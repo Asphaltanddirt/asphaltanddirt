@@ -1,9 +1,13 @@
 import NewsletterForm from "./NewsletterForm";
 
-export default function Footer() {
+export default function Footer({ bgImage }: { bgImage?: string }) {
   return (
     <>
       <section className="newsletter-band">
+        {bgImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={bgImage} className="newsletter-bg" alt="" />
+        )}
         <div className="container newsletter-inner">
           <div className="newsletter-copy">
             <h3>Stay In The Dirt</h3>
