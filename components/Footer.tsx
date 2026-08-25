@@ -1,4 +1,4 @@
-import NewsletterForm from "./NewsletterForm";
+import EmailCaptureForm from "./EmailCaptureForm";
 
 export default function Footer({ bgImage }: { bgImage?: string }) {
   return (
@@ -13,7 +13,7 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
             <h3>Stay In The Dirt</h3>
             <p>Get updates on new builds, episodes, events, merch drops, and more.</p>
           </div>
-          <NewsletterForm />
+          <EmailCaptureForm source="footer" buttonText="Subscribe" />
           <div className="social-row">
             <a href="#" aria-label="Facebook">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" /></svg>
