@@ -1,10 +1,13 @@
 import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import { episodes } from "@/lib/episodes";
+import { getFeaturedProducts } from "@/lib/fourthwall";
 
 const latestEpisode = episodes[0];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const products = await getFeaturedProducts();
+
   return (
     <>
       <section className="hero">
@@ -206,31 +209,29 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </div>
-          <div className="grid grid-5">
-            {[
-              { name: "A&D Hoodie", price: "$59.99", img: "/img/merch/hoodie.jpg", alt: "A&D Hoodie" },
-              { name: "Trail Rated Tee", price: "$29.99", img: "/img/merch/classic-tee.jpg", alt: "Trail Rated Tee" },
-              { name: "A&D Hat", price: "$29.99", img: "/img/merch/patch-hat.jpg", alt: "A&D Hat" },
-              { name: "Overland Tee", price: "$29.99", img: "/img/home/overland-apparel.jpg", alt: "Overland Tee" },
-              { name: "Logo Sticker Pack", price: "$9.99", img: "/img/merch/sticker-pack.jpg", alt: "Logo Sticker Pack" },
-            ].map((p) => (
-              <div className="product-card" key={p.name}>
-                <div className="product-media">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.img} alt={p.alt} />
-                </div>
-                <div className="product-info">
-                  <div>
-                    <div className="product-name">{p.name}</div>
-                    <div className="product-price">{p.price}</div>
+          {products.length ? (
+            <div className="grid grid-5">
+              {products.map((p) => (
+                <a className="product-card" key={p.id} href={p.checkoutUrl} target="_blank" rel="noopener">
+                  <div className="product-media">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.image.url} alt={p.image.alt} />
                   </div>
-                  <div className="cart-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /><path d="M2 3h2l2.6 12.4A2 2 0 0 0 8.5 17h9a2 2 0 0 0 2-1.6L21 7H6" /></svg>
+                  <div className="product-info">
+                    <div>
+                      <div className="product-name">{p.name}</div>
+                      <div className="product-price">${p.price}</div>
+                    </div>
+                    <div className="cart-btn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /><path d="M2 3h2l2.6 12.4A2 2 0 0 0 8.5 17h9a2 2 0 0 0 2-1.6L21 7H6" /></svg>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-0">Merch drops coming soon &mdash; check back here or subscribe above so you don&apos;t miss the launch.</p>
+          )}
         </div>
       </section>
     </>
