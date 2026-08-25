@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
-import YouTubeEmbed from "@/components/YouTubeEmbed";
-import { episodes, getEpisodeByYoutubeId } from "@/lib/episodes";
+import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import {
   fetchLatestFromPlaylist,
   PODCAST_EPISODES_PLAYLIST_ID,
@@ -13,8 +12,6 @@ export const metadata: Metadata = {
   title: "Podcast | Asphalt & Dirt",
   description: "Built street rides. Trail culture. Real events. Real talk.",
 };
-
-const trailer = episodes.find((e) => e.slug === "asphalt-and-dirt-official-trailer");
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -32,29 +29,25 @@ export default async function PodcastIndexPage() {
 
   return (
     <>
-      <section>
-        <div className="container">
-          <div className="eyebrow accent">Intro Video</div>
-          <h1 className="mt-2">
-            <span className="line">This Is</span>
-            <span className="line accent-text">Asphalt</span>
-            <span className="line">&amp; Dirt</span>
-          </h1>
-          <p className="lead mt-2">
-            Built street rides. Trail culture.
-            <br />
-            Real events. Real talk.
-          </p>
-
-          {trailer?.youtubeVideoId && (
-            <div className="mt-4" style={{ maxWidth: 900 }}>
-              <YouTubeEmbed
-                videoId={trailer.youtubeVideoId}
-                title={trailer.title}
-                eventContext="podcast_index_hero"
-              />
-            </div>
-          )}
+      <section className="hero">
+        <video className="hero-bg" poster="/img/podcast/hero.jpg" autoPlay muted loop playsInline>
+          <source src="/video/intro.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-scrim" />
+        <div className="container hero-inner">
+          <div className="hero-content">
+            <div className="eyebrow accent">Intro Video</div>
+            <h1 className="mt-2">
+              <span className="line">This Is</span>
+              <span className="line accent-text">Asphalt</span>
+              <span className="line">&amp; Dirt</span>
+            </h1>
+            <p className="lead mt-2">
+              Built street rides. Trail culture.
+              <br />
+              Real events. Real talk.
+            </p>
+          </div>
         </div>
       </section>
 
