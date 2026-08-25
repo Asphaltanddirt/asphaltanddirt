@@ -60,6 +60,13 @@ export function getEpisodeBySlug(slug: string): Episode | undefined {
   return episodes.find((e) => e.slug === slug);
 }
 
+/** Looks up an internal episode page by its YouTube video ID, so listing
+ *  pages can link in-site when a full episode page exists, and out to
+ *  YouTube directly when it doesn't (yet). */
+export function getEpisodeByYoutubeId(videoId: string): Episode | undefined {
+  return episodes.find((e) => e.youtubeVideoId === videoId);
+}
+
 export function getRelatedEpisodes(episode: Episode): Episode[] {
   if (!episode.relatedSlugs?.length) return [];
   return episode.relatedSlugs
