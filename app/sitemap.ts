@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/team`, changeFrequency: "monthly" },
     ...episodeEntries,
   ];
 }
