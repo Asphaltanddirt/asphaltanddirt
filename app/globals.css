@@ -269,6 +269,8 @@ h1 .line{ display:block; }
 @media (max-width:640px){
   .hero{ min-height:590px; }
   .hero h1{ font-size:clamp(30px,9vw,40px); }
+  .hero .lead{ font-size:16px; }
+  .hero-bg-home{ object-position:62% center; }
   .capture-form{ flex-direction:column; }
 }
 

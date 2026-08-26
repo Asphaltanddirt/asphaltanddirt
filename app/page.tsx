@@ -15,7 +15,7 @@ export default async function HomePage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/img/home/hero.jpg"
-          className="hero-bg"
+          className="hero-bg hero-bg-home"
           alt="Street car and off-road Jeeps under a fiery sunset skyline"
         />
         <div className="hero-scrim" />
@@ -26,7 +26,11 @@ export default async function HomePage() {
               <span className="line accent-text">Horsepower</span>
               <span className="line">Meets Mud</span>
             </h1>
-            <p className="lead">Built street rides, off-road beasts &amp; real talk about it all.</p>
+            <p className="lead">
+              Built street rides, off-road beasts
+              <br />
+              &amp; real talk about it all.
+            </p>
             <HeroCaptureForm />
           </div>
         </div>
