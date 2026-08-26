@@ -129,15 +129,13 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
               </div>
             );
           })}
-          <div className="platform-row-item" style={{ whiteSpace: "normal" }}>
-            <div className="platform-row-icon" style={{ background: "#4a4b4d", color: "#fff" }}>
-              <svg viewBox="0 0 24 24">
-                <circle cx="6" cy="12" r="1.7" fill="currentColor" />
-                <circle cx="12" cy="12" r="1.7" fill="currentColor" />
-                <circle cx="18" cy="12" r="1.7" fill="currentColor" />
-              </svg>
-            </div>
-            <div style={{ maxWidth: 180 }}>...and everywhere else you get your podcasts.</div>
+          <div className="platform-more-badge">
+            <svg viewBox="0 0 24 24">
+              <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+              <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+            </svg>
+            <span>...and everywhere else you get your podcasts.</span>
           </div>
         </div>
       </div>
@@ -210,8 +208,17 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
               </div>
             );
           })}
+          <div className="platform-card">
+            <div className="platform-card-icon" style={{ background: "#4a4b4d", color: "#fff" }}>
+              <svg viewBox="0 0 24 24">
+                <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+                <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+              </svg>
+            </div>
+            <div className="platform-card-name">and more</div>
+          </div>
         </div>
-        <p className="platform-note">...and everywhere else you get your podcasts.</p>
       </div>
     </div>
   );

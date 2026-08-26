@@ -71,7 +71,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <section>
+      <section className="section-pb-tight">
         <div className="container two-col">
           <div>
             <div className="section-head">
@@ -113,7 +113,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section-alt">
+      <section className="section-alt section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">What Our Community Says</div>
@@ -173,7 +173,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section>
+      <section className="section-pt-tight">
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Rep The Culture</div>
