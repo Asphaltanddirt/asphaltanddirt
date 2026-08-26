@@ -366,7 +366,6 @@ h1 .line{ display:block; }
   font-weight:800; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
   color:var(--text-dim); margin-bottom:10px;
 }
-.platform-note{ font-size:13px; color:var(--text-dim); margin:10px 0 0; text-align:right; }
 .platform-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-2); }
 
 /* Larger icon-first cards for the Watch/Listen groups (distinct from the
@@ -391,18 +390,6 @@ h1 .line{ display:block; }
 .platform-row-icon svg{ width:16px; height:16px; }
 .platform-row-badge{ display:block; font-weight:800; font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); }
 @media (max-width:900px){ .platform-row-item{ white-space:normal; } }
-
-/* Single pill-shaped badge (matches the .btn shape/rounding) carrying both
-   the "more" icon and its wording together, rather than icon+plain-text. */
-.platform-more-badge{
-  display:inline-flex; align-items:center; gap:10px;
-  background:#4a4b4d; color:#fff;
-  border-radius:var(--radius-sm);
-  padding:12px 18px;
-  font-weight:700; font-size:12.5px;
-  max-width:280px;
-}
-.platform-more-badge svg{ width:16px; height:16px; flex:none; }
 .platform{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
