@@ -201,7 +201,7 @@ export const builds: Build[] = [
       { value: "37\"", unit: "Tires", icon: "compass" },
       { value: "3\"", unit: "Lift", icon: "lift" },
     ],
-    listingImage: { src: "/img/builds/shockwave.jpg", alt: "Shockwave, Jack's 2022 Jeep Wrangler Rubicon 4xe" },
+    listingImage: { src: "/img/builds/shockwave-hero.jpg", alt: "Shockwave, Jack's 2022 Jeep Wrangler Rubicon 4xe" },
     heroImage: { src: "/img/builds/shockwave-hero.jpg", alt: "Shockwave, a 2022 Jeep Wrangler Rubicon 4xe, on a dirt trail" },
     listingSpecs: [
       { label: "Engine", value: "2.0L Turbo I4 PHEV" },
