@@ -1,9 +1,14 @@
+"use client";
+
+import { track } from "@/lib/analytics";
+
 type Platform = {
   name: string;
   color: string;
   icon: React.ReactNode;
   badge?: string;
   badgeColor?: string;
+  url?: string;
 };
 
 const WATCH_PLATFORMS: Platform[] = [
@@ -12,12 +17,14 @@ const WATCH_PLATFORMS: Platform[] = [
     color: "#FF0000",
     badge: "Live & Video",
     badgeColor: "#ff4a1f",
+    url: "https://www.youtube.com/@Asphaltanddirtpodcast",
     icon: <path d="M8 5v14l11-7z" fill="currentColor" />,
   },
   {
     name: "Spotify",
     color: "#1DB954",
     badge: "Video",
+    url: "https://open.spotify.com/show/1OJaB7uFY09JChAwTNpoko?si=902839da51f04b52",
     icon: (
       <>
         <rect x="4" y="10" width="3" height="7" fill="currentColor" />
@@ -30,6 +37,7 @@ const WATCH_PLATFORMS: Platform[] = [
     name: "Apple Podcasts",
     color: "#9b3fe0",
     badge: "Video",
+    url: "https://podcasts.apple.com/us/podcast/asphalt-dirt-podcast/id6805523570",
     icon: <path d="M3 13a9 9 0 0 1 18 0M3 13v7a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 7 20v-6a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 3 14zM21 13v7a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-6a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 21 14z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
   },
 ];
@@ -49,11 +57,13 @@ const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "iHeartRadio",
     color: "#FF3D57",
+    url: "https://www.iheart.com/podcast/953-asphalt-dirt-podcast-342401764",
     icon: <path d="M12 21s-7-4.35-9.5-8.8C1 9 2.5 5.5 6 5c2-.3 3.5.8 4.5 2.3C11.5 5.8 13 4.7 15 5c3.5.5 5 4 3.5 7.2C19 16.65 12 21 12 21z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />,
   },
   {
     name: "Podcast Index",
     color: "#00A99D",
+    url: "https://rss.buzzsprout.com/2641565.rss",
     icon: (
       <>
         <circle cx="12" cy="18" r="1.5" fill="currentColor" />
@@ -86,23 +96,50 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
     return (
       <div>
         <div className="platform-row">
-          {allPlatforms.map((p) => (
-            <div className="platform-row-item" key={p.name}>
-              <div className="platform-row-icon" style={{ background: p.color, color: "#fff" }}>
-                <svg viewBox="0 0 24 24">{p.icon}</svg>
+          {allPlatforms.map((p) => {
+            const content = (
+              <>
+                <div className="platform-row-icon" style={{ background: p.color, color: "#fff" }}>
+                  <svg viewBox="0 0 24 24">{p.icon}</svg>
+                </div>
+                <div>
+                  <div>{p.name}</div>
+                  {p.badge && (
+                    <span className="platform-row-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
+                      {p.badge}
+                    </span>
+                  )}
+                </div>
+              </>
+            );
+            return p.url ? (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener"
+                className="platform-row-item"
+                onClick={() => track("platform_link_click", { platform: p.name })}
+              >
+                {content}
+              </a>
+            ) : (
+              <div className="platform-row-item" key={p.name}>
+                {content}
               </div>
-              <div>
-                <div>{p.name}</div>
-                {p.badge && (
-                  <span className="platform-row-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
-                    {p.badge}
-                  </span>
-                )}
-              </div>
+            );
+          })}
+          <div className="platform-row-item" style={{ whiteSpace: "normal" }}>
+            <div className="platform-row-icon" style={{ background: "#4a4b4d", color: "#fff" }}>
+              <svg viewBox="0 0 24 24">
+                <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+                <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+              </svg>
             </div>
-          ))}
+            <div style={{ maxWidth: 180 }}>...and everywhere else you get your podcasts.</div>
+          </div>
         </div>
-        <p className="platform-note">...and everywhere else you get your podcasts.</p>
       </div>
     );
   }
@@ -112,31 +149,67 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
       <div className="platform-group">
         <div className="platform-group-label">Watch</div>
         <div className="platform-card-grid">
-          {WATCH_PLATFORMS.map((p) => (
-            <div className="platform-card" key={p.name}>
-              <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
-                <svg viewBox="0 0 24 24">{p.icon}</svg>
+          {WATCH_PLATFORMS.map((p) => {
+            const content = (
+              <>
+                <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
+                  <svg viewBox="0 0 24 24">{p.icon}</svg>
+                </div>
+                <div className="platform-card-name">{p.name}</div>
+                <span className="platform-card-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
+                  {p.badge}
+                </span>
+              </>
+            );
+            return p.url ? (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener"
+                className="platform-card"
+                onClick={() => track("platform_link_click", { platform: p.name })}
+              >
+                {content}
+              </a>
+            ) : (
+              <div className="platform-card" key={p.name}>
+                {content}
               </div>
-              <div className="platform-card-name">{p.name}</div>
-              <span className="platform-card-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
-                {p.badge}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div className="platform-group">
         <div className="platform-group-label">Listen</div>
         <div className="platform-card-grid">
-          {LISTEN_PLATFORMS.map((p) => (
-            <div className="platform-card" key={p.name}>
-              <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
-                <svg viewBox="0 0 24 24">{p.icon}</svg>
+          {LISTEN_PLATFORMS.map((p) => {
+            const content = (
+              <>
+                <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
+                  <svg viewBox="0 0 24 24">{p.icon}</svg>
+                </div>
+                <div className="platform-card-name">{p.name}</div>
+              </>
+            );
+            return p.url ? (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener"
+                className="platform-card"
+                onClick={() => track("platform_link_click", { platform: p.name })}
+              >
+                {content}
+              </a>
+            ) : (
+              <div className="platform-card" key={p.name}>
+                {content}
               </div>
-              <div className="platform-card-name">{p.name}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <p className="platform-note">...and everywhere else you get your podcasts.</p>
       </div>

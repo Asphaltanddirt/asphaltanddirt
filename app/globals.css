@@ -131,6 +131,8 @@ p{ margin:0 0 var(--sp-2); color:var(--text-muted); }
 
 section{ padding:var(--sp-10) 0; }
 @media (max-width:900px){ section{ padding:var(--sp-6) 0; } }
+.section-pt-tight{ padding-top:40px; }
+.section-pb-tight{ padding-bottom:40px; }
 
 .section-alt{ background:var(--bg-alt); }
 

@@ -51,7 +51,7 @@ export default async function PodcastIndexPage() {
         </div>
       </section>
 
-      <section className="section-alt">
+      <section className="section-alt section-pb-tight">
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Latest Podcast Episodes</div>
@@ -95,7 +95,7 @@ export default async function PodcastIndexPage() {
         </div>
       </section>
 
-      <section>
+      <section className="section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Latest Trail &amp; Event Videos</div>
@@ -127,7 +127,7 @@ export default async function PodcastIndexPage() {
         </div>
       </section>
 
-      <section className="section-alt" id="watch-listen">
+      <section className="section-alt section-pt-tight" id="watch-listen">
         <div className="container">
           <div className="eyebrow">Watch &amp; Listen</div>
           <p className="mt-3">
