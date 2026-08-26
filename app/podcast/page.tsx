@@ -130,22 +130,13 @@ export default async function PodcastIndexPage() {
       <section className="section-alt" id="watch-listen">
         <div className="container">
           <div className="eyebrow">Watch &amp; Listen</div>
-          <p className="mt-3" style={{ maxWidth: "60ch" }}>
-            Catch Asphalt &amp; Dirt on your favorite platforms. We go live on YouTube and other
-            platforms. Follow us so you never miss a drop.
+          <p className="mt-3">
+            Catch Asphalt &amp; Dirt on your favorite platforms &mdash; we go live on YouTube and
+            other platforms for live Q&amp;A, real talk, event drops, and more. Follow us and turn
+            on notifications so you never miss a drop.
           </p>
           <div className="mt-4">
             <PlatformGrid compact />
-          </div>
-        </div>
-        <div className="container mt-4">
-          <div className="card" style={{ borderColor: "var(--accent)", flexDirection: "row", alignItems: "center", gap: 16, padding: "18px 24px" }}>
-            <span className="badge-outline" style={{ fontSize: 14 }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg> We Go Live On YouTube &amp; Other Platforms
-            </span>
-            <p className="mb-0" style={{ marginLeft: "auto" }}>
-              Live Q&amp;A, Real Talk, Event Drops, and More. Turn on notifications so you never miss it.
-            </p>
           </div>
         </div>
       </section>

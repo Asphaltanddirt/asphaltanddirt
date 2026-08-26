@@ -1,4 +1,12 @@
-const WATCH_PLATFORMS = [
+type Platform = {
+  name: string;
+  color: string;
+  icon: React.ReactNode;
+  badge?: string;
+  badgeColor?: string;
+};
+
+const WATCH_PLATFORMS: Platform[] = [
   {
     name: "YouTube",
     color: "#FF0000",
@@ -26,7 +34,7 @@ const WATCH_PLATFORMS = [
   },
 ];
 
-const LISTEN_PLATFORMS = [
+const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Amazon Music",
     color: "#00A8E1",
@@ -74,41 +82,27 @@ const LISTEN_PLATFORMS = [
 
 export default function PlatformGrid({ compact = false }: { compact?: boolean }) {
   if (compact) {
+    const allPlatforms = [...WATCH_PLATFORMS, ...LISTEN_PLATFORMS];
     return (
-      <div className="platform-groups">
-        <div className="platform-group">
-          <div className="platform-group-label">Watch</div>
-          <div className="platform-row">
-            {WATCH_PLATFORMS.map((p) => (
-              <div className="platform-row-item" key={p.name}>
-                <div className="platform-row-icon" style={{ background: p.color, color: "#fff" }}>
-                  <svg viewBox="0 0 24 24">{p.icon}</svg>
-                </div>
-                <div>
-                  <div>{p.name}</div>
+      <div>
+        <div className="platform-row">
+          {allPlatforms.map((p) => (
+            <div className="platform-row-item" key={p.name}>
+              <div className="platform-row-icon" style={{ background: p.color, color: "#fff" }}>
+                <svg viewBox="0 0 24 24">{p.icon}</svg>
+              </div>
+              <div>
+                <div>{p.name}</div>
+                {p.badge && (
                   <span className="platform-row-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
                     {p.badge}
                   </span>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-
-        <div className="platform-group">
-          <div className="platform-group-label">Listen</div>
-          <div className="platform-row">
-            {LISTEN_PLATFORMS.map((p) => (
-              <div className="platform-row-item" key={p.name}>
-                <div className="platform-row-icon" style={{ background: p.color, color: "#fff" }}>
-                  <svg viewBox="0 0 24 24">{p.icon}</svg>
-                </div>
-                {p.name}
-              </div>
-            ))}
-          </div>
-          <p className="platform-note">...and everywhere else you get your podcasts.</p>
-        </div>
+        <p className="platform-note">...and everywhere else you get your podcasts.</p>
       </div>
     );
   }
