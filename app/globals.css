@@ -359,6 +359,12 @@ h1 .line{ display:block; }
 .testimonial-role{ font-size:12.5px; color:var(--text-dim); }
 
 /* Platform buttons */
+.platform-groups{ display:flex; flex-direction:column; gap:var(--sp-4); }
+.platform-group-label{
+  font-weight:800; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:10px;
+}
+.platform-note{ font-size:13px; color:var(--text-dim); margin:10px 0 0; }
 .platform-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-2); }
 .platform{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
