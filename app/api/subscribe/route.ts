@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Not a secret — Beehiiv publication IDs are safe to reference client-side/in code.
-const PUBLICATION_ID = "pub_2fe06208-4acc-4f6a-81ad-98ac9c5e0ed3";
+// Not a secret — Kit form IDs are safe to reference client-side/in code.
+const FORM_ID = "9846748"; // "A&D Newsletter"
 
 export async function POST(req: NextRequest) {
   let body: { email?: string; source?: string };
@@ -16,36 +16,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
   }
 
-  const apiKey = process.env.BEEHIIV_API_KEY;
+  const apiKey = process.env.KIT_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Newsletter signup is not configured" }, { status: 500 });
   }
 
-  const beehiivRes = await fetch(
-    `https://api.beehiiv.com/v2/publications/${PUBLICATION_ID}/subscriptions`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        reactivate_existing: false,
-        send_welcome_email: true,
-        utm_source: "asphaltanddirt.com",
-        utm_medium: body.source || "website",
-      }),
-    }
-  );
+  const headers = {
+    "X-Kit-Api-Key": apiKey,
+    "Content-Type": "application/json",
+  };
 
-  if (!beehiivRes.ok) {
-    const errorBody = await beehiivRes.text();
-    // Beehiiv returns 400 for "already subscribed" — treat that as a success from the user's POV.
-    if (beehiivRes.status === 400 && errorBody.includes("already been taken")) {
-      return NextResponse.json({ status: "already_subscribed" });
-    }
-    console.error("Beehiiv subscribe error", beehiivRes.status, errorBody);
+  // Kit's "add subscriber to form by email" endpoint 404s for this account
+  // (confirmed against the live API), so subscribing happens in two steps:
+  // upsert the subscriber, then attach that subscriber to the form by ID.
+  // Both calls are idempotent — safe to repeat for an already-subscribed email.
+  const createRes = await fetch("https://api.kit.com/v4/subscribers", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      email_address: email,
+      referrer: `https://asphaltanddirt.com/?utm_source=asphaltanddirt.com&utm_medium=${body.source || "website"}`,
+    }),
+  });
+
+  if (!createRes.ok) {
+    console.error("Kit create subscriber error", createRes.status, await createRes.text());
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
+  }
+
+  const { subscriber } = (await createRes.json()) as { subscriber: { id: number } };
+
+  const attachRes = await fetch(`https://api.kit.com/v4/forms/${FORM_ID}/subscribers/${subscriber.id}`, {
+    method: "POST",
+    headers,
+  });
+
+  if (!attachRes.ok) {
+    console.error("Kit attach-to-form error", attachRes.status, await attachRes.text());
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
   }
 
