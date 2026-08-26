@@ -366,6 +366,21 @@ h1 .line{ display:block; }
 }
 .platform-note{ font-size:13px; color:var(--text-dim); margin:10px 0 0; }
 .platform-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-2); }
+
+/* Larger icon-first cards for the Watch/Listen groups (distinct from the
+   .platform row layout above, which PlatformLinks still uses on episode
+   pages) */
+.platform-card-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-2); }
+.platform-card{
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:22px 10px; font-weight:700; font-size:13.5px;
+}
+.platform-card-icon{ width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex:none; }
+.platform-card-icon svg{ width:26px; height:26px; }
+.platform-card-name{ line-height:1.25; }
+.platform-card-badge{ font-weight:800; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); }
+@media (max-width:640px){ .platform-card-grid{ grid-template-columns:1fr 1fr; } }
 .platform{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);

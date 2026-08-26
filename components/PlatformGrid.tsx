@@ -9,7 +9,7 @@ const WATCH_PLATFORMS = [
   {
     name: "Spotify",
     color: "#1DB954",
-    badge: "Also Video",
+    badge: "Video",
     icon: (
       <>
         <rect x="4" y="10" width="3" height="7" fill="currentColor" />
@@ -21,7 +21,7 @@ const WATCH_PLATFORMS = [
   {
     name: "Apple Podcasts",
     color: "#9b3fe0",
-    badge: "Also Video",
+    badge: "Video",
     icon: <path d="M3 13a9 9 0 0 1 18 0M3 13v7a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 7 20v-6a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 3 14zM21 13v7a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-6a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 21 14z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
   },
 ];
@@ -77,16 +77,14 @@ export default function PlatformGrid() {
     <div className="platform-groups">
       <div className="platform-group">
         <div className="platform-group-label">Watch</div>
-        <div className="platform-grid">
+        <div className="platform-card-grid">
           {WATCH_PLATFORMS.map((p) => (
-            <div className="platform" key={p.name}>
-              <div className="platform-left">
-                <div className="platform-icon" style={{ background: p.color, color: "#fff" }}>
-                  <svg viewBox="0 0 24 24">{p.icon}</svg>
-                </div>
-                {p.name}
+            <div className="platform-card" key={p.name}>
+              <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
+                <svg viewBox="0 0 24 24">{p.icon}</svg>
               </div>
-              <span className="badge-outline" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
+              <div className="platform-card-name">{p.name}</div>
+              <span className="platform-card-badge" style={p.badgeColor ? { color: p.badgeColor } : undefined}>
                 {p.badge}
               </span>
             </div>
@@ -96,15 +94,13 @@ export default function PlatformGrid() {
 
       <div className="platform-group">
         <div className="platform-group-label">Listen</div>
-        <div className="platform-grid">
+        <div className="platform-card-grid">
           {LISTEN_PLATFORMS.map((p) => (
-            <div className="platform" key={p.name}>
-              <div className="platform-left">
-                <div className="platform-icon" style={{ background: p.color, color: "#fff" }}>
-                  <svg viewBox="0 0 24 24">{p.icon}</svg>
-                </div>
-                {p.name}
+            <div className="platform-card" key={p.name}>
+              <div className="platform-card-icon" style={{ background: p.color, color: "#fff" }}>
+                <svg viewBox="0 0 24 24">{p.icon}</svg>
               </div>
+              <div className="platform-card-name">{p.name}</div>
             </div>
           ))}
         </div>
