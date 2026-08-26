@@ -128,15 +128,15 @@ export default async function PodcastIndexPage() {
       </section>
 
       <section className="section-alt" id="watch-listen">
-        <div className="container two-col">
-          <div>
-            <div className="eyebrow">Watch &amp; Listen</div>
-            <p className="mt-3">
-              Catch Asphalt &amp; Dirt on your favorite platforms. We go live on YouTube and other
-              platforms. Follow us so you never miss a drop.
-            </p>
+        <div className="container">
+          <div className="eyebrow">Watch &amp; Listen</div>
+          <p className="mt-3" style={{ maxWidth: "60ch" }}>
+            Catch Asphalt &amp; Dirt on your favorite platforms. We go live on YouTube and other
+            platforms. Follow us so you never miss a drop.
+          </p>
+          <div className="mt-4">
+            <PlatformGrid compact />
           </div>
-          <PlatformGrid />
         </div>
         <div className="container mt-4">
           <div className="card" style={{ borderColor: "var(--accent)", flexDirection: "row", alignItems: "center", gap: 16, padding: "18px 24px" }}>

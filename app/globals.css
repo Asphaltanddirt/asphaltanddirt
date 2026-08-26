@@ -364,16 +364,15 @@ h1 .line{ display:block; }
   font-weight:800; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
   color:var(--text-dim); margin-bottom:10px;
 }
-.platform-note{ font-size:13px; color:var(--text-dim); margin:10px 0 0; }
+.platform-note{ font-size:13px; color:var(--text-dim); margin:10px 0 0; text-align:right; }
 .platform-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-2); }
 
 /* Larger icon-first cards for the Watch/Listen groups (distinct from the
    .platform row layout above, which PlatformLinks still uses on episode
-   pages) */
+   pages). No card background/border — icons sit directly on the page. */
 .platform-card-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-2); }
 .platform-card{
   display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
-  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
   padding:22px 10px; font-weight:700; font-size:13.5px;
 }
 .platform-card-icon{ width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex:none; }
@@ -381,6 +380,14 @@ h1 .line{ display:block; }
 .platform-card-name{ line-height:1.25; }
 .platform-card-badge{ font-weight:800; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); }
 @media (max-width:640px){ .platform-card-grid{ grid-template-columns:1fr 1fr; } }
+
+/* Compact horizontal layout (podcast page) — same icon-first idea but a
+   wrapping row instead of tall cards, so the section doesn't run long. */
+.platform-row{ display:flex; flex-wrap:wrap; gap:24px 32px; }
+.platform-row-item{ display:flex; align-items:center; gap:12px; font-weight:700; font-size:14px; }
+.platform-row-icon{ width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex:none; }
+.platform-row-icon svg{ width:20px; height:20px; }
+.platform-row-badge{ display:block; font-weight:800; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); }
 .platform{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
