@@ -227,8 +227,10 @@ export default async function CommunityPage() {
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 72, height: 72 }}>{platform.icon}</svg>
                 </a>
-                <span style={{ width: 40, height: 3, background: "var(--accent)", borderRadius: 2 }} />
-                <p className="mb-0" style={{ fontSize: 13 }}>{platform.description}</p>
+                <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+                  <span style={{ height: 3, background: "var(--accent)", borderRadius: 2 }} />
+                  <p className="mb-0" style={{ fontSize: 13, whiteSpace: "nowrap" }}>{platform.description}</p>
+                </div>
               </div>
             ))}
           </div>
