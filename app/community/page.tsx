@@ -225,7 +225,7 @@ export default async function CommunityPage() {
                   aria-label={`${platform.cta} on ${platform.name}`}
                   style={{ color: platform.color ?? "var(--text)" }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="44" height="44">{platform.icon}</svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 72, height: 72 }}>{platform.icon}</svg>
                 </a>
                 <span style={{ width: 40, height: 3, background: "var(--accent)", borderRadius: 2 }} />
                 <p className="mb-0" style={{ fontSize: 13 }}>{platform.description}</p>
