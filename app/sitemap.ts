@@ -30,6 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/builds`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/blog/all`, changeFrequency: "weekly" },
     ...episodeEntries,
     ...buildEntries,
     ...blogEntries,

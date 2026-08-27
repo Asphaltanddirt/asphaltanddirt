@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import EmailCaptureForm from "@/components/EmailCaptureForm";
 import BlogList from "@/components/BlogList";
-import { posts } from "@/lib/blog";
+import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog | Asphalt & Dirt",
   description: "Builds, adventures, gear, and the people who keep the culture moving.",
 };
 
-const LATEST_STORIES = posts.slice(0, 3);
-const POPULAR_RIGHT_NOW = posts.slice(3, 6);
+const LATEST_STORIES = getAllPostsSorted().slice(0, 3);
+const EDITORS_PICKS = getEditorsPicks();
 
 export default function BlogPage() {
   return (
@@ -63,9 +63,9 @@ export default function BlogPage() {
 
       <section className="section-pt-tight">
         <div className="container">
-          <div className="eyebrow">Popular Right Now</div>
+          <div className="eyebrow">Editor&apos;s Picks</div>
           <div className="grid grid-3 mt-4">
-            {POPULAR_RIGHT_NOW.map((post) => (
+            {EDITORS_PICKS.map((post) => (
               <div className="card" key={post.slug}>
                 <div className="card-media">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

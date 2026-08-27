@@ -13,6 +13,12 @@ export interface BlogPost {
    * page once this exists, rather than pointing "Read More" at nothing.
    */
   body?: string[];
+  /**
+   * Manually curated — there's no analytics provider connected yet, so
+   * "Editor's Picks" is editorial judgment rather than real view counts.
+   * Revisit once real traffic data exists.
+   */
+  editorsPick?: boolean;
 }
 
 // Real excerpt copy from the original site. Full article bodies haven't
@@ -51,6 +57,7 @@ export const posts: BlogPost[] = [
     category: "Trail & Travel",
     date: "2025-05-11",
     image: { src: "/img/podcast/ep-convoy.jpg", alt: "Overland-equipped Jeep convoy on a forest road" },
+    editorsPick: true,
   },
   {
     slug: "tires-101-choosing-traction",
@@ -59,6 +66,7 @@ export const posts: BlogPost[] = [
     category: "Gear",
     date: "2025-05-07",
     image: { src: "/img/community/trail-cleanup.jpg", alt: "Close-up of an off-road tire and wheel" },
+    editorsPick: true,
   },
   {
     slug: "why-community-rides-matter",
@@ -67,6 +75,7 @@ export const posts: BlogPost[] = [
     category: "Culture",
     date: "2025-05-03",
     image: { src: "/img/blog/campfire-culture.jpg", alt: "Friends gathered around a campfire" },
+    editorsPick: true,
   },
 ];
 
@@ -76,4 +85,13 @@ export function getPostBySlug(slug: string): BlogPost | undefined {
 
 export function getPublishedPosts(): BlogPost[] {
   return posts.filter((p) => p.body);
+}
+
+/** Every post, newest first — the full archive, not just a curated slice. */
+export function getAllPostsSorted(): BlogPost[] {
+  return [...posts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export function getEditorsPicks(): BlogPost[] {
+  return posts.filter((p) => p.editorsPick);
 }
