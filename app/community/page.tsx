@@ -38,7 +38,7 @@ const PLATFORMS = [
     color: "#1877F2",
     url: socialLinks.facebook,
     cta: "Follow",
-    description: "Events, trails & community updates",
+    description: "Events, trails & updates",
     icon: <path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" />,
   },
   {
@@ -62,7 +62,7 @@ const PLATFORMS = [
     color: "#FF0000",
     url: socialLinks.youtube,
     cta: "Subscribe",
-    description: "Ride recaps & community videos",
+    description: "Ride recaps & videos",
     icon: <><rect x="2.5" y="6" width="19" height="12" rx="3" /><path d="M10.5 9.5v5l4.5-2.5z" fill="currentColor" stroke="none" /></>,
   },
   {
@@ -70,7 +70,7 @@ const PLATFORMS = [
     color: undefined,
     url: socialLinks.x,
     cta: "Follow",
-    description: "Updates, news & community conversation",
+    description: "Updates & conversation",
     icon: <path d="M4 4l16 16M20 4 4 20" />,
   },
 ];
@@ -213,12 +213,22 @@ export default async function CommunityPage() {
           <div className="eyebrow">Where To Connect</div>
           <div className="grid grid-5 mt-4">
             {PLATFORMS.map((platform) => (
-              <div className="card" style={{ alignItems: "center", textAlign: "center", padding: 20, gap: 12 }} key={platform.name}>
-                <div style={platform.color ? { color: platform.color } : undefined}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{platform.icon}</svg>
-                </div>
+              <div
+                className="card"
+                style={{ alignItems: "center", textAlign: "center", padding: 20, gap: 12, background: "var(--bg)", border: "none" }}
+                key={platform.name}
+              >
+                <a
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={`${platform.cta} on ${platform.name}`}
+                  style={{ color: platform.color ?? "var(--text)" }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="44" height="44">{platform.icon}</svg>
+                </a>
+                <span style={{ width: 40, height: 3, background: "var(--accent)", borderRadius: 2 }} />
                 <p className="mb-0" style={{ fontSize: 13 }}>{platform.description}</p>
-                <a href={platform.url} target="_blank" rel="noopener" className="btn btn-outline-accent btn-sm">{platform.cta}</a>
               </div>
             ))}
           </div>
