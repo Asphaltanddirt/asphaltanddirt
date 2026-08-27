@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { episodes } from "@/lib/episodes";
 import { builds } from "@/lib/builds";
+import { getPublishedPosts } from "@/lib/blog";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com";
 
@@ -16,13 +17,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
   }));
 
+  const blogEntries: MetadataRoute.Sitemap = getPublishedPosts().map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: p.date,
+    changeFrequency: "monthly",
+  }));
+
   return [
     { url: SITE_URL, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/team`, changeFrequency: "monthly" },
     { url: `${SITE_URL}/builds`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/blog`, changeFrequency: "weekly" },
     ...episodeEntries,
     ...buildEntries,
+    ...blogEntries,
   ];
 }
