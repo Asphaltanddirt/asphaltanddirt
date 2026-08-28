@@ -16,7 +16,7 @@ const WATCH_PLATFORMS: Platform[] = [
     name: "YouTube",
     color: "#FF0000",
     badge: "Live & Video",
-    badgeColor: "#ff4a1f",
+    badgeColor: "var(--accent)",
     url: "https://www.youtube.com/@Asphaltanddirtpodcast",
     icon: <path d="M8 5v14l11-7z" fill="currentColor" />,
   },

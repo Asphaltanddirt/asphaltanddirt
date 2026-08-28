@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { Anton, Inter } from "next/font/google";
+import { Barlow_Condensed, Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
 
-const anton = Anton({
-  weight: "400",
+// Brand display typeface. Multiple weights + italic loaded so the CSS side
+// can differentiate hero/h1/h2/h3/nav/buttons and selectively use italic
+// for editorial headings, without needing a second font import.
+const barlowCondensed = Barlow_Condensed({
+  weight: ["600", "700", "800", "900"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-display-google",
 });
@@ -23,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${anton.variable} ${inter.variable}`}>
+    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
       <body>
         <Header />
         {children}
