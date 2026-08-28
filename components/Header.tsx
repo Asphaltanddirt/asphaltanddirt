@@ -28,7 +28,8 @@ export default function Header() {
       <header className="site-header">
         <div className="container nav-row">
           <Link href="/" className="logo">
-            ASPHALT <span>&amp; DIRT</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/branding/asphalt-and-dirt-horizontal.png" alt="Asphalt & Dirt" className="logo-image" />
           </Link>
           <nav className="nav-links">
             {NAV_LINKS.map((link) => (
