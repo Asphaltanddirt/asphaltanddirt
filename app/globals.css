@@ -481,7 +481,7 @@ h1 .line{ display:block; }
 /* Product / merch cards — white so the (mostly black/dark) garment photos
    pop against the site's dark pages, with the image itself framed in the
    brand orange. */
-.product-card{ background:#fff; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; transition:border-color .15s ease; }
+.product-card{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; transition:border-color .15s ease; }
 .product-card:hover{ border-color:var(--accent); }
 .product-media{
   aspect-ratio:1/1; background:#fff; overflow:hidden;
@@ -490,7 +490,7 @@ h1 .line{ display:block; }
 }
 .product-media img{ width:100%; height:100%; object-fit:contain; }
 .product-info{ padding:4px 16px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.product-name{ font-weight:700; font-size:14.5px; color:var(--ad-black); }
+.product-name{ font-weight:700; font-size:14.5px; color:var(--text); }
 .product-price{ color:var(--accent); font-weight:800; font-size:13.5px; margin-top:2px; }
 .cart-btn{
   width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
