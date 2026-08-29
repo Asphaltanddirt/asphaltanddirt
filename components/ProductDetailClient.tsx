@@ -39,7 +39,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container">
-        <Link href="/merch" className="back-link">
+        <Link href="/merch/all" className="back-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 6l-6 6 6 6" />
           </svg>

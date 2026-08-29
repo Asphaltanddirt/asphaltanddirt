@@ -35,10 +35,14 @@ export default function ReturnsFaqPage() {
 
         <h2>Reporting a Damaged or Defective Item</h2>
         <p>
-          The fastest way to get this sorted is a clear photo of the issue — laid flat, in good
-          light, with the tag visible — along with your order number. Email{" "}
-          <a href="mailto:team@asphaltanddirt.com?subject=Order%20Issue">team@asphaltanddirt.com</a>{" "}
-          and we&apos;ll take it from there.
+          Order fulfillment and support are handled directly by Fourthwall, our print &amp;
+          shipping partner — they can act on this fastest. The fastest way to get this sorted is a
+          clear photo of the issue — laid flat, in good light, with the tag visible — along with
+          your order number, sent through{" "}
+          <a href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else" target="_blank" rel="noopener">
+            our shop&apos;s contact form
+          </a>
+          .
         </p>
 
         <h2>Refunds</h2>
@@ -63,8 +67,12 @@ export default function ReturnsFaqPage() {
 
         <h2>Still Have a Question?</h2>
         <p>
-          Reach out to <a href="mailto:team@asphaltanddirt.com">team@asphaltanddirt.com</a> and
-          we&apos;ll get back to you.
+          For anything about an order, shipment, or return, use{" "}
+          <a href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else" target="_blank" rel="noopener">
+            our shop&apos;s contact form
+          </a>{" "}
+          — that goes straight to the team handling fulfillment. For anything else, email{" "}
+          <a href="mailto:team@asphaltanddirt.com">team@asphaltanddirt.com</a>.
         </p>
       </div>
     </section>

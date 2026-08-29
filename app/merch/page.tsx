@@ -185,6 +185,25 @@ export default async function MerchPage() {
           </div>
         </div>
       </section>
+
+      <section className="section-pb-tight">
+        <div className="container" style={{ textAlign: "center" }}>
+          <div className="eyebrow" style={{ justifyContent: "center" }}>Merch Contact</div>
+          <p className="mb-0" style={{ maxWidth: 560, margin: "0 auto" }}>
+            Order questions, shipping issues, or returns on something you bought? Our shop orders
+            are handled directly by Fourthwall &mdash;{" "}
+            <a
+              href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else"
+              target="_blank"
+              rel="noopener"
+              style={{ color: "var(--accent)" }}
+            >
+              reach out to them here
+            </a>{" "}
+            for the fastest help. For anything else, <a href="mailto:team@asphaltanddirt.com" style={{ color: "var(--accent)" }}>contact us directly</a>.
+          </p>
+        </div>
+      </section>
     </>
   );
 }
