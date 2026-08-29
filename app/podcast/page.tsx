@@ -30,19 +30,21 @@ export default async function PodcastIndexPage() {
   return (
     <>
       <section className="hero">
-        <video className="hero-bg" poster="/img/podcast/hero.jpg" autoPlay muted loop playsInline>
-          <source src="/video/intro.mp4" type="video/mp4" />
-        </video>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/img/home/hero.jpg"
+          className="hero-bg hero-bg-sunset"
+          alt="Street car and off-road Jeeps under a fiery sunset skyline"
+        />
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <div className="eyebrow accent">Intro Video</div>
-            <h1 className="mt-2">
+            <h1>
               <span className="line">This Is</span>
               <span className="line accent-text">Asphalt</span>
               <span className="line">&amp; Dirt</span>
             </h1>
-            <p className="lead mt-2">
+            <p className="lead">
               Built street rides. Trail culture.
               <br />
               Real events. Real talk.
