@@ -343,3 +343,114 @@ export async function getCart(cartId: string): Promise<Cart | null> {
 export function checkoutUrlForCart(cartId: string) {
   return `https://${SHOP_DOMAIN}/cart/checkout?cartId=${cartId}&currency=USD`;
 }
+
+// ---------------------------------------------------------------------
+// Product detail — full per-product data for the PDP (app/merch/[slug]),
+// including color/size variant selection. Fetched from the single-product
+// Storefront endpoint (not the collection listing, which only returns the
+// first variant per product).
+// ---------------------------------------------------------------------
+
+export type ProductSize = {
+  variantId: string;
+  name: string;
+  price: string;
+  inStock: boolean;
+};
+
+export type ProductColorVariant = {
+  colorName: string;
+  swatch: string;
+  images: { url: string; alt: string }[];
+  sizes: ProductSize[];
+};
+
+export type ProductDetail = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  colors: ProductColorVariant[];
+};
+
+type FourthwallVariantDetail = {
+  id: string;
+  name: string;
+  unitPrice: FourthwallMoney;
+  attributes: {
+    color?: { name: string; swatch: string };
+    size?: { name: string };
+  };
+  stock: { type: "UNLIMITED" | "LIMITED"; inStock?: number };
+  images: FourthwallProductImage[];
+};
+
+type FourthwallProductDetail = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  variants: FourthwallVariantDetail[];
+};
+
+function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
+  const colorOrder: string[] = [];
+  const colorMap = new Map<string, ProductColorVariant>();
+
+  for (const v of product.variants) {
+    const colorName = v.attributes.color?.name ?? "Default";
+    if (!colorMap.has(colorName)) {
+      colorOrder.push(colorName);
+      colorMap.set(colorName, {
+        colorName,
+        swatch: v.attributes.color?.swatch ?? "#333333",
+        images: v.images.map((img) => ({ url: img.url, alt: `${product.name} — ${colorName}` })),
+        sizes: [],
+      });
+    }
+    const inStock = v.stock.type === "UNLIMITED" || (v.stock.inStock ?? 0) > 0;
+    colorMap.get(colorName)!.sizes.push({
+      variantId: v.id,
+      name: v.attributes.size?.name ?? "One Size",
+      price: v.unitPrice.value.toFixed(2),
+      inStock,
+    });
+  }
+
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    description: product.description,
+    colors: colorOrder.map((name) => colorMap.get(name)!),
+  };
+}
+
+/** Returns null if the product doesn't exist or isn't published. */
+export async function getProductDetail(slug: string): Promise<ProductDetail | null> {
+  const token = process.env.FOURTHWALL_STOREFRONT_TOKEN;
+  if (!token) {
+    console.error("Missing FOURTHWALL_STOREFRONT_TOKEN");
+    return null;
+  }
+
+  try {
+    const url = new URL(`${API_URL}/products/${slug}`);
+    url.searchParams.set("storefront_token", token);
+    url.searchParams.set("currency", "USD");
+
+    const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
+    if (!res.ok) {
+      if (res.status !== 404) {
+        console.error("Fourthwall product detail fetch failed", res.status, await res.text());
+      }
+      return null;
+    }
+
+    const data: FourthwallProductDetail = await res.json();
+    return reshapeProductDetail(data);
+  } catch (err) {
+    console.error("Fourthwall product detail fetch error", err);
+    return null;
+  }
+}
