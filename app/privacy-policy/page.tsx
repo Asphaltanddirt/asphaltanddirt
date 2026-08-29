@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Asphalt & Dirt",
+  title: "Privacy Policy",
   description: "How Asphalt & Dirt collects, uses, and protects your information.",
 };
 

@@ -4,7 +4,7 @@ import { socialLinks } from "@/lib/social";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 
 export const metadata: Metadata = {
-  title: "Community | Asphalt & Dirt",
+  title: "Community",
   description: "Real people. Real rides. Real stories from the trail and the street.",
 };
 

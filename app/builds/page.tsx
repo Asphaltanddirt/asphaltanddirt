@@ -3,7 +3,7 @@ import BuildsList from "@/components/BuildsList";
 import { builds } from "@/lib/builds";
 
 export const metadata: Metadata = {
-  title: "Builds | Asphalt & Dirt",
+  title: "Builds",
   description: "Real rigs. Real stories. Explore the rigs, the gear, and the grind behind the build.",
 };
 

@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { episodes, getEpisodeBySlug, getRelatedEpisodes } from "@/lib/episodes";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import PlatformLinks from "@/components/PlatformLinks";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com";
+import { SITE_URL } from "@/lib/site";
 
 export function generateStaticParams() {
   return episodes.map((e) => ({ slug: e.slug }));
@@ -22,7 +21,7 @@ export async function generateMetadata({
 
   const url = `${SITE_URL}/podcast/${episode.slug}`;
   return {
-    title: `${episode.title} | Asphalt & Dirt`,
+    title: episode.title,
     description: episode.description,
     alternates: { canonical: url },
     openGraph: {

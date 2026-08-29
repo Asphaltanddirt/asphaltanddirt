@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPublishedPosts } from "@/lib/blog";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com";
+import { SITE_URL } from "@/lib/site";
 
 export function generateStaticParams() {
   return getPublishedPosts().map((p) => ({ slug: p.slug }));
@@ -20,7 +19,7 @@ export async function generateMetadata({
 
   const url = `${SITE_URL}/blog/${post.slug}`;
   return {
-    title: `${post.title} | Asphalt & Dirt`,
+    title: post.title,
     description: post.excerpt,
     alternates: { canonical: url },
     openGraph: {

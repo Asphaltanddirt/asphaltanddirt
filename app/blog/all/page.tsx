@@ -4,7 +4,7 @@ import BlogArchive from "@/components/BlogArchive";
 import { getAllPostsSorted } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "All Stories | Asphalt & Dirt Blog",
+  title: "All Stories",
   description: "Every story from the Asphalt & Dirt blog — builds, adventures, gear, and the people who keep the culture moving.",
 };
 
