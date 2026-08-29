@@ -72,7 +72,10 @@ function reshapeProduct(product: FourthwallProduct): Product | undefined {
 
 /** Fetches products from a collection (default "all"). Returns [] on any error
  *  or if the collection has no published products — callers should render an
- *  empty state, not treat this as fatal. */
+ *  empty state, not treat this as fatal.
+ *
+ *  Note: the Storefront API ignores a larger `limit` and always pages at 10
+ *  per request, so this walks pages until it has enough or runs out. */
 export async function getFeaturedProducts(
   collectionSlug = "all",
   limit = 5
@@ -83,24 +86,120 @@ export async function getFeaturedProducts(
     return [];
   }
 
+  const products: Product[] = [];
+
   try {
-    const url = new URL(`${API_URL}/collections/${collectionSlug}/products`);
-    url.searchParams.set("storefront_token", token);
-    url.searchParams.set("currency", "USD");
-    url.searchParams.set("limit", String(limit));
+    for (let page = 0; products.length < limit; page++) {
+      const url = new URL(`${API_URL}/collections/${collectionSlug}/products`);
+      url.searchParams.set("storefront_token", token);
+      url.searchParams.set("currency", "USD");
+      url.searchParams.set("page", String(page));
 
-    const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
-    if (!res.ok) {
-      console.error("Fourthwall products fetch failed", res.status, await res.text());
-      return [];
+      const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
+      if (!res.ok) {
+        console.error("Fourthwall products fetch failed", res.status, await res.text());
+        break;
+      }
+
+      const data: { results: FourthwallProduct[]; paging: { hasNextPage: boolean } } =
+        await res.json();
+      products.push(
+        ...data.results.map(reshapeProduct).filter((p): p is Product => Boolean(p))
+      );
+
+      if (!data.paging?.hasNextPage) break;
     }
-
-    const data: { results: FourthwallProduct[] } = await res.json();
-    return data.results
-      .map(reshapeProduct)
-      .filter((p): p is Product => Boolean(p));
   } catch (err) {
     console.error("Fourthwall products fetch error", err);
-    return [];
   }
+
+  return products.slice(0, limit);
+}
+
+// Fourthwall itself only has one real collection ("All Products") for this
+// shop — there's no server-side grouping by product line. These mappings are
+// maintained by hand here (same pattern as lib/builds.tsx / lib/blog.tsx)
+// purely so the merch page can group live products into the brand's actual
+// collections. Keyed by Storefront slug.
+export const MERCH_COLLECTIONS = [
+  {
+    slug: "core",
+    name: "Core",
+    tagline: "The original wordmark. Every ride, every road.",
+    productSlugs: [
+      "split-terrain-heavyweight-tee",
+      "road-trail-heavyweight-tee",
+      "after-hours-hoodie",
+      "trailhead-hoodie",
+      "trailhead-trucker",
+      "cold-start-beanie",
+    ],
+  },
+  {
+    slug: "podcast",
+    name: "Podcast",
+    tagline: "For the people who listen because they live it.",
+    productSlugs: [
+      "open-road-podcast-tee",
+      "behind-the-mic-heavyweight-tee",
+      "roadside-stories-heavyweight-tee",
+      "open-road-podcast-hoodie",
+      "behind-the-mic-hoodie",
+      "roadside-stories-hoodie",
+    ],
+  },
+  {
+    slug: "youth",
+    name: "Youth",
+    tagline: "The next generation doesn't need watered-down gear.",
+    productSlugs: ["next-generation-heavyweight-tee", "next-generation-hoodie"],
+  },
+  {
+    slug: "little-crawlers",
+    name: "Little Crawlers",
+    tagline: "Because you're never too little for your first adventure.",
+    productSlugs: ["little-crawlers-trail-tee", "first-crawl-bodysuit"],
+  },
+  {
+    slug: "show-culture",
+    name: "Show Culture",
+    tagline: "Real builds. Real people. Real car culture.",
+    productSlugs: [
+      "earn-it-heavyweight-tee",
+      "earn-it-hoodie",
+      "protect-the-culture-heavyweight-tee",
+      "protect-the-culture-hoodie",
+    ],
+  },
+  {
+    slug: "accessories",
+    name: "Accessories",
+    tagline: "Bring the garage to the desk.",
+    productSlugs: ["garage-desk-mat", "pit-lane-mouse-pad"],
+  },
+] as const;
+
+export type MerchCollection = {
+  slug: string;
+  name: string;
+  tagline: string;
+  products: Product[];
+};
+
+/** Fetches every published product once, then groups them into the brand's
+ *  named collections per MERCH_COLLECTIONS. Products not listed in any
+ *  collection's productSlugs are dropped silently (e.g. personal-use items
+ *  that are intentionally never published). */
+export async function getMerchCollections(): Promise<MerchCollection[]> {
+  const allProducts = await getFeaturedProducts("all", 100);
+  const bySlug = new Map(allProducts.map((p) => [p.slug, p]));
+
+  return MERCH_COLLECTIONS.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    tagline: c.tagline,
+    products: c.productSlugs
+      .map((slug) => bySlug.get(slug))
+      .filter((p): p is Product => Boolean(p)),
+  })).filter((c) => c.products.length > 0);
 }
