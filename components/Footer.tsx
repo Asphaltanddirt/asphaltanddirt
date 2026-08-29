@@ -1,3 +1,4 @@
+import Link from "next/link";
 import EmailCaptureForm from "./EmailCaptureForm";
 import { socialLinks } from "@/lib/social";
 
@@ -39,9 +40,10 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
           <span>© 2026 Asphalt &amp; Dirt. All Rights Reserved.</span>
           <span className="footer-tagline">Where horsepower meets mud.</span>
           <div className="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Use</a>
-            <a href="#">Contact</a>
+            <Link href="/returns-faq">Returns &amp; FAQ</Link>
+            <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/terms-of-service">Terms of Use</Link>
+            <a href="mailto:team@asphaltanddirt.com">Contact</a>
           </div>
         </div>
       </footer>

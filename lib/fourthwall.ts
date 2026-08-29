@@ -194,6 +194,14 @@ export type MerchCollection = {
   products: Product[];
 };
 
+/** Fetches specific products by slug, in the given order. Used for hand-picked
+ *  sections (Featured Items, New Releases) rather than a whole collection. */
+export async function getProductsBySlugs(slugs: string[]): Promise<Product[]> {
+  const allProducts = await getFeaturedProducts("all", 100);
+  const bySlug = new Map(allProducts.map((p) => [p.slug, p]));
+  return slugs.map((slug) => bySlug.get(slug)).filter((p): p is Product => Boolean(p));
+}
+
 /** Fetches every published product once, then groups them into the brand's
  *  named collections per MERCH_COLLECTIONS. Products not listed in any
  *  collection's productSlugs are dropped silently (e.g. personal-use items

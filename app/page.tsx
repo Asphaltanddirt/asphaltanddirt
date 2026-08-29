@@ -185,7 +185,7 @@ export default async function HomePage() {
           {products.length ? (
             <div className="grid grid-5">
               {products.map((p) => (
-                <a className="product-card" key={p.id} href={p.checkoutUrl} target="_blank" rel="noopener">
+                <Link className="product-card" href={`/merch/${p.slug}`} key={p.id}>
                   <div className="product-media">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.image.url} alt={p.image.alt} />
@@ -195,11 +195,8 @@ export default async function HomePage() {
                       <div className="product-name">{p.name}</div>
                       <div className="product-price">${p.price}</div>
                     </div>
-                    <div className="cart-btn">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /><path d="M2 3h2l2.6 12.4A2 2 0 0 0 8.5 17h9a2 2 0 0 0 2-1.6L21 7H6" /></svg>
-                    </div>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           ) : (
