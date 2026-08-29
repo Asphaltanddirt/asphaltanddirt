@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Asphalt & Dirt",
+  title: "Terms of Service",
   description: "The terms that govern use of the Asphalt & Dirt website and shop.",
 };
 

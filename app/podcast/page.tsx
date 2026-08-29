@@ -9,7 +9,7 @@ import {
 } from "@/lib/youtube";
 
 export const metadata: Metadata = {
-  title: "Podcast | Asphalt & Dirt",
+  title: "Podcast",
   description: "Built street rides. Trail culture. Real events. Real talk.",
 };
 

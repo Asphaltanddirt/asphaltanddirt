@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getProductsBySlugs, MERCH_COLLECTIONS, type Product } from "@/lib/fourthwall";
 
 export const metadata: Metadata = {
-  title: "Merch | Asphalt & Dirt",
+  title: "Merch",
   description: "Rep the lifestyle. Support the mission. Shop Asphalt & Dirt gear.",
 };
 

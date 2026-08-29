@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Team | Asphalt & Dirt",
+  title: "Team",
   description: "We're racers, builders, explorers, and storytellers. Meet the Asphalt & Dirt crew.",
 };
 

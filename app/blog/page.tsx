@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import EmailCaptureForm from "@/components/EmailCaptureForm";
 import BlogList from "@/components/BlogList";
 import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "Blog | Asphalt & Dirt",
+  title: "Blog",
   description: "Builds, adventures, gear, and the people who keep the culture moving.",
 };
 
@@ -51,10 +52,10 @@ export default function BlogPage() {
                 <span className="badge-outline" style={{ width: "fit-content" }}>Builds</span>
                 <h2 style={{ fontSize: 28 }}>Rhino Rock: Built For The Long Way Home</h2>
                 <p>Inside the choices, challenges, and trail-tested upgrades behind Jose&apos;s flagship build.</p>
-                <a href="/builds/rhino-rock" className="btn btn-primary" style={{ width: "fit-content" }}>
+                <Link href="/builds/rhino-rock" className="btn btn-primary" style={{ width: "fit-content" }}>
                   Read Story
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                </a>
+                </Link>
               </div>
             </div>
           </div>

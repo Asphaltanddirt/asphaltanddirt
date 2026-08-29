@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { builds, getBuildBySlug, getAdjacentBuilds, BUILD_ICONS } from "@/lib/builds";
 import { socialLinks } from "@/lib/social";
 import BuildGallery from "@/components/BuildGallery";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com";
+import { SITE_URL } from "@/lib/site";
 
 export function generateStaticParams() {
   return builds.map((b) => ({ slug: b.slug }));
@@ -24,7 +23,7 @@ export async function generateMetadata({
   const description = `${build.vehicle} — full spec sheet, photo gallery, and build story.`;
   const url = `${SITE_URL}/builds/${build.slug}`;
   return {
-    title: `${name} Build | Asphalt & Dirt`,
+    title: `${name} Build`,
     description,
     alternates: { canonical: url },
     openGraph: {
