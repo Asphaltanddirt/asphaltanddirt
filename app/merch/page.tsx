@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
+import AddToCartButton from "@/components/AddToCartButton";
 import { getMerchCollections } from "@/lib/fourthwall";
 
 export const metadata: Metadata = {
@@ -98,7 +99,7 @@ export default async function MerchPage() {
               </div>
               <div className={`grid ${GRID_CLASS_FOR_COUNT[c.products.length] ?? "grid-6"} mt-4`}>
                 {c.products.map((p) => (
-                  <a className="product-card" key={p.id} href={p.checkoutUrl} target="_blank" rel="noopener">
+                  <div className="product-card" key={p.id}>
                     <div className="product-media">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.image.url} alt={p.image.alt} />
@@ -108,11 +109,9 @@ export default async function MerchPage() {
                         <div className="product-name">{p.name}</div>
                         <div className="product-price">${p.price}</div>
                       </div>
-                      <div className="cart-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" /><path d="M2 3h2l2.6 12.4A2 2 0 0 0 8.5 17h9a2 2 0 0 0 2-1.6L21 7H6" /></svg>
-                      </div>
+                      <AddToCartButton variantId={p.variantId} />
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>

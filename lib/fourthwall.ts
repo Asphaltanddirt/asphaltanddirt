@@ -41,8 +41,15 @@ export type Product = {
   price: string;
   currency: string;
   image: { url: string; alt: string };
-  /** Direct checkout link for this product's default variant — no cart API needed. */
+  /** Direct checkout link for this product's default variant — kept as a
+   *  fallback/reference, but the site now uses the cart flow (see Cart
+   *  types below) instead of linking straight to checkout on click. */
   checkoutUrl: string;
+  /** The default (first) variant — used by the Add to Cart button. Products
+   *  with multiple sizes/colors don't have a variant picker yet; this always
+   *  adds the first listed variant, same scope as the old direct-checkout
+   *  link this replaced. */
+  variantId: string;
   inStock: boolean;
 };
 
@@ -66,6 +73,7 @@ function reshapeProduct(product: FourthwallProduct): Product | undefined {
     currency: firstVariant.unitPrice.currency,
     image: { url: image?.url ?? "", alt: product.name },
     checkoutUrl: checkoutUrlFor(firstVariant.id),
+    variantId: firstVariant.id,
     inStock,
   };
 }
@@ -202,4 +210,136 @@ export async function getMerchCollections(): Promise<MerchCollection[]> {
       .map((slug) => bySlug.get(slug))
       .filter((p): p is Product => Boolean(p)),
   })).filter((c) => c.products.length > 0);
+}
+
+// ---------------------------------------------------------------------
+// Cart — real Fourthwall cart sessions, so shoppers can add multiple items
+// and review before checkout instead of a single click jumping straight to
+// Fourthwall's hosted checkout for one variant. These functions are
+// server-only (they use the storefront token directly) and are called from
+// the app/api/cart/* route handlers — the browser never sees the token,
+// it only talks to our own /api/cart endpoints.
+// ---------------------------------------------------------------------
+
+export type CartItem = {
+  variantId: string;
+  productName: string;
+  productSlug: string;
+  variantName: string;
+  image: { url: string; alt: string };
+  unitPrice: string;
+  currency: string;
+  quantity: number;
+};
+
+export type Cart = {
+  id: string;
+  items: CartItem[];
+  itemCount: number;
+  subtotal: string;
+  currency: string;
+};
+
+type FourthwallCartItem = {
+  variant: {
+    id: string;
+    name: string;
+    unitPrice: FourthwallMoney;
+    images: FourthwallProductImage[];
+    product?: { name: string; slug: string };
+  };
+  quantity: number;
+};
+
+type FourthwallCart = { id: string; items: FourthwallCartItem[] };
+
+function reshapeCart(cart: FourthwallCart): Cart {
+  const items: CartItem[] = cart.items.map((item) => ({
+    variantId: item.variant.id,
+    productName: item.variant.product?.name ?? item.variant.name,
+    productSlug: item.variant.product?.slug ?? "",
+    variantName: item.variant.name,
+    image: {
+      url: item.variant.images[0]?.url ?? "",
+      alt: item.variant.product?.name ?? item.variant.name,
+    },
+    unitPrice: item.variant.unitPrice.value.toFixed(2),
+    currency: item.variant.unitPrice.currency,
+    quantity: item.quantity,
+  }));
+
+  const subtotal = items.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0);
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  return {
+    id: cart.id,
+    items,
+    itemCount,
+    subtotal: subtotal.toFixed(2),
+    currency: items[0]?.currency ?? "USD",
+  };
+}
+
+async function cartRequest(
+  path: string,
+  method: "GET" | "POST",
+  body?: unknown
+): Promise<FourthwallCart> {
+  const token = process.env.FOURTHWALL_STOREFRONT_TOKEN;
+  if (!token) throw new Error("Missing FOURTHWALL_STOREFRONT_TOKEN");
+
+  const url = new URL(`${API_URL}${path}`);
+  url.searchParams.set("storefront_token", token);
+  url.searchParams.set("currency", "USD");
+
+  const res = await fetch(url.toString(), {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fourthwall cart request failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+export async function createCart(variantId: string, quantity = 1): Promise<Cart> {
+  const data = await cartRequest("/carts", "POST", { items: [{ variantId, quantity }] });
+  return reshapeCart(data);
+}
+
+export async function addToCart(cartId: string, variantId: string, quantity = 1): Promise<Cart> {
+  const data = await cartRequest(`/carts/${cartId}/add`, "POST", {
+    items: [{ variantId, quantity }],
+  });
+  return reshapeCart(data);
+}
+
+/** Sets a variant's quantity to an absolute value; 0 removes it. */
+export async function changeCartQuantity(
+  cartId: string,
+  variantId: string,
+  quantity: number
+): Promise<Cart> {
+  const data = await cartRequest(`/carts/${cartId}/change`, "POST", {
+    items: [{ variantId, quantity }],
+  });
+  return reshapeCart(data);
+}
+
+/** Returns null if the cart doesn't exist (e.g. expired) rather than throwing
+ *  — callers should treat that as "start a new cart", not a fatal error. */
+export async function getCart(cartId: string): Promise<Cart | null> {
+  try {
+    const data = await cartRequest(`/carts/${cartId}`, "GET");
+    return reshapeCart(data);
+  } catch {
+    return null;
+  }
+}
+
+export function checkoutUrlForCart(cartId: string) {
+  return `https://${SHOP_DOMAIN}/cart/checkout?cartId=${cartId}&currency=USD`;
 }
