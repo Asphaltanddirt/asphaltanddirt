@@ -43,7 +43,7 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
             <Link href="/returns-faq">Returns &amp; FAQ</Link>
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Use</Link>
-            <a href="mailto:team@asphaltanddirt.com">Contact</a>
+            <Link href="/contact">Contact</Link>
           </div>
         </div>
       </footer>
