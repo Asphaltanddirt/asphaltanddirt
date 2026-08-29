@@ -499,6 +499,29 @@ h1 .line{ display:block; }
 .cart-btn:hover{ border-color:var(--accent); color:var(--accent); }
 .cart-btn svg{ width:16px; height:16px; }
 
+/* ---------- Contact routing page ---------- */
+.contact-options{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); margin-top:var(--sp-4); }
+@media (max-width:760px){ .contact-options{ grid-template-columns:1fr; } }
+.contact-option{
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:var(--sp-4); display:flex; flex-direction:column; align-items:flex-start; gap:14px;
+  transition:border-color .15s ease;
+}
+.contact-option:hover{ border-color:var(--accent); }
+/* Reset the .legal-page inline-link styling (orange + underline) that would
+   otherwise bleed onto this whole card, since the card itself is an <a>.
+   Matches .legal-page a's specificity so it actually wins. */
+.legal-page a.contact-option,
+.legal-page a.contact-option:hover,
+.legal-page a.contact-option h3{ color:var(--text); text-decoration:none; }
+.contact-option-icon{
+  width:52px; height:52px; border-radius:14px; background:var(--accent-soft); color:var(--accent);
+  display:flex; align-items:center; justify-content:center; flex:none;
+}
+.contact-option-icon svg{ width:26px; height:26px; }
+.contact-option h3{ margin:0; }
+.contact-option p{ margin:0; }
+
 /* ---------- Simple legal/info pages ---------- */
 .legal-page{ max-width:760px; }
 .legal-page h1{ font-size:clamp(32px,5vw,48px); margin-bottom:var(--sp-2); }
