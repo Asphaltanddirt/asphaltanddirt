@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { CartProvider } from "@/components/CartContext";
+import CartDrawer from "@/components/CartDrawer";
 import "./globals.css";
 
 // Brand display typeface. Multiple weights + italic loaded so the CSS side
@@ -29,9 +31,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
       <body>
-        <Header />
-        {children}
-        <Footer />
+        <CartProvider>
+          <Header />
+          {children}
+          <Footer />
+          <CartDrawer />
+        </CartProvider>
       </body>
     </html>
   );

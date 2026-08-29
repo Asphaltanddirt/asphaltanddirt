@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useCart } from "./CartContext";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { cart, open: openCart } = useCart();
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -46,6 +48,15 @@ export default function Header() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
               </svg>
+            </button>
+            <button className="icon-btn" aria-label="Cart" onClick={openCart}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="20" r="1.4" /><circle cx="17" cy="20" r="1.4" />
+                <path d="M2 3h2l2.6 12.4A2 2 0 0 0 8.5 17h9a2 2 0 0 0 2-1.6L21 7H6" />
+              </svg>
+              {cart && cart.itemCount > 0 && (
+                <span className="cart-count-badge">{cart.itemCount}</span>
+              )}
             </button>
             <button
               className="icon-btn nav-toggle"
