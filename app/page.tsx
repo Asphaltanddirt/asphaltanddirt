@@ -12,21 +12,19 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/img/home/hero.jpg"
-          className="hero-bg hero-bg-home"
-          alt="Street car and off-road Jeeps under a fiery sunset skyline"
-        />
+        <video className="hero-bg" poster="/img/podcast/hero.jpg" autoPlay muted loop playsInline>
+          <source src="/video/intro.mp4" type="video/mp4" />
+        </video>
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <h1>
+            <div className="eyebrow accent">Intro Video</div>
+            <h1 className="mt-2">
               <span className="line">Where</span>
               <span className="line accent-text">Horsepower</span>
               <span className="line">Meets Mud</span>
             </h1>
-            <p className="lead">
+            <p className="lead mt-2">
               Built street rides, off-road beasts
               <br />
               &amp; real talk about it all.

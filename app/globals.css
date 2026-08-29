@@ -347,7 +347,7 @@ h1 .line{ display:block; }
   .hero{ min-height:590px; }
   .hero h1{ font-size:clamp(30px,9vw,40px); }
   .hero .lead{ font-size:16px; max-width:300px; }
-  .hero-bg-home{ object-position:62% center; }
+  .hero-bg-sunset{ object-position:62% center; }
   .capture-form{ flex-direction:column; }
 }
 
