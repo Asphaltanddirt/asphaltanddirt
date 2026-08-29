@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
-import AddToCartButton from "@/components/AddToCartButton";
 import { getMerchCollections } from "@/lib/fourthwall";
 
 export const metadata: Metadata = {
@@ -23,12 +23,32 @@ export default async function MerchPage() {
   return (
     <>
       <section className="hero">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/img/merch/hero.jpg"
-          className="hero-bg"
-          alt="Asphalt & Dirt hoodie, tee, and cap laid out on rocks"
-        />
+        <div className="merch-hero-bg" />
+        {/* Real product renders, not a stock photo — pulled straight from
+            Fourthwall's own product images. */}
+        <div className="merch-hero-products">
+          <div className="merch-hero-item podcast">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://imgproxy.fourthwall.dev/AAZjcVmJ_WqsG_bnbL0jtLjcQhz-E_YLKPAy3MAMvb0/w:1920/sm:1/enc/FZwN8s1Cfo3kTyvG/goW07tuf5akzkV3W/jgNGAgcN0zQLhPC9/6XceQTC7JFBUQpVs/-y4oZCSWGD6oS4Ym/ZkEZ42sxJdPkS8gh/l7szA9n862s1Sb58/aC7Eg2tl0KLUiha2/uczXB08d0NivSySZ/tBH_Bz4CpjmRp4n5/h4OwC4cVQF1susNo/rgASgd7zpVBHoKQq/MqAsGHqCDh0onBWz/al4Ayx4SNbFQ5Qfu/ux5VrKc2U_I.webp"
+              alt="Open Road Podcast Tee"
+            />
+          </div>
+          <div className="merch-hero-item culture">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://imgproxy.fourthwall.dev/Pc0_eed_4NvBprtpvlzhtLTzECMVTO3GXVBD-KPD3LA/w:1920/sm:1/enc/vSDrYql19qsBzQpl/_Ow4ReIbPWkMU8ou/h7SVcOdV8EwWzOJR/HL_xvzfxIadVh3pX/ZgYWrGVEag_o7RwW/76sZubbGHcnNPcSh/9RkFvnUom52gge1t/vlKrtu4lHfKw4ysZ/3R8DQjnAv3iBD1wl/MkHUHYsNYsiFnaVM/oBo2MMd9_eVZObn5/ANbt5vDF3xtCob-v/b3fOW7PxDhXV2A4T/I68nRJ71iP5s_kQe/fQGRBx8Lrk4.webp"
+              alt="Protect the Culture Heavyweight Tee, back print"
+            />
+          </div>
+          <div className="merch-hero-item trucker">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://imgproxy.fourthwall.dev/_7bhJ-91gmhfl2dBYEGBR1s8_y2QWLB__EQBS-zHKs0/w:1920/sm:1/enc/9U0ydCO5vAmyfWW_/Fzi31jG1XTRd_SL4/56qPEopmOUbnDgIC/MEnCJdAy4rF1r9B2/OOfyOS4eTTMp5FWy/y5DuQt_-N4B-uluT/FaJ4kWnFxPptuPTS/HSqqx3P_nGJTkivb/7ZYL582lgzfJMTCd/iOFpPWN8ZiwVNBg5/LzJHKFFIcMtBnHEU/2wnB_R0ZBQU0vShB/AHpIyTGakqiyNwO4/fcpCGx4WlUgkzU7s/8VGn93A7Jg8.webp"
+              alt="Trailhead Trucker"
+            />
+          </div>
+        </div>
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
@@ -99,7 +119,7 @@ export default async function MerchPage() {
               </div>
               <div className={`grid ${GRID_CLASS_FOR_COUNT[c.products.length] ?? "grid-6"} mt-4`}>
                 {c.products.map((p) => (
-                  <div className="product-card" key={p.id}>
+                  <Link className="product-card" href={`/merch/${p.slug}`} key={p.id}>
                     <div className="product-media">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.image.url} alt={p.image.alt} />
@@ -109,9 +129,8 @@ export default async function MerchPage() {
                         <div className="product-name">{p.name}</div>
                         <div className="product-price">${p.price}</div>
                       </div>
-                      <AddToCartButton variantId={p.variantId} />
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
