@@ -91,10 +91,10 @@ export default async function CommunityPage() {
         <div className="container hero-inner">
           <div className="hero-content">
             <h1>
-              <span className="line">Join The</span>
-              <span className="line accent-text">Movement</span>
+              <span className="line">Join The <span className="accent-text">Movement</span></span>
             </h1>
-            <p className="lead">Real people. Real rides. Real stories from the trail and the street.</p>
+            <h3 className="mt-2">No Egos. No Clubs. A Culture Around Community.</h3>
+            <p className="lead mt-2">Real people. Real rides. Real stories from the trail and the street.</p>
             <p>
               From community rides and event coverage to member stories, recaps, and behind-the-scenes
               moments, this is where Asphalt &amp; Dirt comes together.
