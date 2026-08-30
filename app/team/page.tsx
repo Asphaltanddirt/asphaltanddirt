@@ -163,8 +163,8 @@ export default function TeamPage() {
                 Brand Ambassadors represent the heart of our community. If you live the lifestyle, support
                 the brand, and inspire others &mdash; let&apos;s ride.
               </p>
-              <Link href="/ambassadors/apply" className="btn btn-primary mt-2">
-                Apply To Become An Ambassador
+              <Link href="/ambassadors" className="btn btn-primary mt-2">
+                Learn More &amp; Apply
               </Link>
             </div>
             <div className="grid grid-3">

@@ -714,6 +714,18 @@ h1 .line{ display:block; }
 .drives-line svg{ width:18px; height:18px; color:var(--accent); }
 @media (max-width:640px){ .team-card{ grid-template-columns:1fr; } .team-photo{ aspect-ratio:4/5; } }
 
+/* ---------- Ambassador program overview ---------- */
+.tier-card{ padding:var(--sp-4); gap:var(--sp-2); }
+.tier-blurb{ font-size:13px; color:var(--text-dim); margin:0; }
+.tier-list{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }
+.tier-list li{ display:flex; gap:9px; align-items:flex-start; font-size:13.5px; color:var(--text-muted); }
+.tier-list svg{ width:16px; height:16px; color:var(--accent); flex:none; margin-top:2px; }
+.culture-list{ display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; }
+.culture-list li{ display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--text-muted); }
+.culture-list svg{ width:18px; height:18px; flex:none; margin-top:1px; }
+.culture-list.avoid svg{ color:var(--text-dim); }
+.culture-list.encouraged svg{ color:var(--accent); }
+
 .ambassadors-row{ display:grid; grid-template-columns:1fr 2fr; gap:24px; align-items:stretch; }
 @media (max-width:900px){ .ambassadors-row{ grid-template-columns:1fr; } }
 
