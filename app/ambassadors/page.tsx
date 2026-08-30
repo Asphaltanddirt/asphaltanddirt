@@ -90,21 +90,30 @@ const AVOID = [
 export default function AmbassadorsPage() {
   return (
     <>
-      <section className="section-pt-tight section-pb-tight">
-        <div className="container build-form-page">
-          <Link href="/team" className="back-link">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
-            Back To Team
-          </Link>
-          <div className="eyebrow accent mt-3">Real People. Real Builds. Street To Trail.</div>
-          <h1 className="mt-2">Road &amp; Trail Crew</h1>
-          <p className="lead mt-2">
-            The A&amp;D Road &amp; Trail Crew represents people who build, drive, explore, create, and
-            contribute to automotive culture. We welcome street cars, trail rigs, trucks, builders,
-            photographers, families, and enthusiasts who believe the community should be driven by
-            craftsmanship, respect, adventure, and real participation.
-          </p>
-          <p>This isn&apos;t a follower-count contest. It&apos;s a group of people helping keep automotive culture worth showing up for.</p>
+      <section className="hero">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/img/ambassadors/hero.jpg"
+          className="hero-bg"
+          alt="The Road & Trail Crew gathered around a Jeep and a Toyota Supra in a garage at dusk"
+        />
+        <div className="hero-scrim" />
+        <div className="container hero-inner">
+          <div className="hero-content">
+            <Link href="/team" className="back-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
+              Back To Team
+            </Link>
+            <div className="eyebrow accent mt-3">Real People. Real Builds. Street To Trail.</div>
+            <h1 className="mt-2">Road &amp; Trail Crew</h1>
+            <p className="lead mt-2">
+              The A&amp;D Road &amp; Trail Crew represents people who build, drive, explore, create, and
+              contribute to automotive culture. We welcome street cars, trail rigs, trucks, builders,
+              photographers, families, and enthusiasts who believe the community should be driven by
+              craftsmanship, respect, adventure, and real participation.
+            </p>
+            <p>This isn&apos;t a follower-count contest. It&apos;s a group of people helping keep automotive culture worth showing up for.</p>
+          </div>
         </div>
       </section>
 
