@@ -32,9 +32,9 @@ export default async function PodcastIndexPage() {
       <section className="hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/img/home/hero.jpg"
-          className="hero-bg hero-bg-sunset"
-          alt="Street car and off-road Jeeps under a fiery sunset skyline"
+          src="/img/podcast/hero-bg.jpg"
+          className="hero-bg"
+          alt="Recording setup with a mic and mixer in a garage doorway, a Jeep and Mustang parked outside"
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">

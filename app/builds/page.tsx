@@ -15,7 +15,7 @@ export default function BuildsPage() {
         <img
           src="/img/builds/hero.jpg"
           className="hero-bg"
-          alt="Jeep Wrangler Rubicon on a rocky mountain trail at dusk"
+          alt="A Jeep and a street car with hoods open in the garage, mid-build"
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
