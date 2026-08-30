@@ -18,8 +18,7 @@ export default async function HomePage() {
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <div className="eyebrow accent">Intro Video</div>
-            <h1 className="mt-2">
+            <h1>
               <span className="line">Where</span>
               <span className="line accent-text">Horsepower</span>
               <span className="line">Meets Mud</span>

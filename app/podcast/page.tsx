@@ -39,11 +39,12 @@ export default async function PodcastIndexPage() {
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <h1>
-              <span className="line">This Is</span>
-              <span className="line accent-text">Asphalt</span>
-              <span className="line">&amp; Dirt</span>
-            </h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/img/podcast/logo.png"
+              alt="Asphalt &amp; Dirt Podcast"
+              style={{ width: "100%", maxWidth: 280, height: "auto", marginBottom: "var(--sp-3)" }}
+            />
             <p className="lead">
               Built street rides. Trail culture.
               <br />
