@@ -110,7 +110,7 @@ export default function TeamPage() {
         <img
           src="/img/team/hero.jpg"
           className="hero-bg"
-          alt="Two off-road Jeeps against a lava-orange mountain sunset"
+          alt="The crew standing together by their rigs in the garage at sunset"
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">

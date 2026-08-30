@@ -20,7 +20,7 @@ export default function BlogPage() {
         <img
           src="/img/blog/hero.jpg"
           className="hero-bg"
-          alt="Split scene of a street car and a trail Jeep at night"
+          alt="A camera, laptop, and notebook on a garage workbench, cars in the background"
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
