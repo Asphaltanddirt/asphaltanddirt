@@ -57,11 +57,25 @@ function checkoutUrlFor(variantId: string, quantity = 1) {
   return `https://${SHOP_DOMAIN}/cart/checkout?products=${variantId}:${quantity}`;
 }
 
+// Products whose main design lives on the back — Fourthwall lists the back
+// mockup as images[1] for these (confirmed by eye against the live product
+// images). Show that as the listing/hero thumbnail instead of the plain
+// front, so the design that actually sells the shirt is what people see
+// before they click in. The PDP gallery still shows both sides either way.
+const BACK_PRINT_HERO_SLUGS = new Set([
+  "protect-the-culture-hoodie",
+  "protect-the-culture-heavyweight-tee",
+  "earn-it-hoodie",
+  "earn-it-heavyweight-tee",
+]);
+
 function reshapeProduct(product: FourthwallProduct): Product | undefined {
   const firstVariant = product.variants[0];
   if (!firstVariant) return undefined;
 
-  const image = product.images[0];
+  const image = BACK_PRINT_HERO_SLUGS.has(product.slug)
+    ? (product.images[1] ?? product.images[0])
+    : product.images[0];
   const inStock =
     firstVariant.stock.type === "UNLIMITED" || (firstVariant.stock.inStock ?? 0) > 0;
 

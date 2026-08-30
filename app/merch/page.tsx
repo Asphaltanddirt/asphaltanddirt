@@ -41,16 +41,16 @@ const COLLECTION_ICONS: Record<string, React.ReactNode> = {
 // Hand-picked, not a live query — swap slugs here to change what's featured.
 const FEATURED_SLUGS = [
   "protect-the-culture-heavyweight-tee",
-  "split-terrain-heavyweight-tee",
-  "little-crawlers-trail-tee",
   "earn-it-hoodie",
+  "little-crawlers-trail-tee",
+  "trailhead-trucker",
 ];
 
 // Placeholder picks — rotate these out for whatever's actually newest.
 const NEW_RELEASE_SLUGS = [
-  "trailhead-trucker",
-  "next-generation-hoodie",
-  "open-road-podcast-hoodie",
+  "pit-lane-mouse-pad",
+  "garage-desk-mat",
+  "first-crawl-bodysuit",
   "earn-it-heavyweight-tee",
 ];
 
