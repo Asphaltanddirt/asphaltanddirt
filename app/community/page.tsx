@@ -2,35 +2,26 @@ import type { Metadata } from "next";
 import EmailCaptureForm from "@/components/EmailCaptureForm";
 import { socialLinks } from "@/lib/social";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
+import { getCommunityEvents } from "@/lib/calendar";
 
 export const metadata: Metadata = {
   title: "Community",
   description: "Real people. Real rides. Real stories from the trail and the street.",
 };
 
-const EVENTS = [
-  {
-    date: "Jun 8, 2025",
-    image: { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" },
-    title: "Pine Barrens Community Ride",
-    description: "Scenic trails, good people, and unforgettable views through the heart of the Pine Barrens.",
-    location: "Pine Barrens, NJ",
-  },
-  {
-    date: "Jun 21, 2025",
-    image: { src: "/img/community/summer-night.jpg", alt: "Jeeps gathered under string lights at night" },
-    title: "Summer Night Meet-Up",
-    description: "Join us for a laid-back evening of rigs, food, music, and good vibes.",
-    location: "Lake Hopatcong, NJ",
-  },
-  {
-    date: "Jul 12, 2025",
-    image: { src: "/img/community/trail-cleanup.jpg", alt: "Volunteers cleaning up a trail" },
-    title: "Trail Cleanup & Ride Day",
-    description: "Give back to our trails and enjoy a day of riding with the community.",
-    location: "TBD",
-  },
-];
+// Fallback photo for synced calendar events until each one has a real photo
+// of its own — same treatment other placeholder content on the site gets.
+const EVENT_FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
+
+function formatEventDate(date: Date) {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function excerpt(text: string, maxLength = 140) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLength) return clean;
+  return clean.slice(0, clean.lastIndexOf(" ", maxLength)) + "…";
+}
 
 const PLATFORMS = [
   {
@@ -76,7 +67,10 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const recaps = await fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3);
+  const [recaps, { upcoming: upcomingEvents }] = await Promise.all([
+    fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
+    getCommunityEvents(),
+  ]);
 
   return (
     <>
@@ -139,27 +133,39 @@ export default async function CommunityPage() {
       <section className="section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Latest Events &amp; Rides</div>
+            <div className="eyebrow">Upcoming Events &amp; Rides</div>
           </div>
-          <div className="grid grid-3">
-            {EVENTS.map((event) => (
-              <div className="card" key={event.title}>
-                <div className="card-media">
-                  <span className="badge">{event.date}</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={event.image.src} alt={event.image.alt} />
+          {upcomingEvents.length ? (
+            <div className="grid grid-3">
+              {upcomingEvents.map((event) => (
+                <div className="card" key={event.id}>
+                  <div className="card-media">
+                    <span className="badge">{formatEventDate(event.start)}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={EVENT_FALLBACK_IMAGE.src} alt={EVENT_FALLBACK_IMAGE.alt} />
+                  </div>
+                  <div className="card-body">
+                    <h3>{event.title}</h3>
+                    {event.description && <p>{excerpt(event.description)}</p>}
+                    {event.location && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
+                        {event.location}
+                      </span>
+                    )}
+                    <a href={event.url} target="_blank" rel="noopener" className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
+                      Details &amp; RSVP
+                    </a>
+                  </div>
                 </div>
-                <div className="card-body">
-                  <h3>{event.title}</h3>
-                  <p>{event.description}</p>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
-                    {event.location}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-0">
+              No events on the calendar right now &mdash; check back here, or{" "}
+              <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a> so you don&apos;t miss the next one.
+            </p>
+          )}
         </div>
       </section>
 
