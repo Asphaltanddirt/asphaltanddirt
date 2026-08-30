@@ -110,6 +110,22 @@ input{ font-family:inherit; }
 }
 .eyebrow.accent{ color:var(--accent); }
 
+/* Larger hero subhead (h3-sized) with the same trailing accent line as .eyebrow */
+.subhead-line{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.subhead-line::after{
+  content:"";
+  flex:none;
+  width:56px;
+  height:3px;
+  background:var(--accent);
+  border-radius:2px;
+}
+
 .section-head{
   display:flex;
   align-items:center;

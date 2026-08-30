@@ -25,7 +25,7 @@ export default function BuildsPage() {
               <span className="line accent-text">Real Stories.</span>
             </h1>
             <div className="eyebrow mt-2" style={{ fontSize: 16 }}>The Rigs You See On The Trail.</div>
-            <p className="lead mt-2">
+            <p className="lead mt-4">
               Every build has a purpose. Every detail has a story. Explore the rigs, the gear, and the
               grind behind the build.
             </p>

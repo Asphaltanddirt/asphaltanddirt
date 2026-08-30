@@ -28,8 +28,8 @@ export default function BlogPage() {
             <h1>
               <span className="line">The <span className="accent-text">Dirt Line</span></span>
             </h1>
-            <h3 className="mt-2">Stories From The Street &amp; The Trail</h3>
-            <p className="lead mt-2">Builds, adventures, gear, and the people who keep the culture moving.</p>
+            <h3 className="subhead-line mt-2">Stories From The Street &amp; The Trail</h3>
+            <p className="lead mt-4">Builds, adventures, gear, and the people who keep the culture moving.</p>
             <div style={{ maxWidth: 420 }}>
               <EmailCaptureForm source="blog_hero" buttonText="Subscribe" />
             </div>
