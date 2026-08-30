@@ -119,7 +119,7 @@ export default function TeamPage() {
               <span className="line">Meet The <span className="accent-text">Crew</span></span>
             </h1>
             <div className="eyebrow mt-2" style={{ fontSize: 16 }}>The People Behind Asphalt &amp; Dirt.</div>
-            <p className="lead mt-2">
+            <p className="lead mt-4">
               We&apos;re racers, builders, explorers, and storytellers who live for the open road and the
               dirt beyond it. This is our crew. This is our story.
             </p>

@@ -93,11 +93,11 @@ export default async function CommunityPage() {
             <h1>
               <span className="line">Join The <span className="accent-text">Movement</span></span>
             </h1>
-            <h3 className="mt-2">No Egos. No Clubs. A Culture Around Community.</h3>
-            <p className="lead mt-2">Real people. Real rides. Real stories from the trail and the street.</p>
-            <p>
-              From community rides and event coverage to member stories, recaps, and behind-the-scenes
-              moments, this is where Asphalt &amp; Dirt comes together.
+            <h3 className="subhead-line mt-2">No Egos. No Clubs. A Culture Around Community.</h3>
+            <p className="lead mt-4">
+              Real people. Real rides. Real stories from the trail and the street. From community
+              rides and event coverage to member stories, recaps, and behind-the-scenes moments,
+              this is where Asphalt &amp; Dirt comes together.
             </p>
             <div style={{ maxWidth: 440 }}>
               <EmailCaptureForm

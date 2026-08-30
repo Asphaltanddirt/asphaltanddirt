@@ -45,11 +45,7 @@ export default async function PodcastIndexPage() {
               alt="Asphalt &amp; Dirt Podcast"
               style={{ width: "100%", maxWidth: 400, height: "auto", marginBottom: "var(--sp-3)" }}
             />
-            <h3>
-              Built street rides. Trail culture.
-              <br />
-              Real events. Real talk.
-            </h3>
+            <h3 className="subhead-line">Built Street Rides. Trail Culture. Real Events. Real Talk.</h3>
           </div>
         </div>
       </section>
