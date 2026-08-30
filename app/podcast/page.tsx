@@ -43,13 +43,13 @@ export default async function PodcastIndexPage() {
             <img
               src="/img/podcast/logo.png"
               alt="Asphalt &amp; Dirt Podcast"
-              style={{ width: "100%", maxWidth: 280, height: "auto", marginBottom: "var(--sp-3)" }}
+              style={{ width: "100%", maxWidth: 400, height: "auto", marginBottom: "var(--sp-3)" }}
             />
-            <p className="lead">
+            <h3>
               Built street rides. Trail culture.
               <br />
               Real events. Real talk.
-            </p>
+            </h3>
           </div>
         </div>
       </section>

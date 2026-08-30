@@ -20,11 +20,11 @@ export default function BuildsPage() {
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <div className="eyebrow accent">Builds</div>
-            <h1 className="mt-2">
+            <h1>
               <span className="line">Real Rigs.</span>
               <span className="line accent-text">Real Stories.</span>
             </h1>
+            <div className="eyebrow mt-2" style={{ fontSize: 16 }}>The Rigs You See On The Trail.</div>
             <p className="lead mt-2">
               Every build has a purpose. Every detail has a story. Explore the rigs, the gear, and the
               grind behind the build.

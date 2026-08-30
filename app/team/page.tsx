@@ -116,10 +116,9 @@ export default function TeamPage() {
         <div className="container hero-inner">
           <div className="hero-content">
             <h1>
-              <span className="line">Meet The</span>
-              <span className="line accent-text">Crew</span>
+              <span className="line">Meet The <span className="accent-text">Crew</span></span>
             </h1>
-            <div className="eyebrow mt-2" style={{ fontSize: 13 }}>The People Behind Asphalt &amp; Dirt.</div>
+            <div className="eyebrow mt-2" style={{ fontSize: 16 }}>The People Behind Asphalt &amp; Dirt.</div>
             <p className="lead mt-2">
               We&apos;re racers, builders, explorers, and storytellers who live for the open road and the
               dirt beyond it. This is our crew. This is our story.

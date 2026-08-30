@@ -97,9 +97,9 @@ export default async function MerchPage() {
               <span className="line">Gear That</span>
               <span className="line accent-text">Drives Us</span>
             </h1>
-            <p className="lead">
-              Rep the lifestyle. Support the mission. Every purchase helps fuel the rides, the
-              content, and the community.
+            <h3 className="mt-2">Rep The Lifestyle. Support The Mission.</h3>
+            <p className="lead mt-2">
+              Every purchase helps fuel the rides, the content, and the community.
             </p>
             <div className="feature-strip hero-feature-strip">
               <div className="feature-item">

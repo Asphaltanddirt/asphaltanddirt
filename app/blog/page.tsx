@@ -25,13 +25,11 @@ export default function BlogPage() {
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">
-            <div className="eyebrow accent">The Asphalt &amp; Dirt Blog</div>
-            <h1 className="mt-2">
-              <span className="line">Stories From</span>
-              <span className="line accent-text">The Street</span>
-              <span className="line">&amp; The Trail</span>
+            <h1>
+              <span className="line">The <span className="accent-text">Dirt Line</span></span>
             </h1>
-            <p className="lead">Builds, adventures, gear, and the people who keep the culture moving.</p>
+            <h3 className="mt-2">Stories From The Street &amp; The Trail</h3>
+            <p className="lead mt-2">Builds, adventures, gear, and the people who keep the culture moving.</p>
             <div style={{ maxWidth: 420 }}>
               <EmailCaptureForm source="blog_hero" buttonText="Subscribe" />
             </div>
