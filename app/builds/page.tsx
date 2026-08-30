@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import BuildsList from "@/components/BuildsList";
 import { builds } from "@/lib/builds";
 
@@ -57,13 +58,9 @@ export default function BuildsPage() {
                 the Asphalt &amp; Dirt team for a chance to be featured in our Builds gallery and on the
                 channel.
               </p>
-              <a
-                href="mailto:team@asphaltanddirt.com?subject=Submit%20My%20Build"
-                className="btn btn-primary"
-                style={{ width: "fit-content" }}
-              >
+              <Link href="/builds/submit" className="btn btn-primary" style={{ width: "fit-content" }}>
                 Submit Your Build
-              </a>
+              </Link>
             </div>
           </div>
         </div>
