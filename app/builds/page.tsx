@@ -19,16 +19,17 @@ export default function BuildsPage() {
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
-          <div className="page-hero-copy">
-            <h1><span className="line">Builds</span></h1>
-            <div className="accent-text" style={{ fontFamily: "var(--font-display)", fontSize: 22, letterSpacing: ".02em" }}>
-              Real Rigs. Real Stories.
-            </div>
+          <div className="hero-content">
+            <div className="eyebrow accent">Builds</div>
+            <h1 className="mt-2">
+              <span className="line">Real Rigs.</span>
+              <span className="line accent-text">Real Stories.</span>
+            </h1>
             <p className="lead mt-2">
               Every build has a purpose. Every detail has a story. Explore the rigs, the gear, and the
               grind behind the build.
             </p>
-            <a href="#builds-list" className="btn btn-outline-accent">Explore The Builds</a>
+            <a href="#builds-list" className="btn btn-primary">Explore The Builds</a>
           </div>
         </div>
       </section>
