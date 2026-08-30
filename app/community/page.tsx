@@ -151,11 +151,14 @@ export default async function CommunityPage() {
       <section className="section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Upcoming Events &amp; Rides</div>
+            <div className="eyebrow">Events &amp; Rides</div>
           </div>
-          {upcomingEvents.length ? (
-            <div className="grid grid-3">
-              {upcomingEvents.map((event) => {
+          {upcomingEvents.length || pastEvents.length ? (
+            <div className="grid grid-events">
+              {[
+                ...upcomingEvents.map((event) => ({ event, isPast: false })),
+                ...pastEvents.map((event) => ({ event, isPast: true })),
+              ].map(({ event, isPast }) => {
                 const image = eventImage(event.title);
                 return (
                   <div className="card" key={event.id}>
@@ -174,7 +177,7 @@ export default async function CommunityPage() {
                         </span>
                       )}
                       <a href={event.url} target="_blank" rel="noopener" className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
-                        Details &amp; RSVP
+                        {isPast ? "View On Facebook" : "Details & RSVP"}
                       </a>
                     </div>
                   </div>
@@ -189,43 +192,6 @@ export default async function CommunityPage() {
           )}
         </div>
       </section>
-
-      {pastEvents.length > 0 && (
-        <section className="section-pt-tight section-pb-tight">
-          <div className="container">
-            <div className="section-head">
-              <div className="eyebrow">Past Events &amp; Rides</div>
-            </div>
-            <div className="grid grid-3">
-              {pastEvents.map((event) => {
-                const image = eventImage(event.title);
-                return (
-                  <div className="card" key={event.id}>
-                    <div className="card-media">
-                      <span className="badge">{formatEventDate(event.start)}</span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={image.src} alt={image.alt} style={{ objectPosition: image.position ?? "center" }} />
-                    </div>
-                    <div className="card-body">
-                      <h3>{event.title}</h3>
-                      {event.description && <p>{excerpt(event.description)}</p>}
-                      {event.location && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
-                          {event.location}
-                        </span>
-                      )}
-                      <a href={event.url} target="_blank" rel="noopener" className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
-                        View On Facebook
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
 
       <section className="section-alt section-pt-tight section-pb-tight">
         <div className="container">
