@@ -67,7 +67,7 @@ export async function getCommunityEvents(): Promise<{ upcoming: CommunityEvent[]
       .filter((entry): entry is { item: VEvent; url: string } => entry.url !== null)
       .map(({ item, url }) => ({
         id: item.uid,
-        title: textValue(item.summary) || "Untitled Event",
+        title: textValue(item.summary).trim() || "Untitled Event",
         description: textValue(item.description),
         location: textValue(item.location),
         start: item.start,
