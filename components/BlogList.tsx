@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { BlogCategory, BlogPost } from "@/lib/blog";
 
 const CATEGORIES: { key: "All" | BlogCategory; icon: React.ReactNode }[] = [
@@ -55,7 +56,7 @@ const CATEGORIES: { key: "All" | BlogCategory; icon: React.ReactNode }[] = [
 ];
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 export default function BlogList({ posts, children }: { posts: BlogPost[]; children?: React.ReactNode }) {
@@ -92,10 +93,10 @@ export default function BlogList({ posts, children }: { posts: BlogPost[]; child
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Latest Stories</div>
-            <a href="/blog/all" className="view-all">
+            <Link href="/blog/all" className="view-all">
               View All Stories
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </a>
+            </Link>
           </div>
           {visiblePosts.length ? (
             <div className="grid grid-3">

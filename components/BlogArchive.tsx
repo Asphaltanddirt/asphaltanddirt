@@ -55,7 +55,7 @@ const CATEGORIES: { key: "All" | BlogCategory; icon: React.ReactNode }[] = [
 ];
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 export default function BlogArchive({ posts }: { posts: BlogPost[] }) {
