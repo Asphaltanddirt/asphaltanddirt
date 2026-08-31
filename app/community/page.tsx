@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import EmailCaptureForm from "@/components/EmailCaptureForm";
+import TestimonialGrid from "@/components/TestimonialGrid";
 import { socialLinks } from "@/lib/social";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { getCommunityEvents } from "@/lib/calendar";
+import { getApprovedTestimonials } from "@/lib/testimonials";
 
 export const metadata: Metadata = {
   title: "Community",
@@ -85,9 +87,10 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const [recaps, { upcoming: upcomingEvents, past: pastEvents }] = await Promise.all([
+  const [recaps, { upcoming: upcomingEvents, past: pastEvents }, testimonials] = await Promise.all([
     fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
     getCommunityEvents(),
+    getApprovedTestimonials(),
   ]);
 
   return (
@@ -196,45 +199,7 @@ export default async function CommunityPage() {
       <section className="section-alt section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head"><div className="eyebrow">What Our Community Says</div></div>
-          <div className="grid grid-3">
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>The rides, the people, the memories&mdash;this community is second to none. I&apos;ve made lifelong friends through Asphalt &amp; Dirt.</p>
-              <div className="testimonial-foot">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="avatar" src="/img/home/avatar-community.jpg" alt="Mike R." />
-                <div>
-                  <div className="testimonial-name">Mike R.</div>
-                  <div className="testimonial-role">Community Member</div>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>Asphalt &amp; Dirt isn&apos;t just about the rigs, it&apos;s about the people. Every event is top-notch and feels like family.</p>
-              <div className="testimonial-foot">
-                <div className="avatar-initial">S</div>
-                <div>
-                  <div className="testimonial-name">Sarah T.</div>
-                  <div className="testimonial-role">Event Attendee</div>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>From trail cleanups to weekend runs, this community shows up and makes a difference. Proud to be part of it.</p>
-              <div className="testimonial-foot">
-                <div className="avatar-initial">C</div>
-                <div>
-                  <div className="testimonial-name">Chris M.</div>
-                  <div className="testimonial-role">Trail Leader</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TestimonialGrid testimonials={testimonials} />
         </div>
       </section>
 

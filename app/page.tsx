@@ -1,13 +1,15 @@
 import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import PlatformGrid from "@/components/PlatformGrid";
+import TestimonialGrid from "@/components/TestimonialGrid";
 import { episodes } from "@/lib/episodes";
 import { getFeaturedProducts } from "@/lib/fourthwall";
+import { getApprovedTestimonials } from "@/lib/testimonials";
 
 const latestEpisode = episodes[0];
 
 export default async function HomePage() {
-  const products = await getFeaturedProducts();
+  const [products, testimonials] = await Promise.all([getFeaturedProducts(), getApprovedTestimonials()]);
 
   return (
     <>
@@ -119,54 +121,7 @@ export default async function HomePage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>
             </Link>
           </div>
-          <div className="grid grid-3">
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>
-                The podcast is my weekly go-to. Real build talk, great guests, and zero fluff. Feels like
-                hanging out in the garage with friends.
-              </p>
-              <div className="testimonial-foot">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="avatar" src="/img/home/avatar-community.jpg" alt="Mike R." />
-                <div>
-                  <div className="testimonial-name">Mike R.</div>
-                  <div className="testimonial-role">Podcast Listener</div>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>
-                The events and community rides are next level. Good people, epic trails, and memories that
-                last a lifetime.
-              </p>
-              <div className="testimonial-foot">
-                <div className="avatar-initial">S</div>
-                <div>
-                  <div className="testimonial-name">Sarah T.</div>
-                  <div className="testimonial-role">Event Attendee</div>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial">
-              <span className="quote-mark">&ldquo;</span>
-              <div className="stars">★★★★★</div>
-              <p>
-                Asphalt &amp; Dirt nails the mix of street and off-road culture. Authentic, passionate, and
-                always inspiring.
-              </p>
-              <div className="testimonial-foot">
-                <div className="avatar-initial">C</div>
-                <div>
-                  <div className="testimonial-name">Chris M.</div>
-                  <div className="testimonial-role">Community Member</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TestimonialGrid testimonials={testimonials} />
         </div>
       </section>
 

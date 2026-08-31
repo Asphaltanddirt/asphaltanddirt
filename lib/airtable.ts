@@ -25,18 +25,24 @@ export function isAirtableConfigured() {
   return config() !== null;
 }
 
-async function request(table: string, path = "", init: RequestInit = {}) {
+async function request(table: string, path = "", init: RequestInit & { revalidate?: number } = {}) {
   const cfg = config();
   if (!cfg) throw new Error("Airtable is not configured (missing AIRTABLE_API_KEY or AIRTABLE_BASE_ID).");
 
+  const { revalidate, ...fetchInit } = init;
+
   const res = await fetch(`${BASE_URL}/${cfg.baseId}/${encodeURIComponent(table)}${path}`, {
-    ...init,
+    ...fetchInit,
     headers: {
       Authorization: `Bearer ${cfg.apiKey}`,
       "Content-Type": "application/json",
-      ...init.headers,
+      ...fetchInit.headers,
     },
-    cache: "no-store",
+    // Admin/tracking reads stay always-fresh (no-store) by default. Public-facing
+    // reads (e.g. approved testimonials on a page every visitor hits) can pass
+    // `revalidate` to use Next's fetch cache instead of hitting Airtable's API
+    // on every single page load.
+    ...(revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" as const }),
   });
   if (!res.ok) {
     throw new Error(`Airtable request failed: ${res.status} ${await res.text()}`);
@@ -44,8 +50,14 @@ async function request(table: string, path = "", init: RequestInit = {}) {
   return res.json();
 }
 
-/** Lists all records in a table, optionally filtered, following pagination (offset) automatically. */
-export async function listRecords(table: string, filterByFormula?: string): Promise<AirtableRecord[]> {
+/** Lists all records in a table, optionally filtered, following pagination (offset) automatically.
+ *  Pass `revalidate` (seconds) for public-facing reads that should be cached rather than
+ *  hitting Airtable fresh on every request. */
+export async function listRecords(
+  table: string,
+  filterByFormula?: string,
+  options?: { revalidate?: number },
+): Promise<AirtableRecord[]> {
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
 
@@ -55,7 +67,10 @@ export async function listRecords(table: string, filterByFormula?: string): Prom
     if (offset) params.set("offset", offset);
     const query = params.toString();
 
-    const data = (await request(table, query ? `?${query}` : "")) as { records: AirtableRecord[]; offset?: string };
+    const data = (await request(table, query ? `?${query}` : "", { revalidate: options?.revalidate })) as {
+      records: AirtableRecord[];
+      offset?: string;
+    };
     records.push(...data.records);
     offset = data.offset;
   } while (offset);

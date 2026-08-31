@@ -627,6 +627,15 @@ h1 .line{ display:block; }
 .form-success-icon svg{ width:30px; height:30px; }
 .form-success .btn{ margin-top:var(--sp-3); }
 
+.star-input{ display:flex; gap:4px; }
+.star-input-btn{
+  background:none; border:none; cursor:pointer; padding:0; line-height:1;
+  font-size:28px; color:var(--border); transition:color .12s ease, transform .12s ease;
+}
+.star-input-btn:hover{ transform:scale(1.08); }
+.star-input-btn.is-filled{ color:var(--accent); }
+.star-input-btn:disabled{ cursor:default; }
+
 @media (max-width:640px){
   .form-row, .form-row.cols-3{ grid-template-columns:1fr; }
 }
