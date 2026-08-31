@@ -74,7 +74,7 @@ export default function BlogPage() {
                   <h3>{post.title}</h3>
                   <p>{post.excerpt}</p>
                   <span className="date" style={{ fontSize: 12 }}>
-                    {new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    {new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
                   </span>
                 </div>
               </div>

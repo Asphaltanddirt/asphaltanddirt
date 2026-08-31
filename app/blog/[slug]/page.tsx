@@ -18,18 +18,32 @@ export async function generateMetadata({
   if (!post) return {};
 
   const url = `${SITE_URL}/blog/${post.slug}`;
+  const title = post.seoTitle ?? post.title;
+  const description = post.metaDescription ?? post.excerpt;
   return {
-    title: post.title,
-    description: post.excerpt,
+    title,
+    description,
     alternates: { canonical: url },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       url,
       type: "article",
       images: [{ url: post.image.src, alt: post.image.alt }],
     },
   };
+}
+
+/** Parses **bold** markers into <strong> — the only inline markdown the
+ *  blog body model supports right now. */
+function renderInline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
 }
 
 export default async function BlogPostPage({
@@ -45,6 +59,7 @@ export default async function BlogPostPage({
     month: "long",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 
   return (
@@ -68,9 +83,13 @@ export default async function BlogPostPage({
         </div>
 
         <div className="mt-4">
-          {post.body?.map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
-          ))}
+          {post.body?.map((block, i) =>
+            block.type === "heading" ? (
+              <h2 key={i} className="mt-4" style={{ fontSize: 24 }}>{block.text}</h2>
+            ) : (
+              <p key={i}>{renderInline(block.text)}</p>
+            ),
+          )}
         </div>
       </div>
     </section>
