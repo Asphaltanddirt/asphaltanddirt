@@ -3,7 +3,7 @@ import { listRecords, createRecord, isAirtableConfigured } from "@/lib/airtable"
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.CONTENT_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
-const FROM_EMAIL = process.env.CONTENT_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.CONTENT_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <notifications@asphaltanddirt.com>";
 
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
 const SUBMISSIONS_TABLE = process.env.AIRTABLE_CONTENT_SUBMISSIONS_TABLE || "Content Submissions";
