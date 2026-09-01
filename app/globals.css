@@ -942,5 +942,37 @@ h1 .line{ display:block; }
 
 .transcript{ font-size:14px; color:var(--text-muted); line-height:1.7; white-space:pre-wrap; }
 
+/* Shared full-bleed one-pager (coming-soon gate + QR landing) — see
+   components/LandingSplash.tsx */
+.splash{
+  position:relative; min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  overflow:hidden; text-align:center;
+}
+.splash-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+.splash-scrim{ position:absolute; inset:0; z-index:1; background:rgba(0,0,0,.84); }
+.splash-inner{
+  position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;
+  gap:var(--sp-3); max-width:560px; margin:0 auto; padding:var(--sp-6) var(--sp-2);
+}
+.splash-logo{ height:56px; width:auto; max-width:100%; object-fit:contain; }
+.splash-lead{ text-align:center; margin:0 auto; }
+.splash-enter-btn{ padding:16px 32px; font-size:14px; }
+.splash-newsletter{ width:100%; max-width:420px; }
+.splash-newsletter .newsletter-form{ flex:none; width:100%; max-width:none; }
+.splash-listen{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.splash-listen-label{
+  font-family:var(--font-display); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-dim);
+}
+.splash-listen-links{ display:flex; gap:var(--sp-2); flex-wrap:wrap; justify-content:center; }
+.splash-listen-links a{ font-size:13px; color:var(--text-muted); border-bottom:1px solid transparent; }
+.splash-listen-links a:hover{ color:var(--accent); border-color:var(--accent); }
+.splash-social{ margin-top:2px; }
+.splash-footer-note{ font-size:12px; color:var(--text-dim); margin-top:var(--sp-2); }
+@media (max-width:640px){
+  .splash-inner{ padding:var(--sp-4) var(--sp-2); }
+  .splash-logo{ height:44px; }
+}
+
 /* focus states for keyboard nav */
 a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
