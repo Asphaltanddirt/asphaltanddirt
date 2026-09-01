@@ -115,3 +115,34 @@ export async function updateRecord(
     baseId: options?.baseId,
   });
 }
+
+const CONTENT_BASE_URL = "https://content.airtable.com/v0";
+
+/** Uploads a file directly to an attachment field on an existing record —
+ *  Airtable's content API accepts the file inline as base64, no public URL
+ *  needed. Call once per file for a multipleAttachments field; each call
+ *  appends rather than replaces. */
+export async function uploadAttachment(
+  recordId: string,
+  fieldName: string,
+  file: { filename: string; contentType: string; base64: string },
+  options?: { baseId?: string },
+): Promise<void> {
+  const cfg = config(options?.baseId);
+  if (!cfg) throw new Error("Airtable is not configured (missing AIRTABLE_API_KEY or a base ID).");
+
+  const res = await fetch(
+    `${CONTENT_BASE_URL}/${cfg.baseId}/${recordId}/${encodeURIComponent(fieldName)}/uploadAttachment`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${cfg.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ contentType: file.contentType, file: file.base64, filename: file.filename }),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Airtable attachment upload failed: ${res.status} ${await res.text()}`);
+  }
+}

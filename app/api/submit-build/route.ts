@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createRecord, uploadAttachment, isAirtableConfigured } from "@/lib/airtable";
+import { CATEGORY_LABELS } from "@/lib/communityBuilds";
+import type { BuildCategory } from "@/lib/builds";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.BUILD_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
 const FROM_EMAIL = process.env.BUILD_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <onboarding@resend.dev>";
+
+const AIRTABLE_BASE_ID = process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID;
+const AIRTABLE_TABLE = process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions";
 
 const MAX_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // per-photo safety net (photos are pre-compressed client-side)
@@ -21,6 +27,52 @@ function escapeHtml(value: string) {
 
 function field(formData: FormData, key: string) {
   return ((formData.get(key) as string) || "").trim();
+}
+
+async function writeToAirtable(
+  values: { name: string; email: string; rigName: string; vehicle: string; category: string; tagline: string; story: string },
+  extras: { social: string; statPower: string; statTires: string; statLift: string; specEngine: string; specSuspension: string; specWheelsTires: string; specOther: string },
+  photoData: { filename: string; contentType: string; content: string }[],
+) {
+  if (!isAirtableConfigured(AIRTABLE_BASE_ID)) return;
+
+  try {
+    const record = await createRecord(
+      AIRTABLE_TABLE,
+      {
+        Name: values.name,
+        Email: values.email,
+        Social: extras.social,
+        "Rig Name": values.rigName,
+        Vehicle: values.vehicle,
+        Category: CATEGORY_LABELS[values.category as BuildCategory] || undefined,
+        Tagline: values.tagline,
+        "Stat Power": extras.statPower,
+        "Stat Tires": extras.statTires,
+        "Stat Lift": extras.statLift,
+        "Spec Engine": extras.specEngine,
+        "Spec Suspension": extras.specSuspension,
+        "Spec Wheels Tires": extras.specWheelsTires,
+        "Spec Other": extras.specOther,
+        Story: values.story,
+        Approved: false,
+      },
+      { baseId: AIRTABLE_BASE_ID },
+    );
+
+    // Attachments upload to an existing record one at a time — do these after
+    // the record exists rather than blocking record creation on them.
+    for (const photo of photoData) {
+      await uploadAttachment(
+        record.id,
+        "Photos",
+        { filename: photo.filename, contentType: photo.contentType, base64: photo.content },
+        { baseId: AIRTABLE_BASE_ID },
+      );
+    }
+  } catch (err) {
+    console.error("Airtable write error", err);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -84,12 +136,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Your photos are too large combined. Try removing one or two." }, { status: 400 });
   }
 
-  const attachments = await Promise.all(
+  const photoData = await Promise.all(
     photos.map(async (photo) => ({
       filename: photo.name || "photo.jpg",
+      contentType: photo.type || "image/jpeg",
       content: Buffer.from(await photo.arrayBuffer()).toString("base64"),
     })),
   );
+  const attachments = photoData.map(({ filename, content }) => ({ filename, content }));
 
   const rows: [string, string][] = [
     ["Submitted By", `${values.name} (${values.email})`],
@@ -147,6 +201,15 @@ export async function POST(req: NextRequest) {
     console.error("Resend send error", res.status, await res.text());
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
   }
+
+  // Best-effort — the email above is the reliable record either way; Airtable
+  // being unconfigured or briefly down should never block the submitter's
+  // confirmation.
+  await writeToAirtable(
+    values,
+    { social, statPower, statTires, statLift, specEngine, specSuspension, specWheelsTires, specOther },
+    photoData,
+  );
 
   return NextResponse.json({ status: "sent" });
 }
