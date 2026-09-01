@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import ReviewSubmissionForm from "@/components/ReviewSubmissionForm";
 
 export const metadata: Metadata = {
   title: "Leave A Review",
   description: "Share your experience with Asphalt & Dirt — the podcast, the events, or the community.",
+  robots: { index: false, follow: false },
 };
 
 export default function SubmitReviewPage() {
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container build-form-page">
-        <Link href="/" className="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
-          Back Home
-        </Link>
+        {/* Standalone page — no site header/footer (see components/SiteChrome.tsx),
+         *  so this link is a shareable, self-contained form with no path onward
+         *  into the rest of the site. Static brand mark only, not a link. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/branding/asphalt-and-dirt-horizontal.png"
+          alt="Asphalt & Dirt"
+          className="logo-image"
+          style={{ marginBottom: "var(--sp-4)" }}
+        />
         <div className="eyebrow accent mt-3">Tell Us What You Think</div>
         <h1 className="mt-2">Leave A Review</h1>
         <p className="lead mt-2">
