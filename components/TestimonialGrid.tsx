@@ -17,15 +17,14 @@ export default function TestimonialGrid({ testimonials }: { testimonials: Testim
       <div className="grid grid-testimonials">
         {testimonials.map((t) => (
           <div className="testimonial" key={t.id}>
-            <span className="quote-mark">&ldquo;</span>
-            <div className="stars">{stars(t.rating)}</div>
-            <p>{t.quote}</p>
+            <p>&ldquo;{t.quote}&rdquo;</p>
             <div className="testimonial-foot">
               <div className="avatar-initial">{t.name.trim().charAt(0).toUpperCase() || "?"}</div>
               <div>
                 <div className="testimonial-name">{t.name}</div>
                 <div className="testimonial-role">{t.role}</div>
               </div>
+              <div className="stars testimonial-stars">{stars(t.rating)}</div>
             </div>
           </div>
         ))}
