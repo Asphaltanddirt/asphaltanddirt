@@ -1,15 +1,13 @@
 import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import PlatformGrid from "@/components/PlatformGrid";
-import TestimonialGrid from "@/components/TestimonialGrid";
 import { episodes } from "@/lib/episodes";
 import { getFeaturedProducts } from "@/lib/fourthwall";
-import { getApprovedTestimonials } from "@/lib/testimonials";
 
 const latestEpisode = episodes[0];
 
 export default async function HomePage() {
-  const [products, testimonials] = await Promise.all([getFeaturedProducts(), getApprovedTestimonials()]);
+  const products = await getFeaturedProducts();
 
   return (
     <>
@@ -109,19 +107,6 @@ export default async function HomePage() {
               <PlatformGrid />
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="section-alt section-pt-tight section-pb-tight">
-        <div className="container">
-          <div className="section-head">
-            <div className="eyebrow">What Our Community Says</div>
-            <Link href="/community" className="view-all">
-              Join The Movement
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>
-            </Link>
-          </div>
-          <TestimonialGrid testimonials={testimonials} />
         </div>
       </section>
 

@@ -90,7 +90,7 @@ export default async function CommunityPage() {
   const [recaps, { upcoming: upcomingEvents, past: pastEvents }, testimonials] = await Promise.all([
     fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
     getCommunityEvents(),
-    getApprovedTestimonials(),
+    getApprovedTestimonials(3, "community"),
   ]);
 
   return (
@@ -196,12 +196,14 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      <section className="section-alt section-pt-tight section-pb-tight">
-        <div className="container">
-          <div className="section-head"><div className="eyebrow">What Our Community Says</div></div>
-          <TestimonialGrid testimonials={testimonials} />
-        </div>
-      </section>
+      {testimonials.length > 0 && (
+        <section className="section-alt section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="section-head"><div className="eyebrow">What Our Community Says</div></div>
+            <TestimonialGrid testimonials={testimonials} />
+          </div>
+        </section>
+      )}
 
       <section className="section-pt-tight section-pb-tight">
         <div className="container">

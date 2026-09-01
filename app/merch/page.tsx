@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import TestimonialGrid from "@/components/TestimonialGrid";
 import { getProductsBySlugs, MERCH_COLLECTIONS, type Product } from "@/lib/fourthwall";
+import { getApprovedTestimonials } from "@/lib/testimonials";
 
 export const metadata: Metadata = {
   title: "Merch",
@@ -76,9 +78,10 @@ function ProductGrid({ products }: { products: Product[] }) {
 }
 
 export default async function MerchPage() {
-  const [featured, newReleases] = await Promise.all([
+  const [featured, newReleases, testimonials] = await Promise.all([
     getProductsBySlugs(FEATURED_SLUGS),
     getProductsBySlugs(NEW_RELEASE_SLUGS),
+    getApprovedTestimonials(3, "customer"),
   ]);
 
   return (
@@ -186,21 +189,23 @@ export default async function MerchPage() {
         </div>
       </section>
 
+      {testimonials.length > 0 && (
+        <section className="section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="section-head">
+              <div className="eyebrow">What Our Customers Say</div>
+            </div>
+            <TestimonialGrid testimonials={testimonials} />
+          </div>
+        </section>
+      )}
+
       <section className="section-pb-tight">
         <div className="container" style={{ textAlign: "center" }}>
           <div className="eyebrow" style={{ justifyContent: "center" }}>Merch Contact</div>
           <p className="mb-0" style={{ maxWidth: 560, margin: "0 auto" }}>
-            Order questions, shipping issues, or returns on something you bought? Our shop orders
-            are handled directly by Fourthwall &mdash;{" "}
-            <a
-              href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else"
-              target="_blank"
-              rel="noopener"
-              style={{ color: "var(--accent)" }}
-            >
-              reach out to them here
-            </a>{" "}
-            for the fastest help. For anything else, <a href="mailto:team@asphaltanddirt.com" style={{ color: "var(--accent)" }}>contact us directly</a>.
+            Order questions, shipping issues, or returns on something you bought?{" "}
+            <Link href="/contact" style={{ color: "var(--accent)" }}>Contact</Link>.
           </p>
         </div>
       </section>
