@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AMBASSADOR_APPLICATIONS_TO_EMAIL || "team@asphaltanddirt.com";
-const FROM_EMAIL = process.env.AMBASSADOR_APPLICATIONS_FROM_EMAIL || "Asphalt & Dirt <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.AMBASSADOR_APPLICATIONS_FROM_EMAIL || "Asphalt & Dirt <notifications@asphaltanddirt.com>";
 
 // Airtable is optional — if it's not configured yet, the application still emails through.
 // See lib/airtable.ts for the exact base/table field names this expects.

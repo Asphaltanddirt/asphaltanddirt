@@ -5,7 +5,7 @@ import type { BuildCategory } from "@/lib/builds";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.BUILD_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
-const FROM_EMAIL = process.env.BUILD_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.BUILD_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <notifications@asphaltanddirt.com>";
 
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID;
 const AIRTABLE_TABLE = process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions";
