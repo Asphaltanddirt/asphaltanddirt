@@ -393,7 +393,7 @@ h1 .line{ display:block; }
 .grid-6{ grid-template-columns:repeat(6,1fr); }
 /* Sizes columns to however many cards actually exist (1-3), instead of
    always reserving 3 and leaving empty tracks when there are fewer. */
-.grid-events{ grid-template-columns:repeat(auto-fit, minmax(280px, 400px)); justify-content:start; }
+.grid-events, .grid-testimonials{ grid-template-columns:repeat(auto-fit, minmax(280px, 400px)); justify-content:start; }
 @media (max-width:980px){
   .grid-3,.grid-4,.grid-5,.grid-6{ grid-template-columns:repeat(2,1fr); }
 }
@@ -443,7 +443,7 @@ h1 .line{ display:block; }
   background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
   padding:var(--sp-3); display:flex; flex-direction:column; gap:14px;
 }
-.testimonial .quote-mark{ color:var(--accent); font-family:var(--font-display); font-size:40px; line-height:.5; }
+.testimonial .quote-mark{ color:var(--accent); font-family:var(--font-body); font-size:40px; line-height:.5; }
 .stars{ color:var(--accent); letter-spacing:2px; font-size:14px; }
 .testimonial-foot{ display:flex; align-items:center; gap:12px; margin-top:auto; }
 .avatar{ width:44px; height:44px; border-radius:50%; object-fit:cover; flex:none; background:var(--bg-elevated); }

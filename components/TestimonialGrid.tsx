@@ -14,7 +14,7 @@ export default function TestimonialGrid({ testimonials }: { testimonials: Testim
 
   return (
     <>
-      <div className="grid grid-3">
+      <div className="grid grid-testimonials">
         {testimonials.map((t) => (
           <div className="testimonial" key={t.id}>
             <span className="quote-mark">&ldquo;</span>
