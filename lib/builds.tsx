@@ -240,13 +240,17 @@ export const builds: Build[] = [
   },
 ];
 
-export function getBuildBySlug(slug: string): Build | undefined {
-  return builds.find((b) => b.slug === slug);
+// Pure lookups over a caller-supplied list, so pages can pass the static
+// team builds alone or merged with approved community builds (see
+// lib/communityBuilds.ts) without this module needing to know about
+// Airtable at all.
+export function findBuildBySlug(list: Build[], slug: string): Build | undefined {
+  return list.find((b) => b.slug === slug);
 }
 
-export function getAdjacentBuilds(slug: string): { prev: Build; next: Build } {
-  const index = builds.findIndex((b) => b.slug === slug);
-  const prev = builds[(index - 1 + builds.length) % builds.length];
-  const next = builds[(index + 1) % builds.length];
+export function findAdjacentBuilds(list: Build[], slug: string): { prev: Build; next: Build } {
+  const index = list.findIndex((b) => b.slug === slug);
+  const prev = list[(index - 1 + list.length) % list.length];
+  const next = list[(index + 1) % list.length];
   return { prev, next };
 }

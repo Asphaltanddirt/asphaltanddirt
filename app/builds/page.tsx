@@ -2,13 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BuildsList from "@/components/BuildsList";
 import { builds } from "@/lib/builds";
+import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 
 export const metadata: Metadata = {
   title: "Builds",
   description: "Real rigs. Real stories. Explore the rigs, the gear, and the grind behind the build.",
 };
 
-export default function BuildsPage() {
+export default async function BuildsPage() {
+  // Team builds always come first — community submissions are appended
+  // after, not mixed in ahead of them.
+  const communityBuilds = await getApprovedCommunityBuilds();
+  const allBuilds = [...builds, ...communityBuilds];
+
   return (
     <>
       <section className="hero">
@@ -37,7 +43,7 @@ export default function BuildsPage() {
 
       <section className="section-pb-tight" id="builds-list">
         <div className="container">
-          <BuildsList builds={builds} />
+          <BuildsList builds={allBuilds} />
         </div>
       </section>
 

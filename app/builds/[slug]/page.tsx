@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { builds, getBuildBySlug, getAdjacentBuilds, BUILD_ICONS } from "@/lib/builds";
+import { builds, findBuildBySlug, findAdjacentBuilds, BUILD_ICONS } from "@/lib/builds";
+import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { socialLinks } from "@/lib/social";
 import BuildGallery from "@/components/BuildGallery";
 import { SITE_URL } from "@/lib/site";
 
+// Only the 4 team builds are known at build time — a community build's slug
+// isn't known until someone submits and it's approved. Next renders those
+// on first request and caches the result (dynamicParams defaults to true),
+// so this stays fast without an Airtable-dependent build step.
 export function generateStaticParams() {
   return builds.map((b) => ({ slug: b.slug }));
 }
@@ -16,7 +21,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const build = getBuildBySlug(slug);
+  const communityBuilds = await getApprovedCommunityBuilds();
+  const build = findBuildBySlug([...builds, ...communityBuilds], slug);
   if (!build) return {};
 
   const name = build.nameLines.join(" ");
@@ -42,10 +48,12 @@ export default async function BuildDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const build = getBuildBySlug(slug);
+  const communityBuilds = await getApprovedCommunityBuilds();
+  const allBuilds = [...builds, ...communityBuilds];
+  const build = findBuildBySlug(allBuilds, slug);
   if (!build) notFound();
 
-  const { prev, next } = getAdjacentBuilds(slug);
+  const { prev, next } = findAdjacentBuilds(allBuilds, slug);
   const useTwoColSpecs = build.specs.length > 6;
   const specColumns = useTwoColSpecs
     ? [build.specs.slice(0, Math.ceil(build.specs.length / 2)), build.specs.slice(Math.ceil(build.specs.length / 2))]
