@@ -1,6 +1,14 @@
 /**
- * Small Airtable REST client for the Road & Trail Crew base.
- * Server-side only — AIRTABLE_API_KEY must never reach the browser.
+ * Small Airtable REST client. Server-side only — AIRTABLE_API_KEY must never
+ * reach the browser.
+ *
+ * One shared Personal Access Token (AIRTABLE_API_KEY) is scoped to multiple
+ * bases — each feature gets its own base (Road & Trail Crew, Testimonials,
+ * and more to come) to spread record/attachment counts across the free
+ * plan's per-base limits instead of stacking everything into one. Every
+ * function here takes an explicit `baseId`; AIRTABLE_BASE_ID is only a
+ * default for callers that don't pass one (kept for the original Road &
+ * Trail Crew tables — Applications, Ambassadors, etc.).
  */
 
 const BASE_URL = "https://api.airtable.com/v0";
@@ -14,22 +22,27 @@ export interface AirtableRecord {
   fields: AirtableFields;
 }
 
-function config() {
+function config(baseId?: string) {
   const apiKey = process.env.AIRTABLE_API_KEY;
-  const baseId = process.env.AIRTABLE_BASE_ID;
-  if (!apiKey || !baseId) return null;
-  return { apiKey, baseId };
+  const resolvedBaseId = baseId || process.env.AIRTABLE_BASE_ID;
+  if (!apiKey || !resolvedBaseId) return null;
+  return { apiKey, baseId: resolvedBaseId };
 }
 
-export function isAirtableConfigured() {
-  return config() !== null;
+/** Pass a specific `baseId` to check a non-default base's config; omitted,
+ *  checks the default Road & Trail Crew base. */
+export function isAirtableConfigured(baseId?: string) {
+  return config(baseId) !== null;
 }
 
-async function request(table: string, path = "", init: RequestInit & { revalidate?: number } = {}) {
-  const cfg = config();
-  if (!cfg) throw new Error("Airtable is not configured (missing AIRTABLE_API_KEY or AIRTABLE_BASE_ID).");
-
-  const { revalidate, ...fetchInit } = init;
+async function request(
+  table: string,
+  path = "",
+  init: RequestInit & { revalidate?: number; baseId?: string } = {},
+) {
+  const { revalidate, baseId, ...fetchInit } = init;
+  const cfg = config(baseId);
+  if (!cfg) throw new Error("Airtable is not configured (missing AIRTABLE_API_KEY or a base ID).");
 
   const res = await fetch(`${BASE_URL}/${cfg.baseId}/${encodeURIComponent(table)}${path}`, {
     ...fetchInit,
@@ -52,11 +65,12 @@ async function request(table: string, path = "", init: RequestInit & { revalidat
 
 /** Lists all records in a table, optionally filtered, following pagination (offset) automatically.
  *  Pass `revalidate` (seconds) for public-facing reads that should be cached rather than
- *  hitting Airtable fresh on every request. */
+ *  hitting Airtable fresh on every request. Pass `baseId` to target a base other than the
+ *  default (AIRTABLE_BASE_ID). */
 export async function listRecords(
   table: string,
   filterByFormula?: string,
-  options?: { revalidate?: number },
+  options?: { revalidate?: number; baseId?: string },
 ): Promise<AirtableRecord[]> {
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
@@ -67,7 +81,10 @@ export async function listRecords(
     if (offset) params.set("offset", offset);
     const query = params.toString();
 
-    const data = (await request(table, query ? `?${query}` : "", { revalidate: options?.revalidate })) as {
+    const data = (await request(table, query ? `?${query}` : "", {
+      revalidate: options?.revalidate,
+      baseId: options?.baseId,
+    })) as {
       records: AirtableRecord[];
       offset?: string;
     };
@@ -78,10 +95,23 @@ export async function listRecords(
   return records;
 }
 
-export async function createRecord(table: string, fields: AirtableFields): Promise<AirtableRecord> {
-  return request(table, "", { method: "POST", body: JSON.stringify({ fields }) });
+export async function createRecord(
+  table: string,
+  fields: AirtableFields,
+  options?: { baseId?: string },
+): Promise<AirtableRecord> {
+  return request(table, "", { method: "POST", body: JSON.stringify({ fields }), baseId: options?.baseId });
 }
 
-export async function updateRecord(table: string, recordId: string, fields: AirtableFields): Promise<AirtableRecord> {
-  return request(table, `/${recordId}`, { method: "PATCH", body: JSON.stringify({ fields }) });
+export async function updateRecord(
+  table: string,
+  recordId: string,
+  fields: AirtableFields,
+  options?: { baseId?: string },
+): Promise<AirtableRecord> {
+  return request(table, `/${recordId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ fields }),
+    baseId: options?.baseId,
+  });
 }
