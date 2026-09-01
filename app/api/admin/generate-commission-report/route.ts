@@ -5,10 +5,6 @@ import { listRecords, createRecord, updateRecord, isAirtableConfigured } from "@
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
 const SNAPSHOTS_TABLE = process.env.AIRTABLE_SNAPSHOTS_TABLE || "Monthly Commission Snapshots";
 
-// Ambassadors below this net commission for the month are flagged, not withheld —
-// payout is a manual decision either way.
-const MIN_PAYOUT_THRESHOLD = 25;
-
 /** Airtable "percent" fields return a 0-1 fraction; a plain Number field holding "10"
  *  means 10%. Handle either without needing to know which the user picked. */
 function normalizeRate(rate: number): number {
@@ -132,7 +128,6 @@ export async function POST(req: NextRequest) {
       netSubtotal,
       commissionRate,
       commissionOwed,
-      belowPayoutThreshold: commissionOwed < MIN_PAYOUT_THRESHOLD,
     });
   }
 

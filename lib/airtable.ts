@@ -116,6 +116,26 @@ export async function updateRecord(
   });
 }
 
+/** Upserts records in batches of 10 (Airtable's per-request limit), matching
+ *  existing records on `mergeOnFields` (must be real field names, not IDs).
+ *  Records not matching any existing row are created; matches are updated. */
+export async function upsertRecords(
+  table: string,
+  records: { fields: AirtableFields }[],
+  mergeOnFields: string[],
+  options?: { baseId?: string },
+): Promise<void> {
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    await request(table, "", {
+      method: "PATCH",
+      body: JSON.stringify({ performUpsert: { fieldsToMergeOn: mergeOnFields }, records: batch }),
+      baseId: options?.baseId,
+    });
+  }
+}
+
 const CONTENT_BASE_URL = "https://content.airtable.com/v0";
 
 /** Uploads a file directly to an attachment field on an existing record —
