@@ -108,7 +108,6 @@ export default function ReviewSubmissionForm() {
             <option value="">Select one</option>
             <option value="Podcast Listener">Podcast Listener</option>
             <option value="Event Attendee">Event Attendee</option>
-            <option value="Trail Rider">Trail Rider</option>
             <option value="Community Member">Community Member</option>
             <option value="Customer">Customer</option>
             <option value="Other">Other</option>

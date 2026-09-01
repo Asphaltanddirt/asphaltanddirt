@@ -5,16 +5,19 @@ import { createRecord, isAirtableConfigured } from "@/lib/airtable";
 const TO_EMAIL = process.env.REVIEW_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
 const FROM_EMAIL = process.env.REVIEW_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <onboarding@resend.dev>";
 
+// Own base (not the Road & Trail Crew base other Airtable-backed features
+// use) — keeps its record count independent on the free plan.
+const BASE_ID = process.env.AIRTABLE_TESTIMONIALS_BASE_ID;
 const TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
 const MAX_QUOTE_LENGTH = 600;
 
-// Mirrors the <select> options in ReviewSubmissionForm — kept fixed so a
-// submission (whether from the dropdown or a raw request) can't inject
-// arbitrary free text into what's shown next to a testimonial.
+// Mirrors the <select> options in ReviewSubmissionForm, and the Role
+// single-select's exact choices in Airtable — kept fixed so a submission
+// (whether from the dropdown or a raw request) can't inject arbitrary free
+// text into what's shown next to a testimonial.
 const ALLOWED_ROLES = new Set([
   "Podcast Listener",
   "Event Attendee",
-  "Trail Rider",
   "Community Member",
   "Customer",
   "Other",
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
   // Airtable is the actual publishing mechanism for this feature — without it
   // configured, a submission would have nowhere to land, so this is required
   // (unlike the best-effort Airtable write on the Ambassador application).
-  if (!isAirtableConfigured()) {
+  if (!isAirtableConfigured(BASE_ID)) {
     return NextResponse.json({ error: "Reviews aren't configured yet — check back soon." }, { status: 500 });
   }
 
@@ -58,14 +61,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await createRecord(TABLE, {
-      Name: name,
-      Email: email,
-      Role: role || "Community Member",
-      Rating: String(rating), // Rating is an Airtable single-select ("1"–"5"), not a number field
-      Quote: quote,
-      Approved: false,
-    });
+    await createRecord(
+      TABLE,
+      {
+        Name: name,
+        Email: email,
+        Role: role || "Community Member",
+        Rating: String(rating), // Rating is an Airtable single-select ("1"–"5"), not a number field
+        Quote: quote,
+        Approved: false,
+      },
+      { baseId: BASE_ID },
+    );
   } catch (err) {
     console.error("Airtable write error", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });

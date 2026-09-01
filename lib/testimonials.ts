@@ -8,11 +8,14 @@ export interface Testimonial {
   quote: string;
 }
 
+// Own base (not the Road & Trail Crew base the other Airtable-backed
+// features use) — keeps its record count independent on the free plan.
+const BASE_ID = process.env.AIRTABLE_TESTIMONIALS_BASE_ID;
 const TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
 
 /** "customer" = merch buyers (Role = Customer), shown on the Merch page.
- *  "community" = everyone else (Podcast Listener, Event Attendee, Trail
- *  Rider, Community Member, Other), shown on the Community page. Each
+ *  "community" = everyone else (Podcast Listener, Event Attendee,
+ *  Community Member, Other), shown on the Community page. Each
  *  testimonial appears in exactly one of the two. */
 export type TestimonialAudience = "all" | "customer" | "community";
 
@@ -26,10 +29,10 @@ function filterFor(audience: TestimonialAudience) {
  *  this gets fetched on every visit to pages that show it (Merch, Community),
  *  not just an admin dashboard. */
 export async function getApprovedTestimonials(limit = 3, audience: TestimonialAudience = "all"): Promise<Testimonial[]> {
-  if (!isAirtableConfigured()) return [];
+  if (!isAirtableConfigured(BASE_ID)) return [];
 
   try {
-    const records = await listRecords(TABLE, filterFor(audience), { revalidate: 900 });
+    const records = await listRecords(TABLE, filterFor(audience), { revalidate: 900, baseId: BASE_ID });
 
     return records
       .map((r) => ({
