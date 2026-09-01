@@ -10,14 +10,26 @@ export interface Testimonial {
 
 const TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
 
+/** "customer" = merch buyers (Role = Customer), shown on the Merch page.
+ *  "community" = everyone else (Podcast Listener, Event Attendee, Trail
+ *  Rider, Community Member, Other), shown on the Community page. Each
+ *  testimonial appears in exactly one of the two. */
+export type TestimonialAudience = "all" | "customer" | "community";
+
+function filterFor(audience: TestimonialAudience) {
+  if (audience === "customer") return "AND({Approved}=1, {Role}='Customer')";
+  if (audience === "community") return "AND({Approved}=1, {Role}!='Customer')";
+  return "{Approved}=1";
+}
+
 /** Approved, community-submitted testimonials — cached for 15 minutes since
- *  this gets fetched on every visit to pages that show it (Home, Community),
+ *  this gets fetched on every visit to pages that show it (Merch, Community),
  *  not just an admin dashboard. */
-export async function getApprovedTestimonials(limit = 3): Promise<Testimonial[]> {
+export async function getApprovedTestimonials(limit = 3, audience: TestimonialAudience = "all"): Promise<Testimonial[]> {
   if (!isAirtableConfigured()) return [];
 
   try {
-    const records = await listRecords(TABLE, "{Approved}=1", { revalidate: 900 });
+    const records = await listRecords(TABLE, filterFor(audience), { revalidate: 900 });
 
     return records
       .map((r) => ({
