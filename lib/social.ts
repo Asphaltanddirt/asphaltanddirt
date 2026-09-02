@@ -14,4 +14,5 @@ export const podcastLinks = {
   spotify: "https://open.spotify.com/show/1OJaB7uFY09JChAwTNpoko",
   apple: "https://podcasts.apple.com/us/podcast/asphalt-dirt-podcast/id6805523570",
   youtube: "https://www.youtube.com/@Asphaltanddirtpodcast",
+  amazon: "https://music.amazon.com/podcasts/5a8515f8-6128-4b7b-9b7e-793e95e2120c/asphalt-dirt-podcast",
 } as const;

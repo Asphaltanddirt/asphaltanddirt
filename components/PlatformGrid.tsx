@@ -46,6 +46,7 @@ const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Amazon Music",
     color: "#00A8E1",
+    url: "https://music.amazon.com/podcasts/5a8515f8-6128-4b7b-9b7e-793e95e2120c/asphalt-dirt-podcast",
     icon: (
       <>
         <path d="M9 18V5l10-2v13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
