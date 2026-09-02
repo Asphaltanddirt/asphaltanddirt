@@ -1,6 +1,6 @@
 import Link from "next/link";
 import EmailCaptureForm from "./EmailCaptureForm";
-import { socialLinks, podcastLinks } from "@/lib/social";
+import { socialLinks } from "@/lib/social";
 
 /**
  * Shared full-bleed one-pager used by both the domain "coming soon" gate
@@ -48,15 +48,6 @@ export default function LandingSplash({
 
         <div className="splash-newsletter">
           <EmailCaptureForm source={source} buttonText="Subscribe" />
-        </div>
-
-        <div className="splash-listen">
-          <span className="splash-listen-label">Listen Now</span>
-          <div className="splash-listen-links">
-            <a href={podcastLinks.spotify} target="_blank" rel="noopener">Spotify</a>
-            <a href={podcastLinks.apple} target="_blank" rel="noopener">Apple Podcasts</a>
-            <a href={podcastLinks.youtube} target="_blank" rel="noopener">YouTube</a>
-          </div>
         </div>
 
         <div className="social-row splash-social">

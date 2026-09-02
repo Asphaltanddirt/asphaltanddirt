@@ -959,19 +959,15 @@ h1 .line{ display:block; }
 .splash-enter-btn{ padding:16px 32px; font-size:14px; }
 .splash-newsletter{ width:100%; max-width:420px; }
 .splash-newsletter .newsletter-form{ flex:none; width:100%; max-width:none; }
-.splash-listen{ display:flex; flex-direction:column; align-items:center; gap:8px; }
-.splash-listen-label{
-  font-family:var(--font-display); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--text-dim);
-}
-.splash-listen-links{ display:flex; gap:var(--sp-2); flex-wrap:wrap; justify-content:center; }
-.splash-listen-links a{ font-size:13px; color:var(--text-muted); border-bottom:1px solid transparent; }
-.splash-listen-links a:hover{ color:var(--accent); border-color:var(--accent); }
-.splash-social{ margin-top:2px; }
+.splash-social{ margin-top:10px; gap:16px; }
+.splash-social a{ width:58px; height:58px; }
+.splash-social svg{ width:26px; height:26px; }
 .splash-footer-note{ font-size:12px; color:var(--text-dim); margin-top:var(--sp-2); }
 @media (max-width:640px){
   .splash-inner{ padding:var(--sp-4) var(--sp-2); }
   .splash-logo{ height:44px; }
+  .splash-social a{ width:50px; height:50px; }
+  .splash-social svg{ width:22px; height:22px; }
 }
 
 /* focus states for keyboard nav */
