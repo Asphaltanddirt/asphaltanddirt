@@ -1,6 +1,10 @@
+import { track as vercelTrack } from "@vercel/analytics";
+
 /**
- * Analytics event stub. Not wired to a real provider yet — that's a deliberate
- * separate decision (GA4 / Plausible / etc.), not something to pick silently.
+ * Analytics event helper. Provider: Vercel Analytics — cookieless, already
+ * covered under the Vercel Pro plan, no consent-banner needed. The <Analytics />
+ * component (app/layout.tsx) handles pageviews/visitors/referrers automatically;
+ * this covers custom named events.
  *
  * Event names follow the taxonomy from the podcast/video experience spec:
  * listen_start, youtube_embed_play, watch_on_youtube_click, platform_link_click,
@@ -14,6 +18,7 @@ export function track(eventName: string, props: Record<string, string | number |
   if (process.env.NODE_ENV !== "production") {
     // eslint-disable-next-line no-console
     console.log("[analytics]", eventName, props);
+    return;
   }
-  // TODO: forward to a real analytics provider once one is chosen.
+  vercelTrack(eventName, props);
 }

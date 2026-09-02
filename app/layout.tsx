@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import SiteChrome from "@/components/SiteChrome";
 import { CartProvider } from "@/components/CartContext";
 import CartDrawer from "@/components/CartDrawer";
@@ -55,6 +56,7 @@ const organizationJsonLd = {
     "https://www.youtube.com/@Asphaltanddirtpodcast",
     "https://open.spotify.com/show/1OJaB7uFY09JChAwTNpoko",
     "https://podcasts.apple.com/us/podcast/asphalt-dirt-podcast/id6805523570",
+    "https://music.amazon.com/podcasts/5a8515f8-6128-4b7b-9b7e-793e95e2120c/asphalt-dirt-podcast",
   ],
 };
 
@@ -86,6 +88,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteChrome>{children}</SiteChrome>
           <CartDrawer />
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );
