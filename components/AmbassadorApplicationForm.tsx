@@ -16,6 +16,37 @@ const CONTENT_TYPES = [
   { value: "event-coverage", label: "Event Coverage" },
 ];
 
+// Mirrors the "Culture Areas" multipleSelects field in Airtable exactly.
+const CULTURE_AREAS = [
+  "Street cars", "Project cars", "Muscle", "Imports", "Motorsports", "Drag racing",
+  "Autocross", "Track days", "Jeep / 4x4", "Trail riding", "Overlanding", "Trucks",
+  "SxS / UTV", "ATV", "Dirt bikes", "Automotive photography", "Automotive video",
+  "Fabrication / mechanical work", "Shows / meets", "Clubs / events",
+  "Family automotive activities", "Other",
+];
+
+// Mirrors the "Interest Areas" multipleSelects field in Airtable exactly.
+const INTEREST_AREAS = [
+  "Product testing", "Event coverage", "Podcast appearances", "Build features",
+  "Photography assignments", "Video collaborations", "Community events",
+  "Charity initiatives", "Local A&D activations", "Limited merchandise collaborations",
+];
+
+// The itemized Road & Trail Crew standards applicants individually confirm.
+// All must be checked to submit — stored collectively as one "Conduct Standards
+// Accepted" field in Airtable, since they're always all-true together at submit time.
+const STANDARDS = [
+  "I understand that A&D does not support street takeovers or illegal street racing.",
+  "I will not present reckless public-road driving as endorsed by A&D.",
+  "I will respect legal trails, closures, property, and environmental rules.",
+  "I will not promote harassment, discrimination, threats, or hate speech while representing A&D.",
+  "I will clearly disclose my relationship with A&D when required.",
+  "I will not use self-referrals, fake orders, or discount manipulation to generate commission.",
+  "I understand that personal purchases do not generate ambassador commission.",
+  "I understand that being an A&D Ambassador does not make me an employee or official spokesperson for Asphalt & Dirt.",
+  "I understand that acceptance into the program is selective.",
+];
+
 type Status = "idle" | "submitting" | "success" | "error";
 type Photo = { file: File; url: string };
 
@@ -24,13 +55,24 @@ export default function AmbassadorApplicationForm() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [contentTypes, setContentTypes] = useState<string[]>([]);
+  const [cultureAreas, setCultureAreas] = useState<string[]>([]);
+  const [interestAreas, setInterestAreas] = useState<string[]>([]);
+  const [standardsAccepted, setStandardsAccepted] = useState<boolean[]>(() => STANDARDS.map(() => false));
+  const [contentCommitment, setContentCommitment] = useState("");
+  const [mediaCommitment, setMediaCommitment] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const busy = status === "submitting" || compressing;
+  const allStandardsAccepted = standardsAccepted.every(Boolean);
+  const showCommitmentNotes = contentCommitment === "Depends" || mediaCommitment === "Depends";
 
-  function toggleContentType(value: string) {
-    setContentTypes((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  function toggle(setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) {
+    setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  }
+
+  function toggleStandard(index: number) {
+    setStandardsAccepted((prev) => prev.map((v, i) => (i === index ? !v : v)));
   }
 
   async function handleFiles(fileList: FileList | null) {
@@ -76,9 +118,17 @@ export default function AmbassadorApplicationForm() {
       return;
     }
 
+    if (!allStandardsAccepted) {
+      setErrorMsg("Please confirm every Road & Trail Crew standard below.");
+      return;
+    }
+
     data.delete("photos");
     photos.forEach((p) => data.append("photos", p.file));
     contentTypes.forEach((v) => data.append("contentTypes", v));
+    cultureAreas.forEach((v) => data.append("cultureAreas", v));
+    interestAreas.forEach((v) => data.append("interestAreas", v));
+    data.set("conductAccepted", "on");
 
     setStatus("submitting");
     setErrorMsg("");
@@ -125,8 +175,9 @@ export default function AmbassadorApplicationForm() {
         style={{ position: "absolute", left: "-9999px", width: 1, height: 1 }}
       />
 
+      {/* Section 1 — About You */}
       <div className="form-section">
-        <div className="form-section-title">Your Info</div>
+        <div className="form-section-title">About You</div>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
@@ -141,65 +192,69 @@ export default function AmbassadorApplicationForm() {
           <label htmlFor="location">Location (City, State)</label>
           <input type="text" id="location" name="location" placeholder="e.g. Denver, CO" required disabled={busy} />
         </div>
+        <div className="form-row">
+          <div className="form-field">
+            <label htmlFor="socialHandle">Primary Social Media Handle</label>
+            <input type="text" id="socialHandle" name="socialHandle" placeholder="e.g. @yourhandle" required disabled={busy} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="socialLinks">Other Social Links <span className="optional">(Optional)</span></label>
+            <input type="text" id="socialLinks" name="socialLinks" placeholder="One per line" disabled={busy} />
+          </div>
+        </div>
+        <label className="form-field-consent" htmlFor="ageConfirmed">
+          <input type="checkbox" id="ageConfirmed" name="ageConfirmed" required disabled={busy} />
+          <span>I am 18 years of age or older.</span>
+        </label>
+      </div>
+
+      {/* Section 2 — Your Automotive Life */}
+      <div className="form-section">
+        <div className="form-section-title">Your Automotive Life</div>
         <div className="form-field">
-          <label htmlFor="socialLinks">Social Media Links</label>
+          <label htmlFor="vehicle">Vehicles, Builds, Bikes, Or Machines You&apos;re Involved With</label>
           <textarea
-            id="socialLinks"
-            name="socialLinks"
-            placeholder="Instagram, TikTok, YouTube, etc. — one per line"
+            id="vehicle"
+            name="vehicle"
+            placeholder="Year, make, model, major modifications, current projects — whatever's worth knowing"
             required
             disabled={busy}
           />
         </div>
-      </div>
-
-      <div className="form-section">
-        <div className="form-section-title">Your Culture</div>
         <div className="form-field">
-          <label htmlFor="vehicle">Primary Vehicle(s) Or Build</label>
-          <input type="text" id="vehicle" name="vehicle" placeholder="e.g. 2021 Jeep Wrangler Rubicon, built for trail" required disabled={busy} />
+          <label>Which Parts Of Automotive Culture Are You Most Active In? <span className="optional">(Select all that apply)</span></label>
+          <div className="form-checkbox-group">
+            {CULTURE_AREAS.map((area) => (
+              <label className={`form-checkbox${cultureAreas.includes(area) ? " has-check" : ""}`} key={area}>
+                <input
+                  type="checkbox"
+                  checked={cultureAreas.includes(area)}
+                  onChange={() => toggle(setCultureAreas, area)}
+                  disabled={busy}
+                />
+                {area}
+              </label>
+            ))}
+          </div>
         </div>
         <div className="form-field">
-          <label htmlFor="interests">Automotive Interests <span className="optional">(Optional)</span></label>
-          <input
-            type="text"
-            id="interests"
-            name="interests"
-            placeholder="e.g. Off-road, street performance, overlanding, fabrication"
-            disabled={busy}
-          />
-        </div>
-        <div className="form-field">
-          <label htmlFor="clubs">Clubs, Events, Or Communities You&apos;re Part Of <span className="optional">(Optional)</span></label>
+          <label htmlFor="clubs">Clubs, Events, Or Communities You&apos;re A Member Of, Or Organize <span className="optional">(Optional)</span></label>
           <input type="text" id="clubs" name="clubs" disabled={busy} />
         </div>
       </div>
 
+      {/* Section 3 — Your Content */}
       <div className="form-section">
-        <div className="form-section-title">Your Content & Reach</div>
+        <div className="form-section-title">Your Content</div>
         <div className="form-field">
-          <label htmlFor="contentExamples">Examples Of Previous Content <span className="optional">(Optional)</span></label>
-          <textarea id="contentExamples" name="contentExamples" placeholder="Links to posts, videos, or a portfolio" disabled={busy} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="audience">Average Engagement Or Audience Info <span className="optional">(Optional)</span></label>
-          <input
-            type="text"
-            id="audience"
-            name="audience"
-            placeholder="e.g. Instagram: 2,400 followers, ~180 likes/photo"
-            disabled={busy}
-          />
-        </div>
-        <div className="form-field">
-          <label>What Can You Create? <span className="optional">(Select all that apply)</span></label>
+          <label>Which Types Of Content Can You Create? <span className="optional">(Select all that apply)</span></label>
           <div className="form-checkbox-group">
             {CONTENT_TYPES.map((type) => (
               <label className={`form-checkbox${contentTypes.includes(type.value) ? " has-check" : ""}`} key={type.value}>
                 <input
                   type="checkbox"
                   checked={contentTypes.includes(type.value)}
-                  onChange={() => toggleContentType(type.value)}
+                  onChange={() => toggle(setContentTypes, type.value)}
                   disabled={busy}
                 />
                 {type.label}
@@ -207,31 +262,154 @@ export default function AmbassadorApplicationForm() {
             ))}
           </div>
         </div>
+        <div className="form-field">
+          <label htmlFor="contentLinks">Show Us Some Of Your Work <span className="optional">(Optional — up to 3 links)</span></label>
+          <textarea id="contentLinks" name="contentLinks" placeholder="Links to posts, videos, or a portfolio — one per line" disabled={busy} />
+        </div>
+        <div className="form-field">
+          <label htmlFor="contentFrequency">How Often Do You Currently Create Or Share Automotive Content?</label>
+          <select id="contentFrequency" name="contentFrequency" required disabled={busy} defaultValue="">
+            <option value="" disabled>Select one</option>
+            <option>Several times per week</option>
+            <option>About once per week</option>
+            <option>A few times per month</option>
+            <option>Occasionally</option>
+            <option>More through events/community than social content</option>
+          </select>
+        </div>
       </div>
 
+      {/* Section 4 — Your Community */}
       <div className="form-section">
-        <div className="form-section-title">Why You</div>
+        <div className="form-section-title">Your Community</div>
         <div className="form-field">
-          <label htmlFor="why">Why Do You Want To Represent Asphalt &amp; Dirt?</label>
+          <label htmlFor="audienceSize">Approximately How Large Is Your Primary Audience?</label>
+          <p className="form-section-hint">Follower count does not determine acceptance.</p>
+          <select id="audienceSize" name="audienceSize" required disabled={busy} defaultValue="">
+            <option value="" disabled>Select one</option>
+            <option>Under 500</option>
+            <option>500–1,999</option>
+            <option>2,000–4,999</option>
+            <option>5,000–9,999</option>
+            <option>10,000–24,999</option>
+            <option>25,000+</option>
+            <option>Not primarily a social-media creator</option>
+          </select>
+        </div>
+        <div className="form-field">
+          <label htmlFor="audience">How Would You Describe Your Audience Or Community? <span className="optional">(Optional)</span></label>
+          <textarea id="audience" name="audience" placeholder="What are they into? Where are they located? What makes them engage with you?" disabled={busy} />
+        </div>
+        <div className="form-field">
+          <label htmlFor="meaningfulEngagement">What Does Meaningful Engagement Look Like For You? <span className="optional">(Optional)</span></label>
+          <textarea id="meaningfulEngagement" name="meaningfulEngagement" disabled={busy} />
+        </div>
+      </div>
+
+      {/* Section 5 — Why A&D */}
+      <div className="form-section">
+        <div className="form-section-title">Why A&amp;D</div>
+        <div className="form-field">
+          <label htmlFor="why">Why Do You Want To Join The A&amp;D Road &amp; Trail Crew?</label>
           <textarea id="why" name="why" required style={{ minHeight: 130 }} disabled={busy} />
         </div>
         <div className="form-field">
-          <label htmlFor="contribution">What Can You Contribute Beyond Sales?</label>
+          <label htmlFor="contribution">What Could You Contribute Beyond Merchandise Sales?</label>
           <textarea
             id="contribution"
             name="contribution"
-            placeholder="Content quality, event presence, community leadership, technical knowledge, etc."
+            placeholder="Photography/video, build knowledge, event representation, club relationships, guest referrals, technical expertise, local knowledge, or anything else"
             required
             style={{ minHeight: 130 }}
             disabled={busy}
           />
         </div>
         <div className="form-field">
-          <label htmlFor="otherBrands">Other Automotive Brand Relationships <span className="optional">(Optional)</span></label>
+          <label htmlFor="cultureVision">What Do You Want Automotive Culture To Become? <span className="optional">(Optional)</span></label>
+          <textarea id="cultureVision" name="cultureVision" disabled={busy} />
+        </div>
+      </div>
+
+      {/* Section 6 — Availability + Participation */}
+      <div className="form-section">
+        <div className="form-section-title">Availability &amp; Participation</div>
+        <div className="form-row">
+          <div className="form-field">
+            <label htmlFor="contentCommitment">Can You Create At Least 2 Relevant A&amp;D Mentions Or Content Pieces Per Month?</label>
+            <select
+              id="contentCommitment"
+              name="contentCommitment"
+              required
+              disabled={busy}
+              value={contentCommitment}
+              onChange={(e) => setContentCommitment(e.target.value)}
+            >
+              <option value="" disabled>Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Depends</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label htmlFor="mediaCommitment">Can You Provide At Least 1 Usable Original Photo Or Video Each Month?</label>
+            <select
+              id="mediaCommitment"
+              name="mediaCommitment"
+              required
+              disabled={busy}
+              value={mediaCommitment}
+              onChange={(e) => setMediaCommitment(e.target.value)}
+            >
+              <option value="" disabled>Select one</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Depends</option>
+            </select>
+          </div>
+        </div>
+        {showCommitmentNotes && (
+          <div className="form-field">
+            <label htmlFor="commitmentNotes">Tell Us More About That</label>
+            <textarea id="commitmentNotes" name="commitmentNotes" disabled={busy} />
+          </div>
+        )}
+        <div className="form-field">
+          <label htmlFor="eventInterest">Would You Be Interested In Representing A&amp;D At Local Automotive Events?</label>
+          <select id="eventInterest" name="eventInterest" required disabled={busy} defaultValue="">
+            <option value="" disabled>Select one</option>
+            <option>Yes</option>
+            <option>No</option>
+            <option>Maybe</option>
+          </select>
+        </div>
+        <div className="form-field">
+          <label>Are You Interested In Any Of The Following? <span className="optional">(Optional — select all that apply)</span></label>
+          <div className="form-checkbox-group">
+            {INTEREST_AREAS.map((area) => (
+              <label className={`form-checkbox${interestAreas.includes(area) ? " has-check" : ""}`} key={area}>
+                <input
+                  type="checkbox"
+                  checked={interestAreas.includes(area)}
+                  onChange={() => toggle(setInterestAreas, area)}
+                  disabled={busy}
+                />
+                {area}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 7 — Other Brand Relationships */}
+      <div className="form-section">
+        <div className="form-section-title">Other Brand Relationships</div>
+        <div className="form-field">
+          <label htmlFor="otherBrands">Do You Currently Have Ambassador, Affiliate, Sponsorship, Or Paid Relationships With Other Automotive Brands? <span className="optional">(Optional)</span></label>
           <input type="text" id="otherBrands" name="otherBrands" placeholder="None, or list them" disabled={busy} />
         </div>
       </div>
 
+      {/* Photos */}
       <div className="form-section">
         <div className="form-section-title">Photos <span className="optional">(Optional)</span></div>
         <p className="form-section-hint">Up to {MAX_PHOTOS} photos of you and/or your rig.</p>
@@ -269,18 +447,31 @@ export default function AmbassadorApplicationForm() {
         )}
       </div>
 
-      <label className="form-field-consent" htmlFor="conductAccepted">
-        <input type="checkbox" id="conductAccepted" name="conductAccepted" required disabled={busy} />
-        <span>
-          I&apos;ve read and accept the Road &amp; Trail Crew conduct and disclosure standards —
-          no street takeovers, reckless driving, trail damage, or misrepresenting my relationship
-          with Asphalt &amp; Dirt.
-        </span>
-      </label>
+      {/* Section 8 — Standards */}
+      <div className="form-section">
+        <div className="form-section-title">Road &amp; Trail Crew Standards</div>
+        <p className="form-section-hint">Please confirm each statement.</p>
+        <div className="form-checkbox-group form-checkbox-group-stacked">
+          {STANDARDS.map((statement, i) => (
+            <label className={`form-checkbox${standardsAccepted[i] ? " has-check" : ""}`} key={i}>
+              <input type="checkbox" checked={standardsAccepted[i]} onChange={() => toggleStandard(i)} disabled={busy} />
+              {statement}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Final */}
+      <div className="form-section">
+        <div className="form-field">
+          <label htmlFor="additionalInfo">Anything Else We Should Know? <span className="optional">(Optional)</span></label>
+          <textarea id="additionalInfo" name="additionalInfo" placeholder="About you, your build, your community, or what you could bring to the crew" disabled={busy} />
+        </div>
+      </div>
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}
 
-      <button className="btn btn-primary" type="submit" disabled={busy} style={{ width: "fit-content" }}>
+      <button className="btn btn-primary" type="submit" disabled={busy || !allStandardsAccepted} style={{ width: "fit-content" }}>
         {status === "submitting" ? "Submitting…" : "Submit Application"}
       </button>
     </form>

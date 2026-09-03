@@ -583,6 +583,9 @@ h1 .line{ display:block; }
 .form-field input:disabled, .form-field select:disabled, .form-field textarea:disabled{ opacity:.6; }
 
 .form-checkbox-group{ display:flex; flex-wrap:wrap; gap:10px; }
+.form-checkbox-group-stacked{ flex-direction:column; }
+.form-checkbox-group-stacked .form-checkbox{ align-items:flex-start; }
+.form-checkbox-group-stacked .form-checkbox input{ margin-top:3px; }
 .form-checkbox{
   display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-muted);
   background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm);
