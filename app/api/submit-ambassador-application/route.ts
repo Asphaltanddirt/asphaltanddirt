@@ -19,10 +19,15 @@ const REQUIRED_FIELDS = [
   "name",
   "email",
   "location",
-  "socialLinks",
+  "socialHandle",
   "vehicle",
+  "contentFrequency",
+  "audienceSize",
   "why",
   "contribution",
+  "contentCommitment",
+  "mediaCommitment",
+  "eventInterest",
 ] as const;
 
 function escapeHtml(value: string) {
@@ -37,7 +42,7 @@ function field(formData: FormData, key: string) {
   return ((formData.get(key) as string) || "").trim();
 }
 
-async function writeToAirtable(values: Record<string, string>, contentTypes: string[]) {
+async function writeToAirtable(values: Record<string, string>, contentTypes: string[], cultureAreas: string[], interestAreas: string[]) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return;
 
   try {
@@ -54,17 +59,29 @@ async function writeToAirtable(values: Record<string, string>, contentTypes: str
             Name: values.name,
             Email: values.email,
             Location: values.location,
-            "Social Links": values.socialLinks,
+            "Age Confirmed": true,
+            "Primary Social Handle": values.socialHandle,
+            "Social Links": values.socialLinks || "",
             "Primary Vehicle / Build": values.vehicle,
-            "Automotive Interests": values.interests || "",
+            "Culture Areas": cultureAreas,
             "Clubs / Events / Communities": values.clubs || "",
-            "Content Examples": values.contentExamples || "",
+            "Content Types": contentTypes.join(", "),
+            "Content Portfolio Links": values.contentLinks || "",
+            "Content Frequency": values.contentFrequency,
+            "Audience Size": values.audienceSize,
             "Engagement / Audience Info": values.audience || "",
+            "Meaningful Engagement": values.meaningfulEngagement || "",
             "Why A&D": values.why,
             "Non-Sales Contribution": values.contribution,
-            "Content Types": contentTypes.join(", "),
-            "Conduct Standards Accepted": true,
+            "Culture Vision": values.cultureVision || "",
+            "Monthly Content Commitment": values.contentCommitment,
+            "Monthly Media Commitment": values.mediaCommitment,
+            "Commitment Notes": values.commitmentNotes || "",
+            "Event Representation Interest": values.eventInterest,
+            "Interest Areas": interestAreas,
             "Other Brand Relationships": values.otherBrands || "None",
+            "Additional Info": values.additionalInfo || "",
+            "Conduct Standards Accepted": true,
             Status: "New",
           },
         }),
@@ -109,17 +126,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
 
-  const conductAccepted = field(formData, "conductAccepted") === "on";
-  if (!conductAccepted) {
-    return NextResponse.json({ error: "Please confirm you accept the conduct standards." }, { status: 400 });
+  const ageConfirmed = field(formData, "ageConfirmed") === "on";
+  if (!ageConfirmed) {
+    return NextResponse.json({ error: "You must confirm you're 18 or older to apply." }, { status: 400 });
   }
 
-  const interests = field(formData, "interests");
+  const conductAccepted = field(formData, "conductAccepted") === "on";
+  if (!conductAccepted) {
+    return NextResponse.json({ error: "Please confirm every Road & Trail Crew standard." }, { status: 400 });
+  }
+
+  const socialLinks = field(formData, "socialLinks");
   const clubs = field(formData, "clubs");
-  const contentExamples = field(formData, "contentExamples");
+  const contentLinks = field(formData, "contentLinks");
   const audience = field(formData, "audience");
+  const meaningfulEngagement = field(formData, "meaningfulEngagement");
+  const cultureVision = field(formData, "cultureVision");
+  const commitmentNotes = field(formData, "commitmentNotes");
   const otherBrands = field(formData, "otherBrands");
+  const additionalInfo = field(formData, "additionalInfo");
   const contentTypes = formData.getAll("contentTypes").map((v) => String(v)).filter(Boolean);
+  const cultureAreas = formData.getAll("cultureAreas").map((v) => String(v)).filter(Boolean);
+  const interestAreas = formData.getAll("interestAreas").map((v) => String(v)).filter(Boolean);
 
   const photos = formData.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
   if (photos.length > MAX_PHOTOS) {
@@ -148,15 +176,26 @@ export async function POST(req: NextRequest) {
   const rows: [string, string][] = [
     ["Applicant", `${values.name} (${values.email})`],
     ["Location", values.location],
-    ["Social Links", values.socialLinks],
-    ["Primary Vehicle / Build", values.vehicle],
-    ["Automotive Interests", interests || "—"],
+    ["Primary Social Handle", values.socialHandle],
+    ["Other Social Links", socialLinks || "—"],
+    ["Vehicles / Builds", values.vehicle],
+    ["Culture Areas", cultureAreas.length ? cultureAreas.join(", ") : "—"],
     ["Clubs / Events / Communities", clubs || "—"],
-    ["Content Examples", contentExamples || "—"],
-    ["Engagement / Audience Info", audience || "—"],
     ["Can Create", contentTypes.length ? contentTypes.join(", ") : "—"],
+    ["Content Portfolio Links", contentLinks || "—"],
+    ["Content Frequency", values.contentFrequency],
+    ["Audience Size", values.audienceSize],
+    ["Audience Description", audience || "—"],
+    ["Meaningful Engagement", meaningfulEngagement || "—"],
+    ["Culture Vision", cultureVision || "—"],
+    ["Monthly Content Commitment", values.contentCommitment],
+    ["Monthly Media Commitment", values.mediaCommitment],
+    ["Commitment Notes", commitmentNotes || "—"],
+    ["Event Representation Interest", values.eventInterest],
+    ["Interest Areas", interestAreas.length ? interestAreas.join(", ") : "—"],
     ["Other Brand Relationships", otherBrands || "None"],
-    ["Conduct Standards Accepted", "Yes"],
+    ["Age Confirmed (18+)", "Yes"],
+    ["Conduct Standards Accepted", "Yes (all 9 confirmed)"],
   ];
 
   const html = `
@@ -174,10 +213,11 @@ export async function POST(req: NextRequest) {
           )
           .join("")}
       </table>
-      <h3>Why They Want To Represent A&amp;D</h3>
+      <h3>Why They Want To Join The Crew</h3>
       <p style="white-space:pre-wrap;">${escapeHtml(values.why)}</p>
-      <h3>What They Can Contribute Beyond Sales</h3>
+      <h3>What They Could Contribute Beyond Sales</h3>
       <p style="white-space:pre-wrap;">${escapeHtml(values.contribution)}</p>
+      ${additionalInfo ? `<h3>Anything Else</h3><p style="white-space:pre-wrap;">${escapeHtml(additionalInfo)}</p>` : ""}
     </div>
   `;
 
@@ -204,7 +244,12 @@ export async function POST(req: NextRequest) {
 
   // Best-effort — Airtable being unconfigured or briefly down should never block the
   // applicant's confirmation; the email above is the reliable record either way.
-  await writeToAirtable({ ...values, interests, clubs, contentExamples, audience, otherBrands }, contentTypes);
+  await writeToAirtable(
+    { ...values, socialLinks, clubs, contentLinks, audience, meaningfulEngagement, cultureVision, commitmentNotes, otherBrands, additionalInfo },
+    contentTypes,
+    cultureAreas,
+    interestAreas,
+  );
 
   return NextResponse.json({ status: "sent" });
 }
