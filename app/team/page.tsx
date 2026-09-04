@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getFeaturedAmbassadors } from "@/lib/ambassadors";
+import { HOSTS, TRAIL_AMBASSADORS, type TeamMember } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Team",
@@ -14,71 +15,7 @@ const DRIVES_ICON = (
   </svg>
 );
 
-const HOSTS = [
-  {
-    name: "Jose",
-    photo: "/img/team/jose.jpg",
-    role: "Host",
-    tagline: "Gearhead, racer, and off-road explorer.",
-    bio: "Jose helps shape the voice of Asphalt & Dirt with a mix of street performance, trail culture, and real-world community connection. He brings the perspective of someone who lives the build, the ride, and the stories behind both.",
-    experience: "Street builds • Off-road rides",
-    experienceLine2: "Community leadership",
-    drives: "Rhino Rock",
-  },
-  {
-    name: "Anthony",
-    photo: "/img/team/anthony.jpg",
-    role: "Host",
-    tagline: "Builder, storyteller, and weekend adventurer.",
-    bio: "Anthony brings a builder's eye and a storyteller's mindset, helping turn the culture into content that feels real, useful, and entertaining. He connects the technical side of the hobby with the community side.",
-    experience: "Build culture • Event coverage",
-    experienceLine2: "Weekend wheeling",
-    drives: "TBD",
-  },
-];
-
-const TRAIL_AMBASSADORS = [
-  {
-    name: "Dan",
-    photo: "/img/team/dan.jpg",
-    role: "Trail Ambassadors",
-    tagline: "Trail guide, gear tester, and off-road advocate.",
-    bio: "Dan represents the trail-first side of Asphalt & Dirt, bringing practical trail knowledge, honest gear feedback, and a deep appreciation for getting rigs dirty. He helps connect the brand to the off-road community in a grounded, authentic way.",
-    experience: "Trail guidance • Gear testing",
-    experienceLine2: "Off-road community",
-    drives: "Iron Bandit",
-  },
-  {
-    name: "Jack",
-    photo: "/img/team/jack.jpg",
-    role: "Trail Ambassadors",
-    tagline: "Explorer, content creator, and trail enthusiast.",
-    bio: "Jack brings energy to the community through content, adventure, and a passion for documenting the experience. He helps turn rides, events, and moments on the trail into stories people want to be part of.",
-    experience: "Content creation • Ride recaps",
-    experienceLine2: "Community adventures",
-    drives: "Shockwave",
-  },
-];
-
-function TeamCard({
-  name,
-  photo,
-  role,
-  tagline,
-  bio,
-  experience,
-  experienceLine2,
-  drives,
-}: {
-  name: string;
-  photo: string;
-  role: string;
-  tagline: string;
-  bio: string;
-  experience?: string;
-  experienceLine2?: string;
-  drives?: string;
-}) {
+function TeamCard({ slug, name, photo, role, tagline, bio, experience, experienceLine2, drives }: TeamMember) {
   return (
     <div className="team-card">
       <div className="team-photo">
@@ -109,6 +46,10 @@ function TeamCard({
             {DRIVES_ICON} Drives: {drives}
           </div>
         )}
+        <Link href={`/team/${slug}`} className="view-all mt-2">
+          View Full Profile
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </Link>
       </div>
     </div>
   );
@@ -183,7 +124,7 @@ export default async function TeamPage() {
             {featuredAmbassadors.length > 0 ? (
               <div className="grid grid-3">
                 {featuredAmbassadors.map((a) => (
-                  <div className="ambassador-card" key={a.id}>
+                  <Link href={`/team/${a.slug}`} className="ambassador-card" key={a.id}>
                     <div className="ambassador-avatar ambassador-avatar-photo">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={a.photo} alt={`${a.name} portrait`} />
@@ -196,7 +137,7 @@ export default async function TeamPage() {
                         Drives: {a.vehicle}
                       </p>
                     )}
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
