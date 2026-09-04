@@ -29,6 +29,13 @@ export interface Episode {
   sponsors?: Sponsor[];
   affiliateDisclosure?: string;
   relatedSlugs?: string[];
+  /** Cleaned transcript exported from Riverside (see the Podcast Transcript
+   *  runbook prompt for the full process). Plain text, paragraphs separated
+   *  by a blank line. Two light conventions the renderer understands:
+   *    - A line starting with "## " becomes a segment heading.
+   *    - A paragraph starting with "Name: " bolds the speaker's name.
+   *  Rendered inside a native <details> on the episode page so the full text
+   *  stays in the page's HTML (good for SEO/GEO) while collapsed by default. */
   transcript?: string;
   eventRegistrationUrl?: string;
   artwork: { src: string; alt: string };
