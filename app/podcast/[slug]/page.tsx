@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { episodes, getEpisodeBySlug, getRelatedEpisodes } from "@/lib/episodes";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import PlatformLinks from "@/components/PlatformLinks";
+import Transcript from "@/components/Transcript";
 import { SITE_URL } from "@/lib/site";
 
 export function generateStaticParams() {
@@ -194,6 +195,17 @@ export default async function EpisodePage({
           <div className="container" style={{ maxWidth: 760 }}>
             <div className="eyebrow">Show Notes</div>
             <p className="mt-3" style={{ whiteSpace: "pre-wrap" }}>{episode.showNotes}</p>
+          </div>
+        </section>
+      )}
+
+      {episode.transcript && (
+        <section className={episode.showNotes ? undefined : "section-alt"}>
+          <div className="container" style={{ maxWidth: 760 }}>
+            <div className="eyebrow">Episode Transcript</div>
+            <div className="mt-3">
+              <Transcript text={episode.transcript} />
+            </div>
           </div>
         </section>
       )}

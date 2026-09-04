@@ -943,6 +943,17 @@ h1 .line{ display:block; }
 
 .guest-list{ display:flex; flex-direction:column; gap:10px; margin-top:var(--sp-2); }
 .guest-item{ font-size:14px; color:var(--text-muted); }
+
+.transcript-details summary{
+  cursor:pointer; font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--accent); list-style:none; display:inline-flex; align-items:center; gap:8px;
+}
+.transcript-details summary::-webkit-details-marker{ display:none; }
+.transcript-details summary::after{ content:"+"; font-size:16px; }
+.transcript-details[open] summary::after{ content:"\2013"; }
+.transcript-body p{ margin:0 0 12px; color:var(--text-muted); }
+.transcript-body h3{ font-size:16px; margin:20px 0 8px; }
+.transcript-body strong{ color:var(--text); }
 .guest-item strong{ color:var(--text); }
 
 .transcript{ font-size:14px; color:var(--text-muted); line-height:1.7; white-space:pre-wrap; }
