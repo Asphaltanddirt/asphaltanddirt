@@ -7,6 +7,7 @@ import {
   PODCAST_EPISODES_PLAYLIST_ID,
   TRAIL_EVENT_VIDEOS_PLAYLIST_ID,
 } from "@/lib/youtube";
+import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
   title: "Podcast",
@@ -68,7 +69,13 @@ export default async function PodcastIndexPage() {
                     </div>
                     <div className="card-body">
                       <h3>{video.title}</h3>
-                      <p>{video.description.split("\n")[0]}</p>
+                      <p>{excerpt(video.description)}</p>
+                      {internal && (
+                        <Link href={`/podcast/${internal.slug}`} className="view-all" style={{ fontSize: 12 }}>
+                          Read More
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                        </Link>
+                      )}
                       <div className="card-actions">
                         {internal ? (
                           <Link href={`/podcast/${internal.slug}`} className="btn btn-primary btn-sm">
@@ -115,7 +122,7 @@ export default async function PodcastIndexPage() {
                   <div className="card-body">
                     <div className="badge-outline">{formatDate(video.publishedAt)}</div>
                     <h3>{video.title}</h3>
-                    <p>{video.description.split("\n")[0]}</p>
+                    <p>{excerpt(video.description)}</p>
                   </div>
                 </a>
               ))}

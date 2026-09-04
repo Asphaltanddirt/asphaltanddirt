@@ -258,7 +258,7 @@ export default async function CommunityPage() {
                   </div>
                   <div className="card-body">
                     <h3>{video.title}</h3>
-                    <p>{video.description.split("\n")[0]}</p>
+                    <p>{excerpt(video.description)}</p>
                   </div>
                 </a>
               ))}
