@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getFeaturedAmbassadors } from "@/lib/ambassadors";
 
 export const metadata: Metadata = {
   title: "Team",
@@ -74,9 +75,9 @@ function TeamCard({
   role: string;
   tagline: string;
   bio: string;
-  experience: string;
-  experienceLine2: string;
-  drives: string;
+  experience?: string;
+  experienceLine2?: string;
+  drives?: string;
 }) {
   return (
     <div className="team-card">
@@ -89,21 +90,33 @@ function TeamCard({
         <h3 className="team-name">{name}</h3>
         <p className="team-tagline">{tagline}</p>
         <p>{bio}</p>
-        <div className="exp-label">Experience In The Culture</div>
-        <div className="exp-box">
-          {experience}
-          <br />
-          {experienceLine2}
-        </div>
-        <div className="drives-line">
-          {DRIVES_ICON} Drives: {drives}
-        </div>
+        {experience && (
+          <>
+            <div className="exp-label">Experience In The Culture</div>
+            <div className="exp-box">
+              {experience}
+              {experienceLine2 && (
+                <>
+                  <br />
+                  {experienceLine2}
+                </>
+              )}
+            </div>
+          </>
+        )}
+        {drives && (
+          <div className="drives-line">
+            {DRIVES_ICON} Drives: {drives}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default function TeamPage() {
+export default async function TeamPage() {
+  const featuredAmbassadors = await getFeaturedAmbassadors();
+
   return (
     <>
       <section className="hero">
@@ -167,20 +180,41 @@ export default function TeamPage() {
                 Learn More &amp; Apply
               </Link>
             </div>
-            <div className="grid grid-3">
-              {[1, 2, 3].map((i) => (
-                <div className="ambassador-card" key={i}>
-                  <div className="ambassador-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="9" cy="8" r="3" /><path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6" /><circle cx="18" cy="9" r="2.4" /><path d="M15.5 14.2c2.7.4 4.5 2.4 4.5 5.8" />
-                    </svg>
+            {featuredAmbassadors.length > 0 ? (
+              <div className="grid grid-3">
+                {featuredAmbassadors.map((a) => (
+                  <div className="ambassador-card" key={a.id}>
+                    <div className="ambassador-avatar ambassador-avatar-photo">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.photo} alt={`${a.name} portrait`} />
+                    </div>
+                    <h3 style={{ fontSize: 15 }}>{a.name}</h3>
+                    <div className="ambassador-tag">{a.tier}</div>
+                    {a.tagline && <p className="mb-0" style={{ fontSize: 13 }}>{a.tagline}</p>}
+                    {a.vehicle && (
+                      <p className="mb-0" style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                        Drives: {a.vehicle}
+                      </p>
+                    )}
                   </div>
-                  <h3 style={{ fontSize: 15 }}>Future Ambassador</h3>
-                  <div className="ambassador-tag">Intro Coming Soon</div>
-                  <p className="mb-0">Building the crew. Stay tuned.</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-3">
+                {[1, 2, 3].map((i) => (
+                  <div className="ambassador-card" key={i}>
+                    <div className="ambassador-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="9" cy="8" r="3" /><path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6" /><circle cx="18" cy="9" r="2.4" /><path d="M15.5 14.2c2.7.4 4.5 2.4 4.5 5.8" />
+                      </svg>
+                    </div>
+                    <h3 style={{ fontSize: 15 }}>Future Ambassador</h3>
+                    <div className="ambassador-tag">Intro Coming Soon</div>
+                    <p className="mb-0">Building the crew. Stay tuned.</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
