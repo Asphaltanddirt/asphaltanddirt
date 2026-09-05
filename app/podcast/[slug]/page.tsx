@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { episodes, getEpisodeBySlug, getRelatedEpisodes } from "@/lib/episodes";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import PlatformLinks from "@/components/PlatformLinks";
-import Transcript from "@/components/Transcript";
-import ExpandableSection from "@/components/ExpandableSection";
+import DescriptionTranscriptPanel from "@/components/DescriptionTranscriptPanel";
 import BuzzsproutPlayer from "@/components/BuzzsproutPlayer";
 import GuestRow from "@/components/GuestRow";
 import ShareEpisodeButton from "@/components/ShareEpisodeButton";
@@ -64,6 +63,7 @@ export default async function EpisodePage({
 
   const guests = episode.guests ?? [];
   const hasGuests = guests.length > 0;
+  const hasDescOrTranscript = Boolean(episode.showNotes || episode.transcript);
   const episodeUrl = `${SITE_URL}/podcast/${episode.slug}`;
 
   const jsonLd = {
@@ -103,12 +103,20 @@ export default async function EpisodePage({
 
       <section>
         <div className="container">
-          <Link href="/podcast" className="back-link mb-0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 6-6 6 6 6" />
-            </svg>
-            Back To Podcast
-          </Link>
+          <div className="episode-hero-topbar">
+            <Link href="/podcast" className="back-link mb-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 6-6 6 6 6" />
+              </svg>
+              Back To Podcast
+            </Link>
+            {episode.youtubePlaylistUrl && (
+              <a href={episode.youtubePlaylistUrl} target="_blank" rel="noopener" className="view-all">
+                View Full Episode Playlist
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </a>
+            )}
+          </div>
 
           <div className="episode-hero-grid mt-4">
             <div>
@@ -124,25 +132,6 @@ export default async function EpisodePage({
                   <img src={episode.artwork.src} alt={episode.artwork.alt} />
                 </div>
               )}
-              {episode.youtubeVideoId && (
-                <div className="mt-3" style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
-                    target="_blank"
-                    rel="noopener"
-                    className="btn btn-primary"
-                    style={{ whiteSpace: "normal", textAlign: "center" }}
-                  >
-                    Watch, Subscribe &amp; Comment On YouTube
-                  </a>
-                  {episode.youtubePlaylistUrl && (
-                    <a href={episode.youtubePlaylistUrl} target="_blank" rel="noopener" className="view-all">
-                      View Full Episode Playlist
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                    </a>
-                  )}
-                </div>
-              )}
             </div>
 
             <div className="episode-hero-info">
@@ -153,10 +142,21 @@ export default async function EpisodePage({
               </div>
               <p className="lead mt-2">{episode.description}</p>
               <PlatformLinks episode={episode} variant="icons" />
+              {episode.youtubeVideoId && (
+                <a
+                  href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="btn btn-primary btn-sm btn-block mt-3"
+                  style={{ whiteSpace: "normal", textAlign: "center" }}
+                >
+                  Watch, Subscribe &amp; Comment On YouTube
+                </a>
+              )}
             </div>
           </div>
 
-          <div className="episode-audio-strip mt-4">
+          <div className="episode-audio-strip mt-3">
             {episode.buzzsproutEpisodeId ? (
               <BuzzsproutPlayer episodeId={episode.buzzsproutEpisodeId} />
             ) : episode.riversideEmbedUrl ? (
@@ -175,73 +175,61 @@ export default async function EpisodePage({
               </div>
             )}
           </div>
-        </div>
-      </section>
 
-      {(episode.showNotes || episode.transcript) && (
-        <section className="section-alt">
-          <div className="container" style={{ maxWidth: 760 }}>
-            {episode.showNotes && (
-              <ExpandableSection summary="Read Full Description">
-                <p style={{ whiteSpace: "pre-wrap" }}>{episode.showNotes}</p>
-              </ExpandableSection>
-            )}
-            {episode.transcript && (
-              <div className={episode.showNotes ? "mt-4" : undefined}>
-                <Transcript text={episode.transcript} />
+          {hasGuests && (
+            <div className="mt-3">
+              <div className="eyebrow">{guests.length > 1 ? "Featured Guests" : "Featured Guest"}</div>
+              <div className="mt-3" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {guests.map((g) => (
+                  <GuestRow key={g.name} guest={g} />
+                ))}
               </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {hasGuests && (
-        <section>
-          <div className="container">
-            <div className="eyebrow">{guests.length > 1 ? "Featured Guests" : "Featured Guest"}</div>
-            <div className="mt-3" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {guests.map((g) => (
-                <GuestRow key={g.name} guest={g} />
-              ))}
             </div>
-          </div>
-        </section>
-      )}
+          )}
 
-      <section className={hasGuests ? "section-alt" : undefined}>
-        <div className="container two-col">
-          <div>
-            <div className="eyebrow">Sponsor This Episode</div>
-            <div className="sponsor-block mt-3">
-              {episode.sponsors?.length
-                ? episode.sponsors.map((s) => (
-                    <div key={s.name}>
-                      <strong>{s.name}</strong>
-                      {s.disclosure && <p className="mt-2 mb-0">{s.disclosure}</p>}
-                    </div>
-                  ))
-                : "Sponsor spot available on this episode. Reach out to advertise here."}
+          <div className="two-col episode-panel-row mt-3">
+            <div>
+              <div className="eyebrow">Sponsor This Episode</div>
+              <div className="sponsor-block mt-3">
+                {episode.sponsors?.length
+                  ? episode.sponsors.map((s) => (
+                      <div key={s.name}>
+                        <strong>{s.name}</strong>
+                        {s.disclosure && <p className="mt-2 mb-0">{s.disclosure}</p>}
+                      </div>
+                    ))
+                  : "Sponsor spot available on this episode. Reach out to advertise here."}
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="eyebrow">Hype This Episode</div>
-            <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
-              <p className="mb-0">Loved this one? A like, a comment, or a share on YouTube goes a long way.</p>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                {episode.youtubeVideoId && (
-                  <a
-                    href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
-                    target="_blank"
-                    rel="noopener"
-                    className="btn btn-primary btn-sm"
-                  >
-                    Like &amp; Comment On YouTube
-                  </a>
-                )}
-                <ShareEpisodeButton url={episodeUrl} title={episode.title} />
+            <div>
+              <div className="eyebrow">Hype This Episode</div>
+              <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
+                <p className="mb-0">Loved this one? A like, a comment, or a share on YouTube goes a long way.</p>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  {episode.youtubeVideoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="btn btn-primary btn-sm"
+                    >
+                      Like &amp; Comment On YouTube
+                    </a>
+                  )}
+                  <ShareEpisodeButton url={episodeUrl} title={episode.title} />
+                </div>
               </div>
             </div>
           </div>
+
+          {hasDescOrTranscript && (
+            // Lower priority on purpose (most visitors never open it — it's
+            // mainly substance for SEO/GEO) but same tight rhythm as
+            // everything above it, not a separately-padded section.
+            <div className="mt-3">
+              <DescriptionTranscriptPanel description={episode.showNotes} transcript={episode.transcript} />
+            </div>
+          )}
         </div>
       </section>
 

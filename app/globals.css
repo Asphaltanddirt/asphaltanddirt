@@ -931,11 +931,20 @@ h1 .line{ display:block; }
 .episode-meta .dot{ width:4px; height:4px; border-radius:50%; background:var(--text-dim); flex:none; }
 .episode-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:var(--sp-3); }
 
-/* Hero: big video on the left (~3/4 width), title/description/platform
-   icons in a narrower sidebar on the right — both visible without
-   scrolling, so the sidebar's type scale runs smaller than a full-width
-   hero would use. Stacks (video on top) below 900px. */
-.episode-hero-grid{ display:grid; grid-template-columns:3fr 1fr; gap:var(--sp-5); align-items:start; }
+/* Row above the hero grid: Back link left, playlist link right — kept out
+   of the grid itself so it doesn't compete with the video/sidebar heights. */
+.episode-hero-topbar{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+
+/* Hero: video on the left, title/description/platform icons in a narrower
+   sidebar on the right — both visible without scrolling, so the sidebar's
+   type scale runs smaller than a full-width hero would use. 2:1 rather than
+   a more extreme ratio keeps the sidebar's height closer to the video's, so
+   a long title doesn't spill well past the video's bottom edge. Stacks
+   (video on top) below 900px. */
+/* --sp-3 here matches the vertical gap used between the hero grid and the
+   audio strip below it (both mt-3) — same 24px whether you measure the gap
+   left-to-right (video → sidebar) or top-to-bottom (video → audio player). */
+.episode-hero-grid{ display:grid; grid-template-columns:2fr 1fr; gap:var(--sp-3); align-items:start; }
 @media (max-width:900px){ .episode-hero-grid{ grid-template-columns:1fr; gap:var(--sp-4); } }
 .episode-hero-info h1{ font-size:clamp(20px,2.4vw,30px); line-height:1.15; }
 .episode-hero-info .lead{ font-size:14.5px; }
@@ -990,6 +999,14 @@ h1 .line{ display:block; }
 }
 .sponsor-block .eyebrow, .event-promo .eyebrow{ margin-bottom:8px; }
 
+/* Episode page's Sponsor/Hype two-col — the two boxes should match height
+   even when one has a lot more content than the other (e.g. the "spot
+   available" placeholder vs. the Hype panel's CTAs). Grid already stretches
+   the column itself to the row height; this stretches the box inside it. */
+.episode-panel-row > div{ display:flex; flex-direction:column; }
+.episode-panel-row > div > .sponsor-block,
+.episode-panel-row > div > .event-promo{ flex:1; }
+
 /* Guest row — same idea as .build-row (the all-builds list), swapping the
    4:3 thumbnail for a circular portrait since the subject is a person. One
    row per guest, stacked with a gap when an episode has more than one. */
@@ -1010,19 +1027,31 @@ h1 .line{ display:block; }
   .guest-row{ grid-template-columns:1fr; text-align:center; justify-items:center; }
 }
 
-.transcript-details summary{
-  cursor:pointer; font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
-  color:var(--accent); list-style:none; display:inline-flex; align-items:center; gap:8px;
+/* Description/Transcript tabbed panel (episode page) — a single low-key
+   block since most visitors never open it; both tab bodies stay in the DOM
+   (only the inactive one is visually hidden) so the full text is still
+   present in the page's HTML for SEO/GEO regardless of which tab is active.
+   The tabs sit ABOVE the bordered box, styled like every other section's
+   .eyebrow label but clickable — only the active one carries the accent
+   color + trailing bar, so it doubles as this section's header. */
+.desc-transcript-tabs{ display:flex; gap:28px; }
+.desc-transcript-tab{
+  background:none; border:none; padding:0; cursor:pointer;
+  font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-dim); display:flex; align-items:center; gap:14px; transition:color .15s ease;
 }
-.transcript-details summary::-webkit-details-marker{ display:none; }
-.transcript-details summary::after{ content:"+"; font-size:16px; }
-.transcript-details[open] summary::after{ content:"\2013"; }
-.transcript-body p{ margin:0 0 12px; color:var(--text-muted); }
-.transcript-body h3{ font-size:16px; margin:20px 0 8px; }
-.transcript-body strong{ color:var(--text); }
-.guest-item strong{ color:var(--text); }
-
-.transcript{ font-size:14px; color:var(--text-muted); line-height:1.7; white-space:pre-wrap; }
+.desc-transcript-tab:hover{ color:var(--text); }
+.desc-transcript-tab.active{ color:var(--accent); }
+.desc-transcript-tab::after{ content:""; display:block; width:0; height:3px; background:var(--accent); border-radius:2px; transition:width .15s ease; }
+.desc-transcript-tab.active::after{ width:56px; }
+.desc-transcript-panel{
+  border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card); overflow:hidden;
+}
+.desc-transcript-body{ padding:var(--sp-4); font-size:14px; color:var(--text-muted); line-height:1.7; }
+.desc-transcript-body p{ margin:0 0 12px; }
+.desc-transcript-body h3{ font-size:16px; color:var(--text); margin:20px 0 8px; }
+.desc-transcript-body h3:first-child{ margin-top:0; }
+.desc-transcript-body strong{ color:var(--text); }
 
 /* Shared full-bleed one-pager (coming-soon gate + QR landing) — see
    components/LandingSplash.tsx */
