@@ -38,9 +38,13 @@ export default function TermsOfServicePage() {
         <p>
           Orders ship to the address you provide at checkout. Shipping costs and estimated delivery
           windows are shown before you complete your order. Once a package leaves our fulfillment
-          partner, delivery timing is largely in the hands of the carrier — this applies to
-          international orders too, which may also be subject to customs fees or import duties
-          charged by your country, which we don&apos;t collect and aren&apos;t responsible for.
+          partner, delivery timing is largely in the hands of the carrier. We ship to most
+          countries, though a handful are excluded due to carrier restrictions or sanctions — if a
+          country doesn&apos;t appear at checkout, we&apos;re not able to ship there. For many
+          international orders, applicable VAT is already included and collected at checkout; for
+          others, the carrier or your local customs authority may charge duties or taxes directly
+          to you on delivery. We don&apos;t set those charges and can&apos;t predict them in
+          advance.
         </p>
 
         <h2>Product Quality</h2>
