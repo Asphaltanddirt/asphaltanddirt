@@ -4,14 +4,33 @@ import { useState } from "react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+interface SocialLink {
+  platform: string;
+  url: string;
+}
+
 const MAX_BIO_LENGTH = 800;
+const PLATFORM_OPTIONS = ["Instagram", "TikTok", "Facebook", "X", "Website", "Other"];
 
 export default function GuestIntakeForm() {
   const [hasChannel, setHasChannel] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([{ platform: "Instagram", url: "" }]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const busy = status === "submitting";
+
+  function updateSocialLink(index: number, patch: Partial<SocialLink>) {
+    setSocialLinks((links) => links.map((link, i) => (i === index ? { ...link, ...patch } : link)));
+  }
+
+  function addSocialLink() {
+    setSocialLinks((links) => [...links, { platform: "Instagram", url: "" }]);
+  }
+
+  function removeSocialLink(index: number) {
+    setSocialLinks((links) => links.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +48,9 @@ export default function GuestIntakeForm() {
       email: ((data.get("email") as string) || "").trim(),
       phone: ((data.get("phone") as string) || "").trim(),
       bio: ((data.get("bio") as string) || "").trim(),
-      social: ((data.get("social") as string) || "").trim(),
+      socialLinks: socialLinks
+        .map((l) => ({ platform: l.platform, url: l.url.trim() }))
+        .filter((l) => l.url),
       hasYoutubeChannel: hasChannel,
       youtubeUrl: ((data.get("youtubeUrl") as string) || "").trim(),
     };
@@ -120,8 +141,51 @@ export default function GuestIntakeForm() {
           />
         </div>
         <div className="form-field">
-          <label htmlFor="social">Social / Website <span className="optional">(Optional)</span></label>
-          <input type="text" id="social" name="social" placeholder="Instagram, personal site, etc." disabled={busy} />
+          <label>Social Links / Website <span className="optional">(Optional — add as many as you have)</span></label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {socialLinks.map((link, i) => (
+              <div key={i} className="form-row" style={{ gridTemplateColumns: "140px 1fr auto", alignItems: "center" }}>
+                <select
+                  aria-label="Platform"
+                  value={link.platform}
+                  onChange={(e) => updateSocialLink(i, { platform: e.target.value })}
+                  disabled={busy}
+                >
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  aria-label={`${link.platform} URL`}
+                  placeholder="https://…"
+                  value={link.url}
+                  onChange={(e) => updateSocialLink(i, { url: e.target.value })}
+                  disabled={busy}
+                />
+                {socialLinks.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => removeSocialLink(i)}
+                    disabled={busy}
+                    aria-label={`Remove ${link.platform} link`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="view-all mt-2"
+            onClick={addSocialLink}
+            disabled={busy}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            + Add Another Link
+          </button>
         </div>
       </div>
 
