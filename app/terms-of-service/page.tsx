@@ -117,6 +117,14 @@ export default function TermsOfServicePage() {
           law principles.
         </p>
 
+        <h2>Third-Party Fulfillment</h2>
+        <p>
+          Physical merch sold through this site is manufactured, shipped, and supported by
+          Fourthwall, our print-on-demand and fulfillment partner — a separate company from
+          Asphalt &amp; Dirt with its own terms and policies covering that side of your order.
+          We handle everything else: the site, the podcast, and the community around it.
+        </p>
+
         <h2>Contact</h2>
         <p>
           Questions about these terms? Email{" "}

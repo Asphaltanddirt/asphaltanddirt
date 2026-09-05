@@ -98,6 +98,13 @@ export default function PrivacyPolicyPage() {
           the date at the top of this page.
         </p>
 
+        <h2>Third-Party Fulfillment</h2>
+        <p>
+          When you place an order, your shipping and payment information is handled by Fourthwall,
+          our print-on-demand and fulfillment partner — a separate company from Asphalt &amp; Dirt
+          with its own privacy practices for that part of the transaction.
+        </p>
+
         <h2>Contact</h2>
         <p>
           Questions about this policy? Email{" "}
