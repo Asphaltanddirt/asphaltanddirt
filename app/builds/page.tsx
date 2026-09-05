@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import BuildsList from "@/components/BuildsList";
 import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
+import { getFeaturedBuilds } from "@/lib/featuredBuilds";
 
 export const metadata: Metadata = {
   title: "Builds",
@@ -14,6 +14,7 @@ export default async function BuildsPage() {
   // after, not mixed in ahead of them.
   const communityBuilds = await getApprovedCommunityBuilds();
   const allBuilds = [...builds, ...communityBuilds];
+  const featuredBuilds = await getFeaturedBuilds(allBuilds);
 
   return (
     <>
@@ -36,14 +37,42 @@ export default async function BuildsPage() {
               Every build has a purpose. Every detail has a story. Explore the rigs, the gear, and the
               grind behind the build.
             </p>
-            <a href="#builds-list" className="btn btn-primary">Explore The Builds</a>
+            <Link href="/builds/all" className="btn btn-primary">Explore The Builds</Link>
           </div>
         </div>
       </section>
 
-      <section className="section-pb-tight" id="builds-list">
+      <section className="section-pb-tight">
         <div className="container">
-          <BuildsList builds={allBuilds} />
+          <div className="section-head">
+            <div className="eyebrow">Featured Rigs</div>
+            <Link href="/builds/all" className="view-all">
+              View All Builds
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          </div>
+          <div className="grid grid-2 mt-4">
+            {featuredBuilds.map((build) => (
+              <div className="card" key={build.slug}>
+                <div className="card-media" style={{ aspectRatio: "16/10" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={build.listingImage.src} alt={build.listingImage.alt} />
+                </div>
+                <div className="card-body">
+                  <div className="build-kicker">{build.kicker}</div>
+                  <h3>{build.nameLines.join(" ")}</h3>
+                  <div className="accent-text" style={{ fontWeight: 700, fontSize: 13 }}>{build.vehicle}</div>
+                  <p>{build.lead}</p>
+                  <div className="card-actions">
+                    <Link href={`/builds/${build.slug}`} className="btn btn-outline-accent btn-sm">
+                      View Build
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
