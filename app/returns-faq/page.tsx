@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Returns & FAQ",
@@ -71,10 +72,7 @@ export default function ReturnsFaqPage() {
           shipping partner — they can act on this fastest. The fastest way to get this sorted is a
           clear photo of the issue — laid flat, in good light, with the tag visible — along with
           your order number, sent through{" "}
-          <a href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else" target="_blank" rel="noopener">
-            our shop&apos;s contact form
-          </a>
-          .
+          <Link href="/contact">our contact page</Link>.
         </p>
 
         <h2>{FAQS[3].q}</h2>
@@ -89,9 +87,7 @@ export default function ReturnsFaqPage() {
         <h2>Still Have a Question?</h2>
         <p>
           For anything about an order, shipment, or return, use{" "}
-          <a href="https://asphalt-and-dirt-shop.fourthwall.com/contact/something-else" target="_blank" rel="noopener">
-            our shop&apos;s contact form
-          </a>{" "}
+          <Link href="/contact">our contact page</Link>{" "}
           — that goes straight to the team handling fulfillment. For anything else, email{" "}
           <a href="mailto:team@asphaltanddirt.com">team@asphaltanddirt.com</a>.
         </p>

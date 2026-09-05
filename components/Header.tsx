@@ -41,9 +41,6 @@ export default function Header() {
             ))}
           </nav>
           <div className="nav-actions">
-            <Link href="/podcast" className="btn btn-primary btn-sm">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg> Watch Now
-            </Link>
             <button className="icon-btn" aria-label="Search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
@@ -87,9 +84,6 @@ export default function Header() {
             {link.label}
           </Link>
         ))}
-        <Link href="/podcast" className="btn btn-primary btn-block" onClick={() => setOpen(false)}>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg> Watch Now
-        </Link>
       </div>
     </>
   );

@@ -87,6 +87,10 @@ const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Overcast",
     color: "#4FA8D8",
+    // Overcast indexes any show already on Apple Podcasts automatically (no
+    // separate submission) — this redirect URL is deterministic from our
+    // Apple Podcasts ID (see podcastLinks.apple in lib/social.ts).
+    url: "https://overcast.fm/itunes6805523570",
     icon: <path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16 8.5a4.5 4.5 0 0 1 1 8.9H7z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
   },
 ];
@@ -130,7 +134,13 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
               </div>
             );
           })}
-          <div className="platform-row-item">
+          <a
+            href="https://rss.buzzsprout.com/2641565.rss"
+            target="_blank"
+            rel="noopener"
+            className="platform-row-item"
+            onClick={() => track("platform_link_click", { platform: "RSS" })}
+          >
             <div className="platform-row-icon" style={{ background: "#4a4b4d", color: "#fff" }}>
               <svg viewBox="0 0 24 24">
                 <circle cx="6" cy="12" r="1.7" fill="currentColor" />
@@ -138,8 +148,8 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
                 <circle cx="18" cy="12" r="1.7" fill="currentColor" />
               </svg>
             </div>
-            <div>and more</div>
-          </div>
+            <div>Add via RSS</div>
+          </a>
         </div>
       </div>
     );
@@ -211,7 +221,13 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
               </div>
             );
           })}
-          <div className="platform-card">
+          <a
+            href="https://rss.buzzsprout.com/2641565.rss"
+            target="_blank"
+            rel="noopener"
+            className="platform-card"
+            onClick={() => track("platform_link_click", { platform: "RSS" })}
+          >
             <div className="platform-card-icon" style={{ background: "#4a4b4d", color: "#fff" }}>
               <svg viewBox="0 0 24 24">
                 <circle cx="6" cy="12" r="1.7" fill="currentColor" />
@@ -219,8 +235,8 @@ export default function PlatformGrid({ compact = false }: { compact?: boolean })
                 <circle cx="18" cy="12" r="1.7" fill="currentColor" />
               </svg>
             </div>
-            <div className="platform-card-name">and more</div>
-          </div>
+            <div className="platform-card-name">Add via RSS</div>
+          </a>
         </div>
       </div>
     </div>

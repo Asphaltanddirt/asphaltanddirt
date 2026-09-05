@@ -143,7 +143,7 @@ export default function AmbassadorsPage() {
             Everyone starts as a Road &amp; Trail Member. Tiers move up based on consistency, content,
             and real contribution to the community — not automatically, and not overnight.
           </p>
-          <div className="grid grid-3 mt-4">
+          <div className="grid grid-3 tier-grid mt-4">
             {TIERS.map((tier) => (
               <div className="card tier-card" key={tier.name}>
                 <h3>{tier.name}</h3>

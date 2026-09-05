@@ -337,7 +337,11 @@ section{ padding:var(--sp-10) 0; }
 .hero-scrim.full{
   background:linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.4) 40%, rgba(0,0,0,.9) 100%);
 }
-.hero-inner{ position:relative; z-index:2; padding:var(--sp-10) 0; width:100%; }
+/* padding-top/bottom only (not the shorthand) — .hero-inner also carries
+   .container, and a two-value "padding:X 0" shorthand would zero out the
+   left/right padding .container sets, pinning the hero content flush
+   against the viewport edge on every page with a hero. */
+.hero-inner{ position:relative; z-index:2; padding-top:var(--sp-10); padding-bottom:var(--sp-10); width:100%; }
 .hero h1{ color:var(--white); margin-bottom:var(--sp-2); }
 h1 .line{ display:block; }
 .hero .lead{ margin-bottom:var(--sp-4); font-size:18px; }
@@ -540,6 +544,10 @@ h1 .line{ display:block; }
 .contact-option-icon svg{ width:26px; height:26px; }
 .contact-option h3{ margin:0; }
 .contact-option p{ margin:0; }
+/* Cards have different-length copy, so pin the button to the bottom of both
+   cards rather than letting it float directly under whichever paragraph is
+   shorter — keeps the two buttons lined up across the row. */
+.contact-option > .btn{ margin-top:auto; }
 
 /* ---------- Simple legal/info pages ---------- */
 .legal-page{ max-width:760px; }
@@ -730,6 +738,14 @@ h1 .line{ display:block; }
 @media (max-width:640px){ .team-card{ grid-template-columns:1fr; } .team-photo{ aspect-ratio:4/5; } }
 
 /* ---------- Ambassador program overview ---------- */
+/* Each tier card has 6 sections (name, blurb, "Benefits" label + list,
+   "What's Expected" label + list) of varying length, so a plain flex/grid
+   column lets shorter cards' sections drift out of line with the longer
+   ones next to them. Subgrid ties every card's 6 rows to one shared set of
+   row tracks so, e.g., "What's Expected" starts at the same height on all
+   three regardless of how long each card's own Benefits list runs. */
+.tier-grid{ grid-template-rows: repeat(6, auto); }
+.tier-grid > .tier-card{ display:grid; grid-template-rows: subgrid; grid-row: span 6; }
 .tier-card{ padding:var(--sp-4); gap:var(--sp-2); }
 .tier-blurb{ font-size:13px; color:var(--text-dim); margin:0; }
 .tier-list{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }

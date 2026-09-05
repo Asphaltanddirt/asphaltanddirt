@@ -136,10 +136,10 @@ export default async function PodcastIndexPage() {
       <section className="section-alt section-pt-tight" id="watch-listen">
         <div className="container">
           <div className="eyebrow">Watch &amp; Listen</div>
-          <p className="mt-3">
+          <p className="mt-4">
             Catch Asphalt &amp; Dirt on your favorite platforms &mdash; we go live on YouTube and
-            other platforms for live Q&amp;A, real talk, event drops, and more. Follow us and turn
-            on notifications so you never miss a drop.
+            other platforms for live Q&amp;A, real talk, event drops, and more. Follow us and
+            turn&nbsp;on&nbsp;notifications so you never miss a drop.
           </p>
           <div className="mt-4">
             <PlatformGrid compact />

@@ -99,7 +99,7 @@ export default async function HomePage() {
           </div>
           <div>
             <div className="eyebrow">Watch &amp; Listen</div>
-            <p className="mt-3">
+            <p className="mt-4">
               Hear and watch Asphalt &amp; Dirt on Spotify, Apple Podcasts, Amazon Music, and YouTube. We go
               live on YouTube and other platforms. Follow us so you never miss a drop.
             </p>
