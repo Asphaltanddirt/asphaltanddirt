@@ -47,7 +47,7 @@ export default function ContactPage() {
               Podcast, events, sponsorships, brand ambassador stuff, or just want to say
               something &mdash; this goes straight to the Asphalt &amp; Dirt team.
             </p>
-            <span className="btn btn-outline btn-sm">
+            <span className="btn btn-primary btn-sm">
               Email The Team
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </span>

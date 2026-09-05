@@ -540,6 +540,10 @@ h1 .line{ display:block; }
 .contact-option-icon svg{ width:26px; height:26px; }
 .contact-option h3{ margin:0; }
 .contact-option p{ margin:0; }
+/* Cards have different-length copy, so pin the button to the bottom of both
+   cards rather than letting it float directly under whichever paragraph is
+   shorter — keeps the two buttons lined up across the row. */
+.contact-option > .btn{ margin-top:auto; }
 
 /* ---------- Simple legal/info pages ---------- */
 .legal-page{ max-width:760px; }
