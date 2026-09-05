@@ -734,6 +734,14 @@ h1 .line{ display:block; }
 @media (max-width:640px){ .team-card{ grid-template-columns:1fr; } .team-photo{ aspect-ratio:4/5; } }
 
 /* ---------- Ambassador program overview ---------- */
+/* Each tier card has 6 sections (name, blurb, "Benefits" label + list,
+   "What's Expected" label + list) of varying length, so a plain flex/grid
+   column lets shorter cards' sections drift out of line with the longer
+   ones next to them. Subgrid ties every card's 6 rows to one shared set of
+   row tracks so, e.g., "What's Expected" starts at the same height on all
+   three regardless of how long each card's own Benefits list runs. */
+.tier-grid{ grid-template-rows: repeat(6, auto); }
+.tier-grid > .tier-card{ display:grid; grid-template-rows: subgrid; grid-row: span 6; }
 .tier-card{ padding:var(--sp-4); gap:var(--sp-2); }
 .tier-blurb{ font-size:13px; color:var(--text-dim); margin:0; }
 .tier-list{ display:flex; flex-direction:column; gap:9px; margin:0; padding:0; list-style:none; }
