@@ -236,6 +236,13 @@ section{ padding:var(--sp-10) 0; }
 .icon-btn svg{ width:18px; height:18px; }
 .nav-toggle{ display:none; }
 
+.header-search-input{
+  height:38px; width:200px; background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:0 14px; color:var(--text); font-size:14px; outline:none;
+}
+.header-search-input:focus{ border-color:var(--accent); }
+@media (max-width:640px){ .header-search-input{ width:140px; } }
+
 @media (max-width:980px){
   .nav-links{ display:none; }
   .nav-toggle{ display:flex; }

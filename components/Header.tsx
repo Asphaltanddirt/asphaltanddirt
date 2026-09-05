@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "./CartContext";
 
@@ -17,8 +17,18 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { cart, open: openCart } = useCart();
+
+  function submitSearch() {
+    const q = searchQuery.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  }
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -41,7 +51,32 @@ export default function Header() {
             ))}
           </nav>
           <div className="nav-actions">
-            <button className="icon-btn" aria-label="Search">
+            {searchOpen && (
+              <input
+                className="header-search-input"
+                type="text"
+                placeholder="Search the site…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                  if (e.key === "Escape") setSearchOpen(false);
+                }}
+                autoFocus
+                onBlur={() => setSearchOpen(false)}
+              />
+            )}
+            <button
+              className="icon-btn"
+              aria-label="Search"
+              // mousedown (not click) fires before the input's onBlur, so
+              // toggling here — rather than in onClick — avoids a race where
+              // blur closes the box and the click immediately reopens it.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setSearchOpen((o) => !o);
+              }}
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
               </svg>
