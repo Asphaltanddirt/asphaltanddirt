@@ -1,7 +1,17 @@
+export interface GuestSocialLink {
+  /** Free-text platform label ("Instagram", "TikTok", "Website", ...) —
+   *  matches the Guest Intake form's shape 1:1, so a submission can be
+   *  copied straight into an episode's data. See lib/socialIcons.tsx for
+   *  how labels map to an icon. */
+  platform: string;
+  url: string;
+}
+
 export interface Guest {
   name: string;
   bio?: string;
-  url?: string;
+  photo?: string;
+  socialLinks?: GuestSocialLink[];
 }
 
 export interface Sponsor {
@@ -19,6 +29,10 @@ export interface Episode {
   guests?: Guest[];
   /** Absent until a real episode is recorded/published on Riverside. */
   riversideEmbedUrl?: string;
+  /** Buzzsprout's numeric episode ID (from the "small" player embed code in
+   *  the Buzzsprout dashboard's Embed Player tab). This is the actual audio
+   *  player source — takes priority over riversideEmbedUrl once set. */
+  buzzsproutEpisodeId?: string;
   youtubeVideoId?: string;
   youtubePlaylistUrl?: string;
   spotifyUrl?: string;
@@ -52,6 +66,7 @@ export const episodes: Episode[] = [
       "Whether you're chasing horsepower on the asphalt or chasing trails through the mud, this is the show where both sides of car culture finally share the mic. We're bringing you real conversations, real builds, and real stories from the people living this lifestyle — no gatekeeping, no snobbery, just gearheads talking to gearheads.\n\nWhat to expect from ASPHALT & DIRT:\n- In-depth build breakdowns — street, off-road, and everything between\n- Overlanding rigs, trail talk, and adventure-ready setups\n- Guest interviews with builders, drivers, and creators from across the automotive world\n- Live multistreamed episodes across YouTube, TikTok, Instagram, Facebook, and X\n- Full episodes available on Spotify, Apple Podcasts, and everywhere you listen\n\nThis trailer is just a taste of what's coming. New episodes drop soon.",
     youtubeVideoId: "jXeOj8KDVJU",
     youtubePlaylistUrl: "https://www.youtube.com/playlist?list=PLfeeUT85XiEE",
+
     type: "podcast",
     artwork: {
       src: "https://i.ytimg.com/vi/jXeOj8KDVJU/maxresdefault.jpg",
