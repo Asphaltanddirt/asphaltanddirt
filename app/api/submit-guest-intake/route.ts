@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     email?: string;
     phone?: string;
     bio?: string;
-    social?: string;
+    socialLinks?: { platform?: string; url?: string }[];
     hasYoutubeChannel?: boolean;
     youtubeUrl?: string;
   };
@@ -52,7 +52,12 @@ export async function POST(req: NextRequest) {
   const email = (body.email || "").trim();
   const phone = (body.phone || "").trim();
   const bio = (body.bio || "").trim().slice(0, MAX_BIO_LENGTH);
-  const social = (body.social || "").trim();
+  // Stored as one "Platform: url" line per link — supports however many a
+  // guest has without needing a fixed column per platform.
+  const socialLinks = (Array.isArray(body.socialLinks) ? body.socialLinks : [])
+    .map((l) => ({ platform: (l.platform || "Other").trim(), url: (l.url || "").trim() }))
+    .filter((l) => l.url);
+  const socialLinksText = socialLinks.map((l) => `${l.platform}: ${l.url}`).join("\n");
   const hasYoutubeChannel = Boolean(body.hasYoutubeChannel);
   const youtubeUrl = hasYoutubeChannel ? (body.youtubeUrl || "").trim() : "";
 
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest) {
         "Contact Email": email,
         "Contact Phone": phone || undefined,
         "Public Bio": bio,
-        "Social/Website URL": social || undefined,
+        "Social Links": socialLinksText || undefined,
         "Has Own YouTube Channel": hasYoutubeChannel,
         "YouTube Channel URL": youtubeUrl || undefined,
         "Booking Status": "Reached Out",
@@ -92,7 +97,7 @@ export async function POST(req: NextRequest) {
         <h2 style="margin-bottom:4px;">New Guest Intake: ${escapeHtml(name)}</h2>
         <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         ${phone ? `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>` : ""}
-        ${social ? `<p><strong>Social/Website:</strong> ${escapeHtml(social)}</p>` : ""}
+        ${socialLinks.length ? `<p><strong>Social Links:</strong><br>${socialLinks.map((l) => `${escapeHtml(l.platform)}: ${escapeHtml(l.url)}`).join("<br>")}</p>` : ""}
         ${hasYoutubeChannel ? `<p><strong>YouTube Channel:</strong> ${escapeHtml(youtubeUrl || "(not provided)")}</p>` : ""}
         <h3>Bio</h3>
         <p style="white-space:pre-wrap;">${escapeHtml(bio)}</p>
