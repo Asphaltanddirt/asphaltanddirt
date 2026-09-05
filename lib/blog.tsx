@@ -43,7 +43,7 @@ export const posts: BlogPost[] = [
       "Chevy says the 2027 Corvette Grand Sport blends street manners with track-ready engineering—but its Z52 packages are where the serious track hardware shows up. So should Z52 really be optional on a car called Grand Sport?",
     metaDescription:
       "Does the 2027 Corvette Grand Sport need Z52 for track use? We break down what Chevy confirms, what owners are debating, and what the badge should mean.",
-    category: "Builds",
+    category: "Gear",
     date: "2026-08-20",
     image: { src: "/img/blog/corvette-grand-sport-z52.jpg", alt: "Does The 2027 Corvette Grand Sport Really Need Z52 To Be A Track Car? — a Grand Sport on a race track with a Base GS vs Z52 Packages callout" },
     body: [
@@ -296,7 +296,7 @@ export const posts: BlogPost[] = [
       "Everyone keeps saying the Jeep Gladiator 392 is confirmed—but the details aren't nearly that simple. We separate what Jeep has actually said from the rumors, assumptions, and enthusiast wish lists.",
     metaDescription:
       "The Jeep Gladiator 392 hype is everywhere. Here's what Jeep has actually confirmed, what remains speculation, and what owners should watch next.",
-    category: "Builds",
+    category: "Gear",
     date: "2026-09-03",
     image: { src: "/img/blog/gladiator-392-rumors.jpg", alt: "Gladiator 392 — Stop Calling Rumors Facts: a lifted Jeep Gladiator Rubicon on 37s kicking up dust" },
     body: [
@@ -425,7 +425,7 @@ export const posts: BlogPost[] = [
       "California didn't ban your 37s—but its new tire rules could still matter to Jeep, off-road and performance owners. Here's what the regulation actually says, what it doesn't, and what enthusiasts should be watching.",
     metaDescription:
       "California tire rules are changing. Here's what the new standards actually mean for off-road tires, performance tires, 35s, 37s and more.",
-    category: "Gear",
+    category: "Culture",
     date: "2026-08-31",
     image: { src: "/img/blog/california-tire-rules.jpg", alt: "California Tire Rules: What It Really Means — a muddy Jeep Rubicon on 37s next to a crossed-out tire graphic" },
     body: [
