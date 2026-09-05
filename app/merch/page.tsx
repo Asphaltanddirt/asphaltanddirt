@@ -200,15 +200,6 @@ export default async function MerchPage() {
         </section>
       )}
 
-      <section className="section-pb-tight">
-        <div className="container" style={{ textAlign: "center" }}>
-          <div className="eyebrow" style={{ justifyContent: "center" }}>Merch Contact</div>
-          <p className="mb-0" style={{ maxWidth: 560, margin: "0 auto" }}>
-            Order questions, shipping issues, or returns on something you bought?{" "}
-            <Link href="/contact" style={{ color: "var(--accent)" }}>Contact</Link>.
-          </p>
-        </div>
-      </section>
     </>
   );
 }
