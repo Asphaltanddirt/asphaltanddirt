@@ -10,19 +10,20 @@ export default function TermsOfServicePage() {
     <section className="section-pt-tight section-pb-tight">
       <div className="container legal-page">
         <h1>Terms of Service</h1>
-        <p className="updated">Last updated: August 2026</p>
+        <p className="updated">Last updated: September 2026</p>
 
         <p>
           These terms cover your use of the Asphalt &amp; Dirt website and shop. By browsing the
-          site or placing an order, you&apos;re agreeing to them. If something here doesn&apos;t
-          sit right with you, please don&apos;t use the site.
+          site, placing an order, or submitting something to us, you&apos;re agreeing to them. If
+          something here doesn&apos;t sit right with you, please don&apos;t use the site.
         </p>
 
         <h2>Who Can Use This Site</h2>
         <p>
           You need to be at least 13 years old to use the site or place an order. If you&apos;re
           ordering on behalf of a business, you&apos;re confirming you have the authority to agree
-          to these terms for it.
+          to these terms for it. The Road &amp; Trail Crew ambassador program has its own
+          eligibility requirements and a separate agreement, covered when you apply.
         </p>
 
         <h2>Orders &amp; Payment</h2>
@@ -37,7 +38,17 @@ export default function TermsOfServicePage() {
         <p>
           Orders ship to the address you provide at checkout. Shipping costs and estimated delivery
           windows are shown before you complete your order. Once a package leaves our fulfillment
-          partner, delivery timing is largely in the hands of the carrier.
+          partner, delivery timing is largely in the hands of the carrier — this applies to
+          international orders too, which may also be subject to customs fees or import duties
+          charged by your country, which we don&apos;t collect and aren&apos;t responsible for.
+        </p>
+
+        <h2>Product Quality</h2>
+        <p>
+          Merch is printed to order by Fourthwall, our production partner, rather than pulled from
+          pre-made stock. Because of that, minor variation in color, placement, or fabric between
+          individual items is normal and isn&apos;t considered a defect. We stand behind genuine
+          print errors or damage — see <a href="/returns-faq">Returns &amp; FAQ</a>.
         </p>
 
         <h2>Returns &amp; Refunds</h2>
@@ -53,6 +64,18 @@ export default function TermsOfServicePage() {
           Asphalt &amp; Dirt or its licensors. You&apos;re welcome to share links to it, but
           reproducing, redistributing, or selling any of it without our written permission
           isn&apos;t allowed.
+        </p>
+
+        <h2>Content You Submit To Us</h2>
+        <p>
+          When you submit a testimonial, a community build, or content as part of the Road &amp;
+          Trail Crew ambassador program, you confirm it&apos;s yours to share and give us
+          permission to publish, edit for length or clarity, and feature it on the site or our
+          social channels, with credit to you unless you ask otherwise. You can ask us to take
+          down something you submitted at any time by emailing{" "}
+          <a href="mailto:team@asphaltanddirt.com">team@asphaltanddirt.com</a> — we&apos;ll remove
+          it from the site going forward, though we can&apos;t recall copies already shared or
+          cached elsewhere.
         </p>
 
         <h2>Acceptable Use</h2>
@@ -94,11 +117,6 @@ export default function TermsOfServicePage() {
         <p>
           Questions about these terms? Email{" "}
           <a href="mailto:team@asphaltanddirt.com">team@asphaltanddirt.com</a>.
-        </p>
-
-        <p style={{ color: "var(--text-dim)", fontSize: 13, marginTop: "var(--sp-4)" }}>
-          This page is a general-purpose draft and isn&apos;t a substitute for advice from a
-          lawyer familiar with your business — have it reviewed before relying on it.
         </p>
       </div>
     </section>
