@@ -45,7 +45,46 @@ const PLATFORMS: {
   },
 ];
 
-export default function PlatformLinks({ episode }: { episode: Episode }) {
+export default function PlatformLinks({
+  episode,
+  variant = "list",
+}: {
+  episode: Episode;
+  /** "list" is the full label+badge row (Listen section). "icons" is a
+   *  compact circular icon-only row, sized for the hero sidebar. */
+  variant?: "list" | "icons";
+}) {
+  if (variant === "icons") {
+    return (
+      <div className="platform-icons-row">
+        {PLATFORMS.map((p) => {
+          const url = episode[p.key];
+          const icon = (
+            <div className="platform-icon-btn" style={{ background: p.color, color: "#fff" }}>
+              {p.icon}
+            </div>
+          );
+          return url ? (
+            <a
+              key={p.key}
+              href={url}
+              target="_blank"
+              rel="noopener"
+              aria-label={`Listen on ${p.label}`}
+              onClick={() => track("platform_link_click", { platform: p.label, slug: episode.slug })}
+            >
+              {icon}
+            </a>
+          ) : (
+            <div key={p.key} style={{ opacity: 0.4 }} aria-disabled="true" aria-label={`${p.label} — coming soon`}>
+              {icon}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="platform-grid">
       {PLATFORMS.map((p) => {
