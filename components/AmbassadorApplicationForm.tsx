@@ -9,6 +9,13 @@ import { compressImage } from "@/lib/imageCompress";
 const MAX_PHOTOS = 3;
 const MAX_ORIGINAL_FILE_SIZE = 15 * 1024 * 1024;
 
+interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+const PLATFORM_OPTIONS = ["Instagram", "TikTok", "Facebook", "X", "Website", "Other"];
+
 const CONTENT_TYPES = [
   { value: "photos", label: "Photos" },
   { value: "video", label: "Video" },
@@ -54,6 +61,7 @@ export default function AmbassadorApplicationForm() {
   const router = useRouter();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [compressing, setCompressing] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([{ platform: "Instagram", url: "" }]);
   const [contentTypes, setContentTypes] = useState<string[]>([]);
   const [cultureAreas, setCultureAreas] = useState<string[]>([]);
   const [interestAreas, setInterestAreas] = useState<string[]>([]);
@@ -73,6 +81,18 @@ export default function AmbassadorApplicationForm() {
 
   function toggleStandard(index: number) {
     setStandardsAccepted((prev) => prev.map((v, i) => (i === index ? !v : v)));
+  }
+
+  function updateSocialLink(index: number, patch: Partial<SocialLink>) {
+    setSocialLinks((links) => links.map((link, i) => (i === index ? { ...link, ...patch } : link)));
+  }
+
+  function addSocialLink() {
+    setSocialLinks((links) => [...links, { platform: "Instagram", url: "" }]);
+  }
+
+  function removeSocialLink(index: number) {
+    setSocialLinks((links) => links.filter((_, i) => i !== index));
   }
 
   async function handleFiles(fileList: FileList | null) {
@@ -128,6 +148,17 @@ export default function AmbassadorApplicationForm() {
     contentTypes.forEach((v) => data.append("contentTypes", v));
     cultureAreas.forEach((v) => data.append("cultureAreas", v));
     interestAreas.forEach((v) => data.append("interestAreas", v));
+    // Same "Platform: URL" one-per-line convention the API/Airtable field
+    // already expects — formatting it here means the API route needs no
+    // changes at all.
+    data.set(
+      "socialLinks",
+      socialLinks
+        .map((l) => ({ platform: l.platform, url: l.url.trim() }))
+        .filter((l) => l.url)
+        .map((l) => `${l.platform}: ${l.url}`)
+        .join("\n"),
+    );
     data.set("conductAccepted", "on");
 
     setStatus("submitting");
@@ -192,15 +223,56 @@ export default function AmbassadorApplicationForm() {
           <label htmlFor="location">Location (City, State)</label>
           <input type="text" id="location" name="location" placeholder="e.g. Denver, CO" required disabled={busy} />
         </div>
-        <div className="form-row">
-          <div className="form-field">
-            <label htmlFor="socialHandle">Primary Social Media Handle</label>
-            <input type="text" id="socialHandle" name="socialHandle" placeholder="e.g. @yourhandle" required disabled={busy} />
+        <div className="form-field">
+          <label htmlFor="socialHandle">Primary Social Media Handle</label>
+          <input type="text" id="socialHandle" name="socialHandle" placeholder="e.g. @yourhandle" required disabled={busy} />
+        </div>
+        <div className="form-field">
+          <label>Other Social Links <span className="optional">(Optional — add as many as you have)</span></label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {socialLinks.map((link, i) => (
+              <div key={i} className="form-row" style={{ gridTemplateColumns: "140px 1fr auto", alignItems: "center" }}>
+                <select
+                  aria-label="Platform"
+                  value={link.platform}
+                  onChange={(e) => updateSocialLink(i, { platform: e.target.value })}
+                  disabled={busy}
+                >
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  aria-label={`${link.platform} URL`}
+                  placeholder="https://…"
+                  value={link.url}
+                  onChange={(e) => updateSocialLink(i, { url: e.target.value })}
+                  disabled={busy}
+                />
+                {socialLinks.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => removeSocialLink(i)}
+                    disabled={busy}
+                    aria-label={`Remove ${link.platform} link`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="form-field">
-            <label htmlFor="socialLinks">Other Social Links <span className="optional">(Optional)</span></label>
-            <input type="text" id="socialLinks" name="socialLinks" placeholder="One per line" disabled={busy} />
-          </div>
+          <button
+            type="button"
+            className="view-all mt-2"
+            onClick={addSocialLink}
+            disabled={busy}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            + Add Another Link
+          </button>
         </div>
         <label className="form-field-consent" htmlFor="ageConfirmed">
           <input type="checkbox" id="ageConfirmed" name="ageConfirmed" required disabled={busy} />
