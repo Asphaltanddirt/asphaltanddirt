@@ -3,6 +3,7 @@ import Link from "next/link";
 import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { getFeaturedBuilds } from "@/lib/featuredBuilds";
+import AmbassadorBuildBadge from "@/components/AmbassadorBuildBadge";
 
 export const metadata: Metadata = {
   title: "Builds",
@@ -54,9 +55,10 @@ export default async function BuildsPage() {
           <div className="grid grid-2 mt-4">
             {featuredBuilds.map((build) => (
               <div className="card" key={build.slug}>
-                <div className="card-media" style={{ aspectRatio: "16/10" }}>
+                <div className="card-media" style={{ aspectRatio: "16/10", position: "relative" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={build.listingImage.src} alt={build.listingImage.alt} />
+                  {build.isAmbassador && <AmbassadorBuildBadge placement="card" />}
                 </div>
                 <div className="card-body">
                   <div className="build-kicker">{build.kicker}</div>

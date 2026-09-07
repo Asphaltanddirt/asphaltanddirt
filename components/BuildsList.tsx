@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Build, BuildCategory } from "@/lib/builds";
+import AmbassadorBuildBadge from "@/components/AmbassadorBuildBadge";
 
 const FILTERS: { key: "all" | BuildCategory; label: string; icon: React.ReactNode }[] = [
   {
@@ -121,6 +122,7 @@ export default function BuildsList({ builds }: { builds: Build[] }) {
               <div className="build-thumb">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={build.listingImage.src} alt={build.listingImage.alt} />
+                {build.isAmbassador && <AmbassadorBuildBadge placement="thumb" />}
               </div>
               <div>
                 <div className="build-kicker">{build.kicker}</div>

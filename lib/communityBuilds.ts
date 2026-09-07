@@ -55,6 +55,7 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
   if (!rigName || !vehicle || photos.length === 0) return null;
 
   const category = CATEGORY_BY_LABEL[(f.Category as string) || ""] || "trail-built";
+  const isAmbassador = Boolean(f.Ambassador);
   const slug = uniqueSlug(slugify(rigName), usedSlugs);
 
   const heroImage = { src: photos[0].url, alt: `${rigName}, ${submitterName ? `${submitterName}'s ` : ""}${vehicle}` };
@@ -81,9 +82,16 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
   return {
     slug,
     nameLines: [rigName],
+    isAmbassador,
     vehicle,
     lead: (f.Tagline as string) || "",
-    kicker: submitterName ? `${submitterName}'s Submission` : "Community Submission",
+    kicker: isAmbassador
+      ? submitterName
+        ? `${submitterName} — Road & Trail Crew`
+        : "Road & Trail Crew Build"
+      : submitterName
+        ? `${submitterName}'s Submission`
+        : "Community Submission",
     category,
     stats,
     listingImage: heroImage,
@@ -99,16 +107,22 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
 /** Approved community build submissions, shaped as real Build records so
  *  they render on /builds and get a full /builds/[slug] page exactly like
  *  the 4 team builds. Always call after the static `builds` array so slugs
- *  are deduped against team slugs first — team builds keep their URLs. */
+ *  are deduped against team slugs first — team builds keep their URLs.
+ *
+ *  Ambassador builds (the `Ambassador` checkbox in Airtable) sort ahead of
+ *  the rest, so a page doing `[...teamBuilds, ...communityBuilds]` gets
+ *  hosts → ambassadors → everyone else. Order within each group follows
+ *  Airtable's own record order. */
 export async function getApprovedCommunityBuilds(): Promise<Build[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
 
   try {
     const records = await listRecords(TABLE, "{Approved}=1", { revalidate: 900, baseId: BASE_ID });
     const usedSlugs = new Set(teamBuilds.map((b) => b.slug));
-    return records
+    const mapped = records
       .map((r) => mapRecordToBuild(r, usedSlugs))
       .filter((b): b is Build => b !== null);
+    return [...mapped.filter((b) => b.isAmbassador), ...mapped.filter((b) => !b.isAmbassador)];
   } catch (err) {
     console.error("Community builds fetch error", err);
     return [];

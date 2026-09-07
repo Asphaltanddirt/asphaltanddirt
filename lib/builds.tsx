@@ -55,6 +55,10 @@ export interface Build {
   slug: string;
   nameLines: string[];
   badge?: string;
+  /** True for approved community builds submitted by an active Road & Trail
+   *  Crew ambassador — drives the ambassador emblem and priority ordering.
+   *  Always absent for the 4 host builds below. */
+  isAmbassador?: boolean;
   vehicle: string;
   lead: string;
   kicker: string;

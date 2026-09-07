@@ -5,6 +5,7 @@ import { builds, findBuildBySlug, findAdjacentBuilds, BUILD_ICONS } from "@/lib/
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { socialLinks } from "@/lib/social";
 import BuildGallery from "@/components/BuildGallery";
+import AmbassadorBuildBadge from "@/components/AmbassadorBuildBadge";
 import { SITE_URL } from "@/lib/site";
 
 // Only the 4 team builds are known at build time — a community build's slug
@@ -82,8 +83,14 @@ export default async function BuildDetailPage({
           </div>
           <div className="two-col mt-4" style={{ alignItems: "center" }}>
             <div>
-              {build.badge && <div className="badge-outline mb-0">{build.badge}</div>}
-              <h1 className={build.badge ? "mt-2" : undefined} style={{ fontSize: "clamp(48px,7vw,84px)" }}>
+              {build.isAmbassador && (
+                <div className="ambassador-build-hero mb-0">
+                  <AmbassadorBuildBadge placement="hero" />
+                  <span>Road &amp; Trail Crew Ambassador Build</span>
+                </div>
+              )}
+              {build.badge && <div className={`badge-outline mb-0${build.isAmbassador ? " mt-2" : ""}`}>{build.badge}</div>}
+              <h1 className={build.badge || build.isAmbassador ? "mt-2" : undefined} style={{ fontSize: "clamp(48px,7vw,84px)" }}>
                 {build.nameLines.map((line) => (
                   <span className="line" key={line}>{line}</span>
                 ))}
