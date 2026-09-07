@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
 
-const MAX_PHOTOS = 3;
+const MAX_SELF_PHOTOS = 3;
+const MAX_BUILD_PHOTOS = 5;
 const MAX_ORIGINAL_FILE_SIZE = 15 * 1024 * 1024;
 
 interface SocialLink {
@@ -56,10 +57,12 @@ const STANDARDS = [
 
 type Status = "idle" | "submitting" | "success" | "error";
 type Photo = { file: File; url: string };
+type PhotoKind = "self" | "build";
 
 export default function AmbassadorApplicationForm() {
   const router = useRouter();
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [selfPhotos, setSelfPhotos] = useState<Photo[]>([]);
+  const [buildPhotos, setBuildPhotos] = useState<Photo[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([{ platform: "Instagram", url: "" }]);
   const [contentTypes, setContentTypes] = useState<string[]>([]);
@@ -95,11 +98,17 @@ export default function AmbassadorApplicationForm() {
     setSocialLinks((links) => links.filter((_, i) => i !== index));
   }
 
-  async function handleFiles(fileList: FileList | null) {
+  const photoState: Record<PhotoKind, { photos: Photo[]; setter: React.Dispatch<React.SetStateAction<Photo[]>>; max: number; noun: string }> = {
+    self: { photos: selfPhotos, setter: setSelfPhotos, max: MAX_SELF_PHOTOS, noun: "photos of you" },
+    build: { photos: buildPhotos, setter: setBuildPhotos, max: MAX_BUILD_PHOTOS, noun: "build photos" },
+  };
+
+  async function handleFiles(kind: PhotoKind, fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
-    const room = MAX_PHOTOS - photos.length;
+    const { photos, setter, max, noun } = photoState[kind];
+    const room = max - photos.length;
     if (room <= 0) {
-      setErrorMsg(`You can upload up to ${MAX_PHOTOS} photos.`);
+      setErrorMsg(`You can upload up to ${max} ${noun}.`);
       return;
     }
 
@@ -114,18 +123,58 @@ export default function AmbassadorApplicationForm() {
     setCompressing(true);
     try {
       const compressed = await Promise.all(incoming.map((f) => compressImage(f)));
-      setPhotos((prev) => [...prev, ...compressed.map((file) => ({ file, url: URL.createObjectURL(file) }))]);
+      setter((prev) => [...prev, ...compressed.map((file) => ({ file, url: URL.createObjectURL(file) }))]);
     } finally {
       setCompressing(false);
     }
   }
 
-  function removePhoto(index: number) {
-    setPhotos((prev) => {
+  function removePhoto(kind: PhotoKind, index: number) {
+    photoState[kind].setter((prev) => {
       const target = prev[index];
       if (target) URL.revokeObjectURL(target.url);
       return prev.filter((_, i) => i !== index);
     });
+  }
+
+  function renderPhotoUploader(kind: PhotoKind, label: string, hint: string, inputId: string) {
+    const { photos, max } = photoState[kind];
+    return (
+      <div className="form-field">
+        <label htmlFor={inputId}>{label} <span className="optional">(Optional)</span></label>
+        <p className="form-section-hint">{hint}</p>
+        <div className="photo-upload">
+          <label className="photo-upload-label" htmlFor={inputId}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 16l4.5-6 3 3.5L16 8l4 8" /><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8" cy="8.5" r="1.4" />
+            </svg>
+            <span>{compressing ? "Optimizing photos…" : photos.length ? "Add more photos" : "Click to upload photos"}</span>
+          </label>
+          <input
+            id={inputId}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              handleFiles(kind, e.target.files);
+              e.target.value = "";
+            }}
+            disabled={busy || photos.length >= max}
+          />
+        </div>
+        {photos.length > 0 && (
+          <div className="photo-preview-grid">
+            {photos.map((photo, i) => (
+              <div className="photo-preview" key={photo.url}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt={`${label} preview ${i + 1}`} />
+                <button type="button" onClick={() => removePhoto(kind, i)} disabled={busy} aria-label="Remove photo">×</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -143,8 +192,10 @@ export default function AmbassadorApplicationForm() {
       return;
     }
 
-    data.delete("photos");
-    photos.forEach((p) => data.append("photos", p.file));
+    data.delete("selfPhotos");
+    data.delete("buildPhotos");
+    selfPhotos.forEach((p) => data.append("selfPhotos", p.file));
+    buildPhotos.forEach((p) => data.append("buildPhotos", p.file));
     contentTypes.forEach((v) => data.append("contentTypes", v));
     cultureAreas.forEach((v) => data.append("cultureAreas", v));
     interestAreas.forEach((v) => data.append("interestAreas", v));
@@ -219,9 +270,15 @@ export default function AmbassadorApplicationForm() {
             <input type="email" id="email" name="email" required disabled={busy} />
           </div>
         </div>
-        <div className="form-field">
-          <label htmlFor="location">Location (City, State)</label>
-          <input type="text" id="location" name="location" placeholder="e.g. Denver, CO" required disabled={busy} />
+        <div className="form-row">
+          <div className="form-field">
+            <label htmlFor="location">Location (City, State)</label>
+            <input type="text" id="location" name="location" placeholder="e.g. Denver, CO" required disabled={busy} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="phone">Phone Number <span className="optional">(Optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="e.g. (555) 123-4567" autoComplete="tel" disabled={busy} />
+          </div>
         </div>
         <div className="form-field">
           <label htmlFor="socialHandle">Primary Social Media Handle</label>
@@ -284,12 +341,22 @@ export default function AmbassadorApplicationForm() {
       <div className="form-section">
         <div className="form-section-title">Your Automotive Life</div>
         <div className="form-field">
-          <label htmlFor="vehicle">Vehicles, Builds, Bikes, Or Machines You&apos;re Involved With</label>
-          <textarea
+          <label htmlFor="vehicle">Your Primary Vehicle / Rig</label>
+          <input
+            type="text"
             id="vehicle"
             name="vehicle"
-            placeholder="Year, make, model, major modifications, current projects — whatever's worth knowing"
+            placeholder="e.g. 2026 Jeep Wrangler Rubicon XR"
             required
+            disabled={busy}
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="buildDescription">Build Description &mdash; Modifications &amp; Current Projects <span className="optional">(Optional)</span></label>
+          <textarea
+            id="buildDescription"
+            name="buildDescription"
+            placeholder="Lift, tires, armor, engine work, recovery gear, what you're building toward — and any other vehicles or bikes you're involved with."
             disabled={busy}
           />
         </div>
@@ -483,40 +550,12 @@ export default function AmbassadorApplicationForm() {
 
       {/* Photos */}
       <div className="form-section">
-        <div className="form-section-title">Photos <span className="optional">(Optional)</span></div>
-        <p className="form-section-hint">Up to {MAX_PHOTOS} photos of you and/or your rig.</p>
-        <div className="photo-upload">
-          <label className="photo-upload-label" htmlFor="photos">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 16l4.5-6 3 3.5L16 8l4 8" /><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8" cy="8.5" r="1.4" />
-            </svg>
-            <span>
-              {compressing ? "Optimizing photos…" : photos.length ? "Add more photos" : "Click to upload photos"}
-            </span>
-          </label>
-          <input
-            id="photos"
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => {
-              handleFiles(e.target.files);
-              e.target.value = "";
-            }}
-            disabled={busy || photos.length >= MAX_PHOTOS}
-          />
-        </div>
-        {photos.length > 0 && (
-          <div className="photo-preview-grid">
-            {photos.map((photo, i) => (
-              <div className="photo-preview" key={photo.url}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.url} alt={`Upload preview ${i + 1}`} />
-                <button type="button" onClick={() => removePhoto(i)} disabled={busy} aria-label="Remove photo">×</button>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="form-section-title">Photos</div>
+        <p className="form-section-hint">
+          Photos help us review your build and put a face to your application ahead of the video interview.
+        </p>
+        {renderPhotoUploader("self", "Photos Of You", `A clear shot or two of you — up to ${MAX_SELF_PHOTOS}.`, "selfPhotos")}
+        {renderPhotoUploader("build", "Photos Of Your Vehicle / Build", `Your rig from a few angles — up to ${MAX_BUILD_PHOTOS}.`, "buildPhotos")}
       </div>
 
       {/* Section 8 — Standards */}

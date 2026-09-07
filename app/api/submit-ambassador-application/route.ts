@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createRecord, uploadAttachment } from "@/lib/airtable";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AMBASSADOR_APPLICATIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -10,10 +11,15 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_APPLICATIONS_TABLE = process.env.AIRTABLE_APPLICATIONS_TABLE || "Applications";
 
-const MAX_PHOTOS = 3;
+// Two separate uploaders: photos of the applicant (identity check before the
+// video interview) and photos of their build (so reviewers can see the rig).
+const MAX_SELF_PHOTOS = 3;
+const MAX_BUILD_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+type PhotoData = { filename: string; contentType: string; base64: string };
 
 const REQUIRED_FIELDS = [
   "name",
@@ -42,53 +48,60 @@ function field(formData: FormData, key: string) {
   return ((formData.get(key) as string) || "").trim();
 }
 
-async function writeToAirtable(values: Record<string, string>, contentTypes: string[], cultureAreas: string[], interestAreas: string[]) {
+async function writeToAirtable(
+  values: Record<string, string>,
+  contentTypes: string[],
+  cultureAreas: string[],
+  interestAreas: string[],
+  selfPhotos: PhotoData[],
+  buildPhotos: PhotoData[],
+) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return;
 
   try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_APPLICATIONS_TABLE)}`,
+    const record = await createRecord(
+      AIRTABLE_APPLICATIONS_TABLE,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: {
-            Name: values.name,
-            Email: values.email,
-            Location: values.location,
-            "Age Confirmed": true,
-            "Primary Social Handle": values.socialHandle,
-            "Social Links": values.socialLinks || "",
-            "Primary Vehicle / Build": values.vehicle,
-            "Culture Areas": cultureAreas,
-            "Clubs / Events / Communities": values.clubs || "",
-            "Content Types": contentTypes.join(", "),
-            "Content Portfolio Links": values.contentLinks || "",
-            "Content Frequency": values.contentFrequency,
-            "Audience Size": values.audienceSize,
-            "Engagement / Audience Info": values.audience || "",
-            "Meaningful Engagement": values.meaningfulEngagement || "",
-            "Why A&D": values.why,
-            "Non-Sales Contribution": values.contribution,
-            "Culture Vision": values.cultureVision || "",
-            "Monthly Content Commitment": values.contentCommitment,
-            "Monthly Media Commitment": values.mediaCommitment,
-            "Commitment Notes": values.commitmentNotes || "",
-            "Event Representation Interest": values.eventInterest,
-            "Interest Areas": interestAreas,
-            "Other Brand Relationships": values.otherBrands || "None",
-            "Additional Info": values.additionalInfo || "",
-            "Conduct Standards Accepted": true,
-            Status: "New",
-          },
-        }),
+        Name: values.name,
+        Email: values.email,
+        Phone: values.phone || undefined,
+        Location: values.location,
+        "Age Confirmed": true,
+        "Primary Social Handle": values.socialHandle,
+        "Social Links": values.socialLinks || "",
+        "Primary Vehicle / Build": values.vehicle,
+        "Build Description": values.buildDescription || "",
+        "Culture Areas": cultureAreas,
+        "Clubs / Events / Communities": values.clubs || "",
+        "Content Types": contentTypes.join(", "),
+        "Content Portfolio Links": values.contentLinks || "",
+        "Content Frequency": values.contentFrequency,
+        "Audience Size": values.audienceSize,
+        "Engagement / Audience Info": values.audience || "",
+        "Meaningful Engagement": values.meaningfulEngagement || "",
+        "Why A&D": values.why,
+        "Non-Sales Contribution": values.contribution,
+        "Culture Vision": values.cultureVision || "",
+        "Monthly Content Commitment": values.contentCommitment,
+        "Monthly Media Commitment": values.mediaCommitment,
+        "Commitment Notes": values.commitmentNotes || "",
+        "Event Representation": values.eventInterest,
+        "Interest Areas": interestAreas,
+        "Other Brand Relationships": values.otherBrands || "None",
+        "Additional Info": values.additionalInfo || "",
+        "Conduct Standards Accepted": true,
+        Status: "Needs Review",
       },
+      { typecast: true },
     );
-    if (!res.ok) {
-      console.error("Airtable write error", res.status, await res.text());
+
+    // Attachments upload to the now-existing record one at a time — don't block
+    // record creation on them, and a failed photo shouldn't lose the application.
+    for (const photo of selfPhotos) {
+      await uploadAttachment(record.id, "Ambassador Photo", photo);
+    }
+    for (const photo of buildPhotos) {
+      await uploadAttachment(record.id, "Build Photo(s)", photo);
     }
   } catch (err) {
     console.error("Airtable write threw", err);
@@ -136,6 +149,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please confirm every Road & Trail Crew standard." }, { status: 400 });
   }
 
+  const phone = field(formData, "phone");
+  const buildDescription = field(formData, "buildDescription");
   const socialLinks = field(formData, "socialLinks");
   const clubs = field(formData, "clubs");
   const contentLinks = field(formData, "contentLinks");
@@ -149,11 +164,16 @@ export async function POST(req: NextRequest) {
   const cultureAreas = formData.getAll("cultureAreas").map((v) => String(v)).filter(Boolean);
   const interestAreas = formData.getAll("interestAreas").map((v) => String(v)).filter(Boolean);
 
-  const photos = formData.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
-  if (photos.length > MAX_PHOTOS) {
-    return NextResponse.json({ error: `Please upload at most ${MAX_PHOTOS} photos.` }, { status: 400 });
+  const selfPhotoFiles = formData.getAll("selfPhotos").filter((p): p is File => p instanceof File && p.size > 0);
+  const buildPhotoFiles = formData.getAll("buildPhotos").filter((p): p is File => p instanceof File && p.size > 0);
+  if (selfPhotoFiles.length > MAX_SELF_PHOTOS) {
+    return NextResponse.json({ error: `Please upload at most ${MAX_SELF_PHOTOS} photos of yourself.` }, { status: 400 });
   }
-  for (const photo of photos) {
+  if (buildPhotoFiles.length > MAX_BUILD_PHOTOS) {
+    return NextResponse.json({ error: `Please upload at most ${MAX_BUILD_PHOTOS} build photos.` }, { status: 400 });
+  }
+  const allPhotoFiles = [...selfPhotoFiles, ...buildPhotoFiles];
+  for (const photo of allPhotoFiles) {
     if (photo.size > MAX_PHOTO_BYTES) {
       return NextResponse.json({ error: "One of those photos is too large. Try removing it and re-adding a smaller one." }, { status: 400 });
     }
@@ -161,24 +181,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Photos must be JPG, PNG, WEBP, or HEIC." }, { status: 400 });
     }
   }
-  const totalBytes = photos.reduce((sum, p) => sum + p.size, 0);
+  const totalBytes = allPhotoFiles.reduce((sum, p) => sum + p.size, 0);
   if (totalBytes > MAX_TOTAL_BYTES) {
     return NextResponse.json({ error: "Your photos are too large combined. Try removing one." }, { status: 400 });
   }
 
-  const attachments = await Promise.all(
-    photos.map(async (photo) => ({
-      filename: photo.name || "photo.jpg",
-      content: Buffer.from(await photo.arrayBuffer()).toString("base64"),
-    })),
-  );
+  const toPhotoData = (files: File[]): Promise<PhotoData[]> =>
+    Promise.all(
+      files.map(async (photo) => ({
+        filename: photo.name || "photo.jpg",
+        contentType: photo.type || "image/jpeg",
+        base64: Buffer.from(await photo.arrayBuffer()).toString("base64"),
+      })),
+    );
+  const selfPhotoData = await toPhotoData(selfPhotoFiles);
+  const buildPhotoData = await toPhotoData(buildPhotoFiles);
+  const attachments = [...selfPhotoData, ...buildPhotoData].map(({ filename, base64 }) => ({ filename, content: base64 }));
 
   const rows: [string, string][] = [
     ["Applicant", `${values.name} (${values.email})`],
+    ["Phone", phone || "—"],
     ["Location", values.location],
     ["Primary Social Handle", values.socialHandle],
     ["Other Social Links", socialLinks || "—"],
-    ["Vehicles / Builds", values.vehicle],
+    ["Primary Vehicle / Rig", values.vehicle],
+    ["Build Description", buildDescription || "—"],
     ["Culture Areas", cultureAreas.length ? cultureAreas.join(", ") : "—"],
     ["Clubs / Events / Communities", clubs || "—"],
     ["Can Create", contentTypes.length ? contentTypes.join(", ") : "—"],
@@ -191,7 +218,7 @@ export async function POST(req: NextRequest) {
     ["Monthly Content Commitment", values.contentCommitment],
     ["Monthly Media Commitment", values.mediaCommitment],
     ["Commitment Notes", commitmentNotes || "—"],
-    ["Event Representation Interest", values.eventInterest],
+    ["Event Representation", values.eventInterest],
     ["Interest Areas", interestAreas.length ? interestAreas.join(", ") : "—"],
     ["Other Brand Relationships", otherBrands || "None"],
     ["Age Confirmed (18+)", "Yes"],
@@ -201,7 +228,7 @@ export async function POST(req: NextRequest) {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;color:#111;">
       <h2 style="margin-bottom:4px;">New Road &amp; Trail Crew Application: ${escapeHtml(values.name)}</h2>
-      <p style="color:#555;margin-top:0;">${photos.length} photo${photos.length === 1 ? "" : "s"} attached</p>
+      <p style="color:#555;margin-top:0;">${attachments.length} photo${attachments.length === 1 ? "" : "s"} attached — ${selfPhotoData.length} of the applicant, ${buildPhotoData.length} of the build</p>
       <table cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;">
         ${rows
           .map(
@@ -245,10 +272,12 @@ export async function POST(req: NextRequest) {
   // Best-effort — Airtable being unconfigured or briefly down should never block the
   // applicant's confirmation; the email above is the reliable record either way.
   await writeToAirtable(
-    { ...values, socialLinks, clubs, contentLinks, audience, meaningfulEngagement, cultureVision, commitmentNotes, otherBrands, additionalInfo },
+    { ...values, phone, buildDescription, socialLinks, clubs, contentLinks, audience, meaningfulEngagement, cultureVision, commitmentNotes, otherBrands, additionalInfo },
     contentTypes,
     cultureAreas,
     interestAreas,
+    selfPhotoData,
+    buildPhotoData,
   );
 
   return NextResponse.json({ status: "sent" });

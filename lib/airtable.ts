@@ -98,9 +98,13 @@ export async function listRecords(
 export async function createRecord(
   table: string,
   fields: AirtableFields,
-  options?: { baseId?: string },
+  options?: { baseId?: string; typecast?: boolean },
 ): Promise<AirtableRecord> {
-  return request(table, "", { method: "POST", body: JSON.stringify({ fields }), baseId: options?.baseId });
+  // `typecast` lets Airtable coerce/create select options on the fly, so a new
+  // choice added on the form side doesn't hard-fail the whole write before the
+  // matching option exists in the table.
+  const body = options?.typecast ? { fields, typecast: true } : { fields };
+  return request(table, "", { method: "POST", body: JSON.stringify(body), baseId: options?.baseId });
 }
 
 export async function updateRecord(
