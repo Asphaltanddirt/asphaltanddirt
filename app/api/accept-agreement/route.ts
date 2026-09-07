@@ -9,6 +9,18 @@ const FROM_EMAIL = process.env.AGREEMENT_ACCEPTANCE_FROM_EMAIL || "Asphalt & Dir
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
 
 const MAX_NAME_LENGTH = 120;
+const MAX_TEXT = 500;
+const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+
+/** "@handle" or "instagram.com/handle" -> a full profile URL for the
+ *  Instagram URL field (a real url-type field in Airtable). */
+function instagramUrl(raw: string): string {
+  const v = raw.trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  const handle = v.replace(/^@/, "").replace(/^(www\.)?instagram\.com\//i, "").replace(/\/+$/, "");
+  return handle ? `https://instagram.com/${handle}` : "";
+}
 
 function escapeHtml(value: string) {
   return value
@@ -36,7 +48,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Agreement acceptance isn't configured yet — check back soon." }, { status: 500 });
   }
 
-  let body: { email?: string; legalName?: string; accepted?: boolean; company?: string };
+  let body: {
+    email?: string;
+    legalName?: string;
+    phone?: string;
+    instagram?: string;
+    otherSocials?: string;
+    vehicle?: string;
+    shippingAddress?: string;
+    shirtSize?: string;
+    accepted?: boolean;
+    company?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -50,12 +73,21 @@ export async function POST(req: NextRequest) {
 
   const email = (body.email || "").trim();
   const legalName = (body.legalName || "").trim().slice(0, MAX_NAME_LENGTH);
+  const phone = (body.phone || "").trim().slice(0, 40);
+  const instagram = (body.instagram || "").trim().slice(0, MAX_TEXT);
+  const otherSocials = (body.otherSocials || "").trim().slice(0, MAX_TEXT);
+  const vehicle = (body.vehicle || "").trim().slice(0, MAX_TEXT);
+  const shippingAddress = (body.shippingAddress || "").trim().slice(0, MAX_TEXT);
+  const shirtSize = (body.shirtSize || "").trim();
 
-  if (!email || !legalName) {
-    return NextResponse.json({ error: "Please enter your ambassador email and full legal name." }, { status: 400 });
+  if (!email || !legalName || !phone || !instagram || !vehicle || !shippingAddress || !shirtSize) {
+    return NextResponse.json({ error: "Please fill in every field so we can finish setting you up." }, { status: 400 });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+  }
+  if (!SHIRT_SIZES.includes(shirtSize)) {
+    return NextResponse.json({ error: "Please pick a shirt size." }, { status: 400 });
   }
   if (body.accepted !== true) {
     return NextResponse.json({ error: "Please check the box to confirm you've read and accept the Agreement." }, { status: 400 });
@@ -107,12 +139,23 @@ export async function POST(req: NextRequest) {
     `Browser: ${userAgent}`,
   ].join("\n");
 
+  const igUrl = instagramUrl(instagram);
+  const socialLinks = [igUrl ? `Instagram: ${igUrl}` : `Instagram: ${instagram}`, otherSocials]
+    .filter(Boolean)
+    .join("\n");
+
   try {
     await updateRecord(AMBASSADORS_TABLE, ambassador.id, {
       "Agreement Signed": true,
       "Agreement Signed Date": todayISODate(),
       "Agreement Signature": legalName,
       "Agreement Acceptance Log": acceptanceLog,
+      Phone: phone,
+      "Vehicle / Build": vehicle,
+      "Shipping Address": shippingAddress,
+      "Shirt Size": shirtSize,
+      "Instagram URL": igUrl || undefined,
+      "Social Links": socialLinks,
     });
   } catch (err) {
     console.error("Airtable agreement write error", err);
@@ -126,24 +169,31 @@ export async function POST(req: NextRequest) {
     const tier = (ambassador.fields.Tier as string) || "Road & Trail Member";
     const rate = TIER_RATE[tier] || "10%";
     const hasCode = Boolean((ambassador.fields["Promo Code"] as string) || "");
+    const row = (label: string, value: string) =>
+      `<tr><td style="font-weight:bold;border-bottom:1px solid #eee;vertical-align:top;width:150px;">${escapeHtml(label)}</td><td style="border-bottom:1px solid #eee;white-space:pre-wrap;">${escapeHtml(value)}</td></tr>`;
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;color:#111;">
         <h2 style="margin-bottom:4px;">Brand Ambassador Agreement accepted: ${escapeHtml(ambName)}</h2>
-        <p style="color:#555;margin-top:0;">Agreement Signed is now checked on their Ambassador record. Time to finish onboarding them.</p>
+        <p style="color:#555;margin-top:0;">Agreement Signed is checked and their profile + shipping details are on the record. Time to finish onboarding.</p>
         <table cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;">
-          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Ambassador</td><td style="border-bottom:1px solid #eee;">${escapeHtml(ambName)}</td></tr>
-          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Email on file</td><td style="border-bottom:1px solid #eee;">${escapeHtml((ambassador.fields.Email as string) || email)}</td></tr>
-          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Tier</td><td style="border-bottom:1px solid #eee;">${escapeHtml(tier)} — ${escapeHtml(rate)} commission</td></tr>
-          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Typed legal name</td><td style="border-bottom:1px solid #eee;">${escapeHtml(legalName)}</td></tr>
-          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Accepted</td><td style="border-bottom:1px solid #eee;">${escapeHtml(acceptedAt)}</td></tr>
-          <tr><td style="font-weight:bold;">Agreement version</td><td>${escapeHtml(AGREEMENT_VERSION)}</td></tr>
+          ${row("Ambassador", ambName)}
+          ${row("Email on file", (ambassador.fields.Email as string) || email)}
+          ${row("Phone", phone)}
+          ${row("Tier", `${tier} — ${rate} commission`)}
+          ${row("Instagram", igUrl || instagram)}
+          ${otherSocials ? row("Other socials", otherSocials) : ""}
+          ${row("Vehicle / build", vehicle)}
+          ${row("Shirt size", shirtSize)}
+          ${row("Ship to", shippingAddress)}
+          ${row("Signed", `${legalName} · ${acceptedAt}`)}
+          ${row("Agreement version", AGREEMENT_VERSION)}
         </table>
 
         <h3 style="margin:24px 0 6px;">Onboarding checklist</h3>
         <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
           <li>${hasCode ? "Promo code already on the record — double-check it's live in Fourthwall." : "Create their discount code + tracked link in Fourthwall (10% customer discount)."}</li>
           <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Fourthwall Promotion ID</b>, <b>Commission Rate</b> (${escapeHtml(rate)} for ${escapeHtml(tier)}), and <b>Start Date</b>.</li>
-          <li>Confirm the welcome merch package is going out — shipping address + shirt size need to be on the record first (see the separate "Ship starter kit" email).</li>
+          <li>Pack &amp; ship the welcome kit (patch, stickers, shirt — size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b>.</li>
           <li>Send <b>Welcome Email Part 2</b> from Kit — the one with their code and tracking link. Only after steps 1–2 are done.</li>
         </ol>
       </div>

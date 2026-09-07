@@ -22,8 +22,8 @@ export default function AmbassadorAgreementPage() {
         <h1 className="mt-2">Brand Ambassador Agreement</h1>
         <p className="lead mt-2">
           You&apos;ve been accepted into the Road &amp; Trail Crew. Read the agreement below, then
-          accept it at the bottom. Once we have your acceptance, we&apos;ll send your personal
-          discount code and tracking link.
+          confirm your details, tell us where to ship your welcome kit, and accept. Once that&apos;s
+          in, we&apos;ll send your personal discount code and tracking link.
         </p>
 
         <div className="legal-doc mt-4">

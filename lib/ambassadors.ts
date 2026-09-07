@@ -34,7 +34,10 @@ export async function getFeaturedAmbassadors(): Promise<FeaturedAmbassador[]> {
     return records
       .map((r) => {
         const photos = r.fields["Profile Photo"] as { url: string }[] | undefined;
-        const vehicle = r.fields["Vehicle (from Application)"] as string[] | undefined;
+        // Prefer the confirmed "Vehicle / Build" (set on the agreement form),
+        // fall back to the read-only lookup from their application.
+        const vehicleLookup = r.fields["Vehicle (from Application)"] as string[] | undefined;
+        const vehicle = (r.fields["Vehicle / Build"] as string) || vehicleLookup?.[0] || undefined;
         return {
           id: r.id,
           slug: (r.fields.Slug as string) || "",
@@ -43,7 +46,7 @@ export async function getFeaturedAmbassadors(): Promise<FeaturedAmbassador[]> {
           tagline: (r.fields["Public Tagline"] as string) || "",
           bio: (r.fields["Public Bio"] as string) || "",
           photo: photos?.[0]?.url || "",
-          vehicle: vehicle?.[0],
+          vehicle,
           buildSlug: (r.fields["Linked Build Slug"] as string) || undefined,
           instagramUrl: (r.fields["Instagram URL"] as string) || undefined,
           tiktokUrl: (r.fields["TikTok URL"] as string) || undefined,
