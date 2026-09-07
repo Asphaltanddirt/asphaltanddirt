@@ -108,7 +108,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
 
-  const social = field(formData, "social");
+  // One social link, but the visitor picks the platform (matches the "Platform:
+  // value" convention the ambassador form / Airtable already use).
+  const socialHandle = field(formData, "social");
+  const socialPlatform = field(formData, "socialPlatform");
+  const social = socialHandle && socialPlatform ? `${socialPlatform}: ${socialHandle}` : socialHandle;
   const statPower = field(formData, "statPower");
   const statTires = field(formData, "statTires");
   const statLift = field(formData, "statLift");

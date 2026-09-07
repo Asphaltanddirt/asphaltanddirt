@@ -9,6 +9,8 @@ import { compressImage } from "@/lib/imageCompress";
 const MAX_PHOTOS = 5;
 const MAX_ORIGINAL_FILE_SIZE = 15 * 1024 * 1024; // reject absurdly large originals before we even try to compress
 
+const SOCIAL_PLATFORMS = ["Instagram", "TikTok", "YouTube", "Facebook", "X", "Website", "Other"];
+
 type Status = "idle" | "submitting" | "success" | "error";
 type Photo = { file: File; url: string };
 
@@ -132,8 +134,15 @@ export default function BuildSubmissionForm() {
           </div>
         </div>
         <div className="form-field">
-          <label htmlFor="social">Instagram / Social Handle <span className="optional">(Optional)</span></label>
-          <input type="text" id="social" name="social" placeholder="@yourhandle" disabled={busy} />
+          <label htmlFor="social">Social Handle Or Link <span className="optional">(Optional)</span></label>
+          <div className="form-row" style={{ gridTemplateColumns: "150px 1fr", alignItems: "center" }}>
+            <select id="socialPlatform" name="socialPlatform" defaultValue="Instagram" aria-label="Platform" disabled={busy}>
+              {SOCIAL_PLATFORMS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <input type="text" id="social" name="social" placeholder="@yourhandle or https://…" disabled={busy} />
+          </div>
         </div>
       </div>
 
