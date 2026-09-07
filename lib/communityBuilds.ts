@@ -46,7 +46,8 @@ interface AttachmentField {
 
 function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build | null {
   const f = record.fields;
-  const submitterName = ((f.Name as string) || "").trim();
+  // Field names mirror the Build Submissions base's "Submissions" table exactly.
+  const submitterName = ((f["Full Name"] as string) || "").trim();
   const rigName = ((f["Rig Name"] as string) || "").trim();
   const vehicle = ((f.Vehicle as string) || "").trim();
   const photos = (f.Photos as AttachmentField[] | undefined) || [];
@@ -54,7 +55,7 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
   // Not enough to render a real build page — skip rather than show a broken card.
   if (!rigName || !vehicle || photos.length === 0) return null;
 
-  const category = CATEGORY_BY_LABEL[(f.Category as string) || ""] || "trail-built";
+  const category = CATEGORY_BY_LABEL[(f["Build Category"] as string) || ""] || "trail-built";
   const isAmbassador = Boolean(f.Ambassador);
   const slug = uniqueSlug(slugify(rigName), usedSlugs);
 
@@ -63,19 +64,19 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
 
   const stats: BuildStat[] = (
     [
-      f["Stat Power"] && { value: f["Stat Power"] as string, unit: "Horsepower / Engine", icon: "bolt" as const },
-      f["Stat Tires"] && { value: f["Stat Tires"] as string, unit: "Tire Size", icon: "compass" as const },
-      f["Stat Lift"] && { value: f["Stat Lift"] as string, unit: "Lift Height", icon: "lift" as const },
+      f["Horsepower / Engine"] && { value: f["Horsepower / Engine"] as string, unit: "Horsepower / Engine", icon: "bolt" as const },
+      f["Tire Size"] && { value: f["Tire Size"] as string, unit: "Tire Size", icon: "compass" as const },
+      f["Lift Height"] && { value: f["Lift Height"] as string, unit: "Lift Height", icon: "lift" as const },
     ] as (BuildStat | undefined)[]
   ).filter((s): s is BuildStat => Boolean(s));
 
   const specs: BuildSpec[] = (
     [
       { label: "Base Vehicle", value: vehicle, icon: "vehicle" as const },
-      f["Spec Engine"] && { label: "Engine", value: f["Spec Engine"] as string, icon: "bolt" as const },
-      f["Spec Suspension"] && { label: "Suspension", value: f["Spec Suspension"] as string, icon: "lift" as const },
-      f["Spec Wheels Tires"] && { label: "Wheels & Tires", value: f["Spec Wheels Tires"] as string, icon: "compass" as const },
-      f["Spec Other"] && { label: "Other Mods", value: f["Spec Other"] as string, icon: "wrench" as const },
+      f["Engine"] && { label: "Engine", value: f["Engine"] as string, icon: "bolt" as const },
+      f["Suspension / Lift"] && { label: "Suspension", value: f["Suspension / Lift"] as string, icon: "lift" as const },
+      f["Wheels & Tires"] && { label: "Wheels & Tires", value: f["Wheels & Tires"] as string, icon: "compass" as const },
+      f["Other Mods, Armor, Electronics, Etc."] && { label: "Other Mods", value: f["Other Mods, Armor, Electronics, Etc."] as string, icon: "wrench" as const },
     ] as (BuildSpec | undefined)[]
   ).filter((s): s is BuildSpec => Boolean(s));
 
@@ -84,7 +85,7 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
     nameLines: [rigName],
     isAmbassador,
     vehicle,
-    lead: (f.Tagline as string) || "",
+    lead: (f["One-Line Description"] as string) || "",
     kicker: isAmbassador
       ? submitterName
         ? `${submitterName} — Road & Trail Crew`
@@ -98,7 +99,7 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
     heroImage,
     listingSpecs: specs.filter((s) => s.label !== "Base Vehicle").slice(0, 4).map(({ label, value }) => ({ label, value })),
     specs,
-    aboutText: (f.Story as string) || "",
+    aboutText: (f["About This Build"] as string) || "",
     aboutStats: [],
     gallery: gallery.length > 0 ? gallery : undefined,
   };

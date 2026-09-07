@@ -37,27 +37,28 @@ async function writeToAirtable(
   if (!isAirtableConfigured(AIRTABLE_BASE_ID)) return;
 
   try {
+    // Field names mirror the Build Submissions base's "Submissions" table exactly.
     const record = await createRecord(
       AIRTABLE_TABLE,
       {
-        Name: values.name,
+        "Full Name": values.name,
         Email: values.email,
-        Social: extras.social,
+        "Instagram / Social Handle": extras.social,
         "Rig Name": values.rigName,
         Vehicle: values.vehicle,
-        Category: CATEGORY_LABELS[values.category as BuildCategory] || undefined,
-        Tagline: values.tagline,
-        "Stat Power": extras.statPower,
-        "Stat Tires": extras.statTires,
-        "Stat Lift": extras.statLift,
-        "Spec Engine": extras.specEngine,
-        "Spec Suspension": extras.specSuspension,
-        "Spec Wheels Tires": extras.specWheelsTires,
-        "Spec Other": extras.specOther,
-        Story: values.story,
+        "Build Category": CATEGORY_LABELS[values.category as BuildCategory] || undefined,
+        "One-Line Description": values.tagline,
+        "Horsepower / Engine": extras.statPower,
+        "Tire Size": extras.statTires,
+        "Lift Height": extras.statLift,
+        Engine: extras.specEngine,
+        "Suspension / Lift": extras.specSuspension,
+        "Wheels & Tires": extras.specWheelsTires,
+        "Other Mods, Armor, Electronics, Etc.": extras.specOther,
+        "About This Build": values.story,
         Approved: false,
       },
-      { baseId: AIRTABLE_BASE_ID },
+      { baseId: AIRTABLE_BASE_ID, typecast: true },
     );
 
     // Attachments upload to an existing record one at a time — do these after
