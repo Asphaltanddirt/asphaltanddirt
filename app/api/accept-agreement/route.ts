@@ -22,6 +22,13 @@ function todayISODate() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD for the Airtable date field
 }
 
+// Mirrors the Ambassadors "Expected Rate" formula (tier → commission %).
+const TIER_RATE: Record<string, string> = {
+  "Road & Trail Member": "10%",
+  "Featured Ambassador": "12%",
+  "Crew Partner": "15%",
+};
+
 export async function POST(req: NextRequest) {
   // Airtable is the record of acceptance — without it there's nowhere for the
   // signature to land, so it's required here (not best-effort).
@@ -116,17 +123,29 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
     const ambName = (ambassador.fields.Name as string) || legalName;
+    const tier = (ambassador.fields.Tier as string) || "Road & Trail Member";
+    const rate = TIER_RATE[tier] || "10%";
+    const hasCode = Boolean((ambassador.fields["Promo Code"] as string) || "");
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;color:#111;">
         <h2 style="margin-bottom:4px;">Brand Ambassador Agreement accepted: ${escapeHtml(ambName)}</h2>
-        <p style="color:#555;margin-top:0;">Agreement Signed is now checked on their Ambassador record — clear to send Welcome Email Part 2 (code + tracking link).</p>
+        <p style="color:#555;margin-top:0;">Agreement Signed is now checked on their Ambassador record. Time to finish onboarding them.</p>
         <table cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px;">
           <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Ambassador</td><td style="border-bottom:1px solid #eee;">${escapeHtml(ambName)}</td></tr>
           <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Email on file</td><td style="border-bottom:1px solid #eee;">${escapeHtml((ambassador.fields.Email as string) || email)}</td></tr>
+          <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Tier</td><td style="border-bottom:1px solid #eee;">${escapeHtml(tier)} — ${escapeHtml(rate)} commission</td></tr>
           <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Typed legal name</td><td style="border-bottom:1px solid #eee;">${escapeHtml(legalName)}</td></tr>
           <tr><td style="font-weight:bold;border-bottom:1px solid #eee;">Accepted</td><td style="border-bottom:1px solid #eee;">${escapeHtml(acceptedAt)}</td></tr>
           <tr><td style="font-weight:bold;">Agreement version</td><td>${escapeHtml(AGREEMENT_VERSION)}</td></tr>
         </table>
+
+        <h3 style="margin:24px 0 6px;">Onboarding checklist</h3>
+        <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
+          <li>${hasCode ? "Promo code already on the record — double-check it's live in Fourthwall." : "Create their discount code + tracked link in Fourthwall (10% customer discount)."}</li>
+          <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Fourthwall Promotion ID</b>, <b>Commission Rate</b> (${escapeHtml(rate)} for ${escapeHtml(tier)}), and <b>Start Date</b>.</li>
+          <li>Confirm the welcome merch package is going out — shipping address + shirt size need to be on the record first (see the separate "Ship starter kit" email).</li>
+          <li>Send <b>Welcome Email Part 2</b> from Kit — the one with their code and tracking link. Only after steps 1–2 are done.</li>
+        </ol>
       </div>
     `;
     try {
