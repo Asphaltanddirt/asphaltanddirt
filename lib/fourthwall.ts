@@ -190,7 +190,13 @@ export const MERCH_COLLECTIONS = [
     slug: "accessories",
     name: "Accessories",
     tagline: "Bring the garage to the desk.",
-    productSlugs: ["garage-desk-mat", "pit-lane-mouse-pad"],
+    productSlugs: [
+      "garage-desk-mat",
+      "pit-lane-mouse-pad",
+      "hard-line-travel-mug",
+      "road-trail-travel-mug",
+      "trailside-camp-mug",
+    ],
   },
 ] as const;
 
