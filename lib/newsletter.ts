@@ -3,6 +3,7 @@ import { getAllPostsSorted } from "@/lib/blog";
 import { builds, type Build } from "@/lib/builds";
 import { getCommunityEvents } from "@/lib/calendar";
 import { fetchLatestFromPlaylist, PODCAST_EPISODES_PLAYLIST_ID, type YouTubeVideo } from "@/lib/youtube";
+import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { getFeaturedProducts, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
@@ -275,8 +276,15 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
   const latestVideo: YouTubeVideo | undefined = latestVideos[0];
   const newestMerch: Product | undefined = merch[0];
 
+  // Link to the episode's own page on the site, not the raw YouTube URL —
+  // keeps the click on-property and stops Gmail from unfurling a big video
+  // card under the email. Falls back to the podcast index if the video
+  // isn't a catalogued episode yet.
+  const videoEpisode = latestVideo ? getEpisodeByYoutubeId(latestVideo.videoId) : undefined;
+  const videoUrl = videoEpisode ? `${SITE_URL}/podcast/${videoEpisode.slug}` : `${SITE_URL}/podcast`;
+
   const quickHitItems = [
-    latestVideo && { label: `New video: ${latestVideo.title}`, ctaText: "Watch", url: latestVideo.url },
+    latestVideo && { label: `New episode: ${latestVideo.title}`, ctaText: "Listen", url: videoUrl },
     latestOtherPost && {
       label: `From the blog: ${latestOtherPost.title}`,
       ctaText: "Read",
