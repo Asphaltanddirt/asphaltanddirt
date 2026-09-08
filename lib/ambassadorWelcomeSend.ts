@@ -3,7 +3,11 @@ import { buildWelcomePart1, buildWelcomePart2 } from "@/lib/ambassadorWelcome";
 import { sendEmail } from "@/lib/resendEmail";
 
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
-const TEST_EMAIL = process.env.NEWSLETTER_TEST_EMAIL || process.env.AGREEMENT_ACCEPTANCE_TO_EMAIL || "";
+const TEST_EMAIL =
+  process.env.NEWSLETTER_TEST_EMAIL ||
+  process.env.AMBASSADOR_APPLICATIONS_TO_EMAIL ||
+  process.env.AGREEMENT_ACCEPTANCE_TO_EMAIL ||
+  "";
 const CREW_REPLY_TO = "crew@asphaltanddirt.com";
 
 export type WelcomePart = 1 | 2;
