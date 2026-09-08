@@ -699,31 +699,6 @@ export const posts: BlogPost[] = [
     ],
   },
   {
-    slug: "the-gear-we-actually-use",
-    title: "The Gear We Actually Use",
-    excerpt: "Our favorite upgrades and gear that actually hold up when the trail gets tough.",
-    category: "Gear",
-    date: "2025-05-27",
-    image: { src: "/img/blog/gear-flatlay.jpg", alt: "Flatlay of off-road recovery gear" },
-  },
-  {
-    slug: "red-clay-run-community-ride-recap",
-    title: "Red Clay Run: Community Ride Recap",
-    excerpt: "Highlights, laughs, and lessons from an epic weekend on red clay and good vibes.",
-    category: "Events",
-    date: "2025-05-24",
-    image: { src: "/img/blog/trail-convoy.jpg", alt: "Aerial view of a Jeep convoy on a trail" },
-  },
-  {
-    slug: "overland-setup-essentials",
-    title: "Overland Setup Essentials",
-    excerpt: "The gear, mods, and systems that make long trips smoother.",
-    category: "Trail & Travel",
-    date: "2025-05-11",
-    image: { src: "/img/podcast/ep-convoy.jpg", alt: "Overland-equipped Jeep convoy on a forest road" },
-    editorsPick: true,
-  },
-  {
     slug: "tires-101-choosing-traction",
     title: "Tires 101: Match the Tire to the Mission",
     seoTitle: "How to Choose the Right Tires for Street or Trail",
@@ -870,6 +845,82 @@ export const posts: BlogPost[] = [
       { type: "paragraph", text: "Who was the first person in the car community who helped you when they did not have to — and what were you driving when it happened?" },
     ],
   },
+  {
+    slug: "best-overland-routes",
+    title: "The Best Overland Routes—and What It Takes to Run Them",
+    seoTitle: "Best Overland Routes: A Real-World Primer",
+    excerpt:
+      "The best overland routes are mostly legal dirt, gravel, forest roads, and pavement — not one endless rock-crawling trail. From the TAT and NEBDR to White Rim and the Dempster, here is what the routes and the vehicles running them actually require.",
+    metaDescription:
+      "Explore the best overland routes, from the TAT and BDRs to White Rim and the Dempster, with honest advice on vehicles, access, and planning.",
+    category: "Trail & Travel",
+    date: "2026-07-23",
+    image: {
+      src: "/img/blog/best-overland-routes.jpg",
+      alt: "Best Overland Routes — a Toyota 4Runner on a dusty mountain switchback with a paved highway winding through the valley below",
+    },
+    body: [
+      { type: "paragraph", text: "The fantasy is one unbroken dirt trail from your driveway to the horizon." },
+      { type: "paragraph", text: "The reality involves gas stations, county roads, closed gates, weather alerts, paper maps, and the occasional diner parking lot where everybody tries to figure out why the GPX line disappeared into somebody's pasture." },
+      { type: "paragraph", text: "Honestly, that reality is better." },
+
+      { type: "heading", text: "What Actually Counts as an Overland Route?" },
+      { type: "paragraph", text: "Most named overland routes are navigation lines assembled from existing public roads. They connect graded dirt, gravel, forest roads, legal two-track, and rougher sections with pavement transit stages." },
+      { type: "paragraph", text: "They usually are not continuously marked or signed. A GPS track tells you where its creator traveled; it does not guarantee that the road remains open, legal, or passable today." },
+      { type: "paragraph", text: "A trail can be one technical recreational segment. A park road may be regulated as a specific backcountry corridor. In the UK, \"green lane\" is a descriptive term rather than one universal legal category." },
+      { type: "paragraph", text: "What joins the routes in this article is distance. They take multiple days, cross jurisdictions, and require more planning than showing up at an off-road park for the afternoon." },
+
+      { type: "heading", text: "The Trans-America Trail Is the Headliner" },
+      { type: "paragraph", text: "Sam Correro started developing the Trans-America Trail, or TAT, in 1984 as a coast-to-coast dual-sport motorcycle route. It now reaches from the Atlantic side of North Carolina to Port Orford, Oregon, through a modular system of state tracks and ocean spurs." },
+      { type: "paragraph", text: "Depending on the edition, branches, detours, and endpoints, a crossing falls broadly in the 5,000-to-6,000-plus-mile neighborhood. There is no single permanent mileage because the route changes." },
+      { type: "paragraph", text: "The TAT is sold as GPX tracks, maps, and roll charts. It is not one signed trail, and it is definitely not all dirt. The eastern Atlantic spur alone contains substantial pavement, while the western sections bring desert, altitude, snow, mud, and long distances between services." },
+      { type: "paragraph", text: "The current operator supports both street-legal motorcycles and 4x4 travelers. Third-party 4x4 interpretations also exist, but they should not be confused with Sam's official tracks." },
+      { type: "paragraph", text: "That distinction matters. The confirmed access problems involve outdated or unofficial files directing travelers toward closed roads or private land. There is no solid evidence of one route-wide local revolt against the TAT, but there is documented friction around trespass, traffic near homes, and people treating a GPX line like a court order." },
+      { type: "paragraph", text: "It isn't one." },
+
+      { type: "heading", text: "BDRs—and Why the Northeast Deserves Space" },
+      { type: "paragraph", text: "Backcountry Discovery Routes is a nonprofit that develops off-highway routes for adventure and dual-sport motorcycles. Its classic routes generally run 600 to 1,300 miles, usually taking five to nine days. The organization publishes free GPX tracks, updates, planning information, maps, and route films." },
+      { type: "paragraph", text: "The motorcycle-first part matters. A public road may still be too narrow, tight, washed out, or awkward for a full-size truck. Add a trailer and every turnaround, descent, and recovery gets more complicated." },
+      { type: "paragraph", text: "The Northeast BDR covers roughly 1,300 miles through seven states, from the New York/Pennsylvania area to the Canadian border in Maine. It was the tenth BDR and the second East Coast BDR, following the Mid-Atlantic route — not the first BDR east of the Mississippi, as it is sometimes described." },
+      { type: "paragraph", text: "The Mid-Atlantic BDR adds roughly 1,080 miles between Virginia and Pennsylvania. The PA Wilds BDR-X is a 500-mile loop that BDR designed for both adventure motorcycles and 4x4s, while the newer Adirondacks BDR-X loops about 700 miles around Adirondack Park with roughly half its distance on pavement." },
+      { type: "paragraph", text: "Then there are the less commercial regional classics: Vermont's public-road Puppy Dog Route, the 600-plus-mile Trans-Wisconsin Adventure Trail, the community-built Trans-Mass Trail, and New Hampshire's roughly 350-mile Hampster Ride." },
+      { type: "paragraph", text: "Those routes prove you do not need Utah scenery to build a serious dirt-road trip. They also bring a very Northeast set of complications: seasonal roads, mud, narrow tree-lined tracks, old community GPX files, changing gates, and different rules from one state to the next." },
+
+      { type: "heading", text: "The Best Overland Routes Beyond the TAT" },
+      { type: "paragraph", text: "Out West, the Mojave Road runs approximately 150 miles across California desert. It is generally a multi-day 4x4 trip, but storm damage and current conditions can change its vehicle requirements quickly." },
+      { type: "paragraph", text: "Colorado's Alpine Loop packs mining history, high passes, and serious exposure into about 63 miles. The longer Colorado BDR stretches approximately 745 miles from Four Corners to Wyoming and is one of the BDR routes specifically described as accessible to 4x4s." },
+      { type: "paragraph", text: "The Magruder Road Corridor connects Idaho and Montana through 101 miles of mostly primitive road between two vast wilderness areas. It is remote in a way that makes mechanical condition and fuel planning more valuable than another row of lights." },
+      { type: "paragraph", text: "Utah's White Rim Road forms a roughly 100-mile loop through Canyonlands. This one comes with clear boundaries: the National Park Service requires a permit and a high-clearance, low-range 4x4. It is not crossover territory just because plenty of other famous routes are." },
+      { type: "paragraph", text: "Death Valley contains nearly 1,000 miles of paved and dirt roads, but it is a network rather than one continuous route. Some roads suit high-clearance AWD vehicles. Others require genuine 4WD experience, strong tires, extra water, and the ability to accept that recovery may be very far away." },
+      { type: "paragraph", text: "The Continental Divide needs an asterisk too. There is no single official legal motorized route following the divide. The official national scenic trail is primarily for hikers and equestrians. Vehicle travelers use several separately created road itineraries, each requiring its own access check." },
+
+      { type: "heading", text: "International Routes Change the Scale" },
+      { type: "paragraph", text: "Europe's Trans-Euro Trail offers roughly 100,000 kilometers of community-maintained motorcycle GPX tracks. Canada's Trans-Canada Adventure Trail is an approximately 15,000-kilometer community route for motorcycles and prepared 4x4s." },
+      { type: "paragraph", text: "Australia brings the 660-kilometer Gibb River Road and the much more remote, permit-controlled, roughly 1,850-kilometer Canning Stock Route. Heavy vehicles and trailers are discouraged on the Canning for good reason." },
+      { type: "paragraph", text: "Closer to home, Alaska's 414-mile Dalton Highway and Canada's 458-mile Dempster Highway are remote gravel highways rather than technical trails. The Pan-American is the pavement-heavy outlier: a highway network with many possible versions and a hard interruption at the Darién Gap." },
+      { type: "paragraph", text: "Different scale. Same need for current information." },
+
+      { type: "heading", text: "Overland Trip Planning Matters More Than the Catalog" },
+      { type: "paragraph", text: "Start with the newest official GPX file. Load it into Gaia GPS, onX Offroad, or another navigation app, then download the maps for offline use. Carry a paper overview because batteries, screens, mounts, and charging cables all fail." },
+      { type: "paragraph", text: "Plan sections around daylight, fuel, water, legal camping, and realistic dirt-road pace. BDR generally assumes about 100 to 150 miles per day. The TAT considers roughly 200 miles a full day." },
+      { type: "paragraph", text: "Check the weather and land-manager alerts immediately before departure. Snowpack can block Colorado passes into summer. Desert storms can erase roads. Rain can turn Mississippi clay into something that laughs at your tire tread." },
+      { type: "paragraph", text: "On national-forest land, check the current USFS Motor Vehicle Use Map. On BLM, state, tribal, and park land, check the relevant agency's rules. Follow posted signs and gates even when your screen says otherwise." },
+      { type: "paragraph", text: "Carry tire-repair tools, a compressor, a full-size spare where practical, rated recovery points, appropriate recovery equipment, basic tools, first-aid supplies, water, and reliable communications. On isolated roads, a satellite communicator earns its space much faster than most camp gadgets." },
+      { type: "paragraph", text: "Traveling with another vehicle adds recovery options and emergency transport. Solo travel can work, but it demands conservative decisions, a shared trip plan, firm check-in times, and the discipline to turn around early." },
+
+      { type: "heading", text: "Your Daily Driver May Already Be Close" },
+      { type: "paragraph", text: "Many famous routes — or large sections of them — can be handled by a dependable stock-ish 4x4, a carefully chosen AWD crossover, or a dual-sport motorcycle." },
+      { type: "paragraph", text: "The key phrase is \"carefully chosen.\"" },
+      { type: "paragraph", text: "Aired-down all-terrain tires, usable recovery points, protection for vulnerable components, adequate clearance, and a driver who understands the vehicle usually matter more than an oversized lift and 37-inch tires." },
+      { type: "paragraph", text: "More build is not automatically more prepared. Bigger tires add rotating and unsprung weight. Armor cuts into payload. Roof loads affect handling and wind noise. Tall suspension changes can make braking, steering, parking, fuel economy, and the paved drive home worse." },
+      { type: "paragraph", text: "That is the Asphalt & Dirt part of the equation. The truck still has to commute Monday morning. The crossover still has to sit in traffic. The motorcycle still has to survive the highway run before it ever reaches the forest road." },
+      { type: "paragraph", text: "Build for the trip you will actually take, then leave enough vehicle left to enjoy every mile before and after the dirt." },
+
+      { type: "heading", text: "Pick the Route Before the Parts" },
+      { type: "paragraph", text: "The best overland route is the one that matches your available time, season, vehicle, and appetite for risk. Start with the route, identify its actual problems, and prepare for those problems." },
+      { type: "paragraph", text: "If you had ten days and had to use the same vehicle you commute in, which route would you choose — and what is the first thing you would change before leaving?" },
+    ],
+  },
 ];
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
@@ -886,5 +937,7 @@ export function getAllPostsSorted(): BlogPost[] {
 }
 
 export function getEditorsPicks(): BlogPost[] {
-  return posts.filter((p) => p.editorsPick);
+  return posts
+    .filter((p) => p.editorsPick)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }

@@ -44,13 +44,13 @@ export default function BlogPage() {
             <div className="promo-banner mt-3">
               <div className="promo-media">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/img/blog/featured-rhino-rock.jpg" alt="Rhino Rock Jeep on a rocky mountain trail" />
+                <img src="/img/blog/best-overland-routes-featured.jpg" alt="A Toyota Tacoma with a bed topper on a gravel road, snowy mountains and a paved highway in the distance" />
               </div>
               <div className="promo-copy">
-                <span className="badge-outline" style={{ width: "fit-content" }}>Builds</span>
-                <h2 style={{ fontSize: 28 }}>Rhino Rock: Built For The Long Way Home</h2>
-                <p>Inside the choices, challenges, and trail-tested upgrades behind Jose&apos;s flagship build.</p>
-                <Link href="/builds/rhino-rock" className="btn btn-primary" style={{ width: "fit-content" }}>
+                <span className="badge-outline" style={{ width: "fit-content" }}>Trail &amp; Travel</span>
+                <h2 style={{ fontSize: 28 }}>The Best Overland Routes&mdash;and What It Takes to Run Them</h2>
+                <p>The TAT, the BDRs, White Rim, the Dempster&mdash;mostly legal dirt and pavement, not one endless trail. What the routes and the vehicles running them actually require.</p>
+                <Link href="/blog/best-overland-routes" className="btn btn-primary" style={{ width: "fit-content" }}>
                   Read Story
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                 </Link>
