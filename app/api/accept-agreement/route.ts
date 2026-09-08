@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
+import { sendAmbassadorWelcome } from "@/lib/ambassadorWelcomeSend";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AGREEMENT_ACCEPTANCE_TO_EMAIL || "team@asphaltanddirt.com";
@@ -144,8 +145,9 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
+  let updated;
   try {
-    await updateRecord(AMBASSADORS_TABLE, ambassador.id, {
+    updated = await updateRecord(AMBASSADORS_TABLE, ambassador.id, {
       "Agreement Signed": true,
       "Agreement Signed Date": todayISODate(),
       "Agreement Signature": legalName,
@@ -162,6 +164,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Something went wrong saving your acceptance. Please try again." }, { status: 502 });
   }
 
+  // If the promo code + tracking link were already staged on the record,
+  // the agreement was the last thing missing — send Welcome Email 2 (the
+  // code reveal) now. Otherwise it waits for the team to set the code and
+  // tick "Send Welcome 2". Best-effort: a failure here never fails the
+  // acceptance.
+  const codeReady = Boolean(
+    (updated.fields["Promo Code"] as string) && (updated.fields["Tracking Link"] as string),
+  );
+  if (codeReady && updated.fields["Welcome 2 Sent"] !== true) {
+    try {
+      await sendAmbassadorWelcome(updated, 2);
+    } catch (err) {
+      console.error("auto Welcome 2 send failed", err);
+    }
+  }
+
   // Notify the team so they know to send Welcome Email Part 2 (the code + link).
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
@@ -169,6 +187,7 @@ export async function POST(req: NextRequest) {
     const tier = (ambassador.fields.Tier as string) || "Road & Trail Member";
     const rate = TIER_RATE[tier] || "10%";
     const hasCode = Boolean((ambassador.fields["Promo Code"] as string) || "");
+    const welcome2Sent = codeReady && updated.fields["Welcome 2 Sent"] !== true;
     const row = (label: string, value: string) =>
       `<tr><td style="font-weight:bold;border-bottom:1px solid #eee;vertical-align:top;width:150px;">${escapeHtml(label)}</td><td style="border-bottom:1px solid #eee;white-space:pre-wrap;">${escapeHtml(value)}</td></tr>`;
     const html = `
@@ -192,9 +211,13 @@ export async function POST(req: NextRequest) {
         <h3 style="margin:24px 0 6px;">Onboarding checklist</h3>
         <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
           <li>${hasCode ? "Promo code already on the record — double-check it's live in Fourthwall." : "Create their discount code + tracked link in Fourthwall (10% customer discount)."}</li>
-          <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Fourthwall Promotion ID</b>, <b>Commission Rate</b> (${escapeHtml(rate)} for ${escapeHtml(tier)}), and <b>Start Date</b>.</li>
+          <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Tracking Link</b>, <b>Fourthwall Promotion ID</b>, <b>Commission Rate</b> (${escapeHtml(rate)} for ${escapeHtml(tier)}), and <b>Start Date</b>.</li>
           <li>Pack &amp; ship the welcome kit (patch, stickers, shirt — size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b>.</li>
-          <li>Send <b>Welcome Email Part 2</b> from Kit — the one with their code and tracking link. Only after steps 1–2 are done.</li>
+          <li>${
+            welcome2Sent
+              ? "<b>Welcome Email 2 (code reveal) was just sent automatically</b> — the code + tracking link were already on the record."
+              : "Once the Promo Code + Tracking Link are set, tick <b>Send Welcome 2</b> on their record — that sends the code-reveal email."
+          }</li>
         </ol>
       </div>
     `;
