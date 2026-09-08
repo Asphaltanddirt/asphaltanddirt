@@ -21,6 +21,45 @@ function todayISODate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Sends any welcome emails that staff has queued by ticking "Send Welcome
+ * 1" / "Send Welcome 2" on an Ambassador record. Run on a schedule (see
+ * /api/cron/ambassador-welcome) since Airtable automations can't call our
+ * API directly. Each send is idempotent and clears its own trigger flag,
+ * so re-running is safe.
+ */
+export async function processPendingWelcomes(): Promise<{
+  part1: WelcomeSendResult[];
+  part2: WelcomeSendResult[];
+}> {
+  const [p1recs, p2recs] = await Promise.all([
+    listRecords(AMBASSADORS_TABLE, "AND({Send Welcome 1}, NOT({Welcome 1 Sent}))"),
+    listRecords(AMBASSADORS_TABLE, "AND({Send Welcome 2}, NOT({Welcome 2 Sent}))"),
+  ]);
+
+  const part1: WelcomeSendResult[] = [];
+  for (const r of p1recs) {
+    try {
+      part1.push(await sendAmbassadorWelcome(r, 1));
+    } catch (err) {
+      console.error("processPendingWelcomes part 1 failed for", r.id, err);
+      part1.push({ status: "skipped", part: 1, reason: "send threw" });
+    }
+  }
+
+  const part2: WelcomeSendResult[] = [];
+  for (const r of p2recs) {
+    try {
+      part2.push(await sendAmbassadorWelcome(r, 2));
+    } catch (err) {
+      console.error("processPendingWelcomes part 2 failed for", r.id, err);
+      part2.push({ status: "skipped", part: 2, reason: "send threw" });
+    }
+  }
+
+  return { part1, part2 };
+}
+
 /** Find one Ambassador record by id (preferred) or email. */
 export async function findAmbassador(opts: {
   recordId?: string;
