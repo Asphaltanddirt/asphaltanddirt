@@ -665,7 +665,7 @@ export const posts: BlogPost[] = [
     metaDescription:
       "How to choose the right tires for street, track, trail or overland use — and the grip, noise, weight and wear tradeoffs that come with each.",
     category: "Gear",
-    date: "2026-09-08",
+    date: "2026-08-12",
     image: {
       src: "/img/blog/tires-101-choosing-traction.jpg",
       alt: "Tires 101: Match The Tire To The Mission — a Mustang on a wet mountain road beside a Bronco climbing a rocky dirt bank",
@@ -737,12 +737,71 @@ export const posts: BlogPost[] = [
   },
   {
     slug: "why-community-rides-matter",
-    title: "Why Community Rides Matter",
-    excerpt: "It's more than the trails—it's the people who show up.",
+    title: "The Build Is Only Half of It: Why Community Rides Matter",
+    seoTitle: "Why the Car Community Matters Beyond the Build",
+    excerpt:
+      "The build gets you through the gate. The people who teach, wrench, spot, recover, and make room for newcomers turn a collection of vehicles into a community — from the parking lot to the trailhead.",
+    metaDescription:
+      "From cars and coffee to trail rides, a good car community shares real knowledge, makes group travel safer, and helps when builds break.",
     category: "Culture",
-    date: "2025-05-03",
-    image: { src: "/img/blog/campfire-culture.jpg", alt: "Friends gathered around a campfire" },
+    date: "2026-08-13",
+    image: {
+      src: "/img/blog/why-community-rides-matter.jpg",
+      alt: "The Build Is Only Half Of It — a crew helping with a broken-down street car while another crew airs down tires on an off-road rig at a mountain pullout",
+    },
     editorsPick: true,
+    body: [
+      { type: "paragraph", text: "Your build can be perfect and still leave you standing alone in a parking lot." },
+      { type: "paragraph", text: "The car community is what happens after the hood goes up: somebody hears the miss, spots the loose bolt, hands you the right wrench, or tells you the line you are about to take is a terrible idea. The vehicle starts the conversation. The people give the hobby a pulse." },
+      { type: "paragraph", text: "That is why organized cruises, cars and coffee, autocross weekends, trail runs, and overland convoys still matter. At their best, they turn private obsession into shared experience." },
+      { type: "paragraph", text: "At their worst? They are traffic with matching stickers." },
+
+      { type: "heading", text: "What the Car Community Teaches That the Internet Cannot" },
+      { type: "paragraph", text: "Forums and videos are useful. We have all been saved by an ancient thread written by someone with a broken Photobucket link and the exact same problem." },
+      { type: "paragraph", text: "But a screen cannot listen to your engine, feel the play in a wheel bearing, or watch what your suspension does under load. At a good street meet, autocross, or track day, you can see how a modification actually fits, sounds, wears, and survives. You can ask the owner what failed, what they would buy again, and what they regret." },
+      { type: "paragraph", text: "The same thing happens on dirt. A trail guide can show you why one tire placement works, when momentum becomes wheelspin, how low pressure changes the vehicle, and when the smart move is the bypass. Watching a careful recovery in person teaches more than a stack of clips showing somebody yanking a truck by the wrong attachment point." },
+      { type: "paragraph", text: "That knowledge is not automatic. You still have to ask questions, listen, and occasionally accept that the experienced person pointing at your sketchy setup may have a point." },
+
+      { type: "heading", text: "Your Backup Plan Has a Name" },
+      { type: "paragraph", text: "Things break. Street cars overheat in cruise traffic. Old wiring gives up at the gas stop. A trail tire loses a bead. A tie rod decides it has contributed enough to the project." },
+      { type: "paragraph", text: "A solid group changes what happens next. Someone has a scan tool, jack, spare relay, tire plug kit, recovery strap, or the phone number of the person who knows that platform. More valuable, they have enough experience to stop the group from turning a small problem into a larger one." },
+      { type: "paragraph", text: "That safety net does not excuse showing up unprepared. Good events check the basics and communicate expectations. SCCA RoadRally guidance calls for a street-legal, insured car with working safety equipment. One current Jeep Jamboree participant guide requires items such as proper tow points, a full-size spare, seat belts, and a GMRS radio." },
+      { type: "paragraph", text: "A Sunday cruise does not need an inspection lane, and every trail day does not need a rulebook. \"We will figure it out\" works much better when the group planned before something went wrong." },
+
+      { type: "heading", text: "Good Groups Make Room for Rookies" },
+      { type: "paragraph", text: "Every expert was once the person quietly wondering where tech inspection was, how to use a radio, or whether a stock vehicle belonged there." },
+      { type: "paragraph", text: "Good groups remember that." },
+      { type: "paragraph", text: "SCCA's novice guidance recommends clear instructions, pre-event questions, experienced contacts, and deliberate interaction between newcomers and regulars. That is not hand-holding. It is how a car community survives longer than one generation." },
+      { type: "paragraph", text: "On the street side, that can mean welcoming the daily driver, unfinished project, or spectator who came to learn. At an autocross or track event, it means explaining the process and keeping speed inside the controlled venue." },
+      { type: "paragraph", text: "On an off-road trail ride, it means publishing honest difficulty, creating a beginner group, pointing out bypasses, and never shaming someone for asking for a spotter or deciding an obstacle is beyond their limit." },
+      { type: "paragraph", text: "There is a difference between standards and gatekeeping. Requiring working brakes or safe recovery points protects everyone. Acting like somebody needs a certain badge, tire size, budget, age, or résumé before they can belong protects nothing except a fragile pecking order." },
+
+      { type: "heading", text: "Yes, Cars and Coffee Can Be Awful" },
+      { type: "paragraph", text: "The complaints are real. Some meets feel like the same expensive cars in the same reserved row while everyone else records content for people who are not there. Some cruises attract drivers who think a public road becomes a qualifying session because a pack is behind them." },
+      { type: "paragraph", text: "Trail groups have their own version: the leader who hides the real difficulty, the built rig that disappears ahead, the person who blocks an obstacle for photos, or the driver who digs a new bypass rather than backing down." },
+      { type: "paragraph", text: "Sometimes the event is the problem." },
+      { type: "paragraph", text: "Owner discussions across r/cars and overlanding groups show both sides. People describe cliques, ego, reckless exits, endless waiting, and club politics. They also describe meeting mentors, finding track events, learning repairs, getting recovered, and making friends they would never have met otherwise." },
+      { type: "paragraph", text: "Do not confuse a bad room with a dead hobby. Leave the group that rewards bad behavior and support the one that does the work." },
+
+      { type: "heading", text: "Group Car Rides Need Structure" },
+      { type: "paragraph", text: "A well-run cruise is not a rolling roadblock. It has a route, a briefing, lead and sweep cars, sensible spacing, regroup points, and a clear instruction to obey every traffic signal. PCA's touring standards state that safety matters more than staying together. Getting separated is inconvenient; running a red light to catch the group is dangerous." },
+      { type: "paragraph", text: "Off-road trail rides need the same discipline in different clothes. Establish a radio channel. Keep the vehicle behind you in sight. Wait at junctions. Put one vehicle on an obstacle at a time. Match the pace to the least experienced driver, and split the convoy when size starts working against communication or trail access." },
+      { type: "paragraph", text: "Experienced owners disagree about the ideal group size. Some prefer three to five vehicles. Others have run much larger groups successfully. There is no magic number. A five-rig mess is still a mess, while a larger ride with capable leaders, intermediate helpers, and a reliable sweep can work." },
+      { type: "paragraph", text: "Structure is what keeps one person's mistake from becoming everybody's afternoon." },
+
+      { type: "heading", text: "The Venue Remembers Who Showed Up" },
+      { type: "paragraph", text: "Community includes the place hosting it." },
+      { type: "paragraph", text: "A parking-lot meet survives because attendees respect the property owner, leave fire lanes open, control noise, clean up, and do not turn the exit into a burnout contest. One reckless departure can wipe out a pile of organizer work." },
+      { type: "paragraph", text: "The dirt version has higher stakes. On National Forest System land, Motor Vehicle Use Maps identify which routes are legal for which vehicle classes and seasons. Tire tracks are not permission. Tread Lightly's guidance is equally plain: stay on designated routes, drive over rather than around obstacles, yield to other users, and keep speed and noise down." },
+      { type: "paragraph", text: "A club cleanup is worthwhile. It does not buy permission to cut a new line the next weekend." },
+      { type: "paragraph", text: "The best groups understand that access is borrowed. Showing up means protecting the road, lot, track, or trail so the next gathering can happen." },
+
+      { type: "heading", text: "The People Are the Other Half" },
+      { type: "paragraph", text: "The car gets you through the gate. The people teach you where to stand, what to watch, which mistake they already paid for, and when to put the tools down and order food." },
+      { type: "paragraph", text: "No group is perfect. Some are too big. Some are too cliquey. Some need better rules, better leaders, or a firm goodbye for the person who keeps making everyone look bad. The value comes from people making the hobby safer, smarter, more welcoming, and more fun." },
+      { type: "paragraph", text: "The build is half of it. The people willing to teach, spot, wrench, recover, wait, and share the road or trail are the other half." },
+      { type: "paragraph", text: "Who was the first person in the car community who helped you when they did not have to — and what were you driving when it happened?" },
+    ],
   },
 ];
 
