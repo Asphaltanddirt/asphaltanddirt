@@ -1,9 +1,156 @@
-import { upsertRecords, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import {
+  listRecords,
+  createRecord,
+  updateRecord,
+  upsertRecords,
+  isAirtableConfigured,
+  type AirtableFields,
+} from "@/lib/airtable";
 
 // Own base (not Road & Trail Crew, Testimonials, or Build Submissions) —
-// keeps its record count independent on the free plan.
+// keeps its record count independent on the free plan. Airtable is the
+// source of truth for the subscriber list; email is sent from our own
+// code over this list (see lib/newsletterSend.ts), not from a third-party
+// ESP's contact store.
 const BASE_ID = process.env.AIRTABLE_NEWSLETTER_BASE_ID;
 const TABLE = process.env.AIRTABLE_NEWSLETTER_TABLE || "Subscribers";
+
+/** The list is multi-brand — one row per (email, brand). This is the only
+ *  brand today; siblings get their own value when they come online. */
+export const DEFAULT_BRAND = "Asphalt & Dirt";
+
+function assertConfigured() {
+  if (!isAirtableConfigured(BASE_ID)) {
+    throw new Error("Newsletter base is not configured (missing AIRTABLE_NEWSLETTER_BASE_ID).");
+  }
+}
+
+/** filterByFormula string literals are single-quoted — escape any quote in
+ *  the interpolated value so it can't break out of the literal. */
+function escapeFormulaString(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function todayISODate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function newToken() {
+  return globalThis.crypto.randomUUID();
+}
+
+// ---------------------------------------------------------------------------
+// Subscribe / unsubscribe — Airtable as source of truth
+// ---------------------------------------------------------------------------
+
+export type SubscribeOutcome = "subscribed" | "already-subscribed" | "resubscribed";
+
+export interface NewsletterRecipient {
+  email: string;
+  firstName: string;
+  token: string;
+}
+
+/** Adds (or reactivates) a subscriber. Idempotent — safe to call for an
+ *  email that's already on the list. Matches on (Email, Brand). */
+export async function addSubscriber(input: {
+  email: string;
+  source?: string;
+  firstName?: string;
+  brand?: string;
+}): Promise<SubscribeOutcome> {
+  assertConfigured();
+  const email = input.email.trim().toLowerCase();
+  const brand = input.brand || DEFAULT_BRAND;
+
+  const existing = await listRecords(
+    TABLE,
+    `AND(LOWER({Email}) = '${escapeFormulaString(email)}', {Brand} = '${escapeFormulaString(brand)}')`,
+    { baseId: BASE_ID },
+  );
+  const record = existing[0];
+
+  if (record) {
+    if ((record.fields.State as string) === "Active") return "already-subscribed";
+    // Cancelled or Bounced -> reactivate, keeping the existing unsubscribe token if it has one.
+    await updateRecord(
+      TABLE,
+      record.id,
+      {
+        State: "Active",
+        "Subscribed Date": todayISODate(),
+        "Unsubscribed Date": null,
+        ...(record.fields["Unsubscribe Token"] ? {} : { "Unsubscribe Token": newToken() }),
+        ...(input.source ? { Source: input.source } : {}),
+      },
+      { baseId: BASE_ID },
+    );
+    return "resubscribed";
+  }
+
+  const fields: AirtableFields = {
+    Email: email,
+    Brand: brand,
+    State: "Active",
+    "Subscribed Date": todayISODate(),
+    "Unsubscribe Token": newToken(),
+  };
+  if (input.source) fields.Source = input.source;
+  if (input.firstName) fields["First Name"] = input.firstName;
+
+  await createRecord(TABLE, fields, { baseId: BASE_ID, typecast: true });
+  return "subscribed";
+}
+
+/** Every Active subscriber for a brand, with the token used to build their
+ *  personal unsubscribe link. Rows missing an email or token are dropped. */
+export async function listActiveRecipients(brand: string = DEFAULT_BRAND): Promise<NewsletterRecipient[]> {
+  assertConfigured();
+  const records = await listRecords(
+    TABLE,
+    `AND({State} = 'Active', {Brand} = '${escapeFormulaString(brand)}')`,
+    { baseId: BASE_ID },
+  );
+  return records
+    .map((r) => ({
+      email: ((r.fields.Email as string) || "").trim(),
+      firstName: ((r.fields["First Name"] as string) || "").trim(),
+      token: (r.fields["Unsubscribe Token"] as string) || "",
+    }))
+    .filter((r) => r.email && r.token);
+}
+
+/** Flips a subscriber to Cancelled by their unsubscribe token. Idempotent. */
+export async function unsubscribeByToken(token: string): Promise<{ ok: boolean; email?: string }> {
+  assertConfigured();
+  const clean = token.trim();
+  if (!clean) return { ok: false };
+
+  const records = await listRecords(
+    TABLE,
+    `{Unsubscribe Token} = '${escapeFormulaString(clean)}'`,
+    { baseId: BASE_ID },
+  );
+  const record = records[0];
+  if (!record) return { ok: false };
+
+  if ((record.fields.State as string) !== "Cancelled") {
+    await updateRecord(
+      TABLE,
+      record.id,
+      { State: "Cancelled", "Unsubscribed Date": todayISODate() },
+      { baseId: BASE_ID },
+    );
+  }
+  return { ok: true, email: (record.fields.Email as string) || undefined };
+}
+
+// ---------------------------------------------------------------------------
+// One-time Kit -> Airtable migration
+// ---------------------------------------------------------------------------
+// Kept only to pull the existing Kit subscribers into Airtable once. After
+// that migration, Airtable is authoritative and /api/subscribe writes here
+// directly — Kit is out of the loop.
 
 const KIT_STATE_LABELS: Record<string, string> = {
   active: "Active",
@@ -48,26 +195,40 @@ async function fetchAllKitSubscribers(apiKey: string): Promise<KitSubscriber[]> 
 }
 
 /** Pulls every subscriber from Kit and upserts them into the Newsletter
- *  base, matched on Kit ID. Returns the count synced. Throws on failure —
- *  callers (the admin route) surface that to whoever clicked the button. */
+ *  base, matched on Kit ID. Assigns the current brand and a fresh
+ *  unsubscribe token to any row that doesn't have one yet. Returns the
+ *  count synced. */
 export async function syncNewsletterSubscribers(): Promise<number> {
   const kitApiKey = process.env.KIT_API_KEY;
   if (!kitApiKey) throw new Error("Kit is not configured (missing KIT_API_KEY).");
-  if (!isAirtableConfigured(BASE_ID)) throw new Error("Newsletter base is not configured (missing AIRTABLE_NEWSLETTER_BASE_ID).");
+  assertConfigured();
 
   const subscribers = await fetchAllKitSubscribers(kitApiKey);
   const now = new Date().toISOString();
 
-  const records: { fields: AirtableFields }[] = subscribers.map((s) => ({
-    fields: {
-      Email: s.email_address,
-      "First Name": s.first_name || "",
-      "Kit ID": s.id,
-      State: KIT_STATE_LABELS[s.state] || undefined,
-      "Subscribed Date": s.created_at.slice(0, 10), // ISO date, no time component
-      "Last Synced": now,
-    },
-  }));
+  // Existing rows keyed by Kit ID so we only mint a token / set brand once.
+  const existing = await listRecords(TABLE, undefined, { baseId: BASE_ID });
+  const byKitId = new Map<number, (typeof existing)[number]>();
+  for (const r of existing) {
+    const kitId = r.fields["Kit ID"] as number | undefined;
+    if (typeof kitId === "number") byKitId.set(kitId, r);
+  }
+
+  const records: { fields: AirtableFields }[] = subscribers.map((s) => {
+    const prior = byKitId.get(s.id);
+    return {
+      fields: {
+        Email: s.email_address,
+        "First Name": s.first_name || "",
+        "Kit ID": s.id,
+        Brand: (prior?.fields.Brand as string) || DEFAULT_BRAND,
+        State: KIT_STATE_LABELS[s.state] || undefined,
+        "Subscribed Date": s.created_at.slice(0, 10),
+        "Unsubscribe Token": (prior?.fields["Unsubscribe Token"] as string) || newToken(),
+        "Last Synced": now,
+      },
+    };
+  });
 
   await upsertRecords(TABLE, records, ["Kit ID"], { baseId: BASE_ID });
   return records.length;

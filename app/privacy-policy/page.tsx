@@ -55,9 +55,9 @@ export default function PrivacyPolicyPage() {
         <h2>Who We Share It With</h2>
         <p>
           We share what&apos;s necessary with the services that make the site and shop work:
-          Fourthwall (our commerce and fulfillment platform), Kit (our email newsletter provider),
-          Airtable (where submitted forms are stored for review), and standard web analytics
-          tools. We don&apos;t sell your personal information to anyone.
+          Fourthwall (our commerce and fulfillment platform), Airtable (where newsletter
+          subscriptions and submitted forms are stored), Resend (which delivers our email),
+          and standard web analytics tools. We don&apos;t sell your personal information to anyone.
         </p>
 
         <h2>Cookies</h2>
