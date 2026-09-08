@@ -625,11 +625,78 @@ export const posts: BlogPost[] = [
   },
   {
     slug: "what-makes-a-daily-driver-trail-ready",
-    title: "What Makes A Daily Driver Trail Ready",
-    excerpt: "Highlights, laughs, and lessons from an epic weekend on red clay and good vibes.",
+    title: "Build a Trail-Ready Daily Driver Without Ruining Monday",
+    seoTitle: "How to Build a Trail-Ready Daily Driver",
+    excerpt:
+      "A trail-ready daily driver has two jobs: handle the commute without beating you up, then carry you through the trails you actually run. Real capability starts with tires, recovery, protection, sensible geometry, and knowing when enough is enough.",
+    metaDescription:
+      "Build a trail-ready daily driver with the right tires, recovery points, protection, and restraint — without wrecking its pavement manners.",
     category: "Builds",
-    date: "2025-05-30",
-    image: { src: "/img/builds/rock-rhino.jpg", alt: "Jeep built as a daily driver on a trail" },
+    date: "2026-07-30",
+    image: {
+      src: "/img/blog/what-makes-a-daily-driver-trail-ready.jpg",
+      alt: "Trail Ready, Daily Driven — a lifted Subaru crossover on all-terrain tires transitioning from paved mountain road onto a rocky dirt trail at sunset",
+    },
+    editorsPick: true,
+    body: [
+      { type: "paragraph", text: "One vehicle. Two jobs." },
+      { type: "paragraph", text: "A trail-ready daily driver has to survive traffic, rain, emergency stops, parking garages, and thousands of ordinary pavement miles. Then it has to leave the asphalt on Saturday, handle the trail you actually chose, and get home without depending on luck." },
+      { type: "paragraph", text: "It could be a Subaru, midsize truck, 4Runner, AWD crossover, or lifted van. The badge matters less than the mission." },
+      { type: "paragraph", text: "Trail ready is a spectrum. Build for your weekends, not the heroic version of yourself represented by an online shopping cart." },
+
+      { type: "heading", text: "Start With the Trails You Actually Drive" },
+      { type: "paragraph", text: "Before buying anything, define the job. Are your weekends graded roads, sand, mud, washboard, rock, ruts, or ledges? How remote are they, and what changes when it rains?" },
+      { type: "paragraph", text: "Those answers decide the build. National Park Service guidance makes the same distinction: many less-rugged roads in places like Mojave National Preserve can suit an appropriate crossover, while some Canyonlands backcountry roads require high-clearance, low-range four-wheel drive. \"Off-road\" is too broad to be a useful specification." },
+      { type: "paragraph", text: "Start with a mechanically sound vehicle and a conservative route. Learn where it scrapes, where traction runs out, what gets hot, and what you cannot recover from safely. A sensible daily driver off-road build fixes a limitation the vehicle has actually shown." },
+
+      { type: "heading", text: "The Trail-Ready Daily Driver Starts With Tires" },
+      { type: "paragraph", text: "Tires are the first meaningful upgrade for most mixed-use vehicles. They control the vehicle's contact with pavement, gravel, mud, rock, and snow." },
+      { type: "paragraph", text: "The answer is rarely the tallest, heaviest all-terrain that clears the fender. When shopping for off-road tires for daily driving, look at wet braking, winter performance, road noise, load index, sidewall construction, weight, and replacement availability. Tire Rack's testing has found large differences in pavement behavior among tires wearing the same broad A/T label." },
+      { type: "paragraph", text: "Load Range E can make sense for a loaded truck that repeatedly sees sharp rock. On a lightly loaded crossover, that construction may add weight and stiffness without solving a real problem. \"Ten-ply rated\" is also a load-capacity category, not a promise of ten physical plies, as the U.S. Tire Manufacturers Association explains." },
+      { type: "paragraph", text: "Carry a compatible spare, a repair kit, and the tools needed to lift the vehicle safely. A larger tire does little good when the spare or jack stopped matching the build two modifications ago." },
+
+      { type: "heading", text: "Recovery Points You Can Actually Use" },
+      { type: "paragraph", text: "A recovery kit is useful only when the vehicle has safe places to attach it. Identify manufacturer-approved or properly engineered front and rear recovery points before the trail gets difficult." },
+      { type: "paragraph", text: "Do not assume a tie-down, towing eye, hitch pin, or tow ball can handle a dynamic pull. The International 4-Wheel Drive Trainers' Association warns that appearances mislead and off-axis pulls can reduce capacity or damage the frame. Check the vehicle manual and equipment ratings." },
+      { type: "paragraph", text: "Then learn how to use the gear. A rated strap in unopened packaging is inventory. Recovery requires communication, bystander control, an assessment of why the vehicle is stuck, and a plan that applies the least force necessary." },
+
+      { type: "heading", text: "Protect What Can End the Weekend" },
+      { type: "paragraph", text: "Look underneath and identify the oil pan, transmission, transfer case, fuel tank, differentials, exhaust, cooling hardware, rocker panels, and battery enclosure where applicable." },
+      { type: "paragraph", text: "Protect the components most likely to contact your terrain. Factory skids may be enough for maintained trails. Rock-heavy routes can justify thicker and more complete coverage." },
+      { type: "paragraph", text: "Full steel armor carries a price even when it never touches a rock. It consumes payload, changes spring requirements, adds work for the brakes, and rides to the office every Monday." },
+      { type: "paragraph", text: "Armor should earn its weight." },
+
+      { type: "heading", text: "Clearance Is More Than Lift Height" },
+      { type: "paragraph", text: "Ground clearance is useful, but it is only one measurement. Approach angle determines whether the front hits first. Departure angle does the same at the rear. Breakover angle tells you whether the center hangs up as the axles cross a crest." },
+      { type: "paragraph", text: "Ford's Transit Trail shows why. Ford's published specs put the long-body van and the extended-length high-roof van at the same 6.7 inches of minimum ground clearance, but their departure angles are 25.3 and 15.6 degrees. The longer rear overhang changes what the van can actually clear even though the ground-clearance number looks identical." },
+      { type: "paragraph", text: "A lift can improve body clearance and some angles, but it does not raise every low point equally. On a solid axle, the differential gains clearance mainly through tire radius. Independent-suspension vehicles respond differently. Measure the real vehicle rather than repeating a universal lift rule." },
+      { type: "paragraph", text: "Larger tires and more lift can also change effective gearing, steering feel, braking response, alignment, CV-joint angles, stability-system behavior, and total height. Add a roof rack or tent and the work garage may become the toughest obstacle the build faces." },
+      { type: "paragraph", text: "Owner reports on lift quality and driveline wear vary widely. They are anecdotes, not universal evidence. Claims that every mild lift is harmless or automatically destroys axles are speculation without a specific vehicle, kit, alignment, tire, and use case." },
+
+      { type: "heading", text: "Air Down, Then Air Back Up" },
+      { type: "paragraph", text: "Lower tire pressure can create a longer footprint, improve compliance over rough surfaces, and help flotation on sand or soft ground. Taken too far, it can damage a tire or unseat a bead." },
+      { type: "paragraph", text: "There is no magic trail PSI. Vehicle weight, payload, tire and wheel construction, terrain, temperature, and speed all matter. Start conservatively, follow vehicle and tire guidance, keep speeds down, and adjust with a clear reason." },
+      { type: "paragraph", text: "Carry an accurate gauge, a deflator, and a compressor. Ford and BFGoodrich both stress restoring proper pressure before returning to pavement because underinflation compromises handling, tire life, and fuel efficiency." },
+
+      { type: "heading", text: "Lockers and Gearing Need a Job" },
+      { type: "paragraph", text: "Modern AWD systems and brake-based traction control can take a crossover surprisingly far on suitable terrain. Low range gives a true 4x4 more control and torque multiplication on steep, rocky, or soft sections. A locking differential helps when wheel lift or uneven traction defeats an open differential." },
+      { type: "paragraph", text: "None of those systems changes bumper geometry or protects an oil pan. Electronics cannot negotiate an obstacle the vehicle physically cannot clear." },
+      { type: "paragraph", text: "Re-gearing can restore drivability and low-speed control after a substantial tire-size increase. If the stock gearing works with the actual tire size, load, and terrain, leave it alone." },
+
+      { type: "heading", text: "Count the Daily-Driver Tax" },
+      { type: "paragraph", text: "Every permanent modification follows the vehicle onto pavement." },
+      { type: "paragraph", text: "**Heavy wheels and tires** add rotating and unsprung mass, affecting acceleration, braking, steering, and suspension response." },
+      { type: "paragraph", text: "**Aggressive tread** can add noise and surrender wet-road refinement for traction the vehicle may rarely use." },
+      { type: "paragraph", text: "**Lift, racks, tents, armor, and spare carriers** can increase drag, body movement, wear, total height, and fuel use." },
+      { type: "paragraph", text: "**Aftermarket equipment** consumes payload and may require disclosure or added insurance coverage. Policy terms vary, so check with the insurer before assuming expensive parts are covered. Progressive's guidance on modified-car coverage makes the same point." },
+      { type: "paragraph", text: "This is the other half of a daily driver off-road build. A capable weekend off-road vehicle that is miserable for the other five days has missed the assignment." },
+
+      { type: "heading", text: "The Part You Cannot Bolt On" },
+      { type: "paragraph", text: "The best build still needs a driver willing to scout an obstacle, use a spotter, choose a careful line, and turn around. It also needs navigation, first aid, water, communication, and a post-trail inspection." },
+      { type: "paragraph", text: "Driver skill cannot make an unsuitable vehicle fit a route. Hardware cannot rescue bad judgment indefinitely. Capability comes from matching the vehicle, equipment, route, and driver on the same day." },
+      { type: "paragraph", text: "That is what makes a daily driver trail ready: enough tire, protection, recovery, geometry, and traction for its real weekends, with enough restraint left to remain good on asphalt." },
+      { type: "paragraph", text: "So be honest about your weekends: which upgrade on your list is for the trail you actually run, and which one is for the trail you keep meaning to?" },
+    ],
   },
   {
     slug: "the-gear-we-actually-use",
@@ -665,7 +732,7 @@ export const posts: BlogPost[] = [
     metaDescription:
       "How to choose the right tires for street, track, trail or overland use — and the grip, noise, weight and wear tradeoffs that come with each.",
     category: "Gear",
-    date: "2026-08-12",
+    date: "2026-08-13",
     image: {
       src: "/img/blog/tires-101-choosing-traction.jpg",
       alt: "Tires 101: Match The Tire To The Mission — a Mustang on a wet mountain road beside a Bronco climbing a rocky dirt bank",
@@ -744,7 +811,7 @@ export const posts: BlogPost[] = [
     metaDescription:
       "From cars and coffee to trail rides, a good car community shares real knowledge, makes group travel safer, and helps when builds break.",
     category: "Culture",
-    date: "2026-08-13",
+    date: "2026-08-06",
     image: {
       src: "/img/blog/why-community-rides-matter.jpg",
       alt: "The Build Is Only Half Of It — a crew helping with a broken-down street car while another crew airs down tires on an off-road rig at a mountain pullout",
