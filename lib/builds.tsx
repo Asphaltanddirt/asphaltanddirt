@@ -164,7 +164,7 @@ export const builds: Build[] = [
   {
     slug: "iron-bandit",
     nameLines: ["Iron", "Bandit"],
-    vehicle: "2019 Jeep Wrangler JLU",
+    vehicle: "Jeep Wrangler JK Unlimited",
     lead: "A proven trail weapon. Iron Bandit is built for the wild, tested on the rocks, and trusted when it counts.",
     kicker: "Dan's Trail Build",
     category: "trail-built",
@@ -173,8 +173,8 @@ export const builds: Build[] = [
       { value: "37\"", unit: "Tires", icon: "compass" },
       { value: "4.5\"", unit: "Lift", icon: "lift" },
     ],
-    listingImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, Dan's 2019 Jeep Wrangler JLU" },
-    heroImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, a 2019 Jeep Wrangler JLU on the trail" },
+    listingImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, Dan's Jeep Wrangler JK Unlimited" },
+    heroImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, a Jeep Wrangler JK Unlimited on the trail" },
     listingSpecs: [
       { label: "Engine", value: "3.6L Pentastar V6" },
       { label: "Axles", value: "Dana 44 Front & Rear" },
@@ -182,14 +182,14 @@ export const builds: Build[] = [
       { label: "Tires", value: "37\" Mickey Thompson MTZ" },
     ],
     specs: [
-      { label: "Base Vehicle", value: "2019 Jeep Wrangler JLU", icon: "vehicle" },
+      { label: "Base Vehicle", value: "Jeep Wrangler JK Unlimited", icon: "vehicle" },
       { label: "Engine", value: "3.6L Pentastar V6 (285 HP)", icon: "bolt" },
       { label: "Axles", value: "Dana 44 Front & Rear", icon: "cross" },
       { label: "Suspension", value: "Rock Krawler 4.5\"", icon: "lift" },
       { label: "Tires", value: "37\" Mickey Thompson MTZ", icon: "compass" },
     ],
     aboutText:
-      "Iron Bandit is the trail-first rig of the group — a 2019 JLU on 4.5 inches of Rock Krawler, Dana 44s front and rear, and 37-inch Mickey Thompson MTZs. Less about the spec sheet, more about where it's been: this is the one that gets pointed at the rocky, rutted, technical stuff and comes back out the other side. Full build story coming straight from Dan.",
+      "Iron Bandit is the trail-first rig of the group — a JK Unlimited on 4.5 inches of Rock Krawler, Dana 44s front and rear, and 37-inch Mickey Thompson MTZs. Less about the spec sheet, more about where it's been: this is the one that gets pointed at the rocky, rutted, technical stuff and comes back out the other side. Full build story coming straight from Dan.",
     aboutStats: [
       { label: "Primary Terrain", value: "Rocks & Trails", icon: "cross" },
       { label: "Build Goal", value: "Durability & Trail Capability", icon: "bolt" },
