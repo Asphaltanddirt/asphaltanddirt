@@ -106,6 +106,21 @@ New Ambassadors fields: `Tracking Link` (url), `Send Welcome 1`,
   sends the code reveal. (Or: if the code + link are already on the
   record when they sign, Part 2 goes out automatically right then.)
 
+### One-page interface: the Send Welcome buttons
+
+The Road & Trail approval interface has "Send Welcome 1 / 2" buttons.
+Setup (all Airtable UI):
+- **Ambassadors table** — two formula fields `Welcome 1 URL` / `Welcome 2 URL`:
+  `"https://asphaltanddirt.com/api/ambassador-welcome?part=1&key=<AMBASSADOR_WELCOME_KEY>&recordId=" & RECORD_ID()`
+- **Applications table** — two lookup fields (same names) through the
+  `Ambassador Record` link.
+- **Interface buttons** — Action "Go to URL in record" → the lookup field.
+- `AMBASSADOR_WELCOME_KEY` is set in Vercel — a scoped key (only this
+  endpoint; a leak just lets someone re-send a welcome email). The GET
+  handler on `/api/ambassador-welcome` returns a styled confirmation page
+  instead of JSON.
+The `Send Welcome 1/2` checkbox + cron path still works too, side by side.
+
 ### Phase 2 loose ends
 - [x] `CRON_SECRET` set in Vercel.
 - [ ] **`/ambassadors/*` is still behind the coming-soon gate.** The
