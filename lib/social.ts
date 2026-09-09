@@ -5,9 +5,11 @@ export const socialLinks = {
   tiktok: "https://www.tiktok.com/@Asphaltanddirtpodcast",
   youtube: "https://www.youtube.com/@Asphaltanddirtpodcast",
   x: "https://x.com/AsphaltandDirt_",
-  // WhatsApp for Business "click to chat" short link. Consumers hide the
-  // icon when this is empty, so it never ships a dead link.
-  whatsapp: "https://wa.me/message/YWCFCJQJX3NRF1",
+  // WhatsApp for Business "click to chat" link. Consumers hide the icon
+  // when this is empty. The api.whatsapp.com form with app_absent=0 falls
+  // back to WhatsApp Web instead of erroring when the desktop app isn't
+  // installed.
+  whatsapp: "https://api.whatsapp.com/message/YWCFCJQJX3NRF1?autoload=1&app_absent=0",
 } as const;
 
 // Where to actually listen — used on pages that pitch the podcast itself
