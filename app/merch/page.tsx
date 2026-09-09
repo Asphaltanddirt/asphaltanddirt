@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import { getProductsBySlugs, MERCH_COLLECTIONS, type Product } from "@/lib/fourthwall";
+import { getProductSlugsFor } from "@/lib/featuredProducts";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 
 export const metadata: Metadata = {
@@ -40,16 +41,17 @@ const COLLECTION_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-// Hand-picked, not a live query — swap slugs here to change what's featured.
-const FEATURED_SLUGS = [
+// Fallback picks — used only when the Featured Products Airtable table has
+// no active rows for the section (or Airtable isn't configured). Curate
+// there, not here.
+const FEATURED_SLUGS_FALLBACK = [
   "protect-the-culture-heavyweight-tee",
   "earn-it-hoodie",
   "little-crawlers-trail-tee",
   "trailhead-trucker",
 ];
 
-// Placeholder picks — rotate these out for whatever's actually newest.
-const NEW_RELEASE_SLUGS = [
+const NEW_RELEASE_SLUGS_FALLBACK = [
   "pit-lane-mouse-pad",
   "garage-desk-mat",
   "first-crawl-bodysuit",
@@ -78,9 +80,13 @@ function ProductGrid({ products }: { products: Product[] }) {
 }
 
 export default async function MerchPage() {
+  const [featuredSlugs, newReleaseSlugs] = await Promise.all([
+    getProductSlugsFor("Merch Featured"),
+    getProductSlugsFor("Merch New Release"),
+  ]);
   const [featured, newReleases, testimonials] = await Promise.all([
-    getProductsBySlugs(FEATURED_SLUGS),
-    getProductsBySlugs(NEW_RELEASE_SLUGS),
+    getProductsBySlugs(featuredSlugs.length ? featuredSlugs : FEATURED_SLUGS_FALLBACK),
+    getProductsBySlugs(newReleaseSlugs.length ? newReleaseSlugs : NEW_RELEASE_SLUGS_FALLBACK),
     getApprovedTestimonials(3, "customer"),
   ]);
 

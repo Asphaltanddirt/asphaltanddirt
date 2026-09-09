@@ -2,12 +2,18 @@ import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import PlatformGrid from "@/components/PlatformGrid";
 import { episodes } from "@/lib/episodes";
-import { getFeaturedProducts } from "@/lib/fourthwall";
+import { getFeaturedProducts, getProductsBySlugs } from "@/lib/fourthwall";
+import { getProductSlugsFor } from "@/lib/featuredProducts";
 
 const latestEpisode = episodes[0];
 
 export default async function HomePage() {
-  const products = await getFeaturedProducts();
+  // The "Home" section of the Featured Products Airtable table drives this
+  // grid; if it's empty or unconfigured, fall back to the newest products.
+  const homeSlugs = await getProductSlugsFor("Home");
+  const products = homeSlugs.length
+    ? await getProductsBySlugs(homeSlugs)
+    : await getFeaturedProducts();
 
   return (
     <>
