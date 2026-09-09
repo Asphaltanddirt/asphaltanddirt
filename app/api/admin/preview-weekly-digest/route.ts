@@ -40,11 +40,27 @@ export async function GET(req: NextRequest) {
     options = draft.options;
   } else if (full) {
     options = {
+      featureStory: {
+        teaser:
+          "550 turbocharged horsepower, zero V8 rumble. We drove the Charger Hurricane back-to-back with a HEMI car to find out whether muscle is a number or a feeling.",
+      },
+      garageBuildSlug: "shockwave",
       trailTalk: {
         title: "37s Or 40s?",
-        body: "Would you run 40s on a daily-driven Wrangler, or is 37 the smarter sweet spot?",
-        ctaText: "Join The Conversation",
-        ctaUrl: "https://www.facebook.com/TeamAsphaltanddirt",
+        body: "Would you run 40s on a daily-driven Wrangler, or is 37 the smarter sweet spot? Monday's featured post in the group broke it down — jump in.",
+        ctaText: "Read The Thread",
+        ctaUrl: "https://www.facebook.com/share/g/1DEn4B1EX3/",
+      },
+      alsoThisWeek: {
+        title: "Tires 101: Match The Tire To The Mission",
+        body: "All-terrain, mud-terrain, or a hybrid — how tread pattern, load range, and sidewall actually change the way your truck drives on the street.",
+        url: "https://asphaltanddirt.com/blog/tires-101-match-the-tire-to-the-mission",
+      },
+      event: {
+        title: "Fall Foliage Run — Hawk Mountain",
+        teaser:
+          "Saturday, Oct 11. Meet at the Cabela's lot at 8am, airing down at the trailhead by 9. Easy-to-moderate, family rigs welcome. RSVP in the group.",
+        url: "https://www.facebook.com/share/g/1DEn4B1EX3/",
       },
       rigOfTheWeek: {
         name: "Mike's JLUR",
@@ -52,7 +68,9 @@ export async function GET(req: NextRequest) {
           "37s, beadlocks, armor, and a setup built for weekends on the trail without ruining Monday morning.",
         photoUrl: "/img/builds/iron-bandit.jpg",
         photoAlt: "Mike's JLUR",
+        ctaUrl: "https://asphaltanddirt.com/builds/iron-bandit",
       },
+      vlogUrl: "https://www.youtube.com/@asphaltanddirt",
     };
   }
 

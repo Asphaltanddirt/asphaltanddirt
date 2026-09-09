@@ -40,6 +40,21 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
 
   const options: WeeklyDigestOptions = {};
 
+  // Feature story — which post, plus optional teaser/image overrides.
+  const fsLink = str(f["Featured Story Link"]);
+  const fsTeaser = str(f["Featured Story Teaser"]);
+  const fsImage = (f["Featured Story Image"] as { url?: string }[] | undefined)?.[0]?.url;
+  if (fsLink || fsTeaser || fsImage) {
+    options.featureStory = {
+      url: fsLink || undefined,
+      teaser: fsTeaser || undefined,
+      imageUrl: fsImage || undefined,
+    };
+  }
+
+  const garageBuild = str(f["Garage Build"]);
+  if (garageBuild) options.garageBuildSlug = garageBuild;
+
   const ttTitle = str(f["Trail Talk Title"]);
   const ttBody = str(f["Trail Talk Body"]);
   if (ttTitle && ttBody) {
@@ -51,11 +66,45 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
     };
   }
 
+  // Also This Week — the other story of the week (last week's feature, or
+  // the second asphalt/dirt post).
+  const lwTitle = str(f["Last Week FS Title"]);
+  const lwBody = str(f["Last Week FS Body"]);
+  const lwLink = str(f["Last FS Week link"]);
+  if (lwTitle || lwBody || lwLink) {
+    options.alsoThisWeek = {
+      title: lwTitle || undefined,
+      body: lwBody || undefined,
+      url: lwLink || undefined,
+    };
+  }
+
+  // Upcoming event — pulled from the Facebook group by hand.
+  const evTitle = str(f["Event title"]);
+  const evTeaser = str(f["Event Teaser"]);
+  const evLink = str(f["Event Link"]);
+  if (evTitle || evTeaser || evLink) {
+    options.event = {
+      title: evTitle || undefined,
+      teaser: evTeaser || undefined,
+      url: evLink || undefined,
+    };
+  }
+
+  const vlogLink = str(f["Vlog Link"]);
+  if (vlogLink) options.vlogUrl = vlogLink;
+
   const rigName = str(f["Rig Name"]);
   const rigBlurb = str(f["Rig Blurb"]);
   const rigPhoto = (f["Rig Photo"] as { url?: string }[] | undefined)?.[0]?.url;
-  if (rigName && rigBlurb && rigPhoto) {
-    options.rigOfTheWeek = { name: rigName, blurb: rigBlurb, photoUrl: rigPhoto, photoAlt: rigName };
+  if (rigName && rigBlurb) {
+    options.rigOfTheWeek = {
+      name: rigName,
+      blurb: rigBlurb,
+      photoUrl: rigPhoto || "",
+      photoAlt: rigName,
+      ctaUrl: str(f["Rig URL"]) || undefined,
+    };
   }
 
   return { recordId: row.id, weekOf: str(f["Week Of"]), options };
