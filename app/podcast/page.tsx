@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
-import {
-  fetchLatestFromPlaylist,
-  PODCAST_EPISODES_PLAYLIST_ID,
-  TRAIL_EVENT_VIDEOS_PLAYLIST_ID,
-} from "@/lib/youtube";
+import EmailCaptureForm from "@/components/EmailCaptureForm";
+import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
   title: "Podcast",
-  description: "Built street rides. Trail culture. Real events. Real talk.",
+  description: "Built street rides. Trail culture. Real events. Real talk. The Asphalt & Dirt podcast — launching soon.",
 };
 
 function formatDate(iso: string) {
@@ -23,10 +19,7 @@ function formatDate(iso: string) {
 }
 
 export default async function PodcastIndexPage() {
-  const [latestEpisodes, latestVideos] = await Promise.all([
-    fetchLatestFromPlaylist(PODCAST_EPISODES_PLAYLIST_ID, 3),
-    fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
-  ]);
+  const latestVideos = await fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3);
 
   return (
     <>
@@ -52,52 +45,26 @@ export default async function PodcastIndexPage() {
       </section>
 
       <section className="section-alt section-pb-tight">
-        <div className="container">
-          <div className="section-head">
-            <div className="eyebrow">Latest Podcast Episodes</div>
+        <div className="container" style={{ maxWidth: 620, marginInline: "auto", textAlign: "center" }}>
+          <div className="eyebrow accent">The Podcast</div>
+          <h2 className="mt-2">First Episodes Coming Soon</h2>
+          <p className="lead mt-3">
+            The show&apos;s in production right now. First episodes drop this September &mdash; join
+            the newsletter and we&apos;ll tell you the moment they&apos;re live.
+          </p>
+          <div className="mt-4" style={{ display: "flex", justifyContent: "center" }}>
+            <EmailCaptureForm source="podcast" buttonText="Notify Me" />
           </div>
-          {latestEpisodes.length ? (
-            <div className="grid grid-3">
-              {latestEpisodes.map((video) => {
-                const internal = getEpisodeByYoutubeId(video.videoId);
-                return (
-                  <div className="card" key={video.videoId}>
-                    <div className="card-media">
-                      <span className="badge">{formatDate(video.publishedAt)}</span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={video.thumbnail} alt={video.title} />
-                    </div>
-                    <div className="card-body">
-                      <h3>{video.title}</h3>
-                      <p>{excerpt(video.description)}</p>
-                      {internal && (
-                        <Link href={`/podcast/${internal.slug}`} className="view-all" style={{ fontSize: 12 }}>
-                          Read More
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                        </Link>
-                      )}
-                      <div className="card-actions">
-                        {internal ? (
-                          <Link href={`/podcast/${internal.slug}`} className="btn btn-primary btn-sm">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg> Watch Now
-                          </Link>
-                        ) : (
-                          <a href={video.url} target="_blank" rel="noopener" className="btn btn-primary btn-sm">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg> Watch Now
-                          </a>
-                        )}
-                        <a href="#watch-listen" className="btn btn-outline btn-sm">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 13a9 9 0 0 1 18 0" /><rect x="3" y="13" width="4" height="7" rx="1.5" /><rect x="17" y="13" width="4" height="7" rx="1.5" /></svg> Listen
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mb-0">Episodes drop soon &mdash; check back here or subscribe below so you don&apos;t miss one.</p>
-          )}
+          <p className="mt-4" style={{ fontSize: 13, marginBottom: 0 }}>
+            <Link
+              href="/podcast/asphalt-and-dirt-official-trailer"
+              className="view-all"
+              style={{ justifyContent: "center" }}
+            >
+              Watch the official trailer
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -128,7 +95,7 @@ export default async function PodcastIndexPage() {
               ))}
             </div>
           ) : (
-            <p className="mb-0">Videos drop soon &mdash; check back here or subscribe below so you don&apos;t miss one.</p>
+            <p className="mb-0">Videos drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
           )}
         </div>
       </section>
