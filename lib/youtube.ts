@@ -4,6 +4,16 @@
 // Server Component data fetching with ISR caching.
 
 const PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
+const VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos";
+
+/** Pulls the 11-char video id out of any common YouTube URL form (watch?v=,
+ *  youtu.be/, /live/, /shorts/, /embed/), or returns a bare id unchanged. */
+export function youtubeIdFromUrl(value: string): string {
+  const v = value.trim();
+  const m = v.match(/(?:v=|youtu\.be\/|\/live\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{11}$/.test(v) ? v : "";
+}
 
 export const PODCAST_EPISODES_PLAYLIST_ID = "PLfeeUT85XiEE";
 export const TRAIL_EVENT_VIDEOS_PLAYLIST_ID = "PLKEZJPl1lIfxCiLkpYnw226zEulWj8Su5";
@@ -86,5 +96,48 @@ export async function fetchLatestFromPlaylist(
   } catch (err) {
     console.error("YouTube playlistItems fetch error", err);
     return [];
+  }
+}
+
+/** Looks up a single video by id (accepts an id or any YouTube URL). Returns
+ *  undefined on any error, missing config, or an unresolvable/private video. */
+export async function fetchVideoById(idOrUrl: string): Promise<YouTubeVideo | undefined> {
+  const key = process.env.YOUTUBE_API_KEY;
+  const videoId = youtubeIdFromUrl(idOrUrl);
+  if (!key || !videoId) return undefined;
+
+  try {
+    const url = `${VIDEOS_URL}?part=snippet&id=${videoId}&key=${key}`;
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+    if (!res.ok) {
+      console.error("YouTube videos fetch failed", res.status, await res.text());
+      return undefined;
+    }
+    const data: {
+      items?: {
+        snippet?: {
+          title?: string;
+          description?: string;
+          publishedAt?: string;
+          thumbnails?: Record<string, { url?: string }>;
+        };
+      }[];
+    } = await res.json();
+
+    const snippet = data.items?.[0]?.snippet;
+    if (!snippet?.title) return undefined;
+    const thumbs = snippet.thumbnails ?? {};
+    return {
+      videoId,
+      title: snippet.title,
+      description: snippet.description ?? "",
+      thumbnail:
+        thumbs.maxres?.url ?? thumbs.high?.url ?? thumbs.medium?.url ?? thumbs.default?.url ?? "",
+      publishedAt: snippet.publishedAt ?? "",
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+    };
+  } catch (err) {
+    console.error("YouTube videos fetch error", err);
+    return undefined;
   }
 }

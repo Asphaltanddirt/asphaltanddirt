@@ -2,7 +2,13 @@ import type { BlogPost } from "@/lib/blog";
 import { getAllPostsSorted } from "@/lib/blog";
 import { builds, type Build } from "@/lib/builds";
 import { getCommunityEvents } from "@/lib/calendar";
-import { fetchLatestFromPlaylist, PODCAST_EPISODES_PLAYLIST_ID, type YouTubeVideo } from "@/lib/youtube";
+import {
+  fetchLatestFromPlaylist,
+  fetchVideoById,
+  PODCAST_EPISODES_PLAYLIST_ID,
+  youtubeIdFromUrl,
+  type YouTubeVideo,
+} from "@/lib/youtube";
 import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
@@ -290,6 +296,9 @@ export interface WeeklyDigestOptions {
   rigOfTheWeek?: RigOfTheWeekSection;
   /** Anthony's short vlog on this week's story — first Quick Hits line. */
   vlogUrl?: string;
+  /** The video to feature in Quick Hits (any YouTube URL). Blank -> the
+   *  latest podcast episode. */
+  videoUrl?: string;
   /** Merch item to push in Quick Hits (a /merch/<slug> URL). Blank -> the
    *  newest published product. */
   merchUrl?: string;
@@ -328,10 +337,12 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     (builds.length > 0 ? builds[weekNumber(new Date()) % builds.length] : undefined);
 
   const merchSlug = merchSlugFromUrl(options.merchUrl);
-  const [{ upcoming }, latestVideos, merch] = await Promise.all([
+  const videoOverrideId = options.videoUrl ? youtubeIdFromUrl(options.videoUrl) : "";
+  const [{ upcoming }, latestVideos, merch, overrideVideo] = await Promise.all([
     getCommunityEvents(),
     fetchLatestFromPlaylist(PODCAST_EPISODES_PLAYLIST_ID, 1),
     merchSlug ? getProductsBySlugs([merchSlug]) : getFeaturedProducts("all", 1),
+    videoOverrideId ? fetchVideoById(videoOverrideId) : Promise.resolve(undefined),
   ]);
   const nextEvent = upcoming[0];
   const nextEventLine = nextEvent
@@ -341,10 +352,20 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
   const latestVideo: YouTubeVideo | undefined = latestVideos[0];
   const newestMerch: Product | undefined = merch[0];
 
-  // Link to the episode's own page, not the raw YouTube URL — keeps the
-  // click on-property and stops Gmail unfurling a big video card.
-  const videoEpisode = latestVideo ? getEpisodeByYoutubeId(latestVideo.videoId) : undefined;
-  const videoUrl = videoEpisode ? `${SITE_URL}/podcast/${videoEpisode.slug}` : `${SITE_URL}/podcast`;
+  // A hand-picked video links straight to YouTube; the auto pick (latest
+  // podcast episode) links to the episode's own page — keeps the click
+  // on-property and stops Gmail unfurling a big video card.
+  let videoHit: { label: string; ctaText: string; url: string } | undefined;
+  if (overrideVideo) {
+    videoHit = { label: `Watch: ${overrideVideo.title}`, ctaText: "Watch", url: overrideVideo.url };
+  } else if (latestVideo) {
+    const episode = getEpisodeByYoutubeId(latestVideo.videoId);
+    videoHit = {
+      label: `Latest episode: ${latestVideo.title}`,
+      ctaText: "Watch",
+      url: episode ? `${SITE_URL}/podcast/${episode.slug}` : `${SITE_URL}/podcast`,
+    };
+  }
 
   const vlogUrl = options.vlogUrl?.trim();
 
@@ -354,7 +375,7 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
       ctaText: "Watch",
       url: vlogUrl,
     },
-    latestVideo && { label: `New on YouTube: ${latestVideo.title}`, ctaText: "Watch", url: videoUrl },
+    videoHit,
     newestMerch && {
       label: `New in merch: ${newestMerch.name}`,
       ctaText: "Shop",
