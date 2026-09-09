@@ -88,8 +88,8 @@ export const builds: Build[] = [
       { value: "35\"", unit: "BFGoodrich KO2", icon: "compass" },
       { value: "1\"", unit: "Mopar Lift", icon: "lift" },
     ],
-    listingImage: { src: "/img/builds/rock-rhino.jpg", alt: "Rock Rhino, Jose's 2026 Jeep Wrangler Rubicon Extreme Recon in Anvil, muddy at a fuel stop" },
-    heroImage: { src: "/img/builds/rock-rhino-hero.jpg", alt: "Rock Rhino, a 2026 Jeep Wrangler Rubicon Extreme Recon in Anvil, doors off on a residential street" },
+    listingImage: { src: "/img/builds/rock-rhino.jpg", alt: "Rock Rhino, Jose's 2026 Jeep Wrangler Rubicon Extreme Recon in Anvil, doors off on a residential street" },
+    heroImage: { src: "/img/builds/rock-rhino-hero.jpg", alt: "Rock Rhino, a 2026 Jeep Wrangler Rubicon Extreme Recon in Anvil, blasting through a mud hole on the trail" },
     listingSpecs: [
       { label: "Engine", value: "3.6L Pentastar V6" },
       { label: "Suspension", value: "Mopar 1\" Factory Lift" },
@@ -115,10 +115,10 @@ export const builds: Build[] = [
       { label: "Build Goal", value: "Daily-driven high-clearance monster on portals and 40s", icon: "bolt" },
     ],
     gallery: [
-      { src: "/img/builds/rock-rhino.jpg", alt: "Rock Rhino at a fuel stop with mud down the side" },
-      { src: "/img/builds/rock-rhino-gallery-2.jpg", alt: "Rock Rhino front three-quarter, clean, on pavement" },
-      { src: "/img/builds/rock-rhino-gallery-3.jpg", alt: "Rock Rhino on a gravel lot with an American flag whip" },
-      { src: "/img/builds/rock-rhino-hero.jpg", alt: "Rock Rhino with the doors off on a residential street" },
+      { src: "/img/builds/rock-rhino.jpg", alt: "Rock Rhino on a residential street with the doors off" },
+      { src: "/img/builds/rock-rhino-gallery-2.jpg", alt: "Rock Rhino on a gravel staging lot with an American flag whip" },
+      { src: "/img/builds/rock-rhino-gallery-3.jpg", alt: "Rock Rhino, muddy side profile at a fuel stop" },
+      { src: "/img/builds/rock-rhino-hero.jpg", alt: "Rock Rhino throwing mud through a trail puddle" },
     ],
   },
   {
