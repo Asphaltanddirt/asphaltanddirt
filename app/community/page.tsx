@@ -269,19 +269,9 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      <section className="section-pt-tight">
-        <div className="container">
-          <div className="eyebrow">Friends Of The Channel</div>
-          <div className="logo-strip mt-4">
-            <div className="plate">Low Gear Co.</div>
-            <div className="plate">MetalCloak</div>
-            <div className="plate">Bilstein</div>
-            <div className="plate">Rock Krawler</div>
-            <div className="plate">AEV</div>
-            <div className="plate">Mickey Thompson</div>
-          </div>
-        </div>
-      </section>
+      {/* "Friends Of The Channel" logo strip removed 2026-09-09 — placeholder
+       *  brand names, no real partnership. A "Sponsors" section lands here
+       *  once there's something real to show. */}
     </>
   );
 }

@@ -32,6 +32,11 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
             <a href={socialLinks.x} target="_blank" rel="noopener" aria-label="X">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M20 4 4 20" /></svg>
             </a>
+            {socialLinks.whatsapp && (
+              <a href={socialLinks.whatsapp} target="_blank" rel="noopener" aria-label="WhatsApp">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 20.5 5 16a8 8 0 1 1 3 3l-4.5 1.5z" /><path d="M9 8.5c0 4 2.5 6.5 6.5 6.5a1.8 1.8 0 0 0 1.6-2.5l-1.9-.6-1 1a6 6 0 0 1-2.6-2.6l1-1-.6-1.9A1.8 1.8 0 0 0 9 8.5z" /></svg>
+              </a>
+            )}
           </div>
         </div>
       </section>
