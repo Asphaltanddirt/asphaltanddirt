@@ -5,10 +5,9 @@ export const socialLinks = {
   tiktok: "https://www.tiktok.com/@Asphaltanddirtpodcast",
   youtube: "https://www.youtube.com/@Asphaltanddirtpodcast",
   x: "https://x.com/AsphaltandDirt_",
-  // WhatsApp for Business — set to the wa.me link (e.g.
-  // "https://wa.me/15551234567"). Blank until the number is confirmed;
-  // consumers hide the icon while it's empty, so this never ships a dead link.
-  whatsapp: "",
+  // WhatsApp for Business "click to chat" short link. Consumers hide the
+  // icon when this is empty, so it never ships a dead link.
+  whatsapp: "https://wa.me/message/YWCFCJQJX3NRF1",
 } as const;
 
 // Where to actually listen — used on pages that pitch the podcast itself
