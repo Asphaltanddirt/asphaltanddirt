@@ -114,8 +114,11 @@ Ports the Kit "Welcome" sequence (id `2873722`). Content copied from Kit,
 group link updated to the current one.
 
 - `lib/newsletterWelcome.ts` — the 5 emails + `WELCOME_SCHEDULE` (day
-  offsets `[0, 2, 5, 8, 11]` from Subscribed Date). A&D-specific; a
-  sibling brand adds its own module + schedule.
+  offsets `[0, 2, 5, 8, 11]` from Subscribed Date, matching Kit's
+  cumulative delays). Each has its "WELCOME N/5" banner
+  (`public/img/newsletter/welcome-N.jpg`, from the originals in the iCloud
+  `welcom newsletter photos/` folder). A&D-specific; a sibling brand adds
+  its own module + schedule.
 - `lib/newsletterWelcomeSend.ts` — `sendWelcomeStep(sub, n)` and
   `processWelcomeSequence()` (one step per subscriber per run, `DAILY_CAP`
   80).
