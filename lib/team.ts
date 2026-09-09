@@ -33,8 +33,8 @@ export const HOSTS: TeamMember[] = [
     bio: "Anthony brings a builder's eye and a storyteller's mindset, helping turn the culture into content that feels real, useful, and entertaining. He connects the technical side of the hobby with the community side.",
     experience: "Build culture • Event coverage",
     experienceLine2: "Weekend wheeling",
-    drives: "TBD",
-    buildSlug: "tbd",
+    drives: "Stoned",
+    buildSlug: "stoned",
   },
 ];
 

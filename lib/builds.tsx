@@ -74,7 +74,7 @@ export interface Build {
 }
 
 // Cyclical order matches the original site's prev/next links: Rhino Rock ->
-// TBD -> Iron Bandit -> Shockwave -> (back to Rhino Rock).
+// Stoned -> Iron Bandit -> Shockwave -> (back to Rhino Rock).
 export const builds: Build[] = [
   {
     slug: "rhino-rock",
@@ -130,35 +130,43 @@ export const builds: Build[] = [
     ],
   },
   {
-    slug: "tbd",
-    nameLines: ["TBD"],
-    badge: "In Progress",
-    vehicle: "2024 Jeep Wrangler Rubicon 392",
-    lead: "The build is in motion and the mission is set. Stay tuned—this rig is coming together with purpose.",
-    kicker: "Anthony's In Progress Build",
-    category: "overland",
+    slug: "stoned",
+    nameLines: ["Stoned"],
+    vehicle: "2025 Jeep Wrangler Rubicon Extreme Recon",
+    lead: "Stock and fun as can be — a Rubicon Extreme Recon on 35s that still handles the daily without complaint.",
+    kicker: "Anthony's Daily Driver Build",
+    category: "daily-driven",
     stats: [
-      { value: "470 HP", unit: "6.4L HEMI V8", icon: "bolt" },
-      { value: "TBD", unit: "Tires", icon: "compass" },
-      { value: "TBD", unit: "Lift", icon: "lift" },
+      { value: "285 HP", unit: "3.6L Pentastar V6", icon: "bolt" },
+      { value: "35\"", unit: "BFGoodrich KO2", icon: "compass" },
+      { value: "1\"", unit: "Mopar Lift", icon: "lift" },
     ],
-    listingImage: { src: "/img/builds/tbd-covered.jpg", alt: "Anthony's covered in-progress build" },
-    heroImage: { src: "/img/builds/tbd-covered.jpg", alt: "Anthony's covered in-progress build, a 2024 Jeep Wrangler Rubicon 392" },
+    listingImage: { src: "/img/builds/stoned-a.jpg", alt: "Stoned, Anthony's 2025 Jeep Wrangler Rubicon Extreme Recon in a rock cut" },
+    heroImage: { src: "/img/builds/stoned-wide.jpg", alt: "Stoned, a 2025 Jeep Wrangler Rubicon Extreme Recon on a rocky trail through fall foliage" },
     listingSpecs: [
-      { label: "Engine", value: "6.4L HEMI V8" },
-      { label: "Axles", value: "Dana 60 Front & Rear" },
-      { label: "Suspension", value: "TBD" },
-      { label: "Tires", value: "TBD" },
+      { label: "Engine", value: "3.6L Pentastar V6" },
+      { label: "Suspension", value: "Mopar 1\" Factory Lift" },
+      { label: "Tires", value: "35\" BFGoodrich All-Terrain KO2" },
+      { label: "Armor", value: "MetalCloak Skid Plates" },
     ],
     specs: [
-      { label: "Base Vehicle", value: "2024 Jeep Wrangler Rubicon 392", icon: "vehicle" },
-      { label: "Engine", value: "6.4L HEMI V8", icon: "bolt" },
-      { label: "Axles", value: "Dana 60 Front & Rear", icon: "cross" },
-      { label: "Suspension", value: "TBD", icon: "lift" },
-      { label: "Tires", value: "TBD", icon: "compass" },
+      { label: "Base Vehicle", value: "2025 Jeep Wrangler Rubicon Extreme Recon", icon: "vehicle" },
+      { label: "Engine", value: "3.6L Pentastar V6 (285 HP) — stock", icon: "bolt" },
+      { label: "Suspension / Lift", value: "Mopar 1\" Factory Lift", icon: "lift" },
+      { label: "Wheels & Tires", value: "Factory Extreme Recon wheels, 35\" BFGoodrich All-Terrain KO2", icon: "compass" },
+      { label: "Armor", value: "MetalCloak Front & Rear Skid Plates", icon: "cross" },
     ],
-    aboutText: "Anthony's next rig is a 2024 Jeep Wrangler Rubicon 392, currently under wraps while the build comes together. The mission is set—follow along on the podcast and socials as the details get locked in and the cover comes off.",
-    aboutStats: [],
+    aboutText: "This is just the beginning — time will only tell where it goes. The goal is a mildly built rig that can do it all on 37s and still be daily driven.",
+    aboutStats: [
+      { label: "Primary Terrain", value: "Street & Light Trail", icon: "compass" },
+      { label: "Build Goal", value: "Daily-drivable, trail-capable — 37s down the road", icon: "bolt" },
+    ],
+    gallery: [
+      { src: "/img/builds/stoned-a.jpg", alt: "Stoned front three-quarter in a rock cut" },
+      { src: "/img/builds/stoned-b.jpg", alt: "Stoned on the trail" },
+      { src: "/img/builds/stoned-portrait.jpg", alt: "Stoned, vertical trail shot" },
+      { src: "/img/builds/stoned-wide.jpg", alt: "Stoned climbing a rocky trail through fall foliage" },
+    ],
   },
   {
     slug: "iron-bandit",
