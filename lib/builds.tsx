@@ -148,7 +148,8 @@ export const builds: Build[] = [
       { label: "Wheels & Tires", value: "Factory Extreme Recon wheels, 35\" BFGoodrich All-Terrain KO2", icon: "compass" },
       { label: "Armor", value: "MetalCloak Front & Rear Skid Plates", icon: "cross" },
     ],
-    aboutText: "This is just the beginning — time will only tell where it goes. The goal is a mildly built rig that can do it all on 37s and still be daily driven.",
+    aboutText:
+      "Stoned started where a lot of good builds start: barely touched. It's a Rubicon Extreme Recon, so it rolls off the lot on 35s with factory lockers and armor — the early moves are small, a Mopar 1-inch lift and MetalCloak skids underneath. The plan is a mild build that does a little of everything on 37s without ever becoming a chore to daily. No rock-buggy dreams here. Just a clean, capable Jeep that actually gets driven.",
     aboutStats: [
       { label: "Primary Terrain", value: "Street & Light Trail", icon: "compass" },
       { label: "Build Goal", value: "Daily-drivable, trail-capable — 37s down the road", icon: "bolt" },
@@ -187,7 +188,8 @@ export const builds: Build[] = [
       { label: "Suspension", value: "Rock Krawler 4.5\"", icon: "lift" },
       { label: "Tires", value: "37\" Mickey Thompson MTZ", icon: "compass" },
     ],
-    aboutText: "Iron Bandit represents the trail-first side of Asphalt & Dirt—a rig built for the wild, tested on the rocks, and trusted when it counts.",
+    aboutText:
+      "Iron Bandit is the trail-first rig of the group — a 2019 JLU on 4.5 inches of Rock Krawler, Dana 44s front and rear, and 37-inch Mickey Thompson MTZs. Less about the spec sheet, more about where it's been: this is the one that gets pointed at the rocky, rutted, technical stuff and comes back out the other side. Full build story coming straight from Dan.",
     aboutStats: [
       { label: "Primary Terrain", value: "Rocks & Trails", icon: "cross" },
       { label: "Build Goal", value: "Durability & Trail Capability", icon: "bolt" },
@@ -230,7 +232,8 @@ export const builds: Build[] = [
       { label: "Exterior", value: "Red Color-Matched Hardtop, XR Style Fender Flares", icon: "cross" },
       { label: "Utility", value: "Nilight 2\" Hitch Receiver, Retractable Cargo Cover", icon: "vehicle" },
     ],
-    aboutText: "Shockwave is Jack's 2022 Wrangler Rubicon 4xe—built to blend hybrid performance with serious trail capability. Between the AEV suspension, 37\" BFGoodrich tires, and a full winch, skid plate, and lighting setup, this rig brings the energy wherever it rolls.",
+    aboutText:
+      "Shockwave makes the case that a plug-in hybrid can still be a real trail rig. The 4xe drivetrain puts down 375 combined horsepower and instant torque off idle — genuinely useful when you're picking a line through rocks. On top of that: an AEV 2.5–3-inch DualSport lift, 37s, SteerSmarts and Rough Country hardware to settle the steering back down, a 12K winch, front and rear skids, and enough lighting to turn night into day. Built to wheel hard and still commute Monday.",
     aboutStats: [
       { label: "Primary Terrain", value: "Trail & Overland", icon: "cross" },
       { label: "Build Goal", value: "Trail Capability & Everyday Versatility", icon: "bolt" },
