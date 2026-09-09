@@ -48,6 +48,7 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
             <Link href="/returns-faq">Returns &amp; FAQ</Link>
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Use</Link>
+            <a href="/reviews/submit">Leave A Review</a>
             <Link href="/contact">Contact</Link>
           </div>
         </div>

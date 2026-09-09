@@ -206,6 +206,18 @@ export default async function CommunityPage() {
       )}
 
       <section className="section-pt-tight section-pb-tight">
+        <div className="container" style={{ textAlign: "center", maxWidth: 560, marginInline: "auto" }}>
+          <div className="eyebrow accent">Been Part Of It?</div>
+          <h2 className="mt-2">Leave A Review</h2>
+          <p className="lead mt-2">
+            The podcast, an event, or just being in the community &mdash; if Asphalt &amp; Dirt&apos;s
+            been good to you, tell us. Approved reviews get featured on the site.
+          </p>
+          <a href="/reviews/submit" className="btn btn-primary btn-sm mt-3">Leave A Review</a>
+        </div>
+      </section>
+
+      <section className="section-pt-tight section-pb-tight">
         <div className="container">
           <div className="eyebrow">Where To Connect</div>
           <div className="grid grid-5 mt-4">
