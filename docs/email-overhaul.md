@@ -14,6 +14,26 @@ Full project context lives in the iCloud folder `START-HERE.md` (not in
 this repo). This file is the repo-side pointer so a session working only
 from the code can pick up.
 
+## Weekly newsletter workflow
+
+The digest auto-assembles from the site (newest blog post = feature story,
+rotating build spotlight, a Gear post = "worth the money?", next calendar
+event, latest podcast video + newest merch). The only manual inputs are
+**Trail Talk** and **Rig of the Week** — they live in the **Newsletters**
+table (Newsletter base `appuaFFyGs91ZJ6Rr`, `tbliKspDIH3sFsK5S`).
+
+Each week: add a row, set `Week Of`, fill Trail Talk (Title + Body [+ Link])
+and/or Rig (Name + Blurb + Photo), leave `Status = Draft`. Then:
+
+- Preview: `GET /api/admin/preview-weekly-digest?key=<ADMIN_API_SECRET>&from=airtable`
+- Test send: `POST /api/admin/send-weekly-digest?from=airtable&mode=test`
+- Live send: same with `&mode=live` — also stamps the row (`Status = Sent`,
+  `Subject Sent`, `Sent Date`, `Recipients`, `Rendered HTML`).
+
+`getDraftIssue()` / `archiveIssue()` in `lib/newsletterIssue.ts`. The Rig
+block is skipped unless a photo is attached. Without `?from=airtable` the
+route still takes a JSON body.
+
 ---
 
 ## Phase 1 — Newsletter distribution ✅ DONE (deployed)
