@@ -2,7 +2,6 @@ import {
   listRecords,
   createRecord,
   updateRecord,
-  upsertRecords,
   isAirtableConfigured,
   type AirtableFields,
 } from "@/lib/airtable";
@@ -197,93 +196,4 @@ export async function unsubscribeByToken(token: string): Promise<{ ok: boolean; 
     );
   }
   return { ok: true, email: (record.fields.Email as string) || undefined };
-}
-
-// ---------------------------------------------------------------------------
-// One-time Kit -> Airtable migration
-// ---------------------------------------------------------------------------
-// Kept only to pull the existing Kit subscribers into Airtable once. After
-// that migration, Airtable is authoritative and /api/subscribe writes here
-// directly — Kit is out of the loop.
-
-const KIT_STATE_LABELS: Record<string, string> = {
-  active: "Active",
-  cancelled: "Cancelled",
-  bounced: "Bounced",
-};
-
-interface KitSubscriber {
-  id: number;
-  state: string;
-  first_name: string | null;
-  email_address: string;
-  created_at: string;
-}
-
-interface KitSubscribersResponse {
-  subscribers: KitSubscriber[];
-  pagination: { has_next_page: boolean; end_cursor: string | null };
-}
-
-async function fetchAllKitSubscribers(apiKey: string): Promise<KitSubscriber[]> {
-  const subscribers: KitSubscriber[] = [];
-  let after: string | undefined;
-
-  do {
-    const params = new URLSearchParams({ per_page: "500" });
-    if (after) params.set("after", after);
-
-    const res = await fetch(`https://api.kit.com/v4/subscribers?${params}`, {
-      headers: { "X-Kit-Api-Key": apiKey },
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error(`Kit subscribers request failed: ${res.status} ${await res.text()}`);
-    }
-    const data = (await res.json()) as KitSubscribersResponse;
-    subscribers.push(...data.subscribers);
-    after = data.pagination.has_next_page ? (data.pagination.end_cursor ?? undefined) : undefined;
-  } while (after);
-
-  return subscribers;
-}
-
-/** Pulls every subscriber from Kit and upserts them into the Newsletter
- *  base, matched on Kit ID. Assigns the current brand and a fresh
- *  unsubscribe token to any row that doesn't have one yet. Returns the
- *  count synced. */
-export async function syncNewsletterSubscribers(): Promise<number> {
-  const kitApiKey = process.env.KIT_API_KEY;
-  if (!kitApiKey) throw new Error("Kit is not configured (missing KIT_API_KEY).");
-  assertConfigured();
-
-  const subscribers = await fetchAllKitSubscribers(kitApiKey);
-  const now = new Date().toISOString();
-
-  // Existing rows keyed by Kit ID so we only mint a token / set brand once.
-  const existing = await listRecords(TABLE, undefined, { baseId: BASE_ID });
-  const byKitId = new Map<number, (typeof existing)[number]>();
-  for (const r of existing) {
-    const kitId = r.fields["Kit ID"] as number | undefined;
-    if (typeof kitId === "number") byKitId.set(kitId, r);
-  }
-
-  const records: { fields: AirtableFields }[] = subscribers.map((s) => {
-    const prior = byKitId.get(s.id);
-    return {
-      fields: {
-        Email: s.email_address,
-        "First Name": s.first_name || "",
-        "Kit ID": s.id,
-        Brand: (prior?.fields.Brand as string) || DEFAULT_BRAND,
-        State: KIT_STATE_LABELS[s.state] || undefined,
-        "Subscribed Date": s.created_at.slice(0, 10),
-        "Unsubscribe Token": (prior?.fields["Unsubscribe Token"] as string) || newToken(),
-        "Last Synced": now,
-      },
-    };
-  });
-
-  await upsertRecords(TABLE, records, ["Kit ID"], { baseId: BASE_ID });
-  return records.length;
 }
