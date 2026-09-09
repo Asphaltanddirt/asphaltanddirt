@@ -4,7 +4,7 @@ import { builds, type Build } from "@/lib/builds";
 import { getCommunityEvents } from "@/lib/calendar";
 import { fetchLatestFromPlaylist, PODCAST_EPISODES_PLAYLIST_ID, type YouTubeVideo } from "@/lib/youtube";
 import { getEpisodeByYoutubeId } from "@/lib/episodes";
-import { getFeaturedProducts, type Product } from "@/lib/fourthwall";
+import { getFeaturedProducts, getProductsBySlugs, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
 
@@ -290,10 +290,18 @@ export interface WeeklyDigestOptions {
   rigOfTheWeek?: RigOfTheWeekSection;
   /** Anthony's short vlog on this week's story — first Quick Hits line. */
   vlogUrl?: string;
+  /** Merch item to push in Quick Hits (a /merch/<slug> URL). Blank -> the
+   *  newest published product. */
+  merchUrl?: string;
 }
 
 function slugFromUrl(value?: string): string {
   const m = (value || "").match(/\/blog\/([a-z0-9-]+)/i);
+  return m ? m[1] : (value || "").trim();
+}
+
+function merchSlugFromUrl(value?: string): string {
+  const m = (value || "").match(/\/merch\/([a-z0-9-]+)/i);
   return m ? m[1] : (value || "").trim();
 }
 
@@ -319,10 +327,11 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     (garageSlug && builds.find((b) => b.slug === garageSlug)) ||
     (builds.length > 0 ? builds[weekNumber(new Date()) % builds.length] : undefined);
 
+  const merchSlug = merchSlugFromUrl(options.merchUrl);
   const [{ upcoming }, latestVideos, merch] = await Promise.all([
     getCommunityEvents(),
     fetchLatestFromPlaylist(PODCAST_EPISODES_PLAYLIST_ID, 1),
-    getFeaturedProducts("all", 1),
+    merchSlug ? getProductsBySlugs([merchSlug]) : getFeaturedProducts("all", 1),
   ]);
   const nextEvent = upcoming[0];
   const nextEventLine = nextEvent

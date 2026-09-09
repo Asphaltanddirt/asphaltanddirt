@@ -71,6 +71,7 @@ export async function GET(req: NextRequest) {
         ctaUrl: "https://asphaltanddirt.com/builds/iron-bandit",
       },
       vlogUrl: "https://www.youtube.com/@asphaltanddirt",
+      merchUrl: "https://asphaltanddirt.com/merch/hard-line-travel-mug",
     };
   }
 
