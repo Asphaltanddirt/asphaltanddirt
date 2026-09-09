@@ -21,8 +21,8 @@ export const HOSTS: TeamMember[] = [
     bio: "Jose helps shape the voice of Asphalt & Dirt with a mix of street performance, trail culture, and real-world community connection. He brings the perspective of someone who lives the build, the ride, and the stories behind both.",
     experience: "Street builds • Off-road rides",
     experienceLine2: "Community leadership",
-    drives: "Rhino Rock",
-    buildSlug: "rhino-rock",
+    drives: "Rock Rhino",
+    buildSlug: "rock-rhino",
   },
   {
     slug: "anthony",
