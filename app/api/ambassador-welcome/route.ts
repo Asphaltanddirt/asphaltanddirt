@@ -34,17 +34,25 @@ interface Resolved {
 
 async function resolve(req: NextRequest, bodyParams: Record<string, unknown>): Promise<Resolved> {
   const adminSecret = process.env.ADMIN_API_SECRET;
+  // A scoped key just for this endpoint — safe(r) to embed in an Airtable
+  // button/formula, since a leak only lets someone (re-)send welcome emails
+  // to real ambassador records. Falls back to ADMIN_API_SECRET.
+  const welcomeKey = process.env.AMBASSADOR_WELCOME_KEY;
   const q = req.nextUrl.searchParams;
   const part: 1 | 2 = String(bodyParams.part ?? q.get("part") ?? "1") === "2" ? 2 : 1;
 
-  if (!adminSecret) return { httpStatus: 500, error: "Admin actions are not configured.", part };
+  if (!adminSecret && !welcomeKey) {
+    return { httpStatus: 500, error: "Admin actions are not configured.", part };
+  }
 
   const provided =
     req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
     q.get("key") ||
     (typeof bodyParams.key === "string" ? bodyParams.key : "") ||
     "";
-  if (provided !== adminSecret) return { httpStatus: 401, error: "Unauthorized.", part };
+  const ok =
+    (adminSecret && provided === adminSecret) || (welcomeKey && provided === welcomeKey);
+  if (!ok) return { httpStatus: 401, error: "Unauthorized.", part };
   if (!isAirtableConfigured()) return { httpStatus: 500, error: "Airtable is not configured.", part };
 
   const recordId = String(bodyParams.recordId || q.get("recordId") || "");
