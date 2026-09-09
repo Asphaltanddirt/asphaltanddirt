@@ -41,9 +41,9 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
   const options: WeeklyDigestOptions = {};
 
   // Feature story — which post, plus optional teaser/image overrides.
-  const fsLink = str(f["Featured Story Link"]);
-  const fsTeaser = str(f["Featured Story Teaser"]);
-  const fsImage = (f["Featured Story Image"] as { url?: string }[] | undefined)?.[0]?.url;
+  const fsLink = str(f["Feature - Post URL"]);
+  const fsTeaser = str(f["Feature - Teaser"]);
+  const fsImage = (f["Feature - Image"] as { url?: string }[] | undefined)?.[0]?.url;
   if (fsLink || fsTeaser || fsImage) {
     options.featureStory = {
       url: fsLink || undefined,
@@ -52,25 +52,25 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
     };
   }
 
-  const garageBuild = str(f["Garage Build"]);
+  const garageBuild = str(f["Garage - Build slug"]);
   if (garageBuild) options.garageBuildSlug = garageBuild;
 
-  const ttTitle = str(f["Trail Talk Title"]);
-  const ttBody = str(f["Trail Talk Body"]);
+  const ttTitle = str(f["Trail Talk - Title"]);
+  const ttBody = str(f["Trail Talk - Body"]);
   if (ttTitle && ttBody) {
     options.trailTalk = {
       title: ttTitle,
       body: ttBody,
-      ctaText: "Join The Conversation",
-      ctaUrl: str(f["Trail Talk Link"]) || socialLinks.facebookGroup,
+      ctaText: "Read The Thread",
+      ctaUrl: str(f["Trail Talk - Link"]) || socialLinks.facebookGroup,
     };
   }
 
-  // Also This Week — the other story of the week (last week's feature, or
-  // the second asphalt/dirt post).
-  const lwTitle = str(f["Last Week FS Title"]);
-  const lwBody = str(f["Last Week FS Body"]);
-  const lwLink = str(f["Last FS Week link"]);
+  // Also This Week — the other story of the week (the second asphalt/dirt
+  // post, or last week's feature).
+  const lwTitle = str(f["Also This Week - Title"]);
+  const lwBody = str(f["Also This Week - Body"]);
+  const lwLink = str(f["Also This Week - URL"]);
   if (lwTitle || lwBody || lwLink) {
     options.alsoThisWeek = {
       title: lwTitle || undefined,
@@ -80,9 +80,9 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
   }
 
   // Upcoming event — pulled from the Facebook group by hand.
-  const evTitle = str(f["Event title"]);
-  const evTeaser = str(f["Event Teaser"]);
-  const evLink = str(f["Event Link"]);
+  const evTitle = str(f["Event - Title"]);
+  const evTeaser = str(f["Event - Teaser"]);
+  const evLink = str(f["Event - Button URL"]);
   if (evTitle || evTeaser || evLink) {
     options.event = {
       title: evTitle || undefined,
@@ -91,19 +91,19 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
     };
   }
 
-  const vlogLink = str(f["Vlog Link"]);
+  const vlogLink = str(f["Quick Hits - Anthony Vlog URL"]);
   if (vlogLink) options.vlogUrl = vlogLink;
 
-  const rigName = str(f["Rig Name"]);
-  const rigBlurb = str(f["Rig Blurb"]);
-  const rigPhoto = (f["Rig Photo"] as { url?: string }[] | undefined)?.[0]?.url;
+  const rigName = str(f["Rig - Name"]);
+  const rigBlurb = str(f["Rig - Blurb"]);
+  const rigPhoto = (f["Rig - Photo"] as { url?: string }[] | undefined)?.[0]?.url;
   if (rigName && rigBlurb) {
     options.rigOfTheWeek = {
       name: rigName,
       blurb: rigBlurb,
       photoUrl: rigPhoto || "",
       photoAlt: rigName,
-      ctaUrl: str(f["Rig URL"]) || undefined,
+      ctaUrl: str(f["Rig - Build Link"]) || undefined,
     };
   }
 
