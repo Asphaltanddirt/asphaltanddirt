@@ -9,11 +9,17 @@ import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
  * step. Welcome email 1 goes out right away; the cron paces emails 2–5.
  */
 export async function POST(req: NextRequest) {
-  let body: { email?: string; source?: string; firstName?: string };
+  let body: { email?: string; source?: string; firstName?: string; company?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  // Honeypot — a real visitor never fills the hidden "company" field.
+  // Pretend it worked so bots don't learn they were caught.
+  if (body.company) {
+    return NextResponse.json({ status: "subscribed" });
   }
 
   const email = body.email?.trim();

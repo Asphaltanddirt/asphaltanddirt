@@ -23,14 +23,16 @@ export default function EmailCaptureForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const email = new FormData(form).get("email") as string;
+    const data = new FormData(form);
+    const email = data.get("email") as string;
+    const company = (data.get("company") as string) || "";
 
     setStatus("loading");
     try {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source }),
+        body: JSON.stringify({ email, source, company }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
@@ -48,6 +50,15 @@ export default function EmailCaptureForm({
 
   return (
     <form className={className} onSubmit={handleSubmit} style={{ flexWrap: "wrap" }}>
+      {/* Honeypot — hidden from people, bots fill it and get silently dropped server-side. */}
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+      />
       <input type="email" name="email" placeholder={placeholder} required disabled={status === "loading"} />
       <button className="btn btn-primary" type="submit" disabled={status === "loading"}>
         {status === "loading" ? "Sending…" : status === "success" ? "You're In!" : buttonText}
