@@ -107,13 +107,33 @@ New Ambassadors fields: `Tracking Link` (url), `Send Welcome 1`,
 
 ---
 
-## Phase 3 — 5-email welcome drip for new newsletter subscribers (TODO)
+## Phase 3 — 5-email welcome drip ✅ DONE (deployed, tested end-to-end on prod)
 
-Kit sequence, now homeless. Airtable (`Welcome Step` number +
-`Last Welcome Sent` date on `Subscribers`) + a daily Vercel cron
-(`/api/cron/newsletter-drip`) sending "email N at day X" via Resend.
-Build the drip content in `lib/newsletter.ts`. This is the reusable
-multi-brand piece — keep it brand-parameterised.
+Ports the Kit "Welcome" sequence (id `2873722`). Content copied from Kit,
+`asphaltanddirt.vercel.app` links swapped to `asphaltanddirt.com`, FB
+group link updated to the current one.
+
+- `lib/newsletterWelcome.ts` — the 5 emails + `WELCOME_SCHEDULE` (day
+  offsets `[0, 2, 5, 8, 11]` from Subscribed Date). A&D-specific; a
+  sibling brand adds its own module + schedule.
+- `lib/newsletterWelcomeSend.ts` — `sendWelcomeStep(sub, n)` and
+  `processWelcomeSequence()` (one step per subscriber per run, `DAILY_CAP`
+  80).
+- `Subscribers` table: `Welcome Step` (0 = none, 1–5), `Last Welcome Sent`.
+  The 13 migrated subscribers were backfilled to `5` so the cron leaves
+  them alone.
+- `/api/subscribe` sends email 1 inline on a new/reactivated signup
+  (best-effort — cron catches it if the send fails).
+- `GET|POST /api/cron/newsletter-welcome` — Vercel cron daily at 12:00 UTC
+  (`vercel.json`). Auth: `CRON_SECRET` or `ADMIN_API_SECRET`.
+
+### Phase 3 loose ends
+- [ ] **`CRON_SECRET` in Vercel** (same one Phase 2 needs) — now gates two
+  crons.
+- [ ] **Deactivate the Kit "Welcome" sequence** once its remaining ~6
+  subscribers finish it (they're mid-sequence; new signups don't enter it
+  since `/api/subscribe` no longer touches Kit).
+- [ ] Welcome-email links point at `asphaltanddirt.com` — still gated.
 
 ## Phase 4 — Team host-profile collection form (TODO, not email)
 
