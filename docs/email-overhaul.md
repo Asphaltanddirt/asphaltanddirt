@@ -1,10 +1,14 @@
 # Email overhaul — status & plan
 
-_Kit's free plan dropped automations/sequences → the whole email stack is
-moving to **Resend (send) + Airtable (list, source of truth)**, driven from
+_Kit's free plan dropped automations/sequences → the whole email stack
+moved to **Resend (send) + Airtable (list, source of truth)**, driven from
 this app's own code. One Resend account will serve every future brand
 (A&D + personal brands + a school PPO); ~$0 now → Resend Pro $20/mo flat
 once past ~3 brands or >100 sends/day._
+
+**Phases 1–3 are all done and deployed. The Kit account is deleted.**
+`CRON_SECRET` is set in Vercel; both crons run. The coming-soon gate stays
+up until launch — that's the only thing gating live sends.
 
 Full project context lives in the iCloud folder `START-HERE.md` (not in
 this repo). This file is the repo-side pointer so a session working only
@@ -16,10 +20,10 @@ from the code can pick up.
 
 - `lib/newsletterSubscribers.ts` — Airtable Newsletter base
   `appuaFFyGs91ZJ6Rr`, table `Subscribers`, is the source of truth.
-  `addSubscriber` / `listActiveRecipients` / `unsubscribeByToken`.
-  `syncNewsletterSubscribers` is now a one-time Kit→Airtable migration
-  only (already run — 13 subs migrated, all have Brand + Unsubscribe
-  Token).
+  `addSubscriber` / `listActiveRecipients` / `unsubscribeByToken` /
+  `listWelcomeCandidates` / `stampWelcomeStep`. (The 13 Kit subscribers
+  were migrated in with Brand + Unsubscribe Token before the Kit account
+  was deleted.)
 - `lib/newsletter.ts` — provider-agnostic builders `buildBlogAnnouncement`
   and `buildWeeklyDigest`, plus `wrapNewsletterEmail` (CAN-SPAM footer +
   per-recipient unsubscribe).
@@ -33,13 +37,9 @@ from the code can pick up.
 - `/api/subscribe` writes Airtable only. Kit is out of the loop.
 
 ### Phase 1 loose ends
-- [ ] Set `NEWSLETTER_MAILING_ADDRESS` in **Vercel** project env
-  (`265 Belgrove Dr, Kearny, NJ 07032` for now). Only blocks `mode=live`.
-  It's already in `.env.local`.
-- [ ] Live sends also wait on the coming-soon gate coming down — the
-  newsletter links point at `asphaltanddirt.com`.
-- [ ] Optionally set `NEWSLETTER_TEST_EMAIL` in Vercel (falls back to
-  `AMBASSADOR_APPLICATIONS_TO_EMAIL`).
+- [x] `NEWSLETTER_MAILING_ADDRESS` set in Vercel.
+- [ ] Live sends wait on the coming-soon gate coming down — newsletter
+  links point at `asphaltanddirt.com`.
 
 ---
 
@@ -87,9 +87,7 @@ New Ambassadors fields: `Tracking Link` (url), `Send Welcome 1`,
   record when they sign, Part 2 goes out automatically right then.)
 
 ### Phase 2 loose ends
-- [ ] **Set `CRON_SECRET` in Vercel** (value is in `.env.local`) — until
-  then the scheduled cron gets 401. Manual trigger with `ADMIN_API_SECRET`
-  works now.
+- [x] `CRON_SECRET` set in Vercel.
 - [ ] **`/ambassadors/*` is still behind the coming-soon gate.** The
   welcome-email links (`/ambassadors`, `/ambassadors/agreement`) land on
   the coming-soon page until either the gate drops or `/ambassadors` is
@@ -131,11 +129,8 @@ group link updated to the current one.
   (`vercel.json`). Auth: `CRON_SECRET` or `ADMIN_API_SECRET`.
 
 ### Phase 3 loose ends
-- [ ] **`CRON_SECRET` in Vercel** (same one Phase 2 needs) — now gates two
-  crons.
-- [ ] **Deactivate the Kit "Welcome" sequence** once its remaining ~6
-  subscribers finish it (they're mid-sequence; new signups don't enter it
-  since `/api/subscribe` no longer touches Kit).
+- [x] `CRON_SECRET` set in Vercel; both crons registered and running.
+- [x] Kit account deleted — nothing more to migrate or deactivate.
 - [ ] Welcome-email links point at `asphaltanddirt.com` — still gated.
 
 ## Phase 4 — Team host-profile collection form (TODO, not email)
