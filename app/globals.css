@@ -145,6 +145,10 @@ input{ font-family:inherit; }
   letter-spacing:.01em;
   margin:0;
 }
+/* Anchor the podcast hero content to the bottom so the extra tagline line
+   pushes the logo UP rather than moving the last line down. */
+.hero-podcast{ align-items:flex-end; }
+.hero-podcast .hero-inner{ padding-top:var(--sp-6); padding-bottom:93px; }
 
 .section-head{
   display:flex;

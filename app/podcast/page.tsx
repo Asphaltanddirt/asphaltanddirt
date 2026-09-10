@@ -23,7 +23,7 @@ export default async function PodcastIndexPage() {
 
   return (
     <>
-      <section className="hero">
+      <section className="hero hero-podcast">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/img/podcast/hero-bg.jpg"
@@ -40,7 +40,8 @@ export default async function PodcastIndexPage() {
               className="podcast-hero-logo"
             />
             <h1 className="podcast-hero-tagline">
-              <span className="line">Built Street Rides. Trail Culture.</span>
+              <span className="line">Built Street Rides.</span>
+              <span className="line">Trail Culture.</span>
               <span className="line accent-text">Real Events. Real Talk.</span>
             </h1>
           </div>
