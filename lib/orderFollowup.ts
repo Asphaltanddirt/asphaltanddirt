@@ -47,6 +47,29 @@ const STEPS = SCHEDULE.length;
 // Only these Fourthwall statuses count as "in the customer's hands".
 const DELIVERED_STATUSES = new Set(["DELIVERED"]);
 
+/** Marketplace orders (TikTok Shop, Meta/Facebook Shop) route through
+ *  Fourthwall with a relay address, not the buyer's real email, and no
+ *  marketing consent on our side. */
+function isRelayEmail(email: string): boolean {
+  return /@fourthwall\.com$/i.test(email.trim());
+}
+
+/** How the order reached us. Only "Direct" is eligible for the sequence. */
+function classifyChannel(order: FourthwallOrder): "Direct" | "TikTok/Meta Shop" | "Samples/Other" {
+  if ((order.source?.type || "ORDER") !== "ORDER") return "Samples/Other";
+  if (isRelayEmail(order.email || "")) return "TikTok/Meta Shop";
+  return "Direct";
+}
+
+/** Best estimate of the delivery date: the order's last-updated date when
+ *  we first see it DELIVERED (it's a terminal state, so updatedAt tracks
+ *  it closely), never later than today. */
+function deliveredDateFor(order: FourthwallOrder, now: Date): string {
+  const today = todayISO(now);
+  const updated = (order.updatedAt || "").slice(0, 10);
+  return updated && updated < today ? updated : today;
+}
+
 const ORANGE = "#f86000";
 const INK = "#f4f4f2";
 const BG = "#0f0f0f";
@@ -104,10 +127,10 @@ export async function syncOrders(now = new Date()): Promise<OrderSyncResult> {
 
   let created = 0;
   let newlyDelivered = 0;
-  const today = todayISO(now);
 
   for (const o of orders) {
     const delivered = DELIVERED_STATUSES.has(o.status);
+    const channel = classifyChannel(o);
     const row = byFwId.get(o.id);
 
     if (!row) {
@@ -119,12 +142,13 @@ export async function syncOrders(now = new Date()): Promise<OrderSyncResult> {
         Items: summarizeItems(o.offers),
         "Order Date": o.createdAt.slice(0, 10),
         "Fourthwall Status": o.status,
+        Channel: channel,
         "Marketing Opt-In": Boolean(o.emailMarketingOptIn),
         "Followup Step": 0,
         "Unsub Token": token(),
       };
       if (delivered) {
-        fields["Delivered Date"] = today;
+        fields["Delivered Date"] = deliveredDateFor(o, now);
         newlyDelivered += 1;
       }
       await createRecord(TABLE, fields, { baseId: BASE_ID });
@@ -134,11 +158,12 @@ export async function syncOrders(now = new Date()): Promise<OrderSyncResult> {
 
     const patch: AirtableFields = {};
     if (row.fields["Fourthwall Status"] !== o.status) patch["Fourthwall Status"] = o.status;
+    if (row.fields["Channel"] !== channel) patch["Channel"] = channel;
     if (Boolean(row.fields["Marketing Opt-In"]) !== Boolean(o.emailMarketingOptIn)) {
       patch["Marketing Opt-In"] = Boolean(o.emailMarketingOptIn);
     }
     if (delivered && !row.fields["Delivered Date"]) {
-      patch["Delivered Date"] = today;
+      patch["Delivered Date"] = deliveredDateFor(o, now);
       newlyDelivered += 1;
     }
     if (!row.fields["Unsub Token"]) patch["Unsub Token"] = token();
@@ -273,7 +298,7 @@ export async function processOrderFollowups(now = new Date()): Promise<FollowupS
 
   const rows = await listRecords(
     TABLE,
-    "AND({Marketing Opt-In}, NOT({Unsubscribed}), {Followup Step} < 3)",
+    "AND({Channel} = 'Direct', {Marketing Opt-In}, NOT({Unsubscribed}), {Followup Step} < 3)",
     { baseId: BASE_ID },
   );
 
@@ -286,14 +311,14 @@ export async function processOrderFollowups(now = new Date()): Promise<FollowupS
     const deliveredRaw = f["Delivered Date"];
     if (!deliveredRaw || typeof deliveredRaw !== "string") continue;
 
+    const email = String(f["Email"] || "").trim();
+    if (!email || isRelayEmail(email)) continue;
+
     const step = Number(f["Followup Step"]) || 0; // 0..2
     if (step >= STEPS) continue;
     const nextStep = step + 1; // 1..3
 
     if (daysBetween(deliveredRaw, now) < SCHEDULE[step]) continue; // not due yet
-
-    const email = String(f["Email"] || "").trim();
-    if (!email) continue;
 
     const built = buildFollowupEmail(nextStep, {
       name: String(f["First Name"] || "").trim(),

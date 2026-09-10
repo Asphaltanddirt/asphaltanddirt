@@ -25,6 +25,9 @@ export interface FourthwallOrder {
   };
   billing?: { address?: { name?: string } };
   offers?: { name?: string }[];
+  /** `ORDER` for a real customer order; `SAMPLES_ORDER`, `GIFT`, etc. for
+   *  the rest. Only `ORDER` is eligible for the follow-up sequence. */
+  source?: { type?: string };
   createdAt: string;
   updatedAt?: string;
 }
