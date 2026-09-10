@@ -239,9 +239,9 @@ export function buildFollowupEmail(step: number, ctx: EmailContext): {
       previewText: "Give it a look — and if it's right, show it off.",
       innerHtml:
         p(hi) +
-        p(`Your <b>${items}</b> should be in your hands by now. Pull it out, check the fit, give it a once-over.`) +
-        p(`Something off — sizing, a flaw, wrong item? ${link("Start a return or reach out", `${SITE_URL}/returns-faq`)} and we'll sort it.`) +
-        p(`If it's right, we'd love to see it — on the trail, in the garage, wherever. ${TAG_LINE} and we'll find it.`) +
+        p(`Your <b>${items}</b> should be in your hands by now. Pull it out, give it a look, make sure everything's right.`) +
+        p(`Something off — wrong item, a flaw, doesn't fit? ${link("Start a return or reach out", `${SITE_URL}/returns-faq`)} and we'll sort it.`) +
+        p(`If it's good, we'd love to see it — on the trail, in the garage, wherever. ${TAG_LINE} and we'll find it.`) +
         p("Thanks for repping it.<br>— The Asphalt &amp; Dirt crew"),
     };
   }
