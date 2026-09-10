@@ -126,6 +126,26 @@ input{ font-family:inherit; }
   border-radius:2px;
 }
 
+/* Podcast hero — trimmed logo + a two-line display tagline, left-aligned
+   and edge-aligned with the logo. The logo PNG is pre-cropped to its
+   artwork, so no negative offset is needed. */
+.podcast-hero-logo{
+  display:block;
+  width:100%;
+  max-width:340px;      /* keeps the visible badge at its prior size */
+  height:auto;
+  margin-bottom:12px;   /* ~half the previous gap */
+}
+.hero .podcast-hero-tagline{
+  font-family:var(--font-display);
+  font-weight:800;
+  text-transform:uppercase;
+  font-size:clamp(21px,4.5vw,37px);
+  line-height:1.05;
+  letter-spacing:.01em;
+  margin:0;
+}
+
 .section-head{
   display:flex;
   align-items:center;

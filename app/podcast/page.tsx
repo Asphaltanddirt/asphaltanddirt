@@ -37,9 +37,12 @@ export default async function PodcastIndexPage() {
             <img
               src="/img/podcast/logo.png"
               alt="Asphalt &amp; Dirt Podcast"
-              style={{ width: "100%", maxWidth: 400, height: "auto", marginBottom: "var(--sp-3)" }}
+              className="podcast-hero-logo"
             />
-            <h3 className="subhead-line">Built Street Rides. Trail Culture. Real Events. Real Talk.</h3>
+            <h1 className="podcast-hero-tagline">
+              <span className="line">Built Street Rides. Trail Culture.</span>
+              <span className="line accent-text">Real Events. Real Talk.</span>
+            </h1>
           </div>
         </div>
       </section>
