@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Testimonial } from "@/lib/testimonials";
+import TestimonialQuote from "./TestimonialQuote";
 
 function stars(rating: number) {
   const full = Math.max(0, Math.min(5, Math.round(rating)));
@@ -12,11 +13,14 @@ function stars(rating: number) {
 export default function TestimonialGrid({
   testimonials,
   gridClass = "grid-testimonials",
+  expandable = false,
 }: {
   testimonials: Testimonial[];
   /** "grid-testimonials" (default, auto-fit) or e.g. "grid-3" for a fixed
    *  three-across row (home page). */
   gridClass?: string;
+  /** Clamp long quotes to a preview with an inline "Read more" (home 3-up). */
+  expandable?: boolean;
 }) {
   if (testimonials.length === 0) return null;
 
@@ -25,7 +29,7 @@ export default function TestimonialGrid({
       <div className={`grid ${gridClass}`}>
         {testimonials.map((t) => (
           <div className="testimonial" key={t.id}>
-            <p>&ldquo;{t.quote}&rdquo;</p>
+            <TestimonialQuote quote={t.quote} expandable={expandable} />
             <div className="testimonial-foot">
               <div className="avatar-initial">{t.name.trim().charAt(0).toUpperCase() || "?"}</div>
               <div>

@@ -88,7 +88,7 @@ export default async function HomePage() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </Link>
             </div>
-            <TestimonialGrid testimonials={testimonials} gridClass="grid-3" />
+            <TestimonialGrid testimonials={testimonials} gridClass="grid-3" expandable />
           </div>
         </section>
       )}
