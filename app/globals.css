@@ -364,6 +364,23 @@ section{ padding:var(--sp-10) 0; }
 .hero-scrim.full{
   background:linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.4) 40%, rgba(0,0,0,.9) 100%);
 }
+/* Podcast hero — a deeper, wider left-to-centre wash so the two-line
+   tagline has room, plus a soft bottom fade to settle the chair and
+   tabletop under the text. The right side (vehicles, mic) stays lit. */
+.hero-scrim.hero-scrim-podcast{
+  background:
+    linear-gradient(0deg,
+      rgba(0,0,0,.55) 0%,
+      rgba(0,0,0,.28) 16%,
+      rgba(0,0,0,0) 40%),
+    linear-gradient(95deg,
+      rgba(0,0,0,.92) 0%,
+      rgba(0,0,0,.82) 28%,
+      rgba(0,0,0,.58) 46%,
+      rgba(0,0,0,.28) 62%,
+      rgba(0,0,0,.06) 80%,
+      rgba(0,0,0,0) 92%);
+}
 /* padding-top/bottom only (not the shorthand) — .hero-inner also carries
    .container, and a two-value "padding:X 0" shorthand would zero out the
    left/right padding .container sets, pinning the hero content flush

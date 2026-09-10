@@ -30,7 +30,7 @@ export default async function PodcastIndexPage() {
           className="hero-bg"
           alt="Recording setup with a mic and mixer in a garage doorway, a Jeep and Mustang parked outside"
         />
-        <div className="hero-scrim" />
+        <div className="hero-scrim hero-scrim-podcast" />
         <div className="container hero-inner">
           <div className="hero-content">
             {/* eslint-disable-next-line @next/next/no-img-element */}
