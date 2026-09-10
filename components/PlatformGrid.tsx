@@ -76,6 +76,7 @@ const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Castbox",
     color: "#F55B23",
+    url: "https://castbox.fm/channel/id7385803",
     icon: (
       <>
         <path d="M3 8l9-4 9 4-9 4-9-4z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />

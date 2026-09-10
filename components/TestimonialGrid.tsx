@@ -9,12 +9,20 @@ function stars(rating: number) {
 /** Shared "What Our Community Says" grid — used on Home and Community, both
  *  backed by the same live, Approved-gated Airtable testimonials. Renders
  *  nothing until at least one is approved, rather than showing an empty grid. */
-export default function TestimonialGrid({ testimonials }: { testimonials: Testimonial[] }) {
+export default function TestimonialGrid({
+  testimonials,
+  gridClass = "grid-testimonials",
+}: {
+  testimonials: Testimonial[];
+  /** "grid-testimonials" (default, auto-fit) or e.g. "grid-3" for a fixed
+   *  three-across row (home page). */
+  gridClass?: string;
+}) {
   if (testimonials.length === 0) return null;
 
   return (
     <>
-      <div className="grid grid-testimonials">
+      <div className={`grid ${gridClass}`}>
         {testimonials.map((t) => (
           <div className="testimonial" key={t.id}>
             <p>&ldquo;{t.quote}&rdquo;</p>

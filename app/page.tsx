@@ -4,6 +4,8 @@ import PlatformGrid from "@/components/PlatformGrid";
 import { episodes } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs } from "@/lib/fourthwall";
 import { getProductSlugsFor } from "@/lib/featuredProducts";
+import { getApprovedTestimonials } from "@/lib/testimonials";
+import TestimonialGrid from "@/components/TestimonialGrid";
 
 const latestEpisode = episodes[0];
 
@@ -11,9 +13,11 @@ export default async function HomePage() {
   // The "Home" section of the Featured Products Airtable table drives this
   // grid; if it's empty or unconfigured, fall back to the newest products.
   const homeSlugs = await getProductSlugsFor("Home");
-  const products = homeSlugs.length
-    ? await getProductsBySlugs(homeSlugs)
-    : await getFeaturedProducts();
+  const [products, testimonials] = await Promise.all([
+    homeSlugs.length ? getProductsBySlugs(homeSlugs) : getFeaturedProducts(),
+    // Hand-picked (Homepage checkbox), ordered merch -> community -> event.
+    getApprovedTestimonials(3, "homepage"),
+  ]);
 
   return (
     <>
@@ -73,6 +77,21 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
+
+      {testimonials.length > 0 && (
+        <section className="section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="section-head">
+              <div className="eyebrow">What The Crew Says</div>
+              <Link href="/community" className="view-all">
+                More From The Community
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </Link>
+            </div>
+            <TestimonialGrid testimonials={testimonials} gridClass="grid-3" />
+          </div>
+        </section>
+      )}
 
       <section className="section-pb-tight">
         <div className="container two-col">
