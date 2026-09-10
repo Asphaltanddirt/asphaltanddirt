@@ -386,12 +386,27 @@ export type ProductColorVariant = {
   sizes: ProductSize[];
 };
 
+export type ProductSizeGuide = {
+  /** The supplier measurement chart image, if there is one. */
+  imageUrl: string | null;
+  /** HTML — how to measure, plus fit notes ("runs small", etc.). */
+  descriptionHtml: string | null;
+};
+
+export type ProductDetailSection = {
+  title: string;
+  bodyHtml: string;
+};
+
 export type ProductDetail = {
   id: string;
   name: string;
   slug: string;
   description: string;
   colors: ProductColorVariant[];
+  sizeGuide: ProductSizeGuide | null;
+  /** Fabric / fit / returns blocks from Fourthwall's product data. */
+  sections: ProductDetailSection[];
 };
 
 type FourthwallVariantDetail = {
@@ -412,6 +427,12 @@ type FourthwallProductDetail = {
   slug: string;
   description: string;
   variants: FourthwallVariantDetail[];
+  sizeGuide?: {
+    previewUrl?: string | null;
+    fileUrl?: string | null;
+    description?: string | null;
+  } | null;
+  additionalInformation?: { type?: string; title?: string; bodyHtml?: string }[];
 };
 
 function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
@@ -438,12 +459,23 @@ function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
     });
   }
 
+  const guideImage = product.sizeGuide?.previewUrl || product.sizeGuide?.fileUrl || null;
+  const guideDesc = product.sizeGuide?.description?.trim() || null;
+  const sizeGuide: ProductSizeGuide | null =
+    guideImage || guideDesc ? { imageUrl: guideImage, descriptionHtml: guideDesc } : null;
+
+  const sections: ProductDetailSection[] = (product.additionalInformation || [])
+    .map((s) => ({ title: (s.title || "").trim(), bodyHtml: (s.bodyHtml || "").trim() }))
+    .filter((s) => s.title && s.bodyHtml);
+
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
     description: product.description,
     colors: colorOrder.map((name) => colorMap.get(name)!),
+    sizeGuide,
+    sections,
   };
 }
 

@@ -240,7 +240,7 @@ export function buildFollowupEmail(step: number, ctx: EmailContext): {
       innerHtml:
         p(hi) +
         p(`Your <b>${items}</b> should be in your hands by now. Pull it out, give it a look, make sure everything's right.`) +
-        p(`Something off — wrong item, a flaw, doesn't fit? ${link("Start a return or reach out", `${SITE_URL}/returns-faq`)} and we'll sort it.`) +
+        p(`Wrong item, or a print or quality issue? ${link("Reach out", `${SITE_URL}/returns-faq`)} and we'll make it good.`) +
         p(`If it's good, we'd love to see it — on the trail, in the garage, wherever. ${TAG_LINE} and we'll find it.`) +
         p("Thanks for repping it.<br>— The Asphalt &amp; Dirt crew"),
     };
