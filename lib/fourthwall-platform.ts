@@ -14,13 +14,19 @@ export interface FourthwallOrder {
   friendlyId: string;
   status: string;
   email: string;
+  /** Whether the customer ticked the marketing-email box at checkout. Only
+   *  opt-in orders are eligible for the post-purchase follow-up sequence. */
+  emailMarketingOptIn?: boolean;
   promotionId?: string;
   amounts: {
     subtotal: { value: number; currency: string };
     discount?: { value: number; currency: string };
     total: { value: number; currency: string };
   };
+  billing?: { address?: { name?: string } };
+  offers?: { name?: string }[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 function authHeader() {
@@ -60,4 +66,13 @@ export async function getOrdersInRange(createdAfter: Date, createdBefore: Date):
   }
 
   return orders;
+}
+
+/** Orders created in the last `days` days — the window the follow-up sync
+ *  walks (order placed -> POD -> transit -> delivered -> +12-day email is
+ *  ~35 days worst case; 45 gives margin). */
+export async function getRecentOrders(days = 45): Promise<FourthwallOrder[]> {
+  const now = new Date();
+  const after = new Date(now.getTime() - days * 86_400_000);
+  return getOrdersInRange(after, now);
 }

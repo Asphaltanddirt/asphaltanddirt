@@ -5,7 +5,7 @@ import { socialLinks } from "@/lib/social";
 export default function Footer({ bgImage }: { bgImage?: string }) {
   return (
     <>
-      <section className="newsletter-band">
+      <section className="newsletter-band" id="subscribe">
         {bgImage && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={bgImage} className="newsletter-bg" alt="" />
