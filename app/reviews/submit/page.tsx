@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ReviewSubmissionForm from "@/components/ReviewSubmissionForm";
 
 export const metadata: Metadata = {
@@ -11,16 +12,19 @@ export default function SubmitReviewPage() {
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container build-form-page">
-        {/* Standalone page — no site header/footer (see components/SiteChrome.tsx),
-         *  so this link is a shareable, self-contained form with no path onward
-         *  into the rest of the site. Static brand mark only, not a link. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/branding/asphalt-and-dirt-horizontal.png"
-          alt="Asphalt & Dirt"
-          className="logo-image"
-          style={{ marginBottom: "var(--sp-4)" }}
-        />
+        {/* Standalone page — no site header/footer (see components/SiteChrome.tsx).
+         *  It's handed out as a shareable link, but it's also reached from the
+         *  site (community CTA, home reviews), so the brand mark links home to
+         *  give people a way back. */}
+        <Link href="/" aria-label="Asphalt & Dirt home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/branding/asphalt-and-dirt-horizontal.png"
+            alt="Asphalt & Dirt"
+            className="logo-image"
+            style={{ marginBottom: "var(--sp-4)" }}
+          />
+        </Link>
         <div className="eyebrow accent mt-3">Tell Us What You Think</div>
         <h1 className="mt-2">Leave A Review</h1>
         <p className="lead mt-2">

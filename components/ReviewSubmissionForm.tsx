@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { track } from "@/lib/analytics";
 
 type Status = "idle" | "submitting" | "success" | "error";
@@ -75,6 +76,7 @@ export default function ReviewSubmissionForm() {
           We read every submission by hand. Once it&apos;s approved, it&apos;ll show up on the site
           for the whole community to see.
         </p>
+        <Link href="/community" className="btn btn-primary">Back To The Community</Link>
       </div>
     );
   }

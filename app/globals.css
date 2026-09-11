@@ -802,9 +802,14 @@ h1 .line{ display:block; }
 .pdp-add-btn{ flex:1; }
 @media (max-width:900px){
   .pdp-layout{ grid-template-columns:1fr; }
-  .pdp-gallery{ display:flex; flex-direction:column-reverse; gap:12px; }
-  .pdp-thumbs{ flex-direction:row; overflow-x:auto; }
+  /* Without min-width:0 the thumbnail strip's min-content width (wide on
+     products with many images) blows out the 1fr track and shoves the main
+     image off-screen. */
+  .pdp-layout > *{ min-width:0; }
+  .pdp-gallery{ display:flex; flex-direction:column-reverse; gap:12px; min-width:0; }
+  .pdp-thumbs{ flex-direction:row; overflow-x:auto; min-width:0; }
   .pdp-thumb{ width:64px; flex:none; }
+  .pdp-main-image{ min-width:0; }
 }
 
 /* Category / filter chips */
