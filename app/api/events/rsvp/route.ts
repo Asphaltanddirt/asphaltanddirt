@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEventBySlug, createRsvp } from "@/lib/events";
 import { buildRsvpConfirmation } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
-import { addSubscriber } from "@/lib/newsletterSubscribers";
+import { addSubscriber, type Topic } from "@/lib/newsletterSubscribers";
+import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
 
 const FB_GROUP_VALUES = new Set(["Yes", "No", "Not Sure"]);
 
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
     phone?: string;
     alreadyInFbGroup?: string;
     joinEventUpdatesList?: boolean;
+    joinNewsletter?: boolean;
     company?: string; // honeypot
   };
   try {
@@ -34,6 +36,7 @@ export async function POST(req: NextRequest) {
     ? (body.alreadyInFbGroup as "Yes" | "No" | "Not Sure")
     : "Not Sure";
   const joinEventUpdatesList = Boolean(body.joinEventUpdatesList);
+  const joinNewsletter = Boolean(body.joinNewsletter);
 
   if (!slug || !name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
@@ -51,6 +54,7 @@ export async function POST(req: NextRequest) {
     phone,
     alreadyInFbGroup,
     joinEventUpdatesList,
+    joinNewsletter,
   });
 
   // Best-effort: the RSVP is already saved even if the email or the Event
@@ -62,17 +66,23 @@ export async function POST(req: NextRequest) {
     console.error("RSVP confirmation email failed", err);
   }
 
-  if (joinEventUpdatesList) {
+  const topics: Topic[] = [
+    ...(joinEventUpdatesList ? (["Event Updates"] as Topic[]) : []),
+    ...(joinNewsletter ? (["Newsletter"] as Topic[]) : []),
+  ];
+  if (topics.length > 0) {
     try {
-      await addSubscriber({
-        email,
-        firstName: name.split(/\s+/)[0],
-        phone,
-        topics: ["Event Updates"],
-        source: "event_rsvp",
-      });
+      const firstName = name.split(/\s+/)[0];
+      const result = await addSubscriber({ email, firstName, phone, topics, source: "event_rsvp" });
+      const isNewOrReactivated = result.outcome === "subscribed" || result.outcome === "resubscribed";
+      if (isNewOrReactivated && joinNewsletter && result.id && result.token) {
+        await sendWelcomeStep(
+          { id: result.id, email, firstName, token: result.token, brand: "Asphalt & Dirt", welcomeStep: 0, subscribedDate: new Date().toISOString().slice(0, 10) },
+          1,
+        );
+      }
     } catch (err) {
-      console.error("RSVP -> Event Updates subscribe failed", err);
+      console.error("RSVP -> subscribe failed", err);
     }
   }
 

@@ -32,7 +32,11 @@ export default async function EventsPage() {
     <>
       <section className="section-pt-tight section-pb-tight">
         <div className="container" style={{ maxWidth: 720 }}>
-          <div className="eyebrow accent">Events &amp; Rides</div>
+          <Link href="/community" className="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
+            Back To Community
+          </Link>
+          <div className="eyebrow accent mt-3">Events &amp; Rides</div>
           <h1 className="mt-2">Meetups</h1>
           <p className="lead mt-3">
             RSVP here and we&apos;ll email you the details — no Facebook required. Most of the

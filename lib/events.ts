@@ -108,6 +108,7 @@ export interface RsvpInput {
   phone?: string;
   alreadyInFbGroup: "Yes" | "No" | "Not Sure";
   joinEventUpdatesList: boolean;
+  joinNewsletter: boolean;
 }
 
 export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
@@ -121,6 +122,7 @@ export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
       Event: [input.eventRecordId],
       "Already In FB Group": input.alreadyInFbGroup,
       "Join Event Updates List": input.joinEventUpdatesList,
+      "Join Newsletter": input.joinNewsletter,
       "RSVP Date": new Date().toISOString().slice(0, 10),
       Status: "Confirmed",
     },

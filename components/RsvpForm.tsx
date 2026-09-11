@@ -9,6 +9,8 @@ export default function RsvpForm({ slug }: { slug: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
+  const [joinEventUpdatesList, setJoinEventUpdatesList] = useState(true);
+  const [joinNewsletter, setJoinNewsletter] = useState(false);
 
   const busy = status === "submitting";
 
@@ -25,7 +27,6 @@ export default function RsvpForm({ slug }: { slug: string }) {
     const email = ((data.get("email") as string) || "").trim();
     const phone = ((data.get("phone") as string) || "").trim();
     const alreadyInFbGroup = (data.get("alreadyInFbGroup") as string) || "Not Sure";
-    const joinEventUpdatesList = data.get("joinEventUpdatesList") === "on";
 
     if (!name || !email) {
       setErrorMsg("Please fill out your name and email.");
@@ -46,12 +47,13 @@ export default function RsvpForm({ slug }: { slug: string }) {
           phone: phone || undefined,
           alreadyInFbGroup,
           joinEventUpdatesList,
+          joinNewsletter,
         }),
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error || "Something went wrong. Please try again.");
 
-      track("event_rsvp", { slug, alreadyInFbGroup, joinEventUpdatesList });
+      track("event_rsvp", { slug, alreadyInFbGroup, joinEventUpdatesList, joinNewsletter });
       setFirstNameSubmitted(name.split(/\s+/)[0]);
       setStatus("success");
     } catch (err) {
@@ -112,10 +114,31 @@ export default function RsvpForm({ slug }: { slug: string }) {
             </select>
           </div>
         </div>
-        <label className="form-checkbox" style={{ maxWidth: "fit-content" }}>
-          <input type="checkbox" name="joinEventUpdatesList" defaultChecked disabled={busy} />
-          Also add me to the Event Updates list for future meetups
-        </label>
+        <div className="form-field">
+          <label>While You're Here <span className="optional">(Optional)</span></label>
+          <div className="form-checkbox-group form-checkbox-group-stacked">
+            <label className={`form-checkbox${joinEventUpdatesList ? " has-check" : ""}`}>
+              <input
+                type="checkbox"
+                name="joinEventUpdatesList"
+                checked={joinEventUpdatesList}
+                onChange={(e) => setJoinEventUpdatesList(e.target.checked)}
+                disabled={busy}
+              />
+              Also add me to the Event Updates list for future meetups
+            </label>
+            <label className={`form-checkbox${joinNewsletter ? " has-check" : ""}`}>
+              <input
+                type="checkbox"
+                name="joinNewsletter"
+                checked={joinNewsletter}
+                onChange={(e) => setJoinNewsletter(e.target.checked)}
+                disabled={busy}
+              />
+              Add me to The Dirt Line — the weekly newsletter
+            </label>
+          </div>
+        </div>
       </div>
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}
