@@ -173,8 +173,8 @@ export const builds: Build[] = [
       { value: "37\"", unit: "Nitto Tires", icon: "compass" },
       { value: "3.5\"", unit: "MetalCloak Lift", icon: "lift" },
     ],
-    listingImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, Dan's Jeep Wrangler JK" },
-    heroImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, a Jeep Wrangler JK on the trail" },
+    listingImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, Dan's Jeep Wrangler JK, kicking up dust on a sandy trail" },
+    heroImage: { src: "/img/builds/iron-bandit.jpg", alt: "Iron Bandit, Dan's Jeep Wrangler JK, kicking up dust on a sandy trail" },
     listingSpecs: [
       { label: "Engine", value: "3.6L Pentastar V6" },
       { label: "Suspension", value: "MetalCloak 3.5\" Game Changer" },
