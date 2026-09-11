@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/order-followup",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/analytics-snapshot",
+      "schedule": "0 13 * * 1"
     }
   ]
 }
