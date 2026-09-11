@@ -33,9 +33,9 @@ export default async function EventsPage() {
       <section className="hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/img/community/summer-night.jpg"
+          src="/img/events/sunset-overlook.jpg"
           className="hero-bg"
-          alt="Jeeps parked around a firepit and string lights at a night meetup"
+          alt="Jeeps and cars gathered at an overlook around a firepit at sunset"
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
