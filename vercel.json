@@ -15,7 +15,7 @@
     },
     {
       "path": "/api/cron/analytics-snapshot",
-      "schedule": "0 13 * * 1"
+      "schedule": "0 10 * * 1"
     }
   ]
 }
