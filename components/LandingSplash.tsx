@@ -3,9 +3,8 @@ import SubscribeButton from "./SubscribeButton";
 import { socialLinks } from "@/lib/social";
 
 /**
- * Shared full-bleed one-pager used by both the domain "coming soon" gate
- * (app/coming-soon) and the permanent QR-code landing page (app/qr). Content
- * differs per caller via props; the visual frame and CTA blocks stay consistent.
+ * Shared full-bleed one-pager used by the permanent QR-code landing page
+ * (app/qr). Content differs per caller via props.
  */
 export default function LandingSplash({
   eyebrow,

@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 
 // Permanent QR-code destination — printed on physical materials (events,
 // flyers, podcast show notes), so this URL never changes and this page
-// stays live even after the full site launches on the real domain. It's
-// deliberately independent of the coming-soon gate in middleware.ts: while
-// that gate is active this page is one of the exempted paths, and once the
-// gate is removed at launch this page just keeps working as a normal route.
+// stays live as a normal route on the real domain.
 export default function QrLandingPage() {
   return (
     <LandingSplash
@@ -21,11 +18,7 @@ export default function QrLandingPage() {
       description="Thanks for scanning in. Podcast episodes, builds, community, and merch — subscribe below to stay in the loop, or head straight into the full site."
       source="qr-landing"
       returnTo="/qr"
-      // The full site is still hidden behind a coming-soon gate on the real
-      // domain (see middleware.ts) — link straight to the Vercel deployment
-      // for now. Once the site fully launches, swap this for the real
-      // domain (or drop the prop entirely and let people just navigate).
-      enterSiteHref="https://asphaltanddirt.vercel.app"
+      enterSiteHref="/"
     />
   );
 }
