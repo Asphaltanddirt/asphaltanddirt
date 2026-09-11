@@ -1,11 +1,14 @@
 /**
  * Weekly analytics snapshot — pulls what we can from first-party APIs and writes
- * it into the "A&D Analytics" Airtable base. Two tiers:
+ * it into the "A&D Analytics" Airtable base. Three tiers:
  *
  *   No OAuth (always runs if keys present):
  *     - Fourthwall (Open API, Basic Auth)  -> Audience Snapshot: Merch revenue / orders / units
  *     - YouTube Data API v3 (YOUTUBE_API_KEY) -> Audience Snapshot: subscribers
  *                                             -> Performance: per-video + channel lifetime views, upload count
+ *     - Vercel Web Analytics API (VERCEL_API_TOKEN) -> Performance: site pageviews/visitors
+ *       broken down by utm_source (bio-link attribution — facebook/instagram/tiktok/x/youtube),
+ *       rolling 7d and 28d
  *
  *   OAuth (runs if GOOGLE_OAUTH_* present):
  *     - YouTube Analytics API -> Performance: channel + per-video views / watch time /
@@ -13,6 +16,10 @@
  *     - Search Console API    -> Performance: site clicks / impressions / CTR / position, 7d and 28d
  *
  * Not available from any API (still Studio-only): YouTube impressions & CTR.
+ * Not yet wired up: Search Console "platform properties" (Instagram/TikTok/X/YouTube
+ * content performance on Google Search) — needs each account verified in the GSC UI
+ * first, and Google hasn't documented whether the same searchAnalytics.query API
+ * reaches them, so this is deferred until one is verified and testable for real.
  *
  * Idempotent: every row's primary id is date-stamped, so re-running on the same
  * day updates that day's row and a new day appends a new one — old observations
@@ -54,6 +61,7 @@ export interface SnapshotResult {
   dryRun: boolean;
   fourthwall: { ok: boolean; skipped?: string; realOrders?: number; revenue?: number; units?: number };
   youtube: { ok: boolean; skipped?: string; subscribers?: number; videos?: number };
+  vercelAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number };
   youtubeAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number };
   searchConsole: { ok: boolean; skipped?: string; error?: string; rows?: number };
   written: { performance: number; audienceSnapshot: number };
@@ -112,6 +120,70 @@ async function pullYouTube(videoIds: string[]) {
     videoCount: Number.isFinite(videoCount) ? videoCount : undefined,
     perVideo,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Vercel Web Analytics (bio-link attribution via UTM source)
+// ---------------------------------------------------------------------------
+
+const VERCEL_ANALYTICS_URL = "https://api.vercel.com/v1/query/web-analytics/visits/aggregate";
+
+async function pullVercelAnalytics(now: Date) {
+  const token = process.env.VERCEL_API_TOKEN;
+  const projectId = process.env.VERCEL_PROJECT_ID;
+  if (!token || !projectId) {
+    return { ok: false as const, skipped: "VERCEL_API_TOKEN/VERCEL_PROJECT_ID not configured" };
+  }
+  const teamId = process.env.VERCEL_TEAM_ID;
+
+  // Vercel Web Analytics isn't subject to the multi-day finalization lag that
+  // YouTube Analytics / Search Console have, so windows run through today.
+  const end = isoDate(now);
+  const windows: { label: "Rolling 7 days" | "Rolling 28 days"; start: string }[] = [
+    { label: "Rolling 7 days", start: isoDate(daysAgo(now, 6)) },
+    { label: "Rolling 28 days", start: isoDate(daysAgo(now, 27)) },
+  ];
+
+  const out: { fields: AirtableFields }[] = [];
+  for (const w of windows) {
+    const tag = w.label === "Rolling 7 days" ? "7d" : "28d";
+    const params = new URLSearchParams({ projectId, since: w.start, until: end, by: "utmSource", limit: "15" });
+    if (teamId) params.set("teamId", teamId);
+
+    const res = await fetch(`${VERCEL_ANALYTICS_URL}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(`Vercel Web Analytics ${res.status}: ${JSON.stringify(data)}`);
+
+    for (const row of (data.data ?? []) as { utmSource?: string; pageviews?: number; visitors?: number }[]) {
+      // Blank utmSource = direct/organic traffic with no bio link involved —
+      // still worth a baseline row so the social sources have something to compare against.
+      const source = (row.utmSource || "direct").toString();
+      const slug = source.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const push = (metric: string, value: number) =>
+        out.push({
+          fields: {
+            observation_id: `VERCEL-utm-${slug}-${metric}-${tag}-${end}`,
+            scope: "Website",
+            entity_id: `utm_source:${source}`,
+            observed_date: end,
+            period_start: w.start,
+            period_end: end,
+            window: w.label,
+            metric: `${metric}_from_utm_source`,
+            value,
+            unit: "count",
+            source: `Vercel Web Analytics API (cron, data through ${end})`,
+            notes: `utm_source = ${source}`,
+          },
+        });
+      push("pageviews", Number(row.pageviews ?? 0));
+      push("visitors", Number(row.visitors ?? 0));
+    }
+  }
+  return { ok: true as const, rows: out.length, data: out };
 }
 
 // ---------------------------------------------------------------------------
@@ -342,7 +414,11 @@ export async function runAnalyticsSnapshot(
   }
   const videoIds = Object.keys(recIdByVideo);
 
-  const [fw, yt] = await Promise.all([pullFourthwall(now), pullYouTube(videoIds)]);
+  const [fw, yt, vercel] = await Promise.all([
+    pullFourthwall(now),
+    pullYouTube(videoIds),
+    pullVercelAnalytics(now).catch((e) => ({ ok: false as const, error: String(e) })),
+  ]);
 
   const perfRows: { fields: AirtableFields }[] = [];
   const snapRows: { fields: AirtableFields }[] = [];
@@ -466,6 +542,11 @@ export async function runAnalyticsSnapshot(
     }
   }
 
+  // --- Vercel Web Analytics (UTM / bio-link attribution) ---
+  if (vercel.ok && "data" in vercel) {
+    perfRows.push(...vercel.data);
+  }
+
   // --- OAuth tier: YouTube Analytics + Search Console ---
   let yta: SnapshotResult["youtubeAnalytics"] = { ok: false, skipped: "GOOGLE_OAUTH_* not configured" };
   let gsc: SnapshotResult["searchConsole"] = { ok: false, skipped: "GOOGLE_OAUTH_* not configured" };
@@ -515,6 +596,9 @@ export async function runAnalyticsSnapshot(
     youtube: yt.ok
       ? { ok: true, subscribers: yt.subscribers, videos: Object.keys(yt.perVideo).length }
       : { ok: false, skipped: yt.skipped },
+    vercelAnalytics: vercel.ok
+      ? { ok: true, rows: "rows" in vercel ? vercel.rows : undefined }
+      : { ok: false, skipped: "skipped" in vercel ? vercel.skipped : undefined, error: "error" in vercel ? vercel.error : undefined },
     youtubeAnalytics: yta,
     searchConsole: gsc,
     written: { performance: perfRows.length, audienceSnapshot: snapRows.length },
