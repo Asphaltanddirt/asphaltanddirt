@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
 import { episodes } from "@/lib/episodes";
 import { builds } from "@/lib/builds";
+import { HOSTS, TRAIL_AMBASSADORS } from "@/lib/team";
 import { getPublishedPosts } from "@/lib/blog";
 import { getFeaturedProducts } from "@/lib/fourthwall";
+import { getPublishedEvents } from "@/lib/events";
 import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -14,6 +16,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const buildEntries: MetadataRoute.Sitemap = builds.map((b) => ({
     url: `${SITE_URL}/builds/${b.slug}`,
+    changeFrequency: "monthly",
+  }));
+
+  const teamEntries: MetadataRoute.Sitemap = [...HOSTS, ...TRAIL_AMBASSADORS].map((m) => ({
+    url: `${SITE_URL}/team/${m.slug}`,
     changeFrequency: "monthly",
   }));
 
@@ -37,23 +44,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sitemap generation shouldn't fail the build over a transient API error.
   }
 
+  // Events — same live-fetch-with-fallback pattern as merch above.
+  let eventEntries: MetadataRoute.Sitemap = [];
+  try {
+    const { upcoming, past } = await getPublishedEvents();
+    eventEntries = [...upcoming, ...past].map((e) => ({
+      url: `${SITE_URL}/events/${e.slug}`,
+      changeFrequency: "weekly",
+    }));
+  } catch {
+    // Same reasoning — a transient Airtable error shouldn't fail the sitemap.
+  }
+
   return [
     { url: SITE_URL, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/team`, changeFrequency: "monthly" },
     { url: `${SITE_URL}/builds`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/events`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch/all`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/blog/all`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly" },
+    { url: `${SITE_URL}/subscribe`, changeFrequency: "yearly" },
     { url: `${SITE_URL}/returns-faq`, changeFrequency: "monthly" },
     { url: `${SITE_URL}/privacy-policy`, changeFrequency: "yearly" },
     { url: `${SITE_URL}/terms-of-service`, changeFrequency: "yearly" },
     ...episodeEntries,
     ...buildEntries,
+    ...teamEntries,
     ...blogEntries,
     ...merchEntries,
+    ...eventEntries,
   ];
 }
