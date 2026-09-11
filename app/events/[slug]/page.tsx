@@ -74,7 +74,7 @@ export default async function EventDetailPage({
         )}
 
         <h2 className="mt-6">RSVP</h2>
-        <RsvpForm slug={event.slug} eventTitle={event.title} />
+        <RsvpForm slug={event.slug} />
       </div>
     </section>
   );

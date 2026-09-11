@@ -5,7 +5,7 @@ import { track } from "@/lib/analytics";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-export default function RsvpForm({ slug, eventTitle }: { slug: string; eventTitle: string }) {
+export default function RsvpForm({ slug }: { slug: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
@@ -120,8 +120,8 @@ export default function RsvpForm({ slug, eventTitle }: { slug: string; eventTitl
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}
 
-      <button className="btn btn-primary" type="submit" disabled={busy} style={{ width: "fit-content" }}>
-        {busy ? "Submitting…" : `RSVP For ${eventTitle}`}
+      <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+        {busy ? "Submitting…" : "RSVP"}
       </button>
     </form>
   );
