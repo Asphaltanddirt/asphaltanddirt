@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import EmailCaptureForm from "@/components/EmailCaptureForm";
+import SubscribeButton from "@/components/SubscribeButton";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import { socialLinks } from "@/lib/social";
+import Link from "next/link";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
-import { getCommunityEvents } from "@/lib/calendar";
+import { getPublishedEvents } from "@/lib/events";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 
 export const metadata: Metadata = {
@@ -11,30 +12,11 @@ export const metadata: Metadata = {
   description: "Real people. Real rides. Real stories from the trail and the street.",
 };
 
-// Fallback photo for synced calendar events until each one has a real photo
-// of its own — same treatment other placeholder content on the site gets.
+// Fallback photo for events that don't have one uploaded in Airtable yet.
 const EVENT_FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
 
-// Real per-event photos, keyed by the event's exact calendar title. Falls
-// back to EVENT_FALLBACK_IMAGE for anything not listed here yet.
-const EVENT_IMAGES: Record<string, { src: string; alt: string; position?: string }> = {
-  "A&D COMMUNITY MUD RUN — PINE BARRENS": {
-    src: "/img/community/mud-run.jpg",
-    alt: "Asphalt & Dirt Community Mud Run flyer — Pine Barrens, NJ, Saturday, September 26, 2026",
-    position: "top",
-  },
-  "TikTok @ the Pine Barrens": {
-    src: "/img/community/tiktok-pine-barrens.jpg",
-    alt: "Four Jeeps lined up at a scenic overlook in the Pine Barrens",
-  },
-};
-
-function eventImage(title: string) {
-  return EVENT_IMAGES[title] ?? EVENT_FALLBACK_IMAGE;
-}
-
-function formatEventDate(date: Date) {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function formatEventDate(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function excerpt(text: string, maxLength = 140) {
@@ -87,9 +69,9 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const [recaps, { upcoming: upcomingEvents, past: pastEvents }, testimonials] = await Promise.all([
+  const [recaps, { upcoming: upcomingEvents }, testimonials] = await Promise.all([
     fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
-    getCommunityEvents(),
+    getPublishedEvents(),
     getApprovedTestimonials(3, "community"),
   ]);
 
@@ -115,12 +97,7 @@ export default async function CommunityPage() {
               this is where Asphalt &amp; Dirt comes together.
             </p>
             <div style={{ maxWidth: 440 }}>
-              <EmailCaptureForm
-                source="community_hero"
-                buttonText="I Want In"
-                placeholder="Your email gets you in."
-                className="capture-form"
-              />
+              <SubscribeButton source="community_hero" label="I Want In" returnTo="/community" />
             </div>
           </div>
         </div>
@@ -155,41 +132,42 @@ export default async function CommunityPage() {
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Events &amp; Rides</div>
+            <Link href="/events" className="view-all">
+              View All Events
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
           </div>
-          {upcomingEvents.length || pastEvents.length ? (
+          {upcomingEvents.length ? (
             <div className="grid grid-events">
-              {[
-                ...upcomingEvents.map((event) => ({ event, isPast: false })),
-                ...pastEvents.map((event) => ({ event, isPast: true })),
-              ].map(({ event, isPast }) => {
-                const image = eventImage(event.title);
-                return (
-                  <div className="card" key={event.id}>
-                    <div className="card-media">
-                      <span className="badge">{formatEventDate(event.start)}</span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={image.src} alt={image.alt} style={{ objectPosition: image.position ?? "center" }} />
-                    </div>
-                    <div className="card-body">
-                      <h3>{event.title}</h3>
-                      {event.description && <p>{excerpt(event.description)}</p>}
-                      {event.location && (
-                        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
-                          {event.location}
-                        </span>
-                      )}
-                      <a href={event.url} target="_blank" rel="noopener" className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
-                        {isPast ? "View On Facebook" : "Details & RSVP"}
-                      </a>
-                    </div>
+              {upcomingEvents.slice(0, 3).map((event) => (
+                <div className="card" key={event.id}>
+                  <div className="card-media">
+                    <span className="badge">{formatEventDate(event.date)}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={event.photoUrl || EVENT_FALLBACK_IMAGE.src}
+                      alt={event.photoUrl ? event.title : EVENT_FALLBACK_IMAGE.alt}
+                    />
                   </div>
-                );
-              })}
+                  <div className="card-body">
+                    <h3>{event.title}</h3>
+                    {event.publicBlurb && <p>{excerpt(event.publicBlurb)}</p>}
+                    {event.generalArea && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
+                        {event.generalArea}
+                      </span>
+                    )}
+                    <Link href={`/events/${event.slug}`} className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
+                      Details &amp; RSVP
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="mb-0">
-              No events on the calendar right now &mdash; check back here, or{" "}
+              No events on the books right now &mdash; check back here, or{" "}
               <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a> so you don&apos;t miss the next one.
             </p>
           )}

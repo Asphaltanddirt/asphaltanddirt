@@ -1,7 +1,7 @@
 import type { BlogPost } from "@/lib/blog";
 import { getAllPostsSorted } from "@/lib/blog";
 import { builds, type Build } from "@/lib/builds";
-import { getCommunityEvents } from "@/lib/calendar";
+import { getNextUpcomingEvent } from "@/lib/events";
 import {
   fetchLatestFromPlaylist,
   fetchVideoById,
@@ -180,14 +180,14 @@ export interface EventSection {
 }
 
 /** Upcoming community event — from the Facebook group (Newsletters row
- *  override), falling back to the next event on the community calendar. */
+ *  override), falling back to the next Published event on /events. */
 function renderUpcomingEvent(override: EventSection, calendarLine: string | null) {
   const title = override.title?.trim() || (calendarLine ? "What's Happening" : "");
   const teaser =
     override.teaser?.trim() ||
     (calendarLine ? `Next up: ${calendarLine} — plus whatever else the crew's got planned.` : "");
   if (!title && !teaser) return "";
-  const url = override.url?.trim() || `${SITE_URL}/community`;
+  const url = override.url?.trim() || `${SITE_URL}/events`;
   return sectionCard(`
     ${kicker("Upcoming Event")}
     ${title ? `<p style="font-size:20px;font-weight:900;margin:0 0 10px;font-family:Arial,sans-serif;">${escapeHtml(title)}</p>` : ""}
@@ -338,15 +338,14 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
 
   const merchSlug = merchSlugFromUrl(options.merchUrl);
   const videoOverrideId = options.videoUrl ? youtubeIdFromUrl(options.videoUrl) : "";
-  const [{ upcoming }, latestVideos, merch, overrideVideo] = await Promise.all([
-    getCommunityEvents(),
+  const [nextEvent, latestVideos, merch, overrideVideo] = await Promise.all([
+    getNextUpcomingEvent(),
     fetchLatestFromPlaylist(PODCAST_EPISODES_PLAYLIST_ID, 1),
     merchSlug ? getProductsBySlugs([merchSlug]) : getFeaturedProducts("all", 1),
     videoOverrideId ? fetchVideoById(videoOverrideId) : Promise.resolve(undefined),
   ]);
-  const nextEvent = upcoming[0];
   const nextEventLine = nextEvent
-    ? `${nextEvent.title} on ${nextEvent.start.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+    ? `${nextEvent.title} on ${new Date(`${nextEvent.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
     : null;
 
   const latestVideo: YouTubeVideo | undefined = latestVideos[0];

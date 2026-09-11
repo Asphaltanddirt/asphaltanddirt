@@ -619,6 +619,14 @@ h1 .line{ display:block; }
 .legal-page ul{ list-style:disc; padding-left:22px; margin:0 0 var(--sp-2); }
 .legal-page li{ color:var(--text-muted); margin-bottom:8px; }
 .legal-page a{ color:var(--accent); text-decoration:underline; }
+/* Same problem as .contact-option above: a <Link> styled as a .btn inside
+   .legal-page (e.g. ContactForm's Fourthwall link) needs to win over the
+   plain-link orange/underline styling, or it renders invisible orange-on-
+   orange text. */
+.legal-page a.btn,
+.legal-page a.btn:hover{ text-decoration:none; }
+.legal-page a.btn-primary,
+.legal-page a.btn-primary:hover{ color:var(--ad-black); }
 
 /* ---------- Legal document (Brand Ambassador Agreement) ---------- */
 .legal-doc{
@@ -660,6 +668,8 @@ h1 .line{ display:block; }
 .form-field label .optional{ color:var(--text-dim); font-weight:500; text-transform:none; letter-spacing:0; }
 .form-field input[type="text"],
 .form-field input[type="email"],
+.form-field input[type="tel"],
+.form-field input[type="password"],
 .form-field select,
 .form-field textarea{
   background:var(--bg-elevated); border:1px solid var(--border); color:var(--text);
