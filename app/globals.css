@@ -271,6 +271,12 @@ section{ padding:var(--sp-10) 0; }
   .nav-links{ display:none; }
   .nav-toggle{ display:flex; }
   .nav-actions .btn-primary{ display:none; }
+  /* position:sticky silently fails to stick on iOS Safari whenever html/body
+     sets `overflow` (ours does, for overflow-x:hidden) — fixed sidesteps
+     that bug entirely. Body gets matching padding since fixed pulls the
+     header out of flow. */
+  .site-header{ position:fixed; top:0; left:0; right:0; }
+  body{ padding-top:76px; }
 }
 
 /* Mobile drawer (hidden entirely outside the mobile breakpoint so it can
