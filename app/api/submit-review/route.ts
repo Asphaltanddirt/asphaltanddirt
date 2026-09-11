@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRecord, isAirtableConfigured } from "@/lib/airtable";
+import { createRecord, uploadAttachment, isAirtableConfigured } from "@/lib/airtable";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.REVIEW_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -10,6 +10,11 @@ const FROM_EMAIL = process.env.REVIEW_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt 
 const BASE_ID = process.env.AIRTABLE_TESTIMONIALS_BASE_ID;
 const TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
 const MAX_QUOTE_LENGTH = 600;
+
+const MAX_PHOTOS = 3;
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // per-photo safety net (photos are pre-compressed client-side)
+const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024; // keeps the base64'd email comfortably under Vercel's ~4.5MB request cap
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
 
 // Mirrors the <select> options in ReviewSubmissionForm, and the Role
 // single-select's exact choices in Airtable — kept fixed so a submission
@@ -39,19 +44,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Reviews aren't configured yet — check back soon." }, { status: 500 });
   }
 
-  let body: { name?: string; email?: string; role?: string; quote?: string; rating?: number };
+  let formData: FormData;
   try {
-    body = await req.json();
+    formData = await req.formData();
   } catch {
     return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
   }
 
-  const name = (body.name || "").trim();
-  const email = (body.email || "").trim();
-  const rawRole = (body.role || "").trim();
+  const name = ((formData.get("name") as string) || "").trim();
+  const email = ((formData.get("email") as string) || "").trim();
+  const rawRole = ((formData.get("role") as string) || "").trim();
   const role = ALLOWED_ROLES.has(rawRole) ? rawRole : "";
-  const quote = (body.quote || "").trim().slice(0, MAX_QUOTE_LENGTH);
-  const rating = Math.min(5, Math.max(1, Math.round(Number(body.rating)) || 5));
+  const quote = ((formData.get("quote") as string) || "").trim().slice(0, MAX_QUOTE_LENGTH);
+  const rating = Math.min(5, Math.max(1, Math.round(Number(formData.get("rating"))) || 5));
 
   if (!name || !email || !quote) {
     return NextResponse.json({ error: "Please fill out your name, email, and review." }, { status: 400 });
@@ -60,8 +65,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
 
+  const photos = formData.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
+  if (photos.length > MAX_PHOTOS) {
+    return NextResponse.json({ error: `Please upload at most ${MAX_PHOTOS} photos.` }, { status: 400 });
+  }
+  for (const photo of photos) {
+    if (photo.size > MAX_PHOTO_BYTES) {
+      return NextResponse.json({ error: "One of those photos is too large. Try removing it and re-adding a smaller one." }, { status: 400 });
+    }
+    if (photo.type && !ALLOWED_TYPES.includes(photo.type)) {
+      return NextResponse.json({ error: "Photos must be JPG, PNG, WEBP, or HEIC." }, { status: 400 });
+    }
+  }
+  const totalBytes = photos.reduce((sum, p) => sum + p.size, 0);
+  if (totalBytes > MAX_TOTAL_BYTES) {
+    return NextResponse.json({ error: "Your photos are too large combined. Try removing one." }, { status: 400 });
+  }
+
+  let recordId: string;
   try {
-    await createRecord(
+    const record = await createRecord(
       TABLE,
       {
         Name: name,
@@ -73,9 +96,29 @@ export async function POST(req: NextRequest) {
       },
       { baseId: BASE_ID },
     );
+    recordId = record.id;
   } catch (err) {
     console.error("Airtable write error", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
+  }
+
+  // Attachments upload to the existing record one at a time, after it
+  // exists — best-effort, since the record itself is already saved.
+  for (const photo of photos) {
+    try {
+      await uploadAttachment(
+        recordId,
+        "Photo",
+        {
+          filename: photo.name || "photo.jpg",
+          contentType: photo.type || "image/jpeg",
+          base64: Buffer.from(await photo.arrayBuffer()).toString("base64"),
+        },
+        { baseId: BASE_ID },
+      );
+    } catch (err) {
+      console.error("Airtable photo upload error", err);
+    }
   }
 
   // Notification email is best-effort — the Airtable record above is the reliable
@@ -89,6 +132,7 @@ export async function POST(req: NextRequest) {
         <p style="color:#555;margin-top:0;">${"★".repeat(rating)}${"☆".repeat(5 - rating)} &mdash; awaiting approval in Airtable</p>
         <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         <p><strong>Role:</strong> ${escapeHtml(role || "Community Member")}</p>
+        ${photos.length ? `<p><strong>Photos:</strong> ${photos.length} attached in Airtable</p>` : ""}
         <h3>Quote</h3>
         <p style="white-space:pre-wrap;">${escapeHtml(quote)}</p>
       </div>

@@ -6,6 +6,7 @@ export interface Testimonial {
   role: string;
   rating: number;
   quote: string;
+  photoUrl: string | null;
 }
 
 // Own base (not the Road & Trail Crew base the other Airtable-backed
@@ -47,6 +48,7 @@ export async function getApprovedTestimonials(limit = 3, audience: TestimonialAu
         role: (r.fields.Role as string) || "Community Member",
         rating: Number(r.fields.Rating) || 5,
         quote: (r.fields.Quote as string) || "",
+        photoUrl: (r.fields.Photo as { url: string }[] | undefined)?.[0]?.url || null,
         createdTime: r.createdTime,
       }))
       .filter((t) => t.quote)
@@ -61,7 +63,7 @@ export async function getApprovedTestimonials(limit = 3, audience: TestimonialAu
         return a.createdTime < b.createdTime ? 1 : -1; // newest first
       })
       .slice(0, limit)
-      .map(({ id, name, role, rating, quote }) => ({ id, name, role, rating, quote }));
+      .map(({ id, name, role, rating, quote, photoUrl }) => ({ id, name, role, rating, quote, photoUrl }));
   } catch (err) {
     console.error("Testimonials fetch error", err);
     return [];

@@ -3,17 +3,56 @@
 import { useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
+import { compressImage } from "@/lib/imageCompress";
 
 type Status = "idle" | "submitting" | "success" | "error";
+type Photo = { file: File; url: string };
 
 const MAX_QUOTE_LENGTH = 600;
+const MAX_PHOTOS = 3;
+const MAX_ORIGINAL_FILE_SIZE = 15 * 1024 * 1024; // reject absurdly large originals before we even try to compress
 
 export default function ReviewSubmissionForm() {
   const [rating, setRating] = useState(5);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [compressing, setCompressing] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const busy = status === "submitting";
+  const busy = status === "submitting" || compressing;
+
+  async function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const room = MAX_PHOTOS - photos.length;
+    if (room <= 0) {
+      setErrorMsg(`You can upload up to ${MAX_PHOTOS} photos.`);
+      return;
+    }
+
+    const incoming = Array.from(fileList).slice(0, room);
+    const tooLarge = incoming.some((f) => f.size > MAX_ORIGINAL_FILE_SIZE);
+    if (tooLarge) {
+      setErrorMsg("One of those photos is too large — try a smaller file.");
+      return;
+    }
+
+    setErrorMsg("");
+    setCompressing(true);
+    try {
+      const compressed = await Promise.all(incoming.map((f) => compressImage(f)));
+      setPhotos((prev) => [...prev, ...compressed.map((file) => ({ file, url: URL.createObjectURL(file) }))]);
+    } finally {
+      setCompressing(false);
+    }
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,31 +66,28 @@ export default function ReviewSubmissionForm() {
       return;
     }
 
-    const payload = {
-      name: ((data.get("name") as string) || "").trim(),
-      email: ((data.get("email") as string) || "").trim(),
-      role: ((data.get("role") as string) || "").trim(),
-      quote: ((data.get("quote") as string) || "").trim(),
-      rating,
-    };
+    const name = ((data.get("name") as string) || "").trim();
+    const email = ((data.get("email") as string) || "").trim();
+    const role = ((data.get("role") as string) || "").trim();
+    const quote = ((data.get("quote") as string) || "").trim();
 
-    if (!payload.name || !payload.email || !payload.quote) {
+    if (!name || !email || !quote) {
       setErrorMsg("Please fill out your name, email, and review.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrorMsg("A valid email is required.");
       return;
     }
 
+    data.set("rating", String(rating));
+    data.delete("photos");
+    photos.forEach((p) => data.append("photos", p.file));
+
     setStatus("submitting");
     setErrorMsg("");
     try {
-      const res = await fetch("/api/submit-review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch("/api/submit-review", { method: "POST", body: data });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error || "Something went wrong. Please try again.");
 
@@ -149,6 +185,43 @@ export default function ReviewSubmissionForm() {
             disabled={busy}
           />
         </div>
+      </div>
+
+      <div className="form-section">
+        <div className="form-section-title">Photo <span className="optional">(Optional)</span></div>
+        <p className="form-section-hint">Up to {MAX_PHOTOS} photos — a shot of the mug, the build, the ride, whatever fits your review.</p>
+        <div className="photo-upload">
+          <label className="photo-upload-label" htmlFor="photos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 16l4.5-6 3 3.5L16 8l4 8" /><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8" cy="8.5" r="1.4" />
+            </svg>
+            <span>
+              {compressing ? "Optimizing photos…" : photos.length ? "Add more photos" : "Click to upload photos"}
+            </span>
+          </label>
+          <input
+            id="photos"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              handleFiles(e.target.files);
+              e.target.value = "";
+            }}
+            disabled={busy || photos.length >= MAX_PHOTOS}
+          />
+        </div>
+        {photos.length > 0 && (
+          <div className="photo-preview-grid">
+            {photos.map((photo, i) => (
+              <div className="photo-preview" key={photo.url}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt={`Upload preview ${i + 1}`} />
+                <button type="button" onClick={() => removePhoto(i)} disabled={busy} aria-label="Remove photo">×</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}

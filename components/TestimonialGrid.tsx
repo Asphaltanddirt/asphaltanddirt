@@ -31,7 +31,12 @@ export default function TestimonialGrid({
           <div className="testimonial" key={t.id}>
             <TestimonialQuote quote={t.quote} expandable={expandable} />
             <div className="testimonial-foot">
-              <div className="avatar-initial">{t.name.trim().charAt(0).toUpperCase() || "?"}</div>
+              {t.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="avatar" src={t.photoUrl} alt={t.name} />
+              ) : (
+                <div className="avatar-initial">{t.name.trim().charAt(0).toUpperCase() || "?"}</div>
+              )}
               <div>
                 <div className="testimonial-name">{t.name}</div>
                 <div className="testimonial-role">{t.role}</div>
