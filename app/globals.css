@@ -405,7 +405,8 @@ h1 .line{ display:block; }
   border:1.5px solid var(--accent);
   border-radius:var(--radius-md);
   background:rgba(0,0,0,0.55);
-  padding:var(--sp-3);
+  padding:20px 22px;
+  margin:10px 0;
   max-width:480px;
 }
 .capture-box .kicker{ color:var(--accent); font-weight:800; font-size:13px; letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:8px; }
