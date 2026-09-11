@@ -52,7 +52,7 @@ export default async function EventsPage() {
               don&apos;t miss the next one.
             </p>
           ) : (
-            <div className="grid grid-events">
+            <div className="grid grid-3">
               {upcoming.map((event) => (
                 <div className="card" key={event.id}>
                   <div className="card-media">
@@ -86,7 +86,7 @@ export default async function EventsPage() {
             <div className="section-head">
               <div className="eyebrow">Past Events</div>
             </div>
-            <div className="grid grid-events">
+            <div className="grid grid-3">
               {past.slice(0, 6).map((event) => (
                 <div className="card" key={event.id}>
                   <div className="card-media">

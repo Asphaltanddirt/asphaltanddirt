@@ -138,7 +138,7 @@ export default async function CommunityPage() {
             </Link>
           </div>
           {upcomingEvents.length ? (
-            <div className="grid grid-events">
+            <div className="grid grid-3">
               {upcomingEvents.slice(0, 3).map((event) => (
                 <div className="card" key={event.id}>
                   <div className="card-media">
