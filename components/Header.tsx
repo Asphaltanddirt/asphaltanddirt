@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/team", label: "Team" },
   { href: "/builds", label: "Builds" },
   { href: "/community", label: "Community" },
+  { href: "/events", label: "Events" },
   { href: "/merch", label: "Merch" },
   { href: "/blog", label: "Blog" },
 ];

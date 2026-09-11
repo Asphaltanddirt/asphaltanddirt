@@ -30,25 +30,36 @@ export default async function EventsPage() {
 
   return (
     <>
-      <section className="section-pt-tight section-pb-tight">
-        <div className="container" style={{ maxWidth: 720 }}>
-          <Link href="/community" className="back-link">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
-            Back To Community
-          </Link>
-          <div className="eyebrow accent mt-3">Events &amp; Rides</div>
-          <h1 className="mt-2">Meetups</h1>
-          <p className="lead mt-3">
-            RSVP here and we&apos;ll email you the details — no Facebook required. Most of the
-            day-to-day chatter still happens in our{" "}
-            <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">private FB group</a>, so join
-            that too if you&apos;re on there.
-          </p>
+      <section className="hero">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/img/community/summer-night.jpg"
+          className="hero-bg"
+          alt="Jeeps parked around a firepit and string lights at a night meetup"
+        />
+        <div className="hero-scrim" />
+        <div className="container hero-inner">
+          <div className="hero-content">
+            <h1>
+              <span className="line">Meet Up.</span>
+              <span className="line accent-text">Roll Out.</span>
+            </h1>
+            <div className="eyebrow mt-2" style={{ fontSize: 16 }}>Events &amp; Rides</div>
+            <p className="lead mt-4">
+              RSVP here and we&apos;ll email you the details — no Facebook required. Most of the
+              day-to-day chatter still happens in our{" "}
+              <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">private FB group</a>, so
+              join that too if you&apos;re on there.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="section-pb-tight">
+      <section className="section-pt-tight section-pb-tight">
         <div className="container">
+          <div className="section-head">
+            <div className="eyebrow">Upcoming</div>
+          </div>
           {upcoming.length === 0 ? (
             <p>
               Nothing on the books right now &mdash; check back soon, or{" "}
