@@ -20,6 +20,7 @@ export default function QrLandingPage() {
       heading="Welcome To Asphalt & Dirt"
       description="Thanks for scanning in. Podcast episodes, builds, community, and merch — subscribe below to stay in the loop, or head straight into the full site."
       source="qr-landing"
+      returnTo="/qr"
       // The full site is still hidden behind a coming-soon gate on the real
       // domain (see middleware.ts) — link straight to the Vercel deployment
       // for now. Once the site fully launches, swap this for the real

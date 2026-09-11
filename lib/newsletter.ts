@@ -418,14 +418,28 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
  * `unsubscribeUrl` is per-recipient — the send loop calls this once per
  * subscriber with their own token.
  */
+/** Swaps an unsubscribe link's token onto the richer /manage page (drop one
+ *  topic instead of everything) — same token, human-facing destination. */
+function manageUrl(unsubscribeUrl: string): string {
+  const token = new URL(unsubscribeUrl).searchParams.get("token") || "";
+  return `${SITE_URL}/manage?token=${encodeURIComponent(token)}`;
+}
+
 export function wrapNewsletterEmail(
   content: NewsletterContent,
-  opts: { unsubscribeUrl: string; mailingAddress: string },
+  opts: { unsubscribeUrl: string; mailingAddress: string; recipientFirstName?: string },
 ): string {
+  const greeting = opts.recipientFirstName
+    ? `<p style="max-width:600px;margin:0 auto;padding:18px 24px 0;font-family:Arial,sans-serif;font-size:14px;color:#666;">Hey ${escapeHtml(opts.recipientFirstName)},</p>`
+    : "";
   const footer = `
     <div style="max-width:600px;margin:24px auto 0;padding:0 24px 32px;text-align:center;font-family:Arial,sans-serif;">
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">You're getting this because you subscribed to The Dirt Line at <a href="${SITE_URL}" style="color:#999;">asphaltanddirt.com</a>.</p>
-      <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;"><a href="${opts.unsubscribeUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a></p>
+      <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">
+        <a href="${manageUrl(opts.unsubscribeUrl)}" style="color:#999;text-decoration:underline;">Manage Preferences</a>
+        &nbsp;&middot;&nbsp;
+        <a href="${opts.unsubscribeUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
+      </p>
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0;">${escapeHtml(opts.mailingAddress)}</p>
     </div>
   `;
@@ -438,6 +452,7 @@ export function wrapNewsletterEmail(
 </head>
 <body style="margin:0;padding:24px 0;background:#e5e5e5;-webkit-text-size-adjust:100%;">
 <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">${escapeHtml(content.previewText)}</span>
+${greeting}
 <div style="max-width:600px;margin:0 auto;">
 ${content.innerHtml}
 </div>

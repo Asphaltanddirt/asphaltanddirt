@@ -18,6 +18,7 @@ export default function ComingSoonPage() {
       heading="Something's Building"
       description="The Asphalt & Dirt website is under construction — podcast episodes, community builds, events, and merch, all in one place. In the meantime, subscribe so you don't miss a drop, and catch every episode where you already listen."
       source="coming-soon"
+      returnTo="/coming-soon"
     />
   );
 }

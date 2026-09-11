@@ -110,7 +110,11 @@ export async function sendNewsletter(
       from: FROM,
       to: [r.email],
       subject: content.subject,
-      html: wrapNewsletterEmail(content, { unsubscribeUrl: url, mailingAddress: MAILING_ADDRESS }),
+      html: wrapNewsletterEmail(content, {
+        unsubscribeUrl: url,
+        mailingAddress: MAILING_ADDRESS,
+        recipientFirstName: r.firstName,
+      }),
       headers: {
         "List-Unsubscribe": `<${url}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

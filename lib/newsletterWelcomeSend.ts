@@ -34,6 +34,7 @@ export async function sendWelcomeStep(sub: WelcomeCandidate, step: number): Prom
   const html = wrapNewsletterEmail(content, {
     unsubscribeUrl: unsubscribeUrl(sub.token),
     mailingAddress: MAILING_ADDRESS,
+    recipientFirstName: sub.firstName,
   });
   await sendEmail({
     to: sub.email,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
-import EmailCaptureForm from "@/components/EmailCaptureForm";
+import SubscribeButton from "@/components/SubscribeButton";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { excerpt } from "@/lib/text";
 
@@ -57,7 +57,7 @@ export default async function PodcastIndexPage() {
             the newsletter and we&apos;ll tell you the moment they&apos;re live.
           </p>
           <div className="mt-4" style={{ display: "flex", justifyContent: "center" }}>
-            <EmailCaptureForm source="podcast" buttonText="Notify Me" />
+            <SubscribeButton source="podcast" label="Notify Me" returnTo="/podcast" />
           </div>
           <p className="mt-4" style={{ fontSize: 13, marginBottom: 0 }}>
             <Link

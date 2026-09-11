@@ -1,8 +1,8 @@
 import Link from "next/link";
-import EmailCaptureForm from "./EmailCaptureForm";
+import SubscribeButton from "./SubscribeButton";
 import { socialLinks } from "@/lib/social";
 
-export default function Footer({ bgImage }: { bgImage?: string }) {
+export default function Footer({ bgImage, returnTo }: { bgImage?: string; returnTo?: string }) {
   return (
     <>
       <section className="newsletter-band" id="subscribe">
@@ -15,7 +15,7 @@ export default function Footer({ bgImage }: { bgImage?: string }) {
             <h3>Stay In The Dirt</h3>
             <p>Get updates on new builds, episodes, events, merch drops, and more.</p>
           </div>
-          <EmailCaptureForm source="footer" buttonText="Subscribe" />
+          <SubscribeButton source="footer" returnTo={returnTo} />
           <div className="social-row">
             <a href={socialLinks.facebook} target="_blank" rel="noopener" aria-label="Facebook">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" /></svg>

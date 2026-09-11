@@ -20,7 +20,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     <>
       <Header />
       {children}
-      <Footer />
+      <Footer returnTo={pathname} />
     </>
   );
 }

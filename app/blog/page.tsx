@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import EmailCaptureForm from "@/components/EmailCaptureForm";
+import SubscribeButton from "@/components/SubscribeButton";
 import BlogList from "@/components/BlogList";
 import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
@@ -31,7 +31,7 @@ export default function BlogPage() {
             <h3 className="subhead-line mt-2">Stories From The Street &amp; The Trail</h3>
             <p className="lead mt-4">Builds, adventures, gear, and the people who keep the culture moving.</p>
             <div style={{ maxWidth: 420 }}>
-              <EmailCaptureForm source="blog_hero" buttonText="Subscribe" />
+              <SubscribeButton source="blog_hero" returnTo="/blog" />
             </div>
           </div>
         </div>

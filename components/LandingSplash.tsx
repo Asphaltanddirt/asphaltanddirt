@@ -1,5 +1,5 @@
 import Link from "next/link";
-import EmailCaptureForm from "./EmailCaptureForm";
+import SubscribeButton from "./SubscribeButton";
 import { socialLinks } from "@/lib/social";
 
 /**
@@ -12,14 +12,17 @@ export default function LandingSplash({
   heading,
   description,
   source,
+  returnTo,
   enterSiteHref,
   enterSiteLabel = "Enter The Full Site",
 }: {
   eyebrow: string;
   heading: string;
   description: string;
-  /** Tags the newsletter signup for segmentation — see EmailCaptureForm. */
+  /** Tags the newsletter signup for segmentation — see SubscribeButton. */
   source: string;
+  /** Path to send them back to once they've signed up (this same splash). */
+  returnTo: string;
   /** When set, shows a primary CTA into the full site above the newsletter form. */
   enterSiteHref?: string;
   enterSiteLabel?: string;
@@ -47,7 +50,7 @@ export default function LandingSplash({
         )}
 
         <div className="splash-newsletter">
-          <EmailCaptureForm source={source} buttonText="Subscribe" />
+          <SubscribeButton source={source} returnTo={returnTo} />
         </div>
 
         <div className="social-row splash-social">
