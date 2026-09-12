@@ -21,7 +21,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
   const messages = await getMessages(slug);
-  return NextResponse.json({ messages });
+
+  // The client polls this; reporting the caller's roll-call status here is
+  // what lets their view switch from the staff line to the group chat the
+  // moment staff checks them in, without a reload.
+  const token = req.nextUrl.searchParams.get("token") || "";
+  const attendee = token ? await getAttendeeByToken(slug, token) : null;
+
+  return NextResponse.json({ messages, ...(attendee ? { checkedIn: attendee.checkedIn } : {}) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -31,7 +38,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
 
-  let body: { text?: string; sosType?: string; staffCode?: string; token?: string; announcementFromStaff?: boolean };
+  let body: {
+    text?: string;
+    sosType?: string;
+    staffCode?: string;
+    token?: string;
+    announcementFromStaff?: boolean;
+    replyToAttendeeId?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -52,16 +66,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   let authorName: string;
   let vehicleCallsign: string;
   let channel: Channel;
+  let attendeeId: string | undefined;
+  let replyToAttendeeId: string | undefined;
 
   if (staff) {
     authorName = "Staff";
     vehicleCallsign = "";
-    channel = body.announcementFromStaff ? "Announcements" : "Chat";
+    // A reply addressed to one person goes onto the Staff line tagged with
+    // their record ID, so it reaches them and nobody else. Without the tag a
+    // staff message is a normal group post.
+    replyToAttendeeId = (body.replyToAttendeeId || "").trim() || undefined;
+    channel = body.announcementFromStaff ? "Announcements" : replyToAttendeeId ? "Staff" : "Chat";
   } else {
     const attendee = await getAttendeeByToken(slug, body.token || "");
     if (!attendee) {
       return NextResponse.json({ error: "We couldn't verify your link — try opening it again from your email." }, { status: 403 });
     }
+    attendeeId = attendee.id;
     authorName = attendee.screenName;
     vehicleCallsign = attendee.vehicleCallsign;
     // SOS always reaches the group regardless of check-in status; a normal
@@ -72,6 +93,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   const { id } = await postMessage({
     eventSlug: slug,
+    attendeeId,
+    replyToAttendeeId,
     authorName,
     vehicleCallsign,
     channel,

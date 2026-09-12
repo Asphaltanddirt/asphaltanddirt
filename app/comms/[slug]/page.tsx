@@ -63,6 +63,7 @@ export default async function CommsPage({
       initialMessages={messages}
       isStaff={isStaff}
       staffCode={isStaff ? staffParam || "" : ""}
+      attendeeId={attendee?.id || ""}
       attendeeName={attendee?.screenName || ""}
       attendeeVehicle={attendee?.vehicleCallsign || ""}
       attendeeCheckedIn={attendee?.checkedIn || false}

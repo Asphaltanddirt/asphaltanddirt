@@ -227,23 +227,52 @@ export interface WaiverSubmission {
  *  sends the personal link; nothing here does. */
 export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
   assertConfigured();
-  const accessToken = crypto.randomBytes(16).toString("hex");
   const signedAt = new Date().toISOString();
 
-  const created = await createRecord(
-    ATTENDEES_TABLE,
-    {
-      "Event Slug": input.eventSlug,
-      "Screen Name": input.screenName,
-      "Vehicle Callsign": input.vehicleCallsign,
-      "Legal Name": input.legalName,
-      Email: input.email,
-      "Access Token": accessToken,
-      "Waiver Agreed At": signedAt,
-      "Checked In": false,
-    },
-    { baseId: BASE_ID },
-  );
+  // Filling the form twice on one event must not mint a second identity —
+  // that would hand them a second token and orphan the messages they already
+  // sent. Reuse the row (and its token, so the original emailed link keeps
+  // working) and take the newer screen name/vehicle, which makes
+  // re-registering a legitimate way to fix a typo'd name.
+  const existing = await findAttendeeByEmail(input.eventSlug, input.email);
+  let attendee: Attendee;
+
+  if (existing) {
+    await updateRecord(
+      ATTENDEES_TABLE,
+      existing.id,
+      {
+        "Screen Name": input.screenName,
+        "Vehicle Callsign": input.vehicleCallsign,
+        "Legal Name": input.legalName,
+        "Waiver Agreed At": signedAt,
+      },
+      { baseId: BASE_ID },
+    );
+    attendee = {
+      ...existing,
+      screenName: input.screenName,
+      vehicleCallsign: input.vehicleCallsign,
+      legalName: input.legalName,
+    };
+  } else {
+    const accessToken = crypto.randomBytes(16).toString("hex");
+    const created = await createRecord(
+      ATTENDEES_TABLE,
+      {
+        "Event Slug": input.eventSlug,
+        "Screen Name": input.screenName,
+        "Vehicle Callsign": input.vehicleCallsign,
+        "Legal Name": input.legalName,
+        Email: input.email,
+        "Access Token": accessToken,
+        "Waiver Agreed At": signedAt,
+        "Checked In": false,
+      },
+      { baseId: BASE_ID },
+    );
+    attendee = toAttendee({ id: created.id, fields: { ...created, "Access Token": accessToken } });
+  }
 
   const childFields: AirtableFields = {};
   input.children.slice(0, 4).forEach((child, i) => {
@@ -286,7 +315,29 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
     { baseId: BASE_ID, typecast: true },
   );
 
-  return toAttendee({ id: created.id, fields: { ...created, "Access Token": accessToken } });
+  return attendee;
+}
+
+/** An existing registration for this event with the same email, if any.
+ *  Someone who fills the form twice (a typo'd screen name, a lost email, a
+ *  double-tapped submit) must end up with the SAME identity — a second row
+ *  means a second access token, and their own earlier messages become
+ *  invisible to them. Matched case-insensitively; addresses are. */
+export async function findAttendeeByEmail(slug: string, email: string): Promise<Attendee | null> {
+  assertConfigured();
+  const normalised = email.trim().toLowerCase();
+  if (!normalised) return null;
+  const records = await listRecords(ATTENDEES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, { baseId: BASE_ID });
+  const match = records.find((r) => ((r.fields.Email as string) || "").trim().toLowerCase() === normalised);
+  return match ? toAttendee(match) : null;
+}
+
+/** Staff fixing a hand-typed screen name on the roster ("Rache1" -> "Rachel")
+ *  without making the person re-register. Safe now that visibility keys off
+ *  the record ID rather than the name. */
+export async function renameAttendee(attendeeId: string, screenName: string): Promise<void> {
+  assertConfigured();
+  await updateRecord(ATTENDEES_TABLE, attendeeId, { "Screen Name": screenName }, { baseId: BASE_ID });
 }
 
 export async function getAttendeeByToken(slug: string, token: string): Promise<Attendee | null> {
@@ -330,6 +381,12 @@ export type SosType = "Mechanical" | "Stuck" | "Lost" | "Emergency";
 
 export interface CommsMessage {
   id: string;
+  /** Record ID of the Attendees row that posted this — the identity key.
+   *  Screen names are hand-typed, collide, and change on re-registration, so
+   *  they can't be trusted to decide who sees what. Null for staff posts. */
+  attendeeId: string | null;
+  /** On a staff reply in the pre-checkin line: whose line it's addressed to. */
+  replyToAttendeeId: string | null;
   authorName: string;
   vehicleCallsign: string;
   channel: Channel;
@@ -344,6 +401,8 @@ function toMessage(r: { id: string; createdTime: string; fields: AirtableFields 
   const photo = (r.fields.Photo as { url: string }[] | undefined)?.[0];
   return {
     id: r.id,
+    attendeeId: (r.fields["Attendee Id"] as string) || null,
+    replyToAttendeeId: (r.fields["Reply To Attendee Id"] as string) || null,
     authorName: (r.fields["Author Name"] as string) || "",
     vehicleCallsign: (r.fields["Vehicle Callsign"] as string) || "",
     channel: (r.fields.Channel as Channel) || "Chat",
@@ -365,6 +424,8 @@ export async function getMessages(slug: string): Promise<CommsMessage[]> {
 
 export interface PostMessageInput {
   eventSlug: string;
+  attendeeId?: string;
+  replyToAttendeeId?: string;
   authorName: string;
   vehicleCallsign: string;
   channel: Channel;
@@ -379,6 +440,8 @@ export async function postMessage(input: PostMessageInput): Promise<{ id: string
     MESSAGES_TABLE,
     {
       "Event Slug": input.eventSlug,
+      ...(input.attendeeId ? { "Attendee Id": input.attendeeId } : {}),
+      ...(input.replyToAttendeeId ? { "Reply To Attendee Id": input.replyToAttendeeId } : {}),
       "Author Name": input.authorName,
       "Vehicle Callsign": input.vehicleCallsign,
       Channel: input.channel,
