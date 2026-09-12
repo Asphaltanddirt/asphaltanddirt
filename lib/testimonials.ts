@@ -15,19 +15,22 @@ const BASE_ID = process.env.AIRTABLE_TESTIMONIALS_BASE_ID;
 const TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
 
 /** "customer" = merch buyers (Role = Customer), shown on the Merch page.
- *  "community" = everyone else (Podcast Listener, Event Attendee,
- *  Community Member, Other), shown on the Community page.
+ *  "community" = Role = Community Member specifically, shown on the
+ *  Community page. "event" = Role = Event Attendee, shown on the Events
+ *  page — these used to be lumped together under "community" but read
+ *  oddly out of context on each other's page.
  *  "homepage" = a hand-picked 3-up on the home page (the Homepage checkbox
  *  in Airtable), ordered Customer -> Community -> Event so the merch /
  *  community / event angles line up. */
-export type TestimonialAudience = "all" | "customer" | "community" | "homepage";
+export type TestimonialAudience = "all" | "customer" | "community" | "event" | "homepage";
 
 // Home-page ordering: merch, then community, then event.
 const HOMEPAGE_ROLE_ORDER = ["Customer", "Community Member", "Event Attendee"];
 
 function filterFor(audience: TestimonialAudience) {
   if (audience === "customer") return "AND({Approved}=1, {Role}='Customer')";
-  if (audience === "community") return "AND({Approved}=1, {Role}!='Customer')";
+  if (audience === "community") return "AND({Approved}=1, {Role}='Community Member')";
+  if (audience === "event") return "AND({Approved}=1, {Role}='Event Attendee')";
   if (audience === "homepage") return "AND({Approved}=1, {Homepage}=1)";
   return "{Approved}=1";
 }

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublishedEvents } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
+import { getApprovedTestimonials } from "@/lib/testimonials";
+import TestimonialGrid from "@/components/TestimonialGrid";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -26,7 +28,10 @@ function excerpt(text: string, maxLength = 140) {
 }
 
 export default async function EventsPage() {
-  const { upcoming, past } = await getPublishedEvents();
+  const [{ upcoming, past }, testimonials] = await Promise.all([
+    getPublishedEvents(),
+    getApprovedTestimonials(3, "event"),
+  ]);
 
   return (
     <>
@@ -116,6 +121,15 @@ export default async function EventsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {testimonials.length > 0 && (
+        <section className="section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="section-head"><div className="eyebrow">What Attendees Say</div></div>
+            <TestimonialGrid testimonials={testimonials} />
           </div>
         </section>
       )}

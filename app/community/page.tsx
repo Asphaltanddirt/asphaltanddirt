@@ -5,6 +5,7 @@ import { socialLinks } from "@/lib/social";
 import Link from "next/link";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { getPublishedEvents } from "@/lib/events";
+import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 import { getPostBySlug } from "@/lib/blog";
 
@@ -29,42 +30,27 @@ function excerpt(text: string, maxLength = 140) {
 const PLATFORMS = [
   {
     name: "Facebook",
-    color: "#1877F2",
     url: socialLinks.facebook,
-    cta: "Follow",
-    description: "Events, trails & updates",
     icon: <path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" />,
   },
   {
     name: "Instagram",
-    color: "#E1306C",
     url: socialLinks.instagram,
-    cta: "Follow",
-    description: "Daily builds & reels",
     icon: <><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="1" /></>,
   },
   {
     name: "TikTok",
-    color: undefined,
     url: socialLinks.tiktok,
-    cta: "Follow",
-    description: "Shorts & behind the scenes",
     icon: <path d="M13 3v11.5a3 3 0 1 1-2.4-2.9M13 3c.4 2.4 2 4 4.5 4.3" />,
   },
   {
     name: "YouTube",
-    color: "#FF0000",
     url: socialLinks.youtube,
-    cta: "Subscribe",
-    description: "Ride recaps & videos",
     icon: <><rect x="2.5" y="6" width="19" height="12" rx="3" /><path d="M10.5 9.5v5l4.5-2.5z" fill="currentColor" stroke="none" /></>,
   },
   {
     name: "X",
-    color: undefined,
     url: socialLinks.x,
-    cta: "Follow",
-    description: "Updates & conversation",
     icon: <path d="M4 4l16 16M20 4 4 20" />,
   },
 ];
@@ -127,26 +113,19 @@ export default async function CommunityPage() {
 
       <div className="container">
         <div className="feature-strip">
-          <div className="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16V11l2.2-4.4A2 2 0 0 1 8 5.5h8a2 2 0 0 1 1.8 1.1L20 11v5" /><path d="M4 16h16v3H4z" /><circle cx="8" cy="19" r="1.4" /><circle cx="16" cy="19" r="1.4" /></svg>
-            <span>Community<br />Rides</span>
-          </div>
-          <div className="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l2-2h6l2 2h3v11H4z" /><circle cx="12" cy="13.5" r="3.3" /></svg>
-            <span>Event<br />Coverage</span>
-          </div>
-          <div className="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 2.7 5.9 6.3.6-4.8 4.3 1.4 6.2L12 16.9 6.4 20l1.4-6.2L3 9.5l6.3-.6z" /></svg>
-            <span>Member<br />Spotlights</span>
-          </div>
-          <div className="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 19 9 8l4 6.5L15 11l6 8z" /></svg>
-            <span>Trail<br />Stories</span>
-          </div>
-          <div className="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="4" rx=".5" /><rect x="5" y="13" width="14" height="8" /><path d="M12 9v12M12 9C10 5 6 5 6 7.5S9 9 12 9zM12 9c2-4 6-4 6-1.5S15 9 12 9z" /></svg>
-            <span>Giveaways<br />&amp; Perks</span>
-          </div>
+          {PLATFORMS.map((platform) => (
+            <a
+              key={platform.name}
+              href={platform.url}
+              target="_blank"
+              rel="noopener"
+              className="feature-item"
+              aria-label={platform.name}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{platform.icon}</svg>
+              <span>{platform.name}</span>
+            </a>
+          ))}
         </div>
       </div>
 
@@ -188,20 +167,41 @@ export default async function CommunityPage() {
         </div>
       </section>
 
+      {/* Gallery placeholder — swap for a real photo gallery (Jose's leaning
+       *  toward something with motion/rotation) once real event/meetup
+       *  photos exist. Until then, the launch post's own words carry the
+       *  section instead of stock imagery. */}
+      <section className="section-alt section-pt-tight section-pb-tight">
+        <div className="container" style={{ maxWidth: 780, marginInline: "auto", textAlign: "center" }}>
+          <blockquote
+            style={{
+              margin: 0,
+              border: "none",
+              padding: 0,
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontStyle: "normal",
+              fontSize: "clamp(24px, 4vw, 38px)",
+              lineHeight: 1.25,
+              color: "var(--accent)",
+            }}
+          >
+            &ldquo;This community is the entire reason Asphalt &amp; Dirt is a thing at all.
+            Not the podcast, not the builds, not us. You.&rdquo;
+          </blockquote>
+        </div>
+      </section>
+
       {featuredPost && (
-        <section className="section-alt section-pt-tight section-pb-tight">
-          <div className="container">
+        <section className="section-pt-tight section-pb-tight">
+          <div className="container" style={{ maxWidth: 640, marginInline: "auto" }}>
             <div className="eyebrow">From The Blog</div>
-            <Link href={`/blog/${featuredPost.slug}`} className="card mt-3" style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 22, alignItems: "center", padding: 22 }}>
-              <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={featuredPost.image.src} alt={featuredPost.image.alt} />
-              </div>
-              <div>
-                <h3 className="mb-2">{featuredPost.title}</h3>
-                <p className="mb-0">{featuredPost.excerpt}</p>
-              </div>
+            <Link href={`/blog/${featuredPost.slug}`} className="mt-2" style={{ display: "block" }}>
+              <h3 className="mb-2">{featuredPost.title}</h3>
             </Link>
+            <p className="mb-0" style={{ fontSize: 14 }}>
+              A placeholder for now — a piece written specifically about our own journey is coming.
+            </p>
           </div>
         </section>
       )}
@@ -227,35 +227,6 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      <section className="section-pt-tight section-pb-tight">
-        <div className="container">
-          <div className="eyebrow">Where To Connect</div>
-          <div className="grid grid-5 mt-4">
-            {PLATFORMS.map((platform) => (
-              <div
-                className="card"
-                style={{ alignItems: "center", textAlign: "center", padding: 20, gap: 12, background: "var(--bg)", border: "none" }}
-                key={platform.name}
-              >
-                <a
-                  href={platform.url}
-                  target="_blank"
-                  rel="noopener"
-                  aria-label={`${platform.cta} on ${platform.name}`}
-                  style={{ color: platform.color ?? "var(--text)" }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: 72, height: 72 }}>{platform.icon}</svg>
-                </a>
-                <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
-                  <span style={{ height: 3, background: "var(--accent)", borderRadius: 2 }} />
-                  <p className="mb-0" style={{ fontSize: 13, whiteSpace: "nowrap" }}>{platform.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="section-alt section-pt-tight">
         <div className="container">
           <div className="section-head">
@@ -267,23 +238,35 @@ export default async function CommunityPage() {
           </div>
           {recaps.length ? (
             <div className="grid grid-3">
-              {recaps.map((video) => (
-                <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
-                  <div className="card-media">
-                    <div className="play-overlay">
-                      <div className="play-circle">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              {recaps.map((video) => {
+                const internal = getEpisodeByYoutubeId(video.videoId);
+                const cardBody = (
+                  <>
+                    <div className="card-media">
+                      <div className="play-overlay">
+                        <div className="play-circle">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        </div>
                       </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={video.thumbnail} alt={video.title} />
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={video.thumbnail} alt={video.title} />
-                  </div>
-                  <div className="card-body">
-                    <h3>{video.title}</h3>
-                    <p>{excerpt(video.description)}</p>
-                  </div>
-                </a>
-              ))}
+                    <div className="card-body">
+                      <h3>{video.title}</h3>
+                      <p>{excerpt(video.description)}</p>
+                    </div>
+                  </>
+                );
+                return internal ? (
+                  <Link className="card" key={video.videoId} href={`/podcast/${internal.slug}`}>
+                    {cardBody}
+                  </Link>
+                ) : (
+                  <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
+                    {cardBody}
+                  </a>
+                );
+              })}
             </div>
           ) : (
             <p className="mb-0">Recaps drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
