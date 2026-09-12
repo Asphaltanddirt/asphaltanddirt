@@ -1317,6 +1317,24 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   padding:12px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm);
 }
 
+/* Community photo wall — aggregated from every event's gallery */
+.community-gallery{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-2); }
+.community-gallery-item{
+  position:relative; aspect-ratio:1/1; overflow:hidden; border-radius:var(--radius-sm);
+  border:1px solid var(--border); background:var(--bg-elevated); display:block;
+}
+.community-gallery-item img{ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
+.community-gallery-item:hover img{ transform:scale(1.05); }
+.community-gallery-caption{
+  position:absolute; inset:auto 0 0 0; padding:16px 10px 8px;
+  background:linear-gradient(to top, rgba(0,0,0,.85), transparent);
+  color:var(--white); font-size:11px; font-weight:700; line-height:1.3;
+  opacity:0; transition:opacity .2s ease;
+}
+.community-gallery-item:hover .community-gallery-caption{ opacity:1; }
+@media (max-width:900px){ .community-gallery{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:560px){ .community-gallery{ grid-template-columns:repeat(2,1fr); } }
+
 /* Event waiver / registration form */
 .waiver-notice{
   color:#ff6b5b; font-weight:800; font-size:12px; letter-spacing:.02em; line-height:1.5;

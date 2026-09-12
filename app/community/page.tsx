@@ -5,6 +5,8 @@ import SocialProofGrid from "@/components/SocialProofGrid";
 import { socialLinks } from "@/lib/social";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 import { getApprovedSocialProof } from "@/lib/socialProof";
+import { getCommunityPhotos } from "@/lib/events";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Community",
@@ -40,9 +42,10 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const [testimonials, socialProof] = await Promise.all([
+  const [testimonials, socialProof, communityPhotos] = await Promise.all([
     getApprovedTestimonials(3, "community"),
     getApprovedSocialProof(8),
+    getCommunityPhotos(12),
   ]);
 
   return (
@@ -119,6 +122,34 @@ export default async function CommunityPage() {
           </p>
         </div>
       </section>
+
+      {communityPhotos.length > 0 && (
+        <section className="section-pb-tight">
+          <div className="container">
+            <div className="section-head">
+              <div className="eyebrow">Real People, Real Rides</div>
+              <Link href="/events/all" className="view-all">
+                See All Events
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </Link>
+            </div>
+            <div className="community-gallery">
+              {communityPhotos.map((photo, i) => (
+                <Link
+                  key={`${photo.url}-${i}`}
+                  href={`/events/${photo.eventSlug}`}
+                  className="community-gallery-item"
+                  title={photo.eventTitle}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.url} alt={photo.alt} loading="lazy" />
+                  <span className="community-gallery-caption">{photo.eventTitle}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {testimonials.length > 0 && (
         <section className="section-alt section-pt-tight section-pb-tight">

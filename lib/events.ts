@@ -157,6 +157,68 @@ export async function getApprovedEventPhotoSubmissions(
     });
 }
 
+export interface CommunityPhoto {
+  url: string;
+  alt: string;
+  eventTitle: string;
+  eventSlug: string;
+}
+
+/** Every curated gallery photo across every published event, plus approved
+ *  visitor submissions — the Community page's photo wall.
+ *
+ *  Shuffled rather than newest-first on purpose: ordering by date would mean
+ *  the most recent recap permanently owns the top and older rides never
+ *  resurface, which defeats the point of a community gallery. The shuffle is
+ *  seeded off the revalidation window rather than Math.random() so the server
+ *  and client agree on the order within a given render — it changes between
+ *  cache periods, not mid-scroll. */
+export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> {
+  assertConfigured();
+
+  const [eventRecords, submissionRecords] = await Promise.all([
+    listRecords(EVENTS_TABLE, `{Status} = 'Published'`, { baseId: BASE_ID, revalidate: 900 }),
+    listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, { baseId: BASE_ID, revalidate: 900 }),
+  ]);
+
+  const byRecordId = new Map(eventRecords.map((r) => [r.id, r]));
+  const photos: CommunityPhoto[] = [];
+
+  for (const record of eventRecords) {
+    const title = (record.fields.Title as string) || "";
+    const slug = (record.fields.Slug as string) || "";
+    if (!slug) continue;
+    const gallery = (record.fields["Gallery Photos"] as { url: string }[] | undefined) || [];
+    for (const photo of gallery) {
+      photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
+    }
+  }
+
+  for (const record of submissionRecords) {
+    const eventId = ((record.fields.Event as string[]) || [])[0];
+    const event = eventId ? byRecordId.get(eventId) : undefined;
+    if (!event) continue;
+    const title = (event.fields.Title as string) || "";
+    const slug = (event.fields.Slug as string) || "";
+    if (!slug) continue;
+    const submitted = (record.fields.Photo as { url: string }[] | undefined) || [];
+    for (const photo of submitted) {
+      photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
+    }
+  }
+
+  // Deterministic shuffle: a fixed seed per revalidation window keeps the
+  // server render and the hydrated client render identical.
+  const seed = Math.floor(Date.now() / (15 * 60 * 1000));
+  const scored = photos.map((photo, i) => {
+    const h = Math.sin(seed * 9301 + i * 49297) * 233280;
+    return { photo, score: h - Math.floor(h) };
+  });
+  scored.sort((a, b) => a.score - b.score);
+
+  return scored.slice(0, limit).map((s) => s.photo);
+}
+
 export interface RsvpInput {
   eventRecordId: string;
   name: string;
