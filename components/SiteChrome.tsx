@@ -12,7 +12,10 @@ const BARE_PATHS = new Set<string>(["/reviews/submit", "/qr"]);
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (BARE_PATHS.has(pathname)) {
+  // Event Comms is a focused in-field tool (people are standing in a
+  // parking lot with one hand on the phone) — every /comms/* page skips
+  // the header/footer too, not just an exact path.
+  if (BARE_PATHS.has(pathname) || pathname.startsWith("/comms/")) {
     return <>{children}</>;
   }
 

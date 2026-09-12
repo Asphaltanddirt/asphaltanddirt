@@ -127,3 +127,35 @@ export function buildRsvpUpdate(input: { recipientName: string; event: EventDeta
 
   return { subject: `Update: ${event.title}`, html: shell(`An update about ${event.title}`, bodyRows) };
 }
+
+/** Day-before reminder — sent by the comms-reminder cron to every RSVP
+ *  (and, separately, one copy to the team inbox to paste into the FB
+ *  group). Doubles as the comms chat announcement: this link is what
+ *  opens the event-day chat, live for the next 48 hours. */
+export function buildCommsReminder(input: { recipientName: string; event: EventDetail; commsUrl: string }): EventEmail {
+  const { recipientName, event, commsUrl } = input;
+  const first = esc(firstNameOf(recipientName));
+
+  const bodyRows = `
+    <tr>
+      <td align="center" style="padding:40px 32px 8px;">
+        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">See You Tomorrow</p>
+        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title)}</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+        <p style="margin:0 0 16px;">Hey ${first},</p>
+        <p style="margin:0 0 16px;"><strong>${esc(event.title)}</strong> is tomorrow, ${esc(formatDate(event.date))}. We opened a live group chat for the day — no app, no login, just tap in:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:8px 32px 24px;">
+        <a href="${commsUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Open The Group Chat &rarr;</a>
+        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">Stays open through the day &mdash; use it for meetup changes, "anyone have a 13mm socket," or if someone gets separated from the group.</p>
+      </td>
+    </tr>
+  `;
+
+  return { subject: `Tomorrow: ${event.title} — group chat is open`, html: shell(`See you tomorrow at ${event.title}`, bodyRows) };
+}

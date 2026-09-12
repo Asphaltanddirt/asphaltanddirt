@@ -1281,3 +1281,34 @@ h1 .line{ display:block; }
 
 /* focus states for keyboard nav */
 a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* Event Comms — the private, no-login event-day chat */
+.comms-chat{ display:flex; flex-direction:column; height:100dvh; background:var(--bg); }
+.comms-header{ display:flex; align-items:center; justify-content:space-between; padding:var(--sp-2) var(--sp-3); border-bottom:1px solid var(--border-soft); }
+.comms-tabs{ display:flex; border-bottom:1px solid var(--border-soft); }
+.comms-tab{
+  flex:1; padding:12px; background:transparent; border:none; color:var(--text-dim);
+  font-family:var(--font-display); font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase;
+  border-bottom:2px solid transparent; cursor:pointer;
+}
+.comms-tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+.comms-sos-row{ display:flex; gap:8px; padding:var(--sp-2) var(--sp-3); overflow-x:auto; border-bottom:1px solid var(--border-soft); }
+.comms-sos-btn{
+  flex:none; padding:8px 14px; border-radius:999px; border:1.5px solid #c0392b; background:rgba(192,57,43,.12);
+  color:#ff6b5b; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; white-space:nowrap;
+}
+.comms-sos-btn:hover{ background:#c0392b; color:var(--white); }
+.comms-messages{ flex:1; overflow-y:auto; padding:var(--sp-3); display:flex; flex-direction:column; gap:14px; }
+.comms-msg{ max-width:88%; }
+.comms-msg-meta{ display:flex; align-items:baseline; gap:6px; font-size:11.5px; color:var(--text-dim); margin-bottom:3px; }
+.comms-msg-meta strong{ color:var(--text); font-size:13px; }
+.comms-msg-time{ margin-left:auto; }
+.comms-staff-badge{ background:var(--accent); color:var(--ad-black); font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px; text-transform:uppercase; }
+.comms-msg-body{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; font-size:14.5px; white-space:pre-wrap; word-break:break-word; }
+.comms-msg-sos .comms-msg-body{ border-color:#c0392b; background:rgba(192,57,43,.1); }
+.comms-sos-label{ color:#ff6b5b; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+.comms-composer{ display:flex; gap:8px; padding:var(--sp-2) var(--sp-3); border-top:1px solid var(--border-soft); }
+.comms-composer input{
+  flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:12px 14px; color:var(--text); font-size:14px;
+}
