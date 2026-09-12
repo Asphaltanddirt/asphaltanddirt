@@ -14,7 +14,7 @@
 export type WaiverVersion = "ONE-DAY-1.0" | "MULTI-DAY-1.0" | "POP-UP-1.0";
 
 export const WAIVER_CONFIG = {
-  ORGANIZER: "JLDA Holding Corp",
+  ORGANIZER: "JLDA Holding Corp d/b/a Asphalt & Dirt",
   SYSTEM: "Tailgate",
   PRIVACY: "asphaltanddirt.com/event-privacy-policy",
   CONTACT: "team@asphaltanddirt.com",

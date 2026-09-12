@@ -13,12 +13,12 @@ export const POLICY_VERSION = "PRIVACY-1.0";
  *  (§11). Everything else reflects the stack as actually built
  *  (Airtable / Resend / Vercel). */
 const TBD = "[TBD]";
-const ORGANIZER = "JLDA Holding Corp";
+const ORGANIZER = "JLDA Holding Corp d/b/a Asphalt & Dirt";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "What This Policy Covers",
-    body: `This policy explains how ${ORGANIZER}, which operates Asphalt & Dirt ("the Organizer"), collects, uses, shares, and retains personal information in connection with:
+    body: `This policy explains how ${ORGANIZER} ("the Organizer") collects, uses, shares, and retains personal information in connection with:
 • One-day off-road events.
 • Multi-day off-road events.
 • Pop-up meetups, including meals, car shows, and social gatherings.
