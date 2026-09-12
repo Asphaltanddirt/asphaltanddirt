@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getCommsSettings, getMessages, isCommsOpen, isStaffCode } from "@/lib/eventComms";
+import Link from "next/link";
+import { getCommsSettings, getMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import CommsChat from "@/components/CommsChat";
 
@@ -13,10 +14,10 @@ export default async function CommsPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ staff?: string }>;
+  searchParams: Promise<{ staff?: string; token?: string }>;
 }) {
   const { slug } = await params;
-  const { staff: staffParam } = await searchParams;
+  const { staff: staffParam, token } = await searchParams;
 
   const [settings, event] = await Promise.all([getCommsSettings(slug), getEventBySlug(slug)]);
   const open = isCommsOpen(settings);
@@ -37,7 +38,23 @@ export default async function CommsPage({
     );
   }
 
-  const messages = await getMessages(slug);
+  const attendee = !isStaff && token ? await getAttendeeByToken(slug, token) : null;
+
+  if (!isStaff && !attendee) {
+    return (
+      <section className="section-pt-tight section-pb-tight">
+        <div className="container" style={{ maxWidth: 480, textAlign: "center" }}>
+          <h1>Link Not Recognized</h1>
+          <p className="lead mt-2">
+            This chat only works with your personal link, emailed to you after you sign up.
+          </p>
+          <Link href={`/comms/${slug}/waiver`} className="btn btn-primary mt-3">Sign Up For The Chat</Link>
+        </div>
+      </section>
+    );
+  }
+
+  const [messages, roster] = await Promise.all([getMessages(slug), isStaff ? getAttendeeRoster(slug) : Promise.resolve([])]);
 
   return (
     <CommsChat
@@ -46,6 +63,10 @@ export default async function CommsPage({
       initialMessages={messages}
       isStaff={isStaff}
       staffCode={isStaff ? staffParam || "" : ""}
+      attendeeName={attendee?.screenName || ""}
+      attendeeVehicle={attendee?.vehicleCallsign || ""}
+      attendeeCheckedIn={attendee?.checkedIn || false}
+      initialRoster={roster}
     />
   );
 }
