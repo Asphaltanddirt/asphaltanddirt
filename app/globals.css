@@ -401,6 +401,34 @@ h1 .line{ display:block; }
 .hero .lead{ margin-bottom:var(--sp-4); font-size:18px; }
 .hero-content{ max-width:640px; }
 
+/* Community hero's overlay quote — desktop: absolutely positioned over the
+   open part of the hero image, bottom-center, so it doesn't fight the left
+   column's height. Mobile: falls back to a normal stacked block below the
+   content instead of overlapping it (there's no open image space to float
+   over on a narrow viewport). */
+.hero-quote-shift{ transform:translateY(-56px); }
+.hero-quote-overlay{
+  position:absolute; inset:0; z-index:2; display:flex; align-items:flex-end;
+  justify-content:center; padding-bottom:var(--sp-4); pointer-events:none;
+}
+.hero-quote-card{
+  margin:0; border:none; max-width:820px; text-align:center; pointer-events:auto;
+  background:rgba(0,0,0,0.5); border-radius:var(--radius-md); padding:32px 36px;
+  font-family:var(--font-display); font-weight:800; font-style:normal;
+  font-size:clamp(21px,2.7vw,30px); line-height:1.4; color:var(--text);
+}
+@media (max-width:900px){
+  /* .hero is display:flex (row) by default — without this, the overlay
+     becomes a second flex item beside hero-inner instead of stacking below
+     it. Scoped to this page's hero only via .hero-with-quote. */
+  .hero-with-quote{ display:block; height:auto; min-height:0; padding:var(--sp-8) 0; }
+  .hero-quote-shift{ transform:none; }
+  /* position:relative (not static) — static elements ignore z-index and
+     would paint behind .hero-bg/.hero-scrim, which are both position:absolute. */
+  .hero-quote-overlay{ position:relative; padding:var(--sp-3) 0 0; }
+  .hero-quote-card{ max-width:none; font-size:17px; padding:18px 20px; }
+}
+
 .capture-box{
   border:1.5px solid var(--accent);
   border-radius:var(--radius-md);

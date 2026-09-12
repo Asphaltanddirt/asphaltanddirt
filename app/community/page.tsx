@@ -66,7 +66,7 @@ export default async function CommunityPage() {
 
   return (
     <>
-      <section className="hero">
+      <section className="hero hero-with-quote">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/img/community/hero.jpg"
@@ -75,7 +75,7 @@ export default async function CommunityPage() {
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
-          <div className="hero-content">
+          <div className="hero-content hero-quote-shift">
             <h1>
               <span className="line">Join The <span className="accent-text">Movement</span></span>
             </h1>
@@ -88,6 +88,18 @@ export default async function CommunityPage() {
               <SubscribeButton source="community_hero" label="I Want In" returnTo="/community" />
             </div>
           </div>
+        </div>
+
+        {/* Desktop: positioned independently of hero-content so its size/
+         *  placement isn't tied to the left column's height — sits in the
+         *  open area of the hero image, bottom-center. Mobile: falls back to
+         *  a normal stacked block (see .hero-quote-overlay media query). */}
+        <div className="container hero-quote-overlay">
+          <blockquote className="hero-quote-card">
+            &ldquo;This community is the entire reason Asphalt &amp; Dirt is a thing at all.
+            Not the podcast, not the builds, not us.{" "}
+            <span style={{ color: "var(--accent)" }}>YOU!</span>&rdquo;
+          </blockquote>
         </div>
       </section>
 
@@ -109,11 +121,74 @@ export default async function CommunityPage() {
         </div>
       </div>
 
+      <section className="section-pt-tight section-pb-tight">
+        <div className="container">
+          <div className="grid grid-2">
+            {featuredPost && (
+              <div>
+                <div className="eyebrow">From The Blog</div>
+                <Link href={`/blog/${featuredPost.slug}`} className="card mt-2" style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 16, alignItems: "center", padding: 16 }}>
+                  <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={featuredPost.image.src} alt={featuredPost.image.alt} />
+                  </div>
+                  <div>
+                    <h3 className="mb-2" style={{ fontSize: 18 }}>{featuredPost.title}</h3>
+                    <p className="mb-0" style={{ fontSize: 13 }}>
+                      Placeholder — a piece on our own journey is coming.
+                    </p>
+                  </div>
+                </Link>
+                <p className="mt-2 mb-0">
+                  <Link href="/blog/all" className="view-all">
+                    See All Posts
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </Link>
+                </p>
+              </div>
+            )}
+
+            <div>
+              <div className="eyebrow">Next Up</div>
+              {nextEvent ? (
+                <div className="card mt-2" style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 16, alignItems: "center", padding: 16 }}>
+                  <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                    <span className="badge">{formatEventDate(nextEvent.date)}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={nextEvent.photoUrl || EVENT_FALLBACK_IMAGE.src}
+                      alt={nextEvent.photoUrl ? nextEvent.title : EVENT_FALLBACK_IMAGE.alt}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="mb-2" style={{ fontSize: 18 }}>{nextEvent.title}</h3>
+                    <Link href={`/events/${nextEvent.slug}`} className="btn btn-primary btn-sm">
+                      Details &amp; RSVP
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 mb-0">
+                  No events on the books right now &mdash; check back here, or{" "}
+                  <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a>.
+                </p>
+              )}
+              <p className="mt-2 mb-0">
+                <Link href="/events" className="view-all">
+                  See All Events &amp; RSVP
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section-pb-tight">
-        <div className="container" style={{ maxWidth: 720, marginInline: "auto" }}>
+        <div className="container">
           <div className="eyebrow accent">How This Started</div>
           <h2 className="mt-2">Two Guys, Some Jeeps, No Real Plan</h2>
-          <p className="lead mt-4">
+          <p className="mt-4" style={{ fontSize: 17, maxWidth: "none" }}>
             The plan — and we use that term loosely — was to film some funny TikToks, talk smack
             about each other&apos;s builds, and not take any of it too seriously. That was the
             whole pitch. In under 6 weeks, this turned into almost 100 of you: people who didn&apos;t
@@ -126,69 +201,6 @@ export default async function CommunityPage() {
             either — Dan, Jack, and Christina&apos;s hours are the reason any of this exists, same
             as every one of you who showed up.
           </p>
-        </div>
-      </section>
-
-      <section className="section-pb-tight">
-        <div className="container">
-          <div className="section-head">
-            <div className="eyebrow">Next Up</div>
-          </div>
-          {nextEvent ? (
-            <div className="card" style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 20, alignItems: "center", padding: 20 }}>
-              <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
-                <span className="badge">{formatEventDate(nextEvent.date)}</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={nextEvent.photoUrl || EVENT_FALLBACK_IMAGE.src}
-                  alt={nextEvent.photoUrl ? nextEvent.title : EVENT_FALLBACK_IMAGE.alt}
-                />
-              </div>
-              <div>
-                <h3 className="mb-2">{nextEvent.title}</h3>
-                {nextEvent.publicBlurb && <p className="mb-2">{excerpt(nextEvent.publicBlurb)}</p>}
-                <Link href={`/events/${nextEvent.slug}`} className="btn btn-primary btn-sm">
-                  Details &amp; RSVP
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <p className="mb-0">
-              No events on the books right now &mdash; check back here, or{" "}
-              <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a> so you don&apos;t miss the next one.
-            </p>
-          )}
-          <p className="mt-3 mb-0">
-            <Link href="/events" className="view-all">
-              See All Events &amp; RSVP
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* Gallery placeholder — swap for a real photo gallery (Jose's leaning
-       *  toward something with motion/rotation) once real event/meetup
-       *  photos exist. Until then, the launch post's own words carry the
-       *  section instead of stock imagery. */}
-      <section className="section-alt section-pt-tight section-pb-tight">
-        <div className="container" style={{ maxWidth: 780, marginInline: "auto", textAlign: "center" }}>
-          <blockquote
-            style={{
-              margin: 0,
-              border: "none",
-              padding: 0,
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              fontStyle: "normal",
-              fontSize: "clamp(24px, 4vw, 38px)",
-              lineHeight: 1.25,
-              color: "var(--accent)",
-            }}
-          >
-            &ldquo;This community is the entire reason Asphalt &amp; Dirt is a thing at all.
-            Not the podcast, not the builds, not us. You.&rdquo;
-          </blockquote>
         </div>
       </section>
 
@@ -212,20 +224,6 @@ export default async function CommunityPage() {
           <a href="/reviews/submit" className="btn btn-primary btn-sm mt-3">Leave A Review</a>
         </div>
       </section>
-
-      {featuredPost && (
-        <section className="section-pt-tight">
-          <div className="container" style={{ maxWidth: 640, marginInline: "auto" }}>
-            <div className="eyebrow">From The Blog</div>
-            <Link href={`/blog/${featuredPost.slug}`} className="mt-2" style={{ display: "block" }}>
-              <h3 className="mb-2">{featuredPost.title}</h3>
-            </Link>
-            <p className="mb-0" style={{ fontSize: 14 }}>
-              A placeholder for now — a piece written specifically about our own journey is coming.
-            </p>
-          </div>
-        </section>
-      )}
 
       <section className="section-alt section-pt-tight">
         <div className="container">
