@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import HeroCTAButton from "@/components/HeroCTAButton";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import { getProductsBySlugs, MERCH_COLLECTIONS, type Product } from "@/lib/fourthwall";
 import { getProductSlugsFor } from "@/lib/featuredProducts";
@@ -124,10 +125,9 @@ export default async function MerchPage() {
                 <span><strong>Easy Returns</strong><br />Hassle-free returns within 30 days.</span>
               </div>
             </div>
-            <Link href="/merch/all" className="btn btn-primary mt-3">
-              View Full Shop
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </Link>
+            <div className="mt-3">
+              <HeroCTAButton href="/merch/all" label="View Full Shop" />
+            </div>
           </div>
         </div>
       </section>

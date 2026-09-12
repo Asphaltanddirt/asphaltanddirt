@@ -12,6 +12,7 @@ import { listRecords, createRecord, isAirtableConfigured, type AirtableFields } 
 const BASE_ID = process.env.AIRTABLE_EVENTS_BASE_ID;
 const EVENTS_TABLE = "Events";
 const RSVPS_TABLE = "RSVPs";
+const PHOTO_SUBMISSIONS_TABLE = "Event Photo Submissions";
 
 function assertConfigured() {
   if (!isAirtableConfigured(BASE_ID)) {
@@ -43,6 +44,12 @@ export interface EventDetail extends EventSummary {
    *  confirmation email either way. */
   meetupPoint: string;
   meetupPublic: boolean;
+  /** Public recap write-up — only relevant once the event's date has
+   *  passed. Empty until the team writes one. */
+  recap: string;
+  /** Curated gallery photos from the Events table's Gallery Photos field
+   *  (team-selected — Comms system pulls, FB group finds, etc). */
+  galleryPhotos: { url: string; alt: string }[];
 }
 
 function toSummary(r: { id: string; fields: AirtableFields }): EventSummary {
@@ -75,6 +82,28 @@ export async function getPublishedEvents(): Promise<{ upcoming: EventSummary[]; 
   return { upcoming, past };
 }
 
+/** `date` is today or later — for picking the button label/link (Details &
+ *  RSVP vs. Recap & Gallery) without needing the split upcoming/past lists. */
+export function isPastEvent(date: string): boolean {
+  return date < new Date().toISOString().slice(0, 10);
+}
+
+/** Upcoming and past merged into one list, newest date first — the 3-wide
+ *  showcase panel on the Events page. New events (almost always dated
+ *  further out than what's already on the books) naturally slot in at the
+ *  front; whatever falls past `limit` is still reachable on /events/all. */
+export async function getEventsShowcase(limit = 3): Promise<EventSummary[]> {
+  const { upcoming, past } = await getPublishedEvents();
+  return [...upcoming, ...past].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+}
+
+/** Every Published event (upcoming + past), newest date first — for the
+ *  /events/all list/search page. */
+export async function getAllPublishedEvents(): Promise<EventSummary[]> {
+  const { upcoming, past } = await getPublishedEvents();
+  return [...upcoming, ...past].sort((a, b) => b.date.localeCompare(a.date));
+}
+
 /** The single soonest upcoming Published event, or null — for the
  *  newsletter digest's auto-filled "Upcoming Event" section. */
 export async function getNextUpcomingEvent(): Promise<EventSummary | null> {
@@ -93,12 +122,39 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
   );
   const record = records[0];
   if (!record) return null;
+  const galleryPhotos = ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || []).map(
+    (photo) => ({ url: photo.url, alt: (record.fields.Title as string) || "Event photo" }),
+  );
   return {
     ...toSummary(record),
     fullDetails: (record.fields["Full Details"] as string) || "",
     meetupPoint: (record.fields["Meetup Point"] as string) || "",
     meetupPublic: Boolean(record.fields["Show Meetup Publicly"]),
+    recap: (record.fields.Recap as string) || "",
+    galleryPhotos,
   };
+}
+
+/** Approved user-submitted photos for one event, newest first — merged
+ *  onto the end of the curated Gallery Photos on the Recap & Gallery page.
+ *  Filters client-side (like listRsvpsForEvent) since a linked-record
+ *  field's raw value is an array of record IDs, not visible to a formula
+ *  filter on the display text. */
+export async function getApprovedEventPhotoSubmissions(
+  eventRecordId: string,
+): Promise<{ url: string; alt: string }[]> {
+  assertConfigured();
+  const records = await listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, {
+    baseId: BASE_ID,
+    revalidate: 300,
+  });
+  return records
+    .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
+    .flatMap((r) => {
+      const name = (r.fields.Name as string) || "A community member";
+      const photos = (r.fields.Photo as { url: string }[] | undefined) || [];
+      return photos.map((photo) => ({ url: photo.url, alt: `Submitted by ${name}` }));
+    });
 }
 
 export interface RsvpInput {

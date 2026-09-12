@@ -222,6 +222,17 @@ section{ padding:var(--sp-10) 0; }
 .btn-outline-accent:hover{ background:var(--accent); color:var(--ad-black); }
 .btn-sm{ padding:10px 18px; font-size:12px; }
 .btn-block{ width:100%; }
+
+/* Hero CTA pair — newsletter + FB group side by side, framed in a soft
+ * gradient backdrop so the pair separates from the hero photo/copy behind
+ * it instead of floating loose on top of it. */
+.hero-cta-backdrop{
+  display:inline-block; padding:10px; border-radius:calc(var(--radius-sm) + 10px);
+  background:linear-gradient(135deg, rgba(0,0,0,.6), rgba(0,0,0,.05));
+}
+.hero-cta-group{ display:flex; gap:10px; flex-wrap:wrap; }
+.btn-gradient{ background:linear-gradient(135deg, var(--accent), #8a1f00); color:var(--white); }
+.btn-gradient:hover{ background:linear-gradient(135deg, var(--accent-dark), #6e1900); }
 .btn svg{ width:12px; height:12px; flex:none; }
 
 /* ---------- Header / Nav ---------- */
@@ -500,10 +511,28 @@ h1 .line{ display:block; }
 .card-media{ position:relative; aspect-ratio:16/10; overflow:hidden; background:var(--bg-elevated); }
 .card-media img{ width:100%; height:100%; object-fit:cover; }
 .card-media video{ width:100%; height:100%; object-fit:cover; display:block; background:#000; }
+.card-media-vertical{ aspect-ratio:9/16; }
 .card-body{ padding:var(--sp-3); display:flex; flex-direction:column; gap:10px; flex:1; }
 .card h3{ font-size:19px; }
 .card p{ font-size:14px; margin:0; }
 .card-actions{ display:flex; gap:10px; margin-top:auto; padding-top:6px; }
+
+/* Social proof fallback card — only used when a post has no thumbnail
+ * (Instagram, or a failed TikTok oEmbed) and falls back to the platform's
+ * own live embed widget instead of a static thumbnail card. Sits inside
+ * the shared .grid.grid-5 alongside the normal thumbnail cards, so it
+ * spans the full column rather than fighting the grid for its own sizing. */
+.social-proof-card{
+  grid-column:1 / -1; max-width:400px; margin-inline:auto;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md);
+  overflow:hidden; display:flex; flex-direction:column; align-items:center; width:100%;
+}
+.social-proof-caption{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 14px; font-size:12px; font-weight:700; color:var(--text-dim); width:100%;
+}
+.social-proof-caption a{ display:inline-flex; align-items:center; gap:4px; color:var(--accent); }
+.social-proof-caption svg{ width:13px; height:13px; }
 
 .badge{
   position:absolute; top:12px; left:12px; z-index:2;
@@ -1147,6 +1176,7 @@ h1 .line{ display:block; }
   position:relative; aspect-ratio:16/9; border-radius:var(--radius-md); overflow:hidden;
   border:1px solid var(--border); background:var(--bg-elevated);
 }
+.video-frame-vertical{ aspect-ratio:9/16; }
 .video-frame button.play-overlay{
   border:none; background:transparent; width:100%; height:100%; padding:0; cursor:pointer;
 }

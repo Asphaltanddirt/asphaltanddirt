@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import SubscribeButton from "@/components/SubscribeButton";
+import HeroCTAGroup from "@/components/HeroCTAGroup";
 import BlogList from "@/components/BlogList";
 import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
@@ -24,15 +24,13 @@ export default function BlogPage() {
         />
         <div className="hero-scrim" />
         <div className="container hero-inner">
-          <div className="hero-content">
+          <div className="hero-content" style={{ marginTop: -138 }}>
             <h1>
               <span className="line">The <span className="accent-text">Dirt Line</span></span>
             </h1>
             <h3 className="subhead-line mt-2">Stories From The Street &amp; The Trail</h3>
             <p className="lead mt-4">Builds, adventures, gear, and the people who keep the culture moving.</p>
-            <div style={{ maxWidth: 420 }}>
-              <SubscribeButton source="blog_hero" returnTo="/blog" />
-            </div>
+            <HeroCTAGroup source="blog_hero" returnTo="/blog" subscribeLabel="Join Now" />
           </div>
         </div>
       </section>

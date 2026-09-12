@@ -2,25 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
 import SubscribeButton from "@/components/SubscribeButton";
-import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
-import { excerpt } from "@/lib/text";
+import YouTubeEmbed from "@/components/YouTubeEmbed";
+import { fetchLatestFromPlaylist } from "@/lib/youtube";
 
 export const metadata: Metadata = {
   title: "Podcast",
   description: "Built street rides. Trail culture. Real events. Real talk. The Asphalt & Dirt podcast — launching soon.",
 };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+// Anthony's vlog series playlist. Labeled "YT Shorts" on the page for now —
+// filled with Shorts until there are 3 real vlogs worth showing, at which
+// point flip the section copy ("YT Shorts" -> "VLOG", "See All Shorts" ->
+// "See All Vlogs") below. Same playlist ID either way, nothing else changes.
+const VLOG_PLAYLIST_ID = "PLKHAREsF7JDw";
 
 export default async function PodcastIndexPage() {
-  const latestVideos = await fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3);
+  const vlogVideos = await fetchLatestFromPlaylist(VLOG_PLAYLIST_ID, 3);
 
   return (
     <>
@@ -73,53 +70,7 @@ export default async function PodcastIndexPage() {
         </div>
       </section>
 
-      <section className="section-pt-tight section-pb-tight">
-        <div className="container">
-          <div className="section-head">
-            <div className="eyebrow">Latest Trail &amp; Event Videos</div>
-          </div>
-          {latestVideos.length ? (
-            <div className="grid grid-3">
-              {latestVideos.map((video) => {
-                // Link in-site when this upload has a real page (transcript,
-                // FAQ-shaped show notes) — out to YouTube directly otherwise.
-                const internal = getEpisodeByYoutubeId(video.videoId);
-                const cardBody = (
-                  <>
-                    <div className="card-media">
-                      <div className="play-overlay">
-                        <div className="play-circle">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                        </div>
-                      </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={video.thumbnail} alt={video.title} />
-                    </div>
-                    <div className="card-body">
-                      <div className="badge-outline">{formatDate(video.publishedAt)}</div>
-                      <h3>{video.title}</h3>
-                      <p>{excerpt(video.description)}</p>
-                    </div>
-                  </>
-                );
-                return internal ? (
-                  <Link className="card" key={video.videoId} href={`/podcast/${internal.slug}`}>
-                    {cardBody}
-                  </Link>
-                ) : (
-                  <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
-                    {cardBody}
-                  </a>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mb-0">Videos drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
-          )}
-        </div>
-      </section>
-
-      <section className="section-alt section-pt-tight" id="watch-listen">
+      <section className="section-alt section-pt-tight section-pb-tight" id="watch-listen">
         <div className="container">
           <div className="eyebrow">Watch &amp; Listen</div>
           <p className="mt-4">
@@ -130,6 +81,38 @@ export default async function PodcastIndexPage() {
           <div className="mt-4">
             <PlatformGrid compact />
           </div>
+        </div>
+      </section>
+
+      <section className="section-pt-tight section-pb-tight">
+        <div className="container">
+          <div className="section-head">
+            <div className="eyebrow">YT Shorts</div>
+            <a href={`https://www.youtube.com/playlist?list=${VLOG_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
+              See All Shorts
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </a>
+          </div>
+          {vlogVideos.length ? (
+            <div className="grid grid-3">
+              {vlogVideos.map((video) => (
+                <div className="card" key={video.videoId}>
+                  <YouTubeEmbed
+                    videoId={video.videoId}
+                    title={video.title}
+                    thumbnail={video.thumbnail}
+                    eventContext="podcast_shorts"
+                    vertical
+                  />
+                  <div className="card-body" style={{ padding: "var(--sp-2)" }}>
+                    <h3 style={{ fontSize: 14 }}>{video.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-0">Shorts drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
+          )}
         </div>
       </section>
     </>

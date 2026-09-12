@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEventBySlug } from "@/lib/events";
+import { getEventBySlug, getApprovedEventPhotoSubmissions, isPastEvent } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
 import RsvpForm from "@/components/RsvpForm";
+import BuildGallery from "@/components/BuildGallery";
+import EventPhotoSubmissionForm from "@/components/EventPhotoSubmissionForm";
 
 const FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
 
@@ -39,6 +41,10 @@ export default async function EventDetailPage({
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
+  const past = isPastEvent(event.date);
+  const submittedPhotos = past ? await getApprovedEventPhotoSubmissions(event.id) : [];
+  const galleryImages = [...event.galleryPhotos, ...submittedPhotos].map((photo) => ({ src: photo.url, alt: photo.alt }));
+
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container" style={{ maxWidth: 720 }}>
@@ -65,21 +71,47 @@ export default async function EventDetailPage({
         )}
         {event.publicBlurb && <p className="lead mt-3">{event.publicBlurb}</p>}
 
-        {event.meetupPublic && event.meetupPoint ? (
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", margin: "var(--sp-3) 0" }}>
-            <div className="eyebrow" style={{ marginBottom: 6 }}>Meetup Point</div>
-            <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{event.meetupPoint}</p>
-          </div>
-        ) : (
-          <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
-            The exact meetup spot goes out by email once you RSVP.{" "}
-            <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">Already in the FB group?</a> The
-            discussion&apos;s happening there too.
-          </p>
-        )}
+        {past ? (
+          <>
+            <h2 className="mt-6">Recap</h2>
+            {event.recap ? (
+              <p style={{ whiteSpace: "pre-wrap" }}>{event.recap}</p>
+            ) : (
+              <p style={{ color: "var(--text-dim)" }}>Recap coming soon.</p>
+            )}
 
-        <h2 className="mt-6">RSVP</h2>
-        <RsvpForm slug={event.slug} />
+            {galleryImages.length > 0 && (
+              <>
+                <h2 className="mt-6">Gallery</h2>
+                <BuildGallery images={galleryImages} />
+              </>
+            )}
+
+            <h2 className="mt-6">Got Photos From The Day?</h2>
+            <p style={{ color: "var(--text-dim)" }}>
+              Share them here and we&apos;ll add them to the gallery above once approved.
+            </p>
+            <EventPhotoSubmissionForm eventRecordId={event.id} eventTitle={event.title} />
+          </>
+        ) : (
+          <>
+            {event.meetupPublic && event.meetupPoint ? (
+              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", margin: "var(--sp-3) 0" }}>
+                <div className="eyebrow" style={{ marginBottom: 6 }}>Meetup Point</div>
+                <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{event.meetupPoint}</p>
+              </div>
+            ) : (
+              <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
+                The exact meetup spot goes out by email once you RSVP.{" "}
+                <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">Already in the FB group?</a> The
+                discussion&apos;s happening there too.
+              </p>
+            )}
+
+            <h2 className="mt-6">RSVP</h2>
+            <RsvpForm slug={event.slug} />
+          </>
+        )}
       </div>
     </section>
   );

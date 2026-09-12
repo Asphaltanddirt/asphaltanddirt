@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import HeroCTAButton from "@/components/HeroCTAButton";
 import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { getFeaturedBuilds } from "@/lib/featuredBuilds";
@@ -38,7 +39,7 @@ export default async function BuildsPage() {
               Every build has a purpose. Every detail has a story. Explore the rigs, the gear, and the
               grind behind the build.
             </p>
-            <Link href="/builds/all" className="btn btn-primary">Explore The Builds</Link>
+            <HeroCTAButton href="/builds/all" label="Explore The Builds" />
           </div>
         </div>
       </section>

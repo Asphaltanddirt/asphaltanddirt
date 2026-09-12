@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import HeroCTAButton from "@/components/HeroCTAButton";
 import { getFeaturedAmbassadors } from "@/lib/ambassadors";
 import { HOSTS, TRAIL_AMBASSADORS, type TeamMember } from "@/lib/team";
 
@@ -78,6 +79,7 @@ export default async function TeamPage() {
               We&apos;re racers, builders, explorers, and storytellers who live for the open road and the
               dirt beyond it. This is our crew. This is our story.
             </p>
+            <HeroCTAButton href="/ambassadors" label="Join The Team" />
           </div>
         </div>
       </section>

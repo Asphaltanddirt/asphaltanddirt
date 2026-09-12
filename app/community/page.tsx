@@ -1,31 +1,15 @@
 import type { Metadata } from "next";
-import SubscribeButton from "@/components/SubscribeButton";
+import HeroCTAGroup from "@/components/HeroCTAGroup";
 import TestimonialGrid from "@/components/TestimonialGrid";
+import SocialProofGrid from "@/components/SocialProofGrid";
 import { socialLinks } from "@/lib/social";
-import Link from "next/link";
-import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
-import { getPublishedEvents } from "@/lib/events";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { getApprovedTestimonials } from "@/lib/testimonials";
-import { getPostBySlug } from "@/lib/blog";
+import { getApprovedSocialProof } from "@/lib/socialProof";
 
 export const metadata: Metadata = {
   title: "Community",
   description: "Real people. Real rides. Real stories from the trail and the street.",
 };
-
-// Fallback photo for events that don't have one uploaded in Airtable yet.
-const EVENT_FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
-
-function formatEventDate(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-function excerpt(text: string, maxLength = 140) {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (clean.length <= maxLength) return clean;
-  return clean.slice(0, clean.lastIndexOf(" ", maxLength)) + "…";
-}
 
 const PLATFORMS = [
   {
@@ -56,13 +40,10 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const [recaps, { upcoming: upcomingEvents }, testimonials] = await Promise.all([
-    fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
-    getPublishedEvents(),
+  const [testimonials, socialProof] = await Promise.all([
     getApprovedTestimonials(3, "community"),
+    getApprovedSocialProof(8),
   ]);
-  const nextEvent = upcomingEvents[0];
-  const featuredPost = getPostBySlug("why-community-rides-matter");
 
   return (
     <>
@@ -84,9 +65,7 @@ export default async function CommunityPage() {
               What started as funny videos and talking smack about builds turned into a real
               community — real people, real rides, real stories from the trail and the street.
             </p>
-            <div style={{ maxWidth: 440 }}>
-              <SubscribeButton source="community_hero" label="I Want In" returnTo="/community" />
-            </div>
+            <HeroCTAGroup source="community_hero" returnTo="/community" />
           </div>
         </div>
 
@@ -141,69 +120,6 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      <section className="section-pb-tight">
-        <div className="container">
-          <div className="grid grid-2">
-            {featuredPost && (
-              <div>
-                <div className="eyebrow">From The Blog</div>
-                <Link href={`/blog/${featuredPost.slug}`} className="card mt-2" style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 16, alignItems: "center", padding: 16 }}>
-                  <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={featuredPost.image.src} alt={featuredPost.image.alt} />
-                  </div>
-                  <div>
-                    <h3 className="mb-2" style={{ fontSize: 18 }}>{featuredPost.title}</h3>
-                    <p className="mb-0" style={{ fontSize: 13 }}>
-                      Placeholder — a piece on our own journey is coming.
-                    </p>
-                  </div>
-                </Link>
-                <p className="mt-2 mb-0">
-                  <Link href="/blog/all" className="view-all">
-                    See All Posts
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                  </Link>
-                </p>
-              </div>
-            )}
-
-            <div>
-              <div className="eyebrow">Next Up</div>
-              {nextEvent ? (
-                <div className="card mt-2" style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 16, alignItems: "center", padding: 16 }}>
-                  <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
-                    <span className="badge">{formatEventDate(nextEvent.date)}</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={nextEvent.photoUrl || EVENT_FALLBACK_IMAGE.src}
-                      alt={nextEvent.photoUrl ? nextEvent.title : EVENT_FALLBACK_IMAGE.alt}
-                    />
-                  </div>
-                  <div>
-                    <h3 className="mb-2" style={{ fontSize: 18 }}>{nextEvent.title}</h3>
-                    <Link href={`/events/${nextEvent.slug}`} className="btn btn-primary btn-sm">
-                      Details &amp; RSVP
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-2 mb-0">
-                  No events on the books right now &mdash; check back here, or{" "}
-                  <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a>.
-                </p>
-              )}
-              <p className="mt-2 mb-0">
-                <Link href="/events" className="view-all">
-                  See All Events &amp; RSVP
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                </Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {testimonials.length > 0 && (
         <section className="section-alt section-pt-tight section-pb-tight">
           <div className="container">
@@ -213,64 +129,16 @@ export default async function CommunityPage() {
         </section>
       )}
 
-      <section className="section-pt-tight section-pb-tight">
-        <div className="container" style={{ textAlign: "center", maxWidth: 560, marginInline: "auto" }}>
-          <div className="eyebrow accent">Been Part Of It?</div>
-          <h2 className="mt-2">Leave A Review</h2>
-          <p className="lead mt-2">
-            The podcast, an event, or just being in the community &mdash; if Asphalt &amp; Dirt&apos;s
-            been good to you, tell us. Approved reviews get featured on the site.
-          </p>
-          <a href="/reviews/submit" className="btn btn-primary btn-sm mt-3">Leave A Review</a>
-        </div>
-      </section>
-
-      <section className="section-alt section-pt-tight">
-        <div className="container">
-          <div className="section-head">
-            <div className="eyebrow">Ride Recaps &amp; Highlights</div>
-            <a href={`https://www.youtube.com/playlist?list=${TRAIL_EVENT_VIDEOS_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
-              View All Recaps
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </a>
-          </div>
-          {recaps.length ? (
-            <div className="grid grid-3">
-              {recaps.map((video) => {
-                const internal = getEpisodeByYoutubeId(video.videoId);
-                const cardBody = (
-                  <>
-                    <div className="card-media">
-                      <div className="play-overlay">
-                        <div className="play-circle">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                        </div>
-                      </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={video.thumbnail} alt={video.title} />
-                    </div>
-                    <div className="card-body">
-                      <h3>{video.title}</h3>
-                      <p>{excerpt(video.description)}</p>
-                    </div>
-                  </>
-                );
-                return internal ? (
-                  <Link className="card" key={video.videoId} href={`/podcast/${internal.slug}`}>
-                    {cardBody}
-                  </Link>
-                ) : (
-                  <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
-                    {cardBody}
-                  </a>
-                );
-              })}
+      {socialProof.length > 0 && (
+        <section className="section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="section-head">
+              <div className="eyebrow">Tag Us On TikTok To Be Featured</div>
             </div>
-          ) : (
-            <p className="mb-0">Recaps drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
-          )}
-        </div>
-      </section>
+            <SocialProofGrid posts={socialProof} />
+          </div>
+        </section>
+      )}
 
       {/* "Friends Of The Channel" logo strip removed 2026-09-09 — placeholder
        *  brand names, no real partnership. A "Sponsors" section lands here

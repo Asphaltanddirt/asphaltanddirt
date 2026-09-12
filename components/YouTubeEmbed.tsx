@@ -7,16 +7,26 @@ export default function YouTubeEmbed({
   videoId,
   title,
   eventContext,
+  thumbnail,
+  vertical = false,
 }: {
   videoId: string;
   title: string;
   eventContext: string;
+  /** Overrides the default i.ytimg.com maxresdefault lookup — useful when a
+   *  thumbnail URL was already fetched server-side (e.g. via the YouTube
+   *  Data API), since maxresdefault isn't reliably generated for every
+   *  video (Shorts especially). */
+  thumbnail?: string;
+  /** Shorts/vertical video — renders the frame at 9:16 instead of 16:9. */
+  vertical?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
+  const frameClassName = vertical ? "video-frame video-frame-vertical" : "video-frame";
 
   if (playing) {
     return (
-      <div className="video-frame">
+      <div className={frameClassName}>
         <iframe
           src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
           title={title}
@@ -28,7 +38,7 @@ export default function YouTubeEmbed({
   }
 
   return (
-    <div className="video-frame">
+    <div className={frameClassName}>
       <button
         type="button"
         className="play-overlay"
@@ -43,7 +53,7 @@ export default function YouTubeEmbed({
         </span>
       </button>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`} alt={title} loading="lazy" />
+      <img src={thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`} alt={title} loading="lazy" />
     </div>
   );
 }
