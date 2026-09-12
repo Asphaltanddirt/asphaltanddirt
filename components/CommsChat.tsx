@@ -43,7 +43,6 @@ export default function CommsChat({
   initialMessages,
   isStaff,
   staffCode,
-  attendeeId,
   attendeeName,
   attendeeVehicle,
   attendeeCheckedIn,
@@ -54,7 +53,6 @@ export default function CommsChat({
   initialMessages: Message[];
   isStaff: boolean;
   staffCode: string;
-  attendeeId: string;
   attendeeName: string;
   attendeeVehicle: string;
   attendeeCheckedIn: boolean;
@@ -80,11 +78,16 @@ export default function CommsChat({
   // has checked this person in yet — otherwise their view only flips on a
   // manual reload, and the moment it needs to flip is the safety meeting,
   // when nobody is going to think to refresh.
+  // Credential on every poll — the endpoint refuses anonymous callers and
+  // tailors the response to who's asking.
+  const feedUrl = isStaff
+    ? `/api/comms/${slug}/messages?staff=${encodeURIComponent(staffCode)}`
+    : `/api/comms/${slug}/messages?token=${encodeURIComponent(token)}`;
+
   useEffect(() => {
     const poll = setInterval(async () => {
       try {
-        const url = `/api/comms/${slug}/messages${token ? `?token=${encodeURIComponent(token)}` : ""}`;
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(feedUrl, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data.messages)) setMessages(data.messages);
@@ -94,7 +97,7 @@ export default function CommsChat({
       }
     }, POLL_MS);
     return () => clearInterval(poll);
-  }, [slug, token]);
+  }, [feedUrl]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
@@ -122,8 +125,7 @@ export default function CommsChat({
       setDraft("");
       setReplyTo(null);
       setAnnounceMode(false);
-      const url = `/api/comms/${slug}/messages${token ? `?token=${encodeURIComponent(token)}` : ""}`;
-      const refreshed = await fetch(url, { cache: "no-store" }).then((r) => r.json());
+      const refreshed = await fetch(feedUrl, { cache: "no-store" }).then((r) => r.json());
       if (Array.isArray(refreshed.messages)) setMessages(refreshed.messages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't send that — try again.");
@@ -164,25 +166,11 @@ export default function CommsChat({
     }
   }
 
-  // Visibility, in one place:
-  //  - SOS and Announcements reach everyone, always. Announcements matter
-  //    most to the people who AREN'T checked in yet ("safety meeting at the
-  //    flagpole in 10"), so they deliberately flow into the staff line too.
-  //  - Staff sees the group chat and every private line.
-  //  - Checked-in attendees see the group chat.
-  //  - Everyone else sees their own private line: what they sent, plus staff
-  //    replies addressed to them.
-  //
-  // Identity is the attendee record ID, never the screen name. Names are
-  // hand-typed, so they collide (two "Mike" in a "Red JK" would have read
-  // each other's private line) and they change when someone re-registers.
-  const visibleMessages = messages.filter((m) => {
-    if (m.sosType || m.channel === "Announcements") return true;
-    if (isStaff) return m.channel === "Chat" || m.channel === "Staff";
-    if (checkedIn) return m.channel === "Chat";
-    if (m.channel !== "Staff") return false;
-    return m.attendeeId === attendeeId || m.replyToAttendeeId === attendeeId;
-  });
+  // No filtering here on purpose. Who sees what is decided server-side in
+  // lib/eventComms.ts (visibleMessagesFor) — hiding messages in the browser
+  // would leave them sitting in the page payload and the API response for
+  // anyone who looked.
+  const visibleMessages = messages;
 
   const notCheckedIn = roster.filter((a) => !a.checkedIn);
   const alreadyCheckedIn = roster.filter((a) => a.checkedIn);

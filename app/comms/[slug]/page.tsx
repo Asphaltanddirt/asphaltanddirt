@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCommsSettings, getMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode } from "@/lib/eventComms";
+import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode, type MessageViewer } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import CommsChat from "@/components/CommsChat";
 
@@ -54,7 +54,17 @@ export default async function CommsPage({
     );
   }
 
-  const [messages, roster] = await Promise.all([getMessages(slug), isStaff ? getAttendeeRoster(slug) : Promise.resolve([])]);
+  // Filtered here, not in the browser — whatever this returns is embedded in
+  // the page payload, so anything the viewer shouldn't have must never be in
+  // it in the first place.
+  const viewer: MessageViewer = isStaff
+    ? { kind: "staff" }
+    : { kind: "attendee", attendeeId: attendee!.id, checkedIn: attendee!.checkedIn };
+
+  const [messages, roster] = await Promise.all([
+    getVisibleMessages(slug, viewer),
+    isStaff ? getAttendeeRoster(slug) : Promise.resolve([]),
+  ]);
 
   return (
     <CommsChat
@@ -63,7 +73,6 @@ export default async function CommsPage({
       initialMessages={messages}
       isStaff={isStaff}
       staffCode={isStaff ? staffParam || "" : ""}
-      attendeeId={attendee?.id || ""}
       attendeeName={attendee?.screenName || ""}
       attendeeVehicle={attendee?.vehicleCallsign || ""}
       attendeeCheckedIn={attendee?.checkedIn || false}

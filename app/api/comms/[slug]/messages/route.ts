@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getCommsSettings,
-  getMessages,
+  getVisibleMessages,
   postMessage,
+  type MessageViewer,
   isCommsOpen,
   isSosOpen,
   isStaffCode,
@@ -20,15 +21,30 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (!isCommsOpen(settings)) {
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
-  const messages = await getMessages(slug);
-
-  // The client polls this; reporting the caller's roll-call status here is
-  // what lets their view switch from the staff line to the group chat the
-  // moment staff checks them in, without a reload.
+  // Every caller must prove who they are. Without this the endpoint handed
+  // the entire event's chat — including every private staff-line
+  // conversation — to anyone who knew the slug.
   const token = req.nextUrl.searchParams.get("token") || "";
-  const attendee = token ? await getAttendeeByToken(slug, token) : null;
+  const staff = isStaffCode(settings, req.nextUrl.searchParams.get("staff"));
 
-  return NextResponse.json({ messages, ...(attendee ? { checkedIn: attendee.checkedIn } : {}) });
+  let viewer: MessageViewer;
+  let checkedIn: boolean | undefined;
+
+  if (staff) {
+    viewer = { kind: "staff" };
+  } else {
+    const attendee = await getAttendeeByToken(slug, token);
+    if (!attendee) {
+      return NextResponse.json({ error: "We couldn't verify your link." }, { status: 403 });
+    }
+    viewer = { kind: "attendee", attendeeId: attendee.id, checkedIn: attendee.checkedIn };
+    // Reporting roll-call status on the poll is what lets their view switch
+    // to the group chat the moment staff checks them in, without a reload.
+    checkedIn = attendee.checkedIn;
+  }
+
+  const messages = await getVisibleMessages(slug, viewer);
+  return NextResponse.json({ messages, ...(checkedIn === undefined ? {} : { checkedIn }) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

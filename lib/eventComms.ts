@@ -414,12 +414,47 @@ function toMessage(r: { id: string; createdTime: string; fields: AirtableFields 
   };
 }
 
-/** Every message for one event, oldest first — the client polls this and
- *  filters client-side by channel/visibility (see components/CommsChat.tsx). */
-export async function getMessages(slug: string): Promise<CommsMessage[]> {
+/** Every message for one event, oldest first. Server-only — this is the
+ *  UNFILTERED set and includes every private staff-line conversation. Never
+ *  hand the result to a client; use getVisibleMessages instead. */
+async function getAllMessages(slug: string): Promise<CommsMessage[]> {
   assertConfigured();
   const records = await listRecords(MESSAGES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, { baseId: BASE_ID });
   return records.map(toMessage).sort((a, b) => (a.createdTime < b.createdTime ? -1 : 1));
+}
+
+export type MessageViewer =
+  | { kind: "staff" }
+  | { kind: "attendee"; attendeeId: string; checkedIn: boolean };
+
+/**
+ * Who can see what. This runs on the server and is the only thing enforcing
+ * it — hiding messages in the browser is not privacy, since the full set
+ * would still sit in the page payload and the API response.
+ *
+ *  - SOS and Announcements reach everyone. Announcements matter most to the
+ *    people who AREN'T checked in yet ("safety meeting in 10"), so they
+ *    deliberately reach the staff line too.
+ *  - Staff sees the group chat plus every private line.
+ *  - Checked-in attendees see the group chat. What they said privately
+ *    before roll call stays private; it doesn't become public retroactively.
+ *  - Everyone else sees only their own line: what they sent, plus staff
+ *    replies addressed to them. Keyed on the attendee record ID, never the
+ *    screen name — names are hand-typed, so they collide and they change.
+ */
+export function visibleMessagesFor(messages: CommsMessage[], viewer: MessageViewer): CommsMessage[] {
+  return messages.filter((m) => {
+    if (m.sosType || m.channel === "Announcements") return true;
+    if (viewer.kind === "staff") return m.channel === "Chat" || m.channel === "Staff";
+    if (viewer.checkedIn) return m.channel === "Chat";
+    if (m.channel !== "Staff") return false;
+    return m.attendeeId === viewer.attendeeId || m.replyToAttendeeId === viewer.attendeeId;
+  });
+}
+
+/** The only message list that should ever leave the server. */
+export async function getVisibleMessages(slug: string, viewer: MessageViewer): Promise<CommsMessage[]> {
+  return visibleMessagesFor(await getAllMessages(slug), viewer);
 }
 
 export interface PostMessageInput {
