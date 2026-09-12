@@ -65,33 +65,50 @@ export default async function EpisodePage({
   const hasGuests = guests.length > 0;
   const hasDescOrTranscript = Boolean(episode.showNotes || episode.transcript);
   const episodeUrl = `${SITE_URL}/podcast/${episode.slug}`;
+  const isTrailEvent = episode.type === "trail-event";
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "PodcastEpisode",
-    name: episode.title,
-    datePublished: episode.publicationDate,
-    description: episode.description,
-    url: `${SITE_URL}/podcast/${episode.slug}`,
-    image: episode.artwork.src,
-    ...(episode.youtubeVideoId
-      ? {
-          associatedMedia: {
-            "@type": "VideoObject",
-            name: episode.title,
-            description: episode.description,
-            thumbnailUrl: episode.artwork.src,
-            uploadDate: episode.publicationDate,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}`,
-          },
-        }
-      : {}),
-    partOfSeries: {
-      "@type": "PodcastSeries",
-      name: "Asphalt & Dirt",
-      url: SITE_URL,
-    },
-  };
+  // Trail & event uploads are raw ride videos, not podcast episodes — plain
+  // VideoObject schema instead of PodcastEpisode/PodcastSeries so this stays
+  // an accurate description of what the content actually is.
+  const jsonLd = isTrailEvent
+    ? {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        name: episode.title,
+        description: episode.description,
+        thumbnailUrl: episode.artwork.src,
+        uploadDate: episode.publicationDate,
+        url: episodeUrl,
+        ...(episode.youtubeVideoId
+          ? { embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}` }
+          : {}),
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "PodcastEpisode",
+        name: episode.title,
+        datePublished: episode.publicationDate,
+        description: episode.description,
+        url: episodeUrl,
+        image: episode.artwork.src,
+        ...(episode.youtubeVideoId
+          ? {
+              associatedMedia: {
+                "@type": "VideoObject",
+                name: episode.title,
+                description: episode.description,
+                thumbnailUrl: episode.artwork.src,
+                uploadDate: episode.publicationDate,
+                embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}`,
+              },
+            }
+          : {}),
+        partOfSeries: {
+          "@type": "PodcastSeries",
+          name: "Asphalt & Dirt",
+          url: SITE_URL,
+        },
+      };
 
   return (
     <>
@@ -135,7 +152,7 @@ export default async function EpisodePage({
             </div>
 
             <div className="episode-hero-info">
-              <div className="eyebrow accent">Podcast Episode</div>
+              <div className="eyebrow accent">{isTrailEvent ? "Trail & Event Video" : "Podcast Episode"}</div>
               <h1 className="mt-2">{episode.title}</h1>
               <div className="episode-meta mt-2">
                 <span>{formattedDate}</span>
@@ -156,25 +173,27 @@ export default async function EpisodePage({
             </div>
           </div>
 
-          <div className="episode-audio-strip mt-3">
-            {episode.buzzsproutEpisodeId ? (
-              <BuzzsproutPlayer episodeId={episode.buzzsproutEpisodeId} />
-            ) : episode.riversideEmbedUrl ? (
-              <iframe
-                src={episode.riversideEmbedUrl}
-                title={`${episode.title} — audio player`}
-                style={{ width: "100%", height: 200, border: 0, borderRadius: "var(--radius-md)" }}
-                allow="autoplay"
-              />
-            ) : (
-              <div className="audio-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 13a9 9 0 0 1 18 0" /><rect x="3" y="13" width="4" height="7" rx="1.5" /><rect x="17" y="13" width="4" height="7" rx="1.5" />
-                </svg>
-                <p>Audio player coming soon. This episode hasn&apos;t been published on Buzzsprout yet &mdash; once it is, the player embeds right here.</p>
-              </div>
-            )}
-          </div>
+          {!isTrailEvent && (
+            <div className="episode-audio-strip mt-3">
+              {episode.buzzsproutEpisodeId ? (
+                <BuzzsproutPlayer episodeId={episode.buzzsproutEpisodeId} />
+              ) : episode.riversideEmbedUrl ? (
+                <iframe
+                  src={episode.riversideEmbedUrl}
+                  title={`${episode.title} — audio player`}
+                  style={{ width: "100%", height: 200, border: 0, borderRadius: "var(--radius-md)" }}
+                  allow="autoplay"
+                />
+              ) : (
+                <div className="audio-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 13a9 9 0 0 1 18 0" /><rect x="3" y="13" width="4" height="7" rx="1.5" /><rect x="17" y="13" width="4" height="7" rx="1.5" />
+                  </svg>
+                  <p>Audio player coming soon. This episode hasn&apos;t been published on Buzzsprout yet &mdash; once it is, the player embeds right here.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {hasGuests && (
             <div className="mt-3">
@@ -187,20 +206,22 @@ export default async function EpisodePage({
             </div>
           )}
 
-          <div className="two-col episode-panel-row mt-3">
-            <div>
-              <div className="eyebrow">Sponsor This Episode</div>
-              <div className="sponsor-block mt-3">
-                {episode.sponsors?.length
-                  ? episode.sponsors.map((s) => (
-                      <div key={s.name}>
-                        <strong>{s.name}</strong>
-                        {s.disclosure && <p className="mt-2 mb-0">{s.disclosure}</p>}
-                      </div>
-                    ))
-                  : "Sponsor spot available on this episode. Reach out to advertise here."}
+          <div className={isTrailEvent ? "mt-3" : "two-col episode-panel-row mt-3"}>
+            {!isTrailEvent && (
+              <div>
+                <div className="eyebrow">Sponsor This Episode</div>
+                <div className="sponsor-block mt-3">
+                  {episode.sponsors?.length
+                    ? episode.sponsors.map((s) => (
+                        <div key={s.name}>
+                          <strong>{s.name}</strong>
+                          {s.disclosure && <p className="mt-2 mb-0">{s.disclosure}</p>}
+                        </div>
+                      ))
+                    : "Sponsor spot available on this episode. Reach out to advertise here."}
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <div className="eyebrow">Hype This Episode</div>
               <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>

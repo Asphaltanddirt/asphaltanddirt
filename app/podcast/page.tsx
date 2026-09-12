@@ -3,6 +3,7 @@ import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
 import SubscribeButton from "@/components/SubscribeButton";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
+import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
@@ -79,24 +80,38 @@ export default async function PodcastIndexPage() {
           </div>
           {latestVideos.length ? (
             <div className="grid grid-3">
-              {latestVideos.map((video) => (
-                <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
-                  <div className="card-media">
-                    <div className="play-overlay">
-                      <div className="play-circle">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              {latestVideos.map((video) => {
+                // Link in-site when this upload has a real page (transcript,
+                // FAQ-shaped show notes) — out to YouTube directly otherwise.
+                const internal = getEpisodeByYoutubeId(video.videoId);
+                const cardBody = (
+                  <>
+                    <div className="card-media">
+                      <div className="play-overlay">
+                        <div className="play-circle">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        </div>
                       </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={video.thumbnail} alt={video.title} />
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={video.thumbnail} alt={video.title} />
-                  </div>
-                  <div className="card-body">
-                    <div className="badge-outline">{formatDate(video.publishedAt)}</div>
-                    <h3>{video.title}</h3>
-                    <p>{excerpt(video.description)}</p>
-                  </div>
-                </a>
-              ))}
+                    <div className="card-body">
+                      <div className="badge-outline">{formatDate(video.publishedAt)}</div>
+                      <h3>{video.title}</h3>
+                      <p>{excerpt(video.description)}</p>
+                    </div>
+                  </>
+                );
+                return internal ? (
+                  <Link className="card" key={video.videoId} href={`/podcast/${internal.slug}`}>
+                    {cardBody}
+                  </Link>
+                ) : (
+                  <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
+                    {cardBody}
+                  </a>
+                );
+              })}
             </div>
           ) : (
             <p className="mb-0">Videos drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
