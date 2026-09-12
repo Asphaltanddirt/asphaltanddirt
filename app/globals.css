@@ -1316,3 +1316,32 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   padding:12px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm);
 }
+
+/* Event waiver / registration form */
+.waiver-notice{
+  color:#ff6b5b; font-weight:800; font-size:12px; letter-spacing:.02em; line-height:1.5;
+  border:1px solid #c0392b; background:rgba(192,57,43,.1);
+  border-radius:var(--radius-sm); padding:10px 14px; margin:0 0 14px;
+}
+.waiver-text{
+  max-height:340px; overflow-y:auto;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:18px 20px; font-size:13px; line-height:1.65; color:var(--text-dim);
+}
+.waiver-heading{
+  font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--text); margin:0 0 8px;
+}
+.waiver-check{
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:13px; line-height:1.55; color:var(--text-dim); margin-top:10px; cursor:pointer;
+}
+.waiver-check input{ margin-top:3px; flex:none; }
+.waiver-child{
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:16px; margin-bottom:14px; display:flex; flex-direction:column; gap:6px;
+}
+.waiver-privacy{
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:16px; margin-top:16px; background:var(--bg-card);
+}

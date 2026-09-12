@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
+import { getWaiver } from "@/lib/waivers";
 import WaiverForm from "@/components/WaiverForm";
 
 export const metadata: Metadata = {
@@ -24,15 +25,26 @@ export default async function WaiverPage({ params }: { params: Promise<{ slug: s
   }
 
   const eventTitle = event?.title || "This Event";
+  const eventDate = event?.date
+    ? new Date(`${event.date}T00:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : "the scheduled date";
+
+  const waiver = getWaiver(settings?.waiverVersion, {
+    eventName: eventTitle,
+    eventDate,
+    location: event?.generalArea || "the announced location",
+  });
 
   return (
     <section className="section-pt-tight section-pb-tight">
-      <div className="container" style={{ maxWidth: 480 }}>
+      <div className="container" style={{ maxWidth: 640 }}>
         <div className="eyebrow accent">{eventTitle}</div>
-        <h1 className="mt-2">Sign Up For The Group Chat</h1>
-        <p className="lead mt-2">Quick waiver, then we&apos;ll email you a personal link — no app, no login.</p>
+        <h1 className="mt-2">Sign Up For Tailgate</h1>
+        <p className="lead mt-2">
+          Read and sign below, then we&apos;ll email you a personal link to the group chat — no app, no login.
+        </p>
         <div className="mt-4">
-          <WaiverForm slug={slug} eventTitle={eventTitle} />
+          <WaiverForm slug={slug} eventTitle={eventTitle} waiver={waiver} />
         </div>
       </div>
     </section>

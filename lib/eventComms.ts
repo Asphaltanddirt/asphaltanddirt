@@ -1,4 +1,5 @@
 import { listRecords, createRecord, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
 import crypto from "crypto";
 
 /**
@@ -24,6 +25,7 @@ const BASE_ID = process.env.AIRTABLE_EVENT_COMMS_BASE_ID;
 const SETTINGS_TABLE = "Event Settings";
 const MESSAGES_TABLE = "Messages";
 const ATTENDEES_TABLE = "Attendees";
+const SIGNATURES_TABLE = "Waiver Signatures";
 
 // SOS is tighter (covers the ride + ~2hrs home) than general chat (extra
 // day for photos/"great time today" wrap-up talk) — both anchored to the
@@ -66,6 +68,7 @@ export interface CommsSettings {
   eventEndTime: string; // HH:MM, 24-hour, America/New_York
   active: boolean;
   activatedAt: string | null; // ISO datetime, null until the reminder cron stamps it
+  waiverVersion: WaiverVersion;
 }
 
 function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
@@ -77,6 +80,7 @@ function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
     eventEndTime: (r.fields["Event End Time"] as string) || DEFAULT_END_TIME,
     active: Boolean(r.fields.Active),
     activatedAt: (r.fields["Activated At"] as string) || null,
+    waiverVersion: ((r.fields["Waiver Version"] as WaiverVersion) || "ONE-DAY-1.0"),
   };
 }
 
@@ -183,20 +187,46 @@ function toAttendee(r: { id: string; fields: AirtableFields }): Attendee {
   };
 }
 
+export interface WaiverChild {
+  name: string;
+  age: string;
+  relationship: string;
+  mediaConsent: boolean;
+  attendanceDates?: string;
+}
+
 export interface WaiverSubmission {
   eventSlug: string;
+  waiverVersion: WaiverVersion;
   screenName: string;
   vehicleCallsign: string;
   legalName: string;
   email: string;
+  phone: string;
+  adultParticipating: boolean;
+  adultMediaConsent: boolean;
+  adultAttendanceDates?: string;
+  signature: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  acceptedAdultTerms: boolean;
+  acceptedParentalAuthority: boolean;
+  acceptedMediaScope: boolean;
+  acceptedElectronicSignature: boolean;
+  acknowledgedPrivacyNotice: boolean;
+  children: WaiverChild[];
 }
 
-/** Waiver acceptance — creates the Attendee row (the waiver record itself:
- *  name, email, agreed timestamp) and a random access token for their
- *  personal comms link. Caller sends the link; nothing here does. */
+/** Waiver acceptance. Writes two rows: the Attendee (chat identity + access
+ *  token, what staff uses for roll call) and the Waiver Signature (the legal
+ *  record, including exactly which document version was accepted). Caller
+ *  sends the personal link; nothing here does. */
 export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
   assertConfigured();
   const accessToken = crypto.randomBytes(16).toString("hex");
+  const signedAt = new Date().toISOString();
+
   const created = await createRecord(
     ATTENDEES_TABLE,
     {
@@ -206,11 +236,52 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
       "Legal Name": input.legalName,
       Email: input.email,
       "Access Token": accessToken,
-      "Waiver Agreed At": new Date().toISOString(),
+      "Waiver Agreed At": signedAt,
       "Checked In": false,
     },
     { baseId: BASE_ID },
   );
+
+  const childFields: AirtableFields = {};
+  input.children.slice(0, 4).forEach((child, i) => {
+    const n = i + 1;
+    childFields[`Child ${n} Name`] = child.name;
+    childFields[`Child ${n} Age`] = child.age;
+    childFields[`Child ${n} Relationship`] = child.relationship;
+    childFields[`Child ${n} Media Consent`] = child.mediaConsent;
+    if (child.attendanceDates) childFields[`Child ${n} Attendance Dates`] = child.attendanceDates;
+  });
+
+  // The signature is the legally meaningful artifact — if this write fails
+  // the caller should know, so it isn't swallowed like the email send is.
+  await createRecord(
+    SIGNATURES_TABLE,
+    {
+      "Legal Name": input.legalName,
+      "Event Slug": input.eventSlug,
+      "Waiver Version": input.waiverVersion,
+      Email: input.email,
+      Phone: input.phone,
+      "Adult Participating": input.adultParticipating,
+      "Adult Media Consent": input.adultMediaConsent,
+      ...(input.adultAttendanceDates ? { "Adult Attendance Dates": input.adultAttendanceDates } : {}),
+      Signature: input.signature,
+      "Signed At": signedAt,
+      ...(input.emergencyContactName ? { "Emergency Contact Name": input.emergencyContactName } : {}),
+      ...(input.emergencyContactPhone ? { "Emergency Contact Phone": input.emergencyContactPhone } : {}),
+      ...(input.emergencyContactRelationship
+        ? { "Emergency Contact Relationship": input.emergencyContactRelationship }
+        : {}),
+      "Accepted Adult Terms": input.acceptedAdultTerms,
+      "Accepted Parental Authority": input.acceptedParentalAuthority,
+      "Accepted Media Scope": input.acceptedMediaScope,
+      "Accepted Electronic Signature": input.acceptedElectronicSignature,
+      ...(input.acknowledgedPrivacyNotice ? { "Privacy Notice Acknowledged": PRIVACY_POLICY_VERSION } : {}),
+      ...childFields,
+    },
+    { baseId: BASE_ID, typecast: true },
+  );
+
   return toAttendee({ id: created.id, fields: { ...created, "Access Token": accessToken } });
 }
 
