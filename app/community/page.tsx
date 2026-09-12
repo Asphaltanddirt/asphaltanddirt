@@ -91,6 +91,24 @@ export default async function CommunityPage() {
         </div>
       </section>
 
+      <div className="container">
+        <div className="feature-strip">
+          {PLATFORMS.map((platform) => (
+            <a
+              key={platform.name}
+              href={platform.url}
+              target="_blank"
+              rel="noopener"
+              className="feature-item"
+              aria-label={platform.name}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{platform.icon}</svg>
+              <span>{platform.name}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <section className="section-pb-tight">
         <div className="container" style={{ maxWidth: 720, marginInline: "auto" }}>
           <div className="eyebrow accent">How This Started</div>
@@ -110,24 +128,6 @@ export default async function CommunityPage() {
           </p>
         </div>
       </section>
-
-      <div className="container">
-        <div className="feature-strip">
-          {PLATFORMS.map((platform) => (
-            <a
-              key={platform.name}
-              href={platform.url}
-              target="_blank"
-              rel="noopener"
-              className="feature-item"
-              aria-label={platform.name}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{platform.icon}</svg>
-              <span>{platform.name}</span>
-            </a>
-          ))}
-        </div>
-      </div>
 
       <section className="section-pb-tight">
         <div className="container">
@@ -192,20 +192,6 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      {featuredPost && (
-        <section className="section-pt-tight section-pb-tight">
-          <div className="container" style={{ maxWidth: 640, marginInline: "auto" }}>
-            <div className="eyebrow">From The Blog</div>
-            <Link href={`/blog/${featuredPost.slug}`} className="mt-2" style={{ display: "block" }}>
-              <h3 className="mb-2">{featuredPost.title}</h3>
-            </Link>
-            <p className="mb-0" style={{ fontSize: 14 }}>
-              A placeholder for now — a piece written specifically about our own journey is coming.
-            </p>
-          </div>
-        </section>
-      )}
-
       {testimonials.length > 0 && (
         <section className="section-alt section-pt-tight section-pb-tight">
           <div className="container">
@@ -226,6 +212,20 @@ export default async function CommunityPage() {
           <a href="/reviews/submit" className="btn btn-primary btn-sm mt-3">Leave A Review</a>
         </div>
       </section>
+
+      {featuredPost && (
+        <section className="section-pt-tight">
+          <div className="container" style={{ maxWidth: 640, marginInline: "auto" }}>
+            <div className="eyebrow">From The Blog</div>
+            <Link href={`/blog/${featuredPost.slug}`} className="mt-2" style={{ display: "block" }}>
+              <h3 className="mb-2">{featuredPost.title}</h3>
+            </Link>
+            <p className="mb-0" style={{ fontSize: 14 }}>
+              A placeholder for now — a piece written specifically about our own journey is coming.
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="section-alt section-pt-tight">
         <div className="container">
