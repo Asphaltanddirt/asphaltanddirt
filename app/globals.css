@@ -779,6 +779,11 @@ h1 .line{ display:block; }
   padding:12px 16px; border-radius:var(--radius-sm); font-size:14px;
 }
 
+/* Inline, per-field note — quieter than the banner, which is reserved for
+   errors that stop the submit. */
+.form-field-error{ margin:6px 0 0; font-size:13px; color:var(--accent); }
+.form-field input[aria-invalid="true"]{ border-color:var(--accent); }
+
 .form-success{ text-align:center; padding:var(--sp-10) 0; display:flex; flex-direction:column; align-items:center; gap:var(--sp-2); }
 .form-success-icon{
   width:64px; height:64px; border-radius:50%; background:var(--accent); color:var(--ad-black);

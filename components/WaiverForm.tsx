@@ -47,6 +47,7 @@ export default function WaiverForm({
 }) {
   const [legalName, setLegalName] = useState("");
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [screenName, setScreenName] = useState("");
   const [vehicleCallsign, setVehicleCallsign] = useState("");
@@ -57,6 +58,7 @@ export default function WaiverForm({
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [emergencyRelationship, setEmergencyRelationship] = useState("");
+  const [noEmergencyContact, setNoEmergencyContact] = useState(false);
   const [signature, setSignature] = useState("");
   const [acceptedAdultTerms, setAcceptedAdultTerms] = useState(false);
   const [acceptedParentalAuthority, setAcceptedParentalAuthority] = useState(false);
@@ -68,6 +70,11 @@ export default function WaiverForm({
 
   const busy = status === "submitting";
 
+  // Compared normalised: addresses are case-insensitive in practice, and a
+  // trailing space off a phone keyboard shouldn't read as a mismatch.
+  const emailsMatch = email.trim().toLowerCase() === confirmEmail.trim().toLowerCase();
+  const showEmailMismatch = confirmEmail.length > 0 && !emailsMatch;
+
   function updateChild(index: number, patch: Partial<ChildEntry>) {
     setChildren((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)));
   }
@@ -76,6 +83,13 @@ export default function WaiverForm({
     e.preventDefault();
     setError("");
 
+    // Checked before anything else — a typo'd address is the one mistake
+    // that fails silently: the submission succeeds, the chat link sends to
+    // a dead address, and nobody finds out until event day.
+    if (!emailsMatch) {
+      setError("Those two email addresses don't match — check for a typo.");
+      return;
+    }
     if (!acceptedAdultTerms || !acceptedElectronicSignature) {
       setError("Please tick every acceptance box to continue.");
       return;
@@ -109,9 +123,10 @@ export default function WaiverForm({
           adultMediaConsent,
           adultAttendanceDates,
           signature,
-          emergencyContactName: emergencyName,
-          emergencyContactPhone: emergencyPhone,
-          emergencyContactRelationship: emergencyRelationship,
+          emergencyContactName: noEmergencyContact ? "" : emergencyName,
+          emergencyContactPhone: noEmergencyContact ? "" : emergencyPhone,
+          emergencyContactRelationship: noEmergencyContact ? "" : emergencyRelationship,
+          emergencyContactDeclined: noEmergencyContact,
           acceptedAdultTerms,
           acceptedParentalAuthority,
           acceptedMediaScope,
@@ -170,21 +185,41 @@ export default function WaiverForm({
             <input id="w-legal" value={legalName} onChange={(e) => setLegalName(e.target.value)} required disabled={busy} maxLength={120} />
           </div>
           <div className="form-field">
-            <label htmlFor="w-email">Email <span className="optional">(Your chat link goes here)</span></label>
-            <input id="w-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} maxLength={120} />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-field">
             <label htmlFor="w-phone">Telephone</label>
             <input id="w-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required disabled={busy} maxLength={40} />
           </div>
+        </div>
+        {/* Email and its confirmation share a row so they're side by side on
+         *  desktop and stacked together on mobile — a confirm field two rows
+         *  away from the original defeats the point. */}
+        <div className="form-row">
+          <div className="form-field">
+            <label htmlFor="w-email">Email <span className="optional">(Your chat link goes here)</span></label>
+            <input id="w-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} maxLength={120} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="w-email-confirm">Confirm Email</label>
+            <input
+              id="w-email-confirm"
+              type="email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              required
+              disabled={busy}
+              maxLength={120}
+              aria-invalid={showEmailMismatch}
+              aria-describedby={showEmailMismatch ? "w-email-mismatch" : undefined}
+            />
+            {showEmailMismatch && (
+              <p id="w-email-mismatch" className="form-field-error">These don&apos;t match yet.</p>
+            )}
+          </div>
+        </div>
+        <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-screen">Screen Name <span className="optional">(shown in chat)</span></label>
             <input id="w-screen" value={screenName} onChange={(e) => setScreenName(e.target.value)} required disabled={busy} maxLength={60} />
           </div>
-        </div>
-        <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-vehicle">Vehicle / Callsign</label>
             <input
@@ -197,20 +232,20 @@ export default function WaiverForm({
               maxLength={60}
             />
           </div>
-          {waiver.collectsAttendanceDates && (
-            <div className="form-field">
-              <label htmlFor="w-dates">Planned Attendance Dates</label>
-              <input
-                id="w-dates"
-                value={adultAttendanceDates}
-                onChange={(e) => setAdultAttendanceDates(e.target.value)}
-                placeholder="e.g. Fri–Sun, or Sat only"
-                disabled={busy}
-                maxLength={120}
-              />
-            </div>
-          )}
         </div>
+        {waiver.collectsAttendanceDates && (
+          <div className="form-field">
+            <label htmlFor="w-dates">Planned Attendance Dates</label>
+            <input
+              id="w-dates"
+              value={adultAttendanceDates}
+              onChange={(e) => setAdultAttendanceDates(e.target.value)}
+              placeholder="e.g. Fri–Sun, or Sat only"
+              disabled={busy}
+              maxLength={120}
+            />
+          </div>
+        )}
 
         <label className="waiver-check">
           <input type="checkbox" checked={adultParticipating} onChange={(e) => setAdultParticipating(e.target.checked)} disabled={busy} />
@@ -270,21 +305,43 @@ export default function WaiverForm({
 
       {waiver.collectsEmergencyContact && (
         <div className="form-section">
-          <div className="form-section-title">Emergency Contact</div>
-          <div className="form-row">
-            <div className="form-field">
-              <label htmlFor="w-ec-name">Name</label>
-              <input id="w-ec-name" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} required disabled={busy} maxLength={120} />
-            </div>
-            <div className="form-field">
-              <label htmlFor="w-ec-phone">Telephone</label>
-              <input id="w-ec-phone" type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} required disabled={busy} maxLength={40} />
-            </div>
+          <div className="form-section-title">
+            Emergency Contact {noEmergencyContact && <span className="optional">(Skipped)</span>}
           </div>
-          <div className="form-field">
-            <label htmlFor="w-ec-rel">Relationship To Participant(s)</label>
-            <input id="w-ec-rel" value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} required disabled={busy} maxLength={60} />
-          </div>
+          <p className="form-section-hint">
+            Someone we can reach if something happens to you out there. Strongly recommended — but if you don&apos;t
+            have someone to list, or would rather not share it, tick the box below and carry on.
+          </p>
+          {!noEmergencyContact && (
+            <>
+              <div className="form-row">
+                <div className="form-field">
+                  <label htmlFor="w-ec-name">Name</label>
+                  <input id="w-ec-name" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} required disabled={busy} maxLength={120} />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="w-ec-phone">Telephone</label>
+                  <input id="w-ec-phone" type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} required disabled={busy} maxLength={40} />
+                </div>
+              </div>
+              <div className="form-field">
+                <label htmlFor="w-ec-rel">Relationship To Participant(s)</label>
+                <input id="w-ec-rel" value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} required disabled={busy} maxLength={60} />
+              </div>
+            </>
+          )}
+          {/* Unmounting the inputs (rather than just dropping `required`) is
+           *  what actually clears the browser's own validation — a hidden
+           *  required field blocks submit with a tooltip pointing at nothing. */}
+          <label className="waiver-check">
+            <input
+              type="checkbox"
+              checked={noEmergencyContact}
+              onChange={(e) => setNoEmergencyContact(e.target.checked)}
+              disabled={busy}
+            />
+            I don&apos;t have an emergency contact to give, or would rather not share one.
+          </label>
         </div>
       )}
 

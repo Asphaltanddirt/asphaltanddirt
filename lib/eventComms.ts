@@ -210,6 +210,9 @@ export interface WaiverSubmission {
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   emergencyContactRelationship?: string;
+  /** They ticked "I don't have one / would rather not share". Recorded so a
+   *  deliberate decline is distinguishable from three fields left blank. */
+  emergencyContactDeclined?: boolean;
   acceptedAdultTerms: boolean;
   acceptedParentalAuthority: boolean;
   acceptedMediaScope: boolean;
@@ -272,6 +275,7 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
       ...(input.emergencyContactRelationship
         ? { "Emergency Contact Relationship": input.emergencyContactRelationship }
         : {}),
+      ...(input.emergencyContactDeclined ? { "No Emergency Contact": true } : {}),
       "Accepted Adult Terms": input.acceptedAdultTerms,
       "Accepted Parental Authority": input.acceptedParentalAuthority,
       "Accepted Media Scope": input.acceptedMediaScope,

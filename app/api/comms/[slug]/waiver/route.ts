@@ -80,6 +80,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     );
   }
 
+  // Declining is allowed (not everyone has someone to list, and some would
+  // rather not share it) — but a decline and a fill-in are mutually
+  // exclusive, so the decline wins and the fields are stored empty.
+  const emergencyContactDeclined = body.emergencyContactDeclined === true;
+
   const attendee = await submitWaiver({
     eventSlug: slug,
     waiverVersion: settings.waiverVersion,
@@ -92,9 +97,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     adultMediaConsent: body.adultMediaConsent === true,
     adultAttendanceDates: clean(body.adultAttendanceDates),
     signature,
-    emergencyContactName: clean(body.emergencyContactName),
-    emergencyContactPhone: clean(body.emergencyContactPhone),
-    emergencyContactRelationship: clean(body.emergencyContactRelationship),
+    emergencyContactName: emergencyContactDeclined ? "" : clean(body.emergencyContactName),
+    emergencyContactPhone: emergencyContactDeclined ? "" : clean(body.emergencyContactPhone),
+    emergencyContactRelationship: emergencyContactDeclined ? "" : clean(body.emergencyContactRelationship),
+    emergencyContactDeclined,
     acceptedAdultTerms,
     acceptedParentalAuthority,
     acceptedMediaScope,
