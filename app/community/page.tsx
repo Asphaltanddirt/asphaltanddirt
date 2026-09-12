@@ -6,6 +6,7 @@ import { socialLinks } from "@/lib/social";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 import { getApprovedSocialProof } from "@/lib/socialProof";
 import { getCommunityPhotos } from "@/lib/events";
+import CommunityPhotoStack from "@/components/CommunityPhotoStack";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -133,20 +134,7 @@ export default async function CommunityPage() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </Link>
             </div>
-            <div className="community-gallery">
-              {communityPhotos.map((photo, i) => (
-                <Link
-                  key={`${photo.url}-${i}`}
-                  href={`/events/${photo.eventSlug}`}
-                  className="community-gallery-item"
-                  title={photo.eventTitle}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.url} alt={photo.alt} loading="lazy" />
-                  <span className="community-gallery-caption">{photo.eventTitle}</span>
-                </Link>
-              ))}
-            </div>
+            <CommunityPhotoStack photos={communityPhotos} />
           </div>
         </section>
       )}

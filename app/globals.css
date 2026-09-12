@@ -1317,23 +1317,40 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
   padding:12px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm);
 }
 
-/* Community photo wall — aggregated from every event's gallery */
-.community-gallery{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-2); }
-.community-gallery-item{
-  position:relative; aspect-ratio:1/1; overflow:hidden; border-radius:var(--radius-sm);
-  border:1px solid var(--border); background:var(--bg-elevated); display:block;
+/* Community photo stack — one big photo with the deck peeking out behind,
+ * auto-advancing through every event's gallery. */
+.photo-stack-wrap{ display:flex; flex-direction:column; align-items:center; gap:var(--sp-2); }
+.photo-stack{
+  position:relative; width:100%; max-width:640px; aspect-ratio:3/2;
+  /* room for the offset/rotated cards behind the front one */
+  margin-bottom:26px;
 }
-.community-gallery-item img{ width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
-.community-gallery-item:hover img{ transform:scale(1.05); }
-.community-gallery-caption{
-  position:absolute; inset:auto 0 0 0; padding:16px 10px 8px;
-  background:linear-gradient(to top, rgba(0,0,0,.85), transparent);
-  color:var(--white); font-size:11px; font-weight:700; line-height:1.3;
-  opacity:0; transition:opacity .2s ease;
+.photo-stack-card{
+  position:absolute; inset:0; display:block; overflow:hidden;
+  border-radius:var(--radius-md); border:1px solid var(--border);
+  background:var(--bg-elevated); box-shadow:0 12px 32px rgba(0,0,0,.45);
+  transition:transform .55s cubic-bezier(.22,.61,.36,1), opacity .55s ease;
 }
-.community-gallery-item:hover .community-gallery-caption{ opacity:1; }
-@media (max-width:900px){ .community-gallery{ grid-template-columns:repeat(3,1fr); } }
-@media (max-width:560px){ .community-gallery{ grid-template-columns:repeat(2,1fr); } }
+.photo-stack-card img{ width:100%; height:100%; object-fit:cover; }
+.photo-stack-caption{
+  position:absolute; inset:auto 0 0 0; padding:28px 18px 14px;
+  background:linear-gradient(to top, rgba(0,0,0,.9), transparent);
+  color:var(--white); font-family:var(--font-display); font-size:14px; font-weight:700;
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+}
+.photo-stack-cta{ color:var(--accent); font-size:12px; white-space:nowrap; }
+.photo-stack-controls{ display:flex; align-items:center; gap:14px; }
+.photo-stack-controls button{
+  width:34px; height:34px; border-radius:50%; cursor:pointer;
+  background:transparent; border:1px solid var(--border); color:var(--text-dim);
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.photo-stack-controls button:hover{ border-color:var(--accent); color:var(--accent); }
+.photo-stack-controls svg{ width:16px; height:16px; }
+.photo-stack-count{ font-size:12px; font-weight:700; color:var(--text-dim); letter-spacing:.04em; }
+@media (prefers-reduced-motion: reduce){
+  .photo-stack-card{ transition:none; }
+}
 
 /* Event waiver / registration form */
 .waiver-notice{
