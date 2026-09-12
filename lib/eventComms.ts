@@ -436,17 +436,21 @@ export type MessageViewer =
  *    people who AREN'T checked in yet ("safety meeting in 10"), so they
  *    deliberately reach the staff line too.
  *  - Staff sees the group chat plus every private line.
- *  - Checked-in attendees see the group chat. What they said privately
- *    before roll call stays private; it doesn't become public retroactively.
- *  - Everyone else sees only their own line: what they sent, plus staff
- *    replies addressed to them. Keyed on the attendee record ID, never the
- *    screen name — names are hand-typed, so they collide and they change.
+ *  - Attendees see their own private line always — before roll call it's all
+ *    they have, and after it they keep it. Getting checked in shouldn't make
+ *    your own history disappear; it reads as lost rather than protected. It
+ *    stays private either way: nobody else's view ever includes it.
+ *  - Checked-in attendees additionally see the group chat. What they said
+ *    privately never becomes public retroactively.
+ *
+ *  Keyed on the attendee record ID, never the screen name — names are
+ *  hand-typed, so they collide and they change.
  */
 export function visibleMessagesFor(messages: CommsMessage[], viewer: MessageViewer): CommsMessage[] {
   return messages.filter((m) => {
     if (m.sosType || m.channel === "Announcements") return true;
     if (viewer.kind === "staff") return m.channel === "Chat" || m.channel === "Staff";
-    if (viewer.checkedIn) return m.channel === "Chat";
+    if (m.channel === "Chat") return viewer.checkedIn;
     if (m.channel !== "Staff") return false;
     return m.attendeeId === viewer.attendeeId || m.replyToAttendeeId === viewer.attendeeId;
   });
