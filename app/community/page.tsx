@@ -123,6 +123,26 @@ export default async function CommunityPage() {
 
       <section className="section-pt-tight section-pb-tight">
         <div className="container">
+          <div className="eyebrow accent">How This Started</div>
+          <h2 className="mt-2">Two Guys, Some Jeeps, No Real Plan</h2>
+          <p className="mt-4" style={{ fontSize: 17, maxWidth: "none" }}>
+            The plan — and we use that term loosely — was to film some funny TikToks, talk smack
+            about each other&apos;s builds, and not take any of it too seriously. That was the
+            whole pitch. In under 6 weeks, this turned into almost 100 of you: people who didn&apos;t
+            know each other a month ago, now showing up to meetups, trading numbers, helping
+            strangers fix their rigs in the middle of nowhere, becoming actual friends.
+          </p>
+          <p>
+            We built a group chat to talk crap in and it turned into a community we genuinely
+            love. None of it happens without the crew putting in the work behind the scenes
+            either — Dan, Jack, and Christina&apos;s hours are the reason any of this exists, same
+            as every one of you who showed up.
+          </p>
+        </div>
+      </section>
+
+      <section className="section-pb-tight">
+        <div className="container">
           <div className="grid grid-2">
             {featuredPost && (
               <div>
@@ -181,26 +201,6 @@ export default async function CommunityPage() {
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="section-pb-tight">
-        <div className="container">
-          <div className="eyebrow accent">How This Started</div>
-          <h2 className="mt-2">Two Guys, Some Jeeps, No Real Plan</h2>
-          <p className="mt-4" style={{ fontSize: 17, maxWidth: "none" }}>
-            The plan — and we use that term loosely — was to film some funny TikToks, talk smack
-            about each other&apos;s builds, and not take any of it too seriously. That was the
-            whole pitch. In under 6 weeks, this turned into almost 100 of you: people who didn&apos;t
-            know each other a month ago, now showing up to meetups, trading numbers, helping
-            strangers fix their rigs in the middle of nowhere, becoming actual friends.
-          </p>
-          <p>
-            We built a group chat to talk crap in and it turned into a community we genuinely
-            love. None of it happens without the crew putting in the work behind the scenes
-            either — Dan, Jack, and Christina&apos;s hours are the reason any of this exists, same
-            as every one of you who showed up.
-          </p>
         </div>
       </section>
 
