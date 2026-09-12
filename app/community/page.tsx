@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { getPublishedEvents } from "@/lib/events";
 import { getApprovedTestimonials } from "@/lib/testimonials";
+import { getPostBySlug } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Community",
@@ -74,6 +75,8 @@ export default async function CommunityPage() {
     getPublishedEvents(),
     getApprovedTestimonials(3, "community"),
   ]);
+  const nextEvent = upcomingEvents[0];
+  const featuredPost = getPostBySlug("why-community-rides-matter");
 
   return (
     <>
@@ -92,14 +95,33 @@ export default async function CommunityPage() {
             </h1>
             <h3 className="subhead-line mt-2">No Egos. No Clubs. A Culture Around Community.</h3>
             <p className="lead mt-4">
-              Real people. Real rides. Real stories from the trail and the street. From community
-              rides and event coverage to member stories, recaps, and behind-the-scenes moments,
-              this is where Asphalt &amp; Dirt comes together.
+              What started as funny videos and talking smack about builds turned into a real
+              community — real people, real rides, real stories from the trail and the street.
             </p>
             <div style={{ maxWidth: 440 }}>
               <SubscribeButton source="community_hero" label="I Want In" returnTo="/community" />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="section-pb-tight">
+        <div className="container" style={{ maxWidth: 720, marginInline: "auto" }}>
+          <div className="eyebrow accent">How This Started</div>
+          <h2 className="mt-2">Two Guys, Some Jeeps, No Real Plan</h2>
+          <p className="lead mt-4">
+            The plan — and we use that term loosely — was to film some funny TikToks, talk smack
+            about each other&apos;s builds, and not take any of it too seriously. That was the
+            whole pitch. In under 6 weeks, this turned into almost 100 of you: people who didn&apos;t
+            know each other a month ago, now showing up to meetups, trading numbers, helping
+            strangers fix their rigs in the middle of nowhere, becoming actual friends.
+          </p>
+          <p>
+            We built a group chat to talk crap in and it turned into a community we genuinely
+            love. None of it happens without the crew putting in the work behind the scenes
+            either — Dan, Jack, and Christina&apos;s hours are the reason any of this exists, same
+            as every one of you who showed up.
+          </p>
         </div>
       </section>
 
@@ -131,39 +153,25 @@ export default async function CommunityPage() {
       <section className="section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Events &amp; Rides</div>
-            <Link href="/events" className="view-all">
-              View All Events
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </Link>
+            <div className="eyebrow">Next Up</div>
           </div>
-          {upcomingEvents.length ? (
-            <div className="grid grid-3">
-              {upcomingEvents.slice(0, 3).map((event) => (
-                <div className="card" key={event.id}>
-                  <div className="card-media">
-                    <span className="badge">{formatEventDate(event.date)}</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={event.photoUrl || EVENT_FALLBACK_IMAGE.src}
-                      alt={event.photoUrl ? event.title : EVENT_FALLBACK_IMAGE.alt}
-                    />
-                  </div>
-                  <div className="card-body">
-                    <h3>{event.title}</h3>
-                    {event.publicBlurb && <p>{excerpt(event.publicBlurb)}</p>}
-                    {event.generalArea && (
-                      <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-dim)" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
-                        {event.generalArea}
-                      </span>
-                    )}
-                    <Link href={`/events/${event.slug}`} className="btn btn-outline btn-sm" style={{ marginTop: "auto" }}>
-                      Details &amp; RSVP
-                    </Link>
-                  </div>
-                </div>
-              ))}
+          {nextEvent ? (
+            <div className="card" style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 20, alignItems: "center", padding: 20 }}>
+              <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                <span className="badge">{formatEventDate(nextEvent.date)}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={nextEvent.photoUrl || EVENT_FALLBACK_IMAGE.src}
+                  alt={nextEvent.photoUrl ? nextEvent.title : EVENT_FALLBACK_IMAGE.alt}
+                />
+              </div>
+              <div>
+                <h3 className="mb-2">{nextEvent.title}</h3>
+                {nextEvent.publicBlurb && <p className="mb-2">{excerpt(nextEvent.publicBlurb)}</p>}
+                <Link href={`/events/${nextEvent.slug}`} className="btn btn-primary btn-sm">
+                  Details &amp; RSVP
+                </Link>
+              </div>
             </div>
           ) : (
             <p className="mb-0">
@@ -171,8 +179,32 @@ export default async function CommunityPage() {
               <a href={socialLinks.facebook} target="_blank" rel="noopener">join the FB group</a> so you don&apos;t miss the next one.
             </p>
           )}
+          <p className="mt-3 mb-0">
+            <Link href="/events" className="view-all">
+              See All Events &amp; RSVP
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          </p>
         </div>
       </section>
+
+      {featuredPost && (
+        <section className="section-alt section-pt-tight section-pb-tight">
+          <div className="container">
+            <div className="eyebrow">From The Blog</div>
+            <Link href={`/blog/${featuredPost.slug}`} className="card mt-3" style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 22, alignItems: "center", padding: 22 }}>
+              <div className="card-media" style={{ borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={featuredPost.image.src} alt={featuredPost.image.alt} />
+              </div>
+              <div>
+                <h3 className="mb-2">{featuredPost.title}</h3>
+                <p className="mb-0">{featuredPost.excerpt}</p>
+              </div>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {testimonials.length > 0 && (
         <section className="section-alt section-pt-tight section-pb-tight">
