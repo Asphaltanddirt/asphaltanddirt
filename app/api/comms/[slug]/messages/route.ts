@@ -61,6 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     token?: string;
     announcementFromStaff?: boolean;
     replyToAttendeeId?: string;
+    staffName?: string;
   };
   try {
     body = await req.json();
@@ -86,7 +87,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   let replyToAttendeeId: string | undefined;
 
   if (staff) {
-    authorName = "Staff";
+    // Whoever is on comms names themselves on their own device. Claimed, not
+    // verified — but anyone holding the staff code is staff by definition, so
+    // what's missing here is attribution, not authentication. Without it every
+    // staff message reads "Staff" and nobody knows which of the four is
+    // talking (or, on a staff SOS, whose rig is stuck).
+    authorName = (body.staffName || "").trim().slice(0, 60) || "Staff";
     vehicleCallsign = "";
     // A reply addressed to one person goes onto the Staff line tagged with
     // their record ID, so it reaches them and nobody else. Without the tag a

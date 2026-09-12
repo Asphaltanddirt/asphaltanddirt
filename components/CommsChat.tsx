@@ -60,6 +60,7 @@ export default function CommsChat({
 }) {
   const [tab, setTab] = useState<Tab>("Chat");
   const [announceMode, setAnnounceMode] = useState(false);
+  const [staffName, setStaffName] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [roster, setRoster] = useState<Attendee[]>(initialRoster);
@@ -78,6 +79,32 @@ export default function CommsChat({
   // has checked this person in yet — otherwise their view only flips on a
   // manual reload, and the moment it needs to flip is the safety meeting,
   // when nobody is going to think to refresh.
+  // Who's on comms, remembered per device so it's asked once, not every
+  // time the phone locks and the page reloads. Per-device rather than
+  // per-code: the crew shares one staff code by design (it goes on printed
+  // signage), so the code can't say who's holding it.
+  const staffNameKey = `ad-comms-staff-name:${slug}`;
+  useEffect(() => {
+    if (!isStaff) return;
+    let stored = "";
+    try {
+      stored = window.localStorage.getItem(staffNameKey) || "";
+    } catch {
+      // Private mode / blocked storage — fall through and just ask.
+    }
+    if (!stored) {
+      stored = (window.prompt("Who's on comms? (shown on your messages)") || "").trim();
+      if (stored) {
+        try {
+          window.localStorage.setItem(staffNameKey, stored);
+        } catch {
+          // Can't persist — the name still applies for this session.
+        }
+      }
+    }
+    setStaffName(stored);
+  }, [isStaff, staffNameKey]);
+
   // Credential on every poll — the endpoint refuses anonymous callers and
   // tailors the response to who's asking.
   const feedUrl = isStaff
@@ -118,6 +145,7 @@ export default function CommsChat({
           token: isStaff ? undefined : token,
           announcementFromStaff: isStaff && announceMode,
           replyToAttendeeId: isStaff && replyTo ? replyTo.id : undefined,
+          staffName: isStaff ? staffName : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -145,6 +173,20 @@ export default function CommsChat({
       if (res.ok && Array.isArray(data.roster)) setRoster(data.roster);
     } catch {
       // Roster stays stale until the next successful toggle — non-fatal.
+    }
+  }
+
+  /** Hand the phone to someone else, or fix a typo in your own name. */
+  function changeStaffName() {
+    const next = window.prompt("Who's on comms? (shown on your messages)", staffName);
+    if (next === null) return;
+    const trimmed = next.trim();
+    setStaffName(trimmed);
+    try {
+      if (trimmed) window.localStorage.setItem(staffNameKey, trimmed);
+      else window.localStorage.removeItem(staffNameKey);
+    } catch {
+      // Applies for this session even if it can't be stored.
     }
   }
 
@@ -181,7 +223,16 @@ export default function CommsChat({
         <div>
           <div className="eyebrow accent" style={{ fontSize: 11 }}>{eventTitle}</div>
           <div style={{ fontSize: 13, color: "var(--text-dim)" }}>
-            {isStaff ? "Control — you can post announcements and run roll call" : `${attendeeName} · ${attendeeVehicle}`}
+            {isStaff ? (
+              <>
+                Posting as <strong style={{ color: "var(--text)" }}>{staffName || "Staff"}</strong>
+                <button type="button" className="comms-roster-rename" onClick={changeStaffName}>
+                  Change
+                </button>
+              </>
+            ) : (
+              `${attendeeName} · ${attendeeVehicle}`
+            )}
             {!isStaff && !checkedIn && " · Not checked in yet"}
           </div>
         </div>
