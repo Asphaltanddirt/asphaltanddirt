@@ -13,7 +13,7 @@ export const POLICY_VERSION = "PRIVACY-1.0";
  *  (§11). Everything else reflects the stack as actually built
  *  (Airtable / Resend / Vercel). */
 const TBD = "[TBD]";
-const ORGANIZER = "JLDA Holding";
+const ORGANIZER = "JLDA Holding Corp";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
