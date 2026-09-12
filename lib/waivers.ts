@@ -13,11 +13,8 @@
 
 export type WaiverVersion = "ONE-DAY-1.0" | "MULTI-DAY-1.0" | "POP-UP-1.0";
 
-/** ORGANIZER is still a placeholder: it's the released party named in the
- *  liability clause, so it should be the legal entity name (LLC/etc.) if
- *  one exists rather than just the brand. Everything else is settled. */
 export const WAIVER_CONFIG = {
-  ORGANIZER: "[ORGANIZER LEGAL NAME — TBD]",
+  ORGANIZER: "JLDA Holding",
   SYSTEM: "Tailgate",
   PRIVACY: "asphaltanddirt.com/event-privacy-policy",
   CONTACT: "team@asphaltanddirt.com",
