@@ -11,7 +11,19 @@
  * at the end of each document is the form itself (components/WaiverForm.tsx).
  */
 
-export type WaiverVersion = "ONE-DAY-1.0" | "MULTI-DAY-1.0" | "POP-UP-1.0";
+export type WaiverVersion =
+  | "ONE-DAY-1.0"
+  | "MULTI-DAY-1.0"
+  | "POP-UP-1.0"
+  // 1.1 (drafted 2026-09-13, not yet assigned to any event): Tailgate becomes
+  // registration/check-in + before/after communication rather than trail
+  // comms; every adult signs for themselves and is registered to a vehicle;
+  // optional WhatsApp Community announcements; staff event-day roster;
+  // submitted media stored with service providers and reviewed first.
+  // Only switch an event to 1.1 once Tailgate actually works that way.
+  | "ONE-DAY-1.1"
+  | "MULTI-DAY-1.1"
+  | "POP-UP-1.1";
 
 export const WAIVER_CONFIG = {
   ORGANIZER: "JLDA Holding Corp d/b/a Asphalt & Dirt",
@@ -72,7 +84,7 @@ Legal names, signatures, contact information, and emergency details must be subm
 This agreement does not authorize recording private conversations or communications.`,
 };
 
-function mediaSection(scopeWord: string): WaiverSection {
+function mediaSection(scopeWord: string, reviewedSubmissions = false): WaiverSection {
   return {
     heading: "Photo, Video, And Audio Permission",
     body: `This section applies only to people for whom "Consent" is selected below.
@@ -84,7 +96,13 @@ Permission includes editing, reproduction, publication, display, and distributio
 Permission continues after the event, subject to applicable law. It does not permit unlawful or misleading use, implied endorsement of unrelated products, publication of private registration details, or publication of children's full names.
 
 I retain ownership of media I voluntarily submit and grant the Organizer a nonexclusive, royalty-free license for these uses. I confirm that I have the necessary rights and permissions.
-
+${
+  reviewedSubmissions
+    ? `
+Photos and videos I submit may be stored with the Organizer's service providers, such as cloud storage, and are reviewed by the Organizer before any publication. The Organizer is not required to publish submitted media.
+`
+    : ""
+}
 Requests concerning future media use may be sent to {{CONTACT}}. Applicable withdrawal and privacy rights remain unaffected.
 
 Declining media permission does not prevent participation. This permission governs the Organizer's media practices; independent attendees may take their own photographs or videos.`,
@@ -311,10 +329,144 @@ This agreement does not waive my or my children's personal-injury claims.`,
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Version 1.1 — built from 1.0 so unchanged sections stay word-for-word.
+// ---------------------------------------------------------------------------
+
+function registrationSection(activity: "ride" | "meetup"): WaiverSection {
+  const joins = activity === "ride" ? "attends or rides" : "attends";
+  return {
+    heading: "Registration, Vehicles, And Check-In",
+    body: `Each adult who ${joins} must complete their own agreement. No one may sign for another adult.
+
+A child may attend${activity === "ride" ? " or ride" : ""} only if listed on an agreement signed by that child's parent or legal guardian.
+
+${
+  activity === "ride"
+    ? "Each person is registered to the vehicle they will ride in. The driver is responsible for confirming that everyone in the vehicle has registered before the vehicle participates."
+    : "Attendees arriving together may be registered to the same vehicle."
+}
+
+Registration may be completed in advance or at the event, including on a device handed to me by the Organizer's staff. An agreement signed that way is as binding as one signed on my own device.
+
+At check-in, staff confirm that everyone present is covered by a completed agreement. The Organizer may refuse or end participation for anyone who is not.`,
+  };
+}
+
+const WHATSAPP_PARAGRAPH = `The Organizer may offer an optional WhatsApp community for the event in which only the Organizer posts announcements. Joining is voluntary and is not required to participate. WhatsApp is a third-party service governed by its own terms and privacy practices, which the Organizer does not control. The Organizer's administrators can see the phone numbers of community members.`;
+
+function trailCommsSection(overnight: boolean): WaiverSection {
+  return {
+    heading: "Trail Communications, Radios, And Tailgate",
+    body: `GMRS radio is the primary way the group communicates during trail activities. The Organizer recommends that every vehicle carry a radio but is not obligated to provide one.
+
+Anyone transmitting on GMRS must operate under a valid FCC GMRS license or other authorization permitted by FCC rules, including eligible family authorization where applicable. Participants must follow FCC call-sign identification requirements and event channel instructions. Registration does not provide a GMRS license or authorize otherwise unlawful radio operation.
+
+Participants without a radio are responsible for their own arrangements, such as riding with or staying near a participant who has one. Radios lent or shared between participants are arranged between those participants, and the person using a radio is responsible for operating it lawfully.
+
+{{SYSTEM}} is used for registration, check-in, and communication before and after event activities, including sharing event photos and videos. It is not a trail communication or emergency system and is not monitored during trail activities.
+
+${WHATSAPP_PARAGRAPH}
+
+Coverage, connectivity, device compatibility, battery power, and service failures may delay or prevent any radio or electronic message. No method guarantees continuous monitoring, contact, rescue, or emergency response${overnight ? ", including overnight" : ""}.
+
+In an emergency, I will contact 911 when appropriate and possible, including through any satellite emergency feature my phone offers, and follow the event's emergency briefing. I will communicate respectfully and stop in a safe location before using a screen or adjusting equipment.`,
+  };
+}
+
+const MEETUP_COMMS_V11: WaiverSection = {
+  heading: "Communications And Tailgate",
+  body: `{{SYSTEM}} is used for registration, check-in, and communication before and after this meetup, including sharing photos and videos. It is not an emergency system and is not continuously monitored.
+
+${WHATSAPP_PARAGRAPH}
+
+Anyone using a GMRS radio must follow FCC licensing and call-sign identification rules.
+
+Messages may be delayed or unavailable because of coverage, connectivity, battery power, device compatibility, or service interruptions. No method guarantees continuous monitoring, contact, or emergency response.
+
+For an emergency, contact 911 when appropriate and possible and notify venue staff.
+
+I will use communications respectfully, avoid harassment and unnecessary messages, and park safely before typing or adjusting equipment while operating a vehicle.`,
+};
+
+const PRIVACY_V11: WaiverSection = {
+  heading: "Privacy And Personal Information",
+  body: `{{SYSTEM}} is configured to help participants communicate without sharing their last names, email addresses, or telephone numbers with other participants. This does not apply to optional third-party services such as WhatsApp.
+
+I will use the designated display name or identifier and avoid sharing my own or anyone else's private information in participant-visible profiles, messages, or channels. Information voluntarily shared may be copied or redistributed.
+
+These features do not guarantee anonymity or confidentiality and do not override GMRS call-sign identification requirements.
+
+Legal names, signatures, contact information, and emergency details must be submitted through the Organizer's designated private registration process. Event staff may access this information, including in an electronic or printed roster kept for event day, only for safety, check-in, and event coordination. Collection, access, use, and retention are described in the privacy notice at {{PRIVACY}}.
+
+This agreement does not authorize recording private conversations or communications.`,
+};
+
+const CHILD_VEHICLE_SENTENCE = `
+
+At check-in, I will tell staff which vehicle each listed child is riding in.`;
+
+/** 1.1 from 1.0: swap the named sections, insert registration after the
+ *  first (scope) section, and leave every other section untouched. */
+function toV11(
+  doc: WaiverDocument,
+  version: WaiverVersion,
+  replacements: Record<string, WaiverSection>,
+  registration: WaiverSection,
+): WaiverDocument {
+  const sections = doc.sections.map((section) => {
+    if (section === SHARED_PRIVACY) return PRIVACY_V11;
+    return replacements[section.heading] ?? section;
+  });
+  sections.splice(1, 0, registration);
+  return { ...doc, version, sections };
+}
+
+const ONE_DAY_V11 = toV11(
+  ONE_DAY,
+  "ONE-DAY-1.1",
+  {
+    "GMRS And Backup Communications": trailCommsSection(false),
+    "Children And Emergency Assistance": {
+      heading: "Children And Emergency Assistance",
+      body: ONE_DAY.sections.find((s) => s.heading === "Children And Emergency Assistance")!.body + CHILD_VEHICLE_SENTENCE,
+    },
+    "Photo, Video, And Audio Permission": mediaSection("this event", true),
+  },
+  registrationSection("ride"),
+);
+
+const MULTI_DAY_V11 = toV11(
+  MULTI_DAY,
+  "MULTI-DAY-1.1",
+  {
+    "GMRS And Backup Communications": trailCommsSection(true),
+    "Children And Emergency Assistance": {
+      heading: "Children And Emergency Assistance",
+      body: MULTI_DAY.sections.find((s) => s.heading === "Children And Emergency Assistance")!.body + CHILD_VEHICLE_SENTENCE,
+    },
+    "Photo, Video, And Audio Permission": mediaSection("covered event activities", true),
+  },
+  registrationSection("ride"),
+);
+
+const POP_UP_V11 = toV11(
+  POP_UP,
+  "POP-UP-1.1",
+  {
+    "GMRS And Backup Communications": MEETUP_COMMS_V11,
+    "Photo, Video, And Audio Permission": mediaSection("this meetup", true),
+  },
+  registrationSection("meetup"),
+);
+
 const DOCUMENTS: Record<WaiverVersion, WaiverDocument> = {
   "ONE-DAY-1.0": ONE_DAY,
   "MULTI-DAY-1.0": MULTI_DAY,
   "POP-UP-1.0": POP_UP,
+  "ONE-DAY-1.1": ONE_DAY_V11,
+  "MULTI-DAY-1.1": MULTI_DAY_V11,
+  "POP-UP-1.1": POP_UP_V11,
 };
 
 export interface WaiverContext {

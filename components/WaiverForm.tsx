@@ -349,7 +349,7 @@ export default function WaiverForm({
         <div className="form-section-title">Acceptance</div>
         <label className="waiver-check">
           <input type="checkbox" checked={acceptedAdultTerms} onChange={(e) => setAcceptedAdultTerms(e.target.checked)} disabled={busy} />
-          {waiver.version === "POP-UP-1.0"
+          {waiver.version.startsWith("POP-UP")
             ? "I am at least 18 and have read, understand, and accept the communications and privacy terms."
             : "I am at least 18, have read and understand this agreement, and voluntarily accept it, including the adult liability release."}
         </label>
