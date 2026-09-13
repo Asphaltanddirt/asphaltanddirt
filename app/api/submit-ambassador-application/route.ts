@@ -149,6 +149,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please confirm every Road & Trail Crew standard." }, { status: 400 });
   }
 
+  // Platform comes from a picker next to the handle — stored as "Platform: handle",
+  // same convention as the build submission form's social field.
+  const socialHandlePlatform = field(formData, "socialHandlePlatform");
+  if (socialHandlePlatform) values.socialHandle = `${socialHandlePlatform}: ${values.socialHandle}`;
+
   const phone = field(formData, "phone");
   const buildDescription = field(formData, "buildDescription");
   const socialLinks = field(formData, "socialLinks");

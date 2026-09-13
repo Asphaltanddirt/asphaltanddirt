@@ -111,9 +111,10 @@ export default async function CommunityPage() {
           <p className="mt-4" style={{ fontSize: 17, maxWidth: "none" }}>
             The plan — and we use that term loosely — was to film some funny TikToks, talk smack
             about each other&apos;s builds, and not take any of it too seriously. That was the
-            whole pitch. In under 6 weeks, this turned into almost 100 of you: people who didn&apos;t
-            know each other a month ago, now showing up to meetups, trading numbers, helping
-            strangers fix their rigs in the middle of nowhere, becoming actual friends.
+            whole pitch. In under 6 weeks, this turned into over 1,000 of you. All of a sudden,
+            people who didn&apos;t know each other a month ago are now showing up to meetups,
+            trading numbers, helping strangers fix their rigs in the middle of nowhere, becoming
+            actual friends.
           </p>
           <p>
             We built a group chat to talk crap in and it turned into a community we genuinely

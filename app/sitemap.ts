@@ -63,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/builds`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/events`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/events/recaps`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch/all`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly" },

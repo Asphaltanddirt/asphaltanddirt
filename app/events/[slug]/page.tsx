@@ -47,71 +47,73 @@ export default async function EventDetailPage({
 
   return (
     <section className="section-pt-tight section-pb-tight">
-      <div className="container" style={{ maxWidth: 720 }}>
+      <div className="container">
         <Link href="/events" className="back-link mb-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
           Back To Events
         </Link>
-        <div className="gallery-main mt-3" style={{ marginBottom: "var(--sp-4)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={event.photoUrl || FALLBACK_IMAGE.src}
-            alt={event.photoUrl ? event.title : FALLBACK_IMAGE.alt}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </div>
 
-        <div className="eyebrow accent">{formatEventDate(event.date)}</div>
-        <h1 className="mt-2">{event.title}</h1>
-        {event.generalArea && (
-          <p style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-dim)", fontSize: 14 }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
-            {event.generalArea}
-          </p>
-        )}
-        {event.publicBlurb && <p className="lead mt-3">{event.publicBlurb}</p>}
+        <div className="event-detail-grid mt-3">
+          {/* Flyer at its own proportions — never cropped */}
+          <div className="event-detail-cover">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.photoUrl || FALLBACK_IMAGE.src} alt={event.photoUrl ? event.title : FALLBACK_IMAGE.alt} />
+          </div>
 
-        {past ? (
-          <>
-            <h2 className="mt-6">Recap</h2>
-            {event.recap ? (
-              <p style={{ whiteSpace: "pre-wrap" }}>{event.recap}</p>
-            ) : (
-              <p style={{ color: "var(--text-dim)" }}>Recap coming soon.</p>
-            )}
-
-            {galleryImages.length > 0 && (
-              <>
-                <h2 className="mt-6">Gallery</h2>
-                <BuildGallery images={galleryImages} />
-              </>
-            )}
-
-            <h2 className="mt-6">Got Photos From The Day?</h2>
-            <p style={{ color: "var(--text-dim)" }}>
-              Share them here and we&apos;ll add them to the gallery above once approved.
-            </p>
-            <EventPhotoSubmissionForm eventRecordId={event.id} eventTitle={event.title} />
-          </>
-        ) : (
-          <>
-            {event.meetupPublic && event.meetupPoint ? (
-              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", margin: "var(--sp-3) 0" }}>
-                <div className="eyebrow" style={{ marginBottom: 6 }}>Meetup Point</div>
-                <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{event.meetupPoint}</p>
-              </div>
-            ) : (
-              <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
-                The exact meetup spot goes out by email once you RSVP.{" "}
-                <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">Already in the FB group?</a> The
-                discussion&apos;s happening there too.
+          <div>
+            <div className="eyebrow accent">{formatEventDate(event.date)}</div>
+            <h1 className="mt-2">{event.title}</h1>
+            {event.generalArea && (
+              <p style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-dim)", fontSize: 14 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12z" /><circle cx="12" cy="10" r="2.4" /></svg>
+                {event.generalArea}
               </p>
             )}
+            {event.publicBlurb && <p className="lead mt-3">{event.publicBlurb}</p>}
 
-            <h2 className="mt-6">RSVP</h2>
-            <RsvpForm slug={event.slug} />
-          </>
-        )}
+            {past ? (
+              <>
+                <h2 className="mt-6">Recap</h2>
+                {event.recap ? (
+                  <p style={{ whiteSpace: "pre-wrap" }}>{event.recap}</p>
+                ) : (
+                  <p style={{ color: "var(--text-dim)" }}>Recap coming soon.</p>
+                )}
+
+                {galleryImages.length > 0 && (
+                  <>
+                    <h2 className="mt-6">Gallery</h2>
+                    <BuildGallery images={galleryImages} />
+                  </>
+                )}
+
+                <h2 className="mt-6">Got Photos From The Day?</h2>
+                <p style={{ color: "var(--text-dim)" }}>
+                  Share them here and we&apos;ll add them to the gallery above once approved.
+                </p>
+                <EventPhotoSubmissionForm eventRecordId={event.id} eventTitle={event.title} />
+              </>
+            ) : (
+              <>
+                {event.meetupPublic && event.meetupPoint ? (
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", margin: "var(--sp-3) 0" }}>
+                    <div className="eyebrow" style={{ marginBottom: 6 }}>Meetup Point</div>
+                    <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{event.meetupPoint}</p>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
+                    The exact meetup spot goes out by email once you RSVP.{" "}
+                    <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">Already in the FB group?</a> The
+                    discussion&apos;s happening there too.
+                  </p>
+                )}
+
+                <h2 className="mt-6">RSVP</h2>
+                <RsvpForm slug={event.slug} />
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

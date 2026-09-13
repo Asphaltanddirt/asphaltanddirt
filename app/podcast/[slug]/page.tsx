@@ -121,11 +121,13 @@ export default async function EpisodePage({
       <section>
         <div className="container">
           <div className="episode-hero-topbar">
-            <Link href="/podcast" className="back-link mb-0">
+            {/* Trail & event videos are reached from the Events page's Ride
+                Recaps section, so that's where "back" should go. */}
+            <Link href={isTrailEvent ? "/events" : "/podcast"} className="back-link mb-0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 6-6 6 6 6" />
               </svg>
-              Back To Podcast
+              {isTrailEvent ? "Back To Events" : "Back To Podcast"}
             </Link>
             {episode.youtubePlaylistUrl && (
               <a href={episode.youtubePlaylistUrl} target="_blank" rel="noopener" className="view-all">
@@ -257,9 +259,9 @@ export default async function EpisodePage({
       <section className="section-alt">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Related Episodes</div>
-            <Link href="/podcast" className="view-all">
-              View All Episodes
+            <div className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</div>
+            <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
+              {isTrailEvent ? "View All Recaps" : "View All Episodes"}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </div>

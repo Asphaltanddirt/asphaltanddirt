@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { EventSummary } from "@/lib/events";
-
-const FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
+import EventCover from "@/components/EventCover";
 
 type SortOption = "newest" | "oldest";
 
@@ -57,8 +56,7 @@ export default function EventsList({ events }: { events: EventSummary[] }) {
             return (
               <div className="build-row" key={event.id}>
                 <div className="build-thumb">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={event.photoUrl || FALLBACK_IMAGE.src} alt={event.photoUrl ? event.title : FALLBACK_IMAGE.alt} />
+                  <EventCover photoUrl={event.photoUrl} title={event.title} />
                 </div>
                 <div>
                   <div className="build-kicker">{formatEventDate(event.date)}</div>

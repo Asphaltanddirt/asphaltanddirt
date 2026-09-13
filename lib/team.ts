@@ -9,6 +9,15 @@ export interface TeamMember {
   experienceLine2?: string;
   drives?: string;
   buildSlug?: string;
+  /** Personal profile URLs. Any filled in replace the brand social row on
+   *  their /team/[slug] page; leave them all empty to keep the brand row. */
+  socials?: {
+    instagram?: string;
+    tiktok?: string;
+    youtube?: string;
+    facebook?: string;
+    x?: string;
+  };
 }
 
 export const HOSTS: TeamMember[] = [

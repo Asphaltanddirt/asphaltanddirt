@@ -56,7 +56,7 @@ export async function fetchLatestFromPlaylist(
   }
 
   try {
-    const url = `${PLAYLIST_ITEMS_URL}?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=25&key=${key}`;
+    const url = `${PLAYLIST_ITEMS_URL}?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=50&key=${key}`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) {
       console.error("YouTube playlistItems fetch failed", res.status, await res.text());

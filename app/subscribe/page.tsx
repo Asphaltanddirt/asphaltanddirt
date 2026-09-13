@@ -12,9 +12,10 @@ export default async function SubscribePage({
 }: {
   searchParams: Promise<{ topic?: string; source?: string; returnTo?: string }>;
 }) {
-  const { topic, source, returnTo } = await searchParams;
-  const requestedTopic = ALL_TOPICS.find((t) => t.toLowerCase() === topic?.toLowerCase()) as Topic | undefined;
-  const defaultTopics = requestedTopic ? [requestedTopic] : ["Newsletter"];
+  const { source, returnTo } = await searchParams;
+  // Every entry point pre-selects every list — people untick what they don't
+  // want. (The `topic` param some links still carry is intentionally ignored.)
+  const defaultTopics: Topic[] = [...ALL_TOPICS];
   // Only ever send them back to a path on this site — never an absolute URL
   // (which could be attacker-supplied via the query string).
   const safeReturnTo = returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : undefined;

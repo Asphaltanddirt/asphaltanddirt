@@ -16,6 +16,7 @@ interface SocialLink {
 }
 
 const PLATFORM_OPTIONS = ["Instagram", "TikTok", "Facebook", "X", "Website", "Other"];
+const PRIMARY_SOCIAL_PLATFORMS = ["Instagram", "TikTok", "YouTube", "Facebook", "X", "Website", "Other"];
 
 const CONTENT_TYPES = [
   { value: "photos", label: "Photos" },
@@ -282,7 +283,15 @@ export default function AmbassadorApplicationForm() {
         </div>
         <div className="form-field">
           <label htmlFor="socialHandle">Primary Social Media Handle</label>
-          <input type="text" id="socialHandle" name="socialHandle" placeholder="e.g. @yourhandle" required disabled={busy} />
+          {/* Same platform picker + handle pairing as the build submission form */}
+          <div className="form-row" style={{ gridTemplateColumns: "150px 1fr", alignItems: "center" }}>
+            <select id="socialHandlePlatform" name="socialHandlePlatform" defaultValue="Instagram" aria-label="Platform" disabled={busy}>
+              {PRIMARY_SOCIAL_PLATFORMS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <input type="text" id="socialHandle" name="socialHandle" placeholder="@yourhandle or https://…" required disabled={busy} />
+          </div>
         </div>
         <div className="form-field">
           <label>Other Social Links <span className="optional">(Optional — add as many as you have)</span></label>

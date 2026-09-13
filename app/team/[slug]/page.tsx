@@ -35,10 +35,9 @@ interface Profile {
   socials: Social[];
 }
 
-// Hosts and Trail Ambassadors run the brand's own accounts, so their bio
-// page shows the same brand social row every /builds/[slug] page already
-// shows. Brand Ambassadors get their own personal handles instead (below),
-// since showcasing an individual ambassador's own channel is the point.
+// Hosts and Trail Ambassadors show their own personal links when lib/team.ts
+// has them, falling back to this brand row until then. Brand Ambassadors'
+// personal handles come from Airtable (below).
 const BRAND_SOCIALS: Social[] = [
   { key: "instagram", url: socialLinks.instagram, label: "Instagram" },
   { key: "facebook", url: socialLinks.facebook, label: "Facebook" },
@@ -60,9 +59,20 @@ const DRIVES_ICON = (
   </svg>
 );
 
+const SOCIAL_LABELS: Record<SocialKey, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  facebook: "Facebook",
+  x: "X",
+};
+
 async function getProfile(slug: string): Promise<Profile | undefined> {
   const member = findTeamMemberBySlug(slug);
   if (member) {
+    const personalSocials = (Object.keys(SOCIAL_LABELS) as SocialKey[])
+      .filter((key) => member.socials?.[key])
+      .map((key) => ({ key, url: member.socials![key]!, label: SOCIAL_LABELS[key] }));
     return {
       slug: member.slug,
       name: member.name,
@@ -74,7 +84,7 @@ async function getProfile(slug: string): Promise<Profile | undefined> {
       experienceLine2: member.experienceLine2,
       drives: member.drives,
       buildSlug: member.buildSlug,
-      socials: BRAND_SOCIALS,
+      socials: personalSocials.length ? personalSocials : BRAND_SOCIALS,
     };
   }
 

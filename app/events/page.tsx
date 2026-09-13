@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
+import EventCover from "@/components/EventCover";
+import RecapCard from "@/components/RecapCard";
 import { getEventsShowcase, isPastEvent } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
 import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
 import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
   title: "Events",
   description: "Meetups and rides — RSVP here even if you're not on Facebook.",
 };
-
-const FALLBACK_IMAGE = { src: "/img/community/pine-barrens.jpg", alt: "Jeeps on a Pine Barrens trail ride" };
 
 function formatEventDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
@@ -78,10 +77,9 @@ export default async function EventsPage() {
                 const past = isPastEvent(event.date);
                 return (
                   <div className="card" key={event.id}>
-                    <div className="card-media">
+                    <div className="card-media event-card-media">
+                      <EventCover photoUrl={event.photoUrl} title={event.title} />
                       <span className="badge">{formatEventDate(event.date)}</span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={event.photoUrl || FALLBACK_IMAGE.src} alt={event.photoUrl ? event.title : FALLBACK_IMAGE.alt} />
                     </div>
                     <div className="card-body">
                       <h3>{event.title}</h3>
@@ -108,42 +106,16 @@ export default async function EventsPage() {
         <div className="container">
           <div className="section-head">
             <div className="eyebrow">Ride Recaps &amp; Highlights</div>
-            <a href={`https://www.youtube.com/playlist?list=${TRAIL_EVENT_VIDEOS_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
+            <Link href="/events/recaps" className="view-all">
               View All Recaps
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </a>
+            </Link>
           </div>
           {recaps.length ? (
             <div className="grid grid-3">
-              {recaps.map((video) => {
-                const internal = getEpisodeByYoutubeId(video.videoId);
-                const cardBody = (
-                  <>
-                    <div className="card-media">
-                      <div className="play-overlay">
-                        <div className="play-circle">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                        </div>
-                      </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={video.thumbnail} alt={video.title} />
-                    </div>
-                    <div className="card-body">
-                      <h3>{video.title}</h3>
-                      <p>{excerpt(video.description)}</p>
-                    </div>
-                  </>
-                );
-                return internal ? (
-                  <Link className="card" key={video.videoId} href={`/podcast/${internal.slug}`}>
-                    {cardBody}
-                  </Link>
-                ) : (
-                  <a className="card" key={video.videoId} href={video.url} target="_blank" rel="noopener">
-                    {cardBody}
-                  </a>
-                );
-              })}
+              {recaps.map((video) => (
+                <RecapCard key={video.videoId} video={video} />
+              ))}
             </div>
           ) : (
             <p className="mb-0">Recaps drop soon &mdash; check back here or subscribe so you don&apos;t miss one.</p>
