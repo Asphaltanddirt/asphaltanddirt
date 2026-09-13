@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/get-google-refresh-token.mjs <CLIENT_ID> <CLIENT_SECRET>
+ *   GOOGLE_TOKEN_PURPOSE=drive node scripts/get-google-refresh-token.mjs <CLIENT_ID> <CLIENT_SECRET>
  *
  * It prints an auth URL — open it in the browser where you're signed in as the
  * asphaltanddirt.com Google account, approve, and it captures the code on
@@ -35,10 +36,16 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
 
 const PORT = 53682;
 const REDIRECT_URI = `http://localhost:${PORT}`;
-const SCOPES = [
-  "https://www.googleapis.com/auth/yt-analytics.readonly",
-  "https://www.googleapis.com/auth/webmasters.readonly",
-].join(" ");
+// Default: the analytics cron's scopes. `GOOGLE_TOKEN_PURPOSE=drive` mints a
+// separate Drive-only token (event media uploads) so the analytics token is
+// never replaced or widened.
+const SCOPES =
+  process.env.GOOGLE_TOKEN_PURPOSE === "drive"
+    ? "https://www.googleapis.com/auth/drive"
+    : [
+        "https://www.googleapis.com/auth/yt-analytics.readonly",
+        "https://www.googleapis.com/auth/webmasters.readonly",
+      ].join(" ");
 
 const authUrl =
   "https://accounts.google.com/o/oauth2/v2/auth?" +

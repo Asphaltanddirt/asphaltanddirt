@@ -116,11 +116,11 @@ export default async function EventDetailPage({
 
             {past && (
               <div className="event-detail-upload">
-                <h2 className="mt-6">Got Photos From The Day?</h2>
+                <h2 className="mt-6">Got Photos Or Video From The Day?</h2>
                 <p style={{ color: "var(--text-dim)" }}>
-                  Share them here and we&apos;ll add them to the gallery once approved.
+                  Send them here in full quality. We look at everything by hand, and approved photos show up in the gallery.
                 </p>
-                <EventPhotoSubmissionForm eventRecordId={event.id} eventTitle={event.title} />
+                <EventPhotoSubmissionForm eventSlug={event.slug} eventTitle={event.title} />
               </div>
             )}
           </div>
