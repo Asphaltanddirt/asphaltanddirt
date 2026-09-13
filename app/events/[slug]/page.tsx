@@ -49,9 +49,9 @@ export default async function EventDetailPage({
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container">
-        <Link href="/events" className="back-link mb-0">
+        <Link href="/events/all" className="back-link mb-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
-          Back To Events
+          Back To All Events
         </Link>
 
         {/* Left: the flyer at its own proportions (never cropped), plus the
