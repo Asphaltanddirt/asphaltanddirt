@@ -37,12 +37,23 @@ export async function POST(req: NextRequest) {
 
     const files = await listSubmissionFiles(folderId);
     const photos = files.filter((f) => f.mimeType.startsWith("image/")).length;
-    const videos = files.filter((f) => f.mimeType.startsWith("video/")).length;
+    const videoFiles = files.filter((f) => f.mimeType.startsWith("video/"));
+    const videos = videoFiles.length;
+    // Videos never get a preview on the row (too big for Airtable), so list a
+    // direct play link for each — otherwise a video submission looks empty.
+    const videoLinks = videoFiles
+      .map((f) => `${f.name} (${Math.round(Number(f.size || 0) / 1024 / 1024)} MB): https://drive.google.com/file/d/${f.id}/view`)
+      .join("\n");
     const expected = Number(body.expected) || 0;
     const status = photos + videos >= expected && expected > 0 ? "Complete" : "Partial";
     const alreadyClosed = record.fields["Upload Status"] === "Complete" || record.fields["Upload Status"] === "Partial";
 
-    await updateSubmission(submissionId, { "Photo Count": photos, "Video Count": videos, "Upload Status": status });
+    await updateSubmission(submissionId, {
+      "Photo Count": photos,
+      "Video Count": videos,
+      "Video Links": videoLinks,
+      "Upload Status": status,
+    });
 
     if (!alreadyClosed) {
       const name = (record.fields.Name as string) || "Someone";
@@ -60,6 +71,13 @@ export async function POST(req: NextRequest) {
               <h2 style="margin-bottom:4px;">New event media: ${escapeHtml(name)}</h2>
               <p style="color:#555;margin-top:0;">For ${escapeHtml(eventTitle || "an event")} &mdash; ${status === "Complete" ? "everything arrived" : `<strong>partial</strong>: ${photos + videos} of ${expected} files arrived`}</p>
               <p><strong>${photos}</strong> photo${photos === 1 ? "" : "s"} &middot; <strong>${videos}</strong> video${videos === 1 ? "" : "s"}</p>
+              ${
+                videoFiles.length
+                  ? `<ul>${videoFiles
+                      .map((f) => `<li><a href="https://drive.google.com/file/d/${f.id}/view">${escapeHtml(f.name)}</a> (${Math.round(Number(f.size || 0) / 1024 / 1024)} MB)</li>`)
+                      .join("")}</ul>`
+                  : ""
+              }
               <p><a href="${escapeHtml(folderLink)}">Open the Drive folder</a> to review the originals. Photo previews are on the Airtable row &mdash; tick Approved to show them in the event gallery.</p>
               ${email ? `<p style="color:#555;">Reply to reach ${escapeHtml(email)}.</p>` : ""}
             </div>`,
