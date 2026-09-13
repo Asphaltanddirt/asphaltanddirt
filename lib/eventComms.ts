@@ -47,9 +47,13 @@ const DEFAULT_END_TIME = "17:00"; // 9-5 unless Event End Time says otherwise
 // very next poll. Visibility filtering still happens per viewer AFTER the
 // cached read, on the server, exactly as before.
 // ---------------------------------------------------------------------------
-const SETTINGS_CACHE_SECONDS = 60;
-const ATTENDEES_CACHE_SECONDS = 30;
-const MESSAGES_CACHE_SECONDS = 5;
+// Every write through this file expires its cache on the spot (verified on
+// prod), so these windows only bound how stale an edit made directly in the
+// Airtable grid can be — and they cap cost when a single phone sits open on a
+// dash mount for the whole 48 hours (cost scales with time, not people).
+const SETTINGS_CACHE_SECONDS = 300;
+const ATTENDEES_CACHE_SECONDS = 300;
+const MESSAGES_CACHE_SECONDS = 60;
 
 function commsTag(kind: "settings" | "attendees" | "messages", slug: string) {
   return `comms-${kind}:${slug}`;
