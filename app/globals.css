@@ -1196,6 +1196,19 @@ h1 .line{ display:block; }
 .video-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
 .video-frame .play-circle{ width:72px; height:72px; position:relative; z-index:2; box-shadow:0 0 30px 10px rgba(0,0,0,.4); }
 
+/* Captions toggle under every embedded video — one site-wide preference */
+.video-toolbar{ display:flex; justify-content:flex-end; margin-top:8px; }
+.card .video-toolbar{ padding:0 var(--sp-2); }
+.cc-toggle{
+  display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:5px 12px;
+  background:transparent; color:var(--text-dim); border:1px solid var(--ad-gray); border-radius:var(--radius-sm);
+  font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+}
+.cc-toggle svg{ width:16px; height:16px; }
+.cc-toggle:hover{ color:var(--text); border-color:var(--text-dim); }
+.cc-toggle.on{ color:var(--accent); border-color:var(--accent); }
+.cc-toggle:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
 .sponsor-block, .affiliate-note, .event-promo{
   border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card);
   padding:var(--sp-3); font-size:13px; color:var(--text-dim);
