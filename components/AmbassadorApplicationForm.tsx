@@ -239,8 +239,8 @@ export default function AmbassadorApplicationForm() {
         </div>
         <h2>Application Submitted!</h2>
         <p className="lead" style={{ maxWidth: 480 }}>
-          Thanks for putting yourself out there. We review applications on a rolling basis and
-          will reach out by email either way. Taking you back home&hellip;
+          Thanks for putting yourself out there. Check your inbox &mdash; we just sent a
+          confirmation with what happens next. Taking you back home&hellip;
         </p>
         <Link href="/" className="btn btn-primary">Back To Home</Link>
       </div>

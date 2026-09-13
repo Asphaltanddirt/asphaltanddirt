@@ -216,3 +216,66 @@ export function buildWelcomePart2(input: {
     html: shell("You're all set — here's your Asphalt & Dirt code and tracking link.", bodyRows),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Application received — sent automatically the moment someone applies, so
+// nobody is left waiting on a yes/no. Not a rejection and not an approval:
+// "we'll see where it fits now, and if not now, we keep it on file."
+// ---------------------------------------------------------------------------
+
+export function buildApplicationReceived(input: { name: string }): WelcomeEmail {
+  const first = esc(firstNameOf(input.name));
+
+  const bodyRows = `
+      <tr>
+        <td align="center" style="padding:40px 32px 8px;">
+          <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#f86000;">Road &amp; Trail Crew</p>
+          <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;font-weight:900;letter-spacing:0.5px;text-transform:uppercase;color:#1a1712;">We Got Your Application.</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+          <p style="margin:0 0 16px;">Hey ${first},</p>
+          <p style="margin:0 0 16px;">Thanks for applying to the A&amp;D Road &amp; Trail Crew &mdash; and for putting yourself out there. Every application gets read by the actual crew, not a bot.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 32px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;">
+            <tr><td style="padding:20px 24px;">
+              <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#1a1712;">What happens next</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;">
+                <tr><td style="padding:4px 0;">&bull;&nbsp; We'll review your application and see where it fits with what the crew needs right now.</td></tr>
+                <tr><td style="padding:4px 0;">&bull;&nbsp; <strong style="color:#1a1712;">If it's a fit now,</strong> we'll reach out by email with next steps.</td></tr>
+                <tr><td style="padding:4px 0;">&bull;&nbsp; <strong style="color:#1a1712;">If the timing isn't right yet,</strong> we don't toss it. We hold on to every application and reach back out as new spots, events, and campaigns open up.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:20px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+          <p style="margin:0 0 16px;">There's nothing else you need to do. In the meantime, the best way to get on our radar is the same way everyone in this community did &mdash; show up. Come out to a meetup, and tag <strong style="color:#f86000;">#AsphaltAndDirtCrew</strong> when you post your rig.</p>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding:12px 32px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td align="center" style="background-color:#f86000;">
+              <a href="${SITE}/events" style="display:inline-block;padding:14px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;color:#000000;text-decoration:none;">See Upcoming Events</a>
+            </td>
+          </tr></table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+          <p style="margin:0;font-weight:bold;color:#1a1712;">Real people. Real builds. Street to trail.</p>
+          <p style="margin:8px 0 0;color:#1a1712;">&mdash; Asphalt &amp; Dirt</p>
+        </td>
+      </tr>`;
+
+  return {
+    subject: "We got your Road & Trail Crew application",
+    html: shell("Thanks for applying — here's what happens next.", bodyRows),
+  };
+}

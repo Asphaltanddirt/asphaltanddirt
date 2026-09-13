@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRecord, uploadAttachment } from "@/lib/airtable";
+import { buildApplicationReceived } from "@/lib/ambassadorWelcome";
+import { sendEmail } from "@/lib/resendEmail";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AMBASSADOR_APPLICATIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -284,6 +286,15 @@ export async function POST(req: NextRequest) {
     selfPhotoData,
     buildPhotoData,
   );
+
+  // Tell the applicant we have it and what "not yet" means, so nobody needs a
+  // manual no. Best-effort — the application is already recorded above.
+  try {
+    const received = buildApplicationReceived({ name: values.name });
+    await sendEmail({ to: values.email, subject: received.subject, html: received.html, replyTo: "crew@asphaltanddirt.com" });
+  } catch (err) {
+    console.error("Application-received email failed", err);
+  }
 
   return NextResponse.json({ status: "sent" });
 }
