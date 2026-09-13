@@ -30,6 +30,11 @@ const SOS_OPTIONS: { type: "Mechanical" | "Stuck" | "Lost" | "Emergency"; label:
 ];
 
 const POLL_MS = 7000;
+// When nothing new has arrived for a while, check less often — a quiet chat
+// left open on a dash mount shouldn't cost the same as a busy one. Any new
+// message, a send, or coming back to the tab snaps it back to POLL_MS.
+const IDLE_POLL_MS = 20000;
+const IDLE_AFTER_MS = 5 * 60 * 1000;
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -69,6 +74,9 @@ export default function CommsChat({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+  // 0 = "active as of now" — resolved to a real timestamp inside the poll loop.
+  const lastActivity = useRef(0);
+  const lastMessageId = useRef(initialMessages[initialMessages.length - 1]?.id ?? "");
 
   // Token isn't a prop — pulled straight from the URL the personal email
   // link opened with, so it never needs to round-trip through this
@@ -111,19 +119,57 @@ export default function CommsChat({
     ? `/api/comms/${slug}/messages?staff=${encodeURIComponent(staffCode)}`
     : `/api/comms/${slug}/messages?token=${encodeURIComponent(token)}`;
 
+  // Polls only while the page is actually on screen — a locked phone or a
+  // backgrounded tab stops polling, and checks immediately on return.
   useEffect(() => {
-    const poll = setInterval(async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+
+    const schedule = () => {
+      if (stopped || document.hidden) return;
+      clearTimeout(timer);
+      if (lastActivity.current === 0) lastActivity.current = Date.now();
+      const idle = Date.now() - lastActivity.current > IDLE_AFTER_MS;
+      timer = setTimeout(tick, idle ? IDLE_POLL_MS : POLL_MS);
+    };
+
+    const tick = async () => {
+      if (document.hidden) return;
       try {
         const res = await fetch(feedUrl, { cache: "no-store" });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (Array.isArray(data.messages)) setMessages(data.messages);
-        if (typeof data.checkedIn === "boolean") setCheckedIn(data.checkedIn);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.messages)) {
+            const newestId = data.messages[data.messages.length - 1]?.id ?? "";
+            if (newestId !== lastMessageId.current) {
+              lastMessageId.current = newestId;
+              lastActivity.current = Date.now();
+            }
+            setMessages(data.messages);
+          }
+          if (typeof data.checkedIn === "boolean") setCheckedIn(data.checkedIn);
+        }
       } catch {
         // Silent — next poll retries.
       }
-    }, POLL_MS);
-    return () => clearInterval(poll);
+      schedule();
+    };
+
+    const onVisibility = () => {
+      clearTimeout(timer);
+      if (!document.hidden) {
+        lastActivity.current = Date.now();
+        tick();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    schedule();
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [feedUrl]);
 
   useEffect(() => {
@@ -150,6 +196,7 @@ export default function CommsChat({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Couldn't send that — try again.");
+      lastActivity.current = 0;
       setDraft("");
       setReplyTo(null);
       setAnnounceMode(false);

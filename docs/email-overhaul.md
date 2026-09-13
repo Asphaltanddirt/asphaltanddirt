@@ -85,7 +85,7 @@ base `appXheLlmY0Grspla`, table `Ambassadors` (`tbl8XwmNOBz48hvia`).
   Body `{recordId|email, part: 1|2, test: bool}`. Manual / programmatic
   trigger.
 - `GET|POST /api/cron/ambassador-welcome` — Vercel cron (`vercel.json`,
-  every 15 min) → `processPendingWelcomes()`. Auth: `CRON_SECRET` (Vercel
+  hourly — was every 15 min until 2026-09-13, cut to save Airtable API calls) → `processPendingWelcomes()`. Auth: `CRON_SECRET` (Vercel
   sends it) or `ADMIN_API_SECRET`. This is how the Send Welcome 1/2
   checkboxes work — Airtable automations can't call our API.
 - `/api/accept-agreement` — now auto-sends Part 2 when Promo Code +
@@ -98,7 +98,7 @@ New Ambassadors fields: `Tracking Link` (url), `Send Welcome 1`,
 
 **Flow:**
 - Approve an applicant → "Auto-create Ambassador on Accept" makes the
-  record → staff ticks **Send Welcome 1** → within 15 min the cron sends
+  record → staff ticks **Send Welcome 1** → within the hour the cron sends
   Part 1.
 - Ambassador signs at `/ambassadors/agreement` → team creates the
   Fourthwall code, fills **Promo Code** + **Tracking Link** (+ Promotion

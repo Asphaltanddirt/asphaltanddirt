@@ -38,9 +38,9 @@ export function isAirtableConfigured(baseId?: string) {
 async function request(
   table: string,
   path = "",
-  init: RequestInit & { revalidate?: number; baseId?: string } = {},
+  init: RequestInit & { revalidate?: number; tags?: string[]; baseId?: string } = {},
 ) {
-  const { revalidate, baseId, ...fetchInit } = init;
+  const { revalidate, tags, baseId, ...fetchInit } = init;
   const cfg = config(baseId);
   if (!cfg) throw new Error("Airtable is not configured (missing AIRTABLE_API_KEY or a base ID).");
 
@@ -55,7 +55,8 @@ async function request(
     // reads (e.g. approved testimonials on a page every visitor hits) can pass
     // `revalidate` to use Next's fetch cache instead of hitting Airtable's API
     // on every single page load.
-    ...(revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" as const }),
+    // `tags` let a write invalidate exactly the reads it affects (revalidateTag).
+    ...(revalidate !== undefined ? { next: { revalidate, ...(tags ? { tags } : {}) } } : { cache: "no-store" as const }),
   });
   if (!res.ok) {
     throw new Error(`Airtable request failed: ${res.status} ${await res.text()}`);
@@ -70,7 +71,7 @@ async function request(
 export async function listRecords(
   table: string,
   filterByFormula?: string,
-  options?: { revalidate?: number; baseId?: string },
+  options?: { revalidate?: number; tags?: string[]; baseId?: string },
 ): Promise<AirtableRecord[]> {
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
@@ -83,6 +84,7 @@ export async function listRecords(
 
     const data = (await request(table, query ? `?${query}` : "", {
       revalidate: options?.revalidate,
+      tags: options?.tags,
       baseId: options?.baseId,
     })) as {
       records: AirtableRecord[];

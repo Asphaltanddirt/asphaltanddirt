@@ -74,7 +74,7 @@ async function run(req: NextRequest) {
       console.error("Waiver invite team copy failed", err);
     }
 
-    await markActivated(settings.id);
+    await markActivated(settings);
     reminders.push({ slug: settings.eventSlug, title: event.title, recipients: recipients.length, sent, failed });
   }
 
@@ -106,7 +106,7 @@ async function run(req: NextRequest) {
       }
     }
 
-    await markClosedEmailSent(settings.id);
+    await markClosedEmailSent(settings);
     closings.push({ slug: settings.eventSlug, title: event.title, attendees: attendees.length, sent, failed });
   }
 

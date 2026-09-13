@@ -28,9 +28,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // `screenName` present means "fix this person's name", nothing else.
   const screenName = (body.screenName || "").trim().slice(0, MAX_SCREEN_NAME);
   if (screenName) {
-    await renameAttendee(body.attendeeId, screenName);
+    await renameAttendee(slug, body.attendeeId, screenName);
   } else {
-    await setCheckedIn(body.attendeeId, Boolean(body.checkedIn));
+    await setCheckedIn(slug, body.attendeeId, Boolean(body.checkedIn));
   }
 
   const roster = await getAttendeeRoster(slug);

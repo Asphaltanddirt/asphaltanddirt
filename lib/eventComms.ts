@@ -1,6 +1,7 @@
 import { listRecords, createRecord, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
 import crypto from "crypto";
+import { revalidateTag } from "next/cache";
 
 /**
  * Event-day comms — a private, no-login chat per event. Lives in its own
@@ -33,6 +34,30 @@ const SIGNATURES_TABLE = "Waiver Signatures";
 const SOS_WINDOW_HOURS = 24;
 const CHAT_WINDOW_HOURS = 48;
 const DEFAULT_END_TIME = "17:00"; // 9-5 unless Event End Time says otherwise
+
+// ---------------------------------------------------------------------------
+// Read caching. Every phone in the chat polls every few seconds; reading
+// Airtable per poll made it ~3 API calls per phone per poll, which crosses
+// Airtable's 5 requests/second-per-base limit at about a dozen phones and
+// burns a month of API allowance in one event. Instead each event's
+// settings, attendees and messages are read from Airtable at most once per
+// window below, shared by every viewer (Next's data cache, global on Vercel),
+// and every write through this file expires the affected cache immediately —
+// so a sent message, a check-in or a new registration still shows on the
+// very next poll. Visibility filtering still happens per viewer AFTER the
+// cached read, on the server, exactly as before.
+// ---------------------------------------------------------------------------
+const SETTINGS_CACHE_SECONDS = 60;
+const ATTENDEES_CACHE_SECONDS = 30;
+const MESSAGES_CACHE_SECONDS = 5;
+
+function commsTag(kind: "settings" | "attendees" | "messages", slug: string) {
+  return `comms-${kind}:${slug}`;
+}
+
+function expire(kind: "settings" | "attendees" | "messages", slug: string) {
+  revalidateTag(commsTag(kind, slug), { expire: 0 });
+}
 
 function assertConfigured() {
   if (!isAirtableConfigured(BASE_ID)) {
@@ -86,7 +111,11 @@ function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
 
 export async function getCommsSettings(slug: string): Promise<CommsSettings | null> {
   assertConfigured();
-  const records = await listRecords(SETTINGS_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, { baseId: BASE_ID });
+  const records = await listRecords(SETTINGS_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: SETTINGS_CACHE_SECONDS,
+    tags: [commsTag("settings", slug)],
+  });
   const record = records[0];
   return record ? toSettings(record) : null;
 }
@@ -124,14 +153,17 @@ export async function getSettingsToClose(now = new Date()): Promise<CommsSetting
   });
 }
 
-export async function markActivated(settingsId: string): Promise<void> {
+export async function markActivated(settings: Pick<CommsSettings, "id" | "eventSlug">): Promise<void> {
   assertConfigured();
-  await updateRecord(SETTINGS_TABLE, settingsId, { "Activated At": new Date().toISOString() }, { baseId: BASE_ID });
+  await updateRecord(SETTINGS_TABLE, settings.id, { "Activated At": new Date().toISOString() }, { baseId: BASE_ID });
+  // The chat opens off Activated At — don't make people wait out the cache.
+  expire("settings", settings.eventSlug);
 }
 
-export async function markClosedEmailSent(settingsId: string): Promise<void> {
+export async function markClosedEmailSent(settings: Pick<CommsSettings, "id" | "eventSlug">): Promise<void> {
   assertConfigured();
-  await updateRecord(SETTINGS_TABLE, settingsId, { "Closed Email Sent": new Date().toISOString() }, { baseId: BASE_ID });
+  await updateRecord(SETTINGS_TABLE, settings.id, { "Closed Email Sent": new Date().toISOString() }, { baseId: BASE_ID });
+  expire("settings", settings.eventSlug);
 }
 
 function hoursSinceActivation(settings: CommsSettings | null): number | null {
@@ -273,6 +305,8 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
     );
     attendee = toAttendee({ id: created.id, fields: { ...created, "Access Token": accessToken } });
   }
+  // Their emailed link must work the moment it lands, not after the cache window.
+  expire("attendees", input.eventSlug);
 
   const childFields: AirtableFields = {};
   input.children.slice(0, 4).forEach((child, i) => {
@@ -335,31 +369,37 @@ export async function findAttendeeByEmail(slug: string, email: string): Promise<
 /** Staff fixing a hand-typed screen name on the roster ("Rache1" -> "Rachel")
  *  without making the person re-register. Safe now that visibility keys off
  *  the record ID rather than the name. */
-export async function renameAttendee(attendeeId: string, screenName: string): Promise<void> {
+export async function renameAttendee(slug: string, attendeeId: string, screenName: string): Promise<void> {
   assertConfigured();
   await updateRecord(ATTENDEES_TABLE, attendeeId, { "Screen Name": screenName }, { baseId: BASE_ID });
+  expire("attendees", slug);
+}
+
+/** Every attendee for one event, from the shared cache (see top of file).
+ *  Server-only: includes access tokens. */
+async function getEventAttendees(slug: string): Promise<Attendee[]> {
+  assertConfigured();
+  const records = await listRecords(ATTENDEES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: ATTENDEES_CACHE_SECONDS,
+    tags: [commsTag("attendees", slug)],
+  });
+  return records.map(toAttendee);
 }
 
 export async function getAttendeeByToken(slug: string, token: string): Promise<Attendee | null> {
-  assertConfigured();
   if (!token) return null;
-  const records = await listRecords(
-    ATTENDEES_TABLE,
-    `AND({Event Slug} = '${escapeFormulaString(slug)}', {Access Token} = '${escapeFormulaString(token)}')`,
-    { baseId: BASE_ID },
-  );
-  const record = records[0];
-  return record ? toAttendee(record) : null;
+  const attendees = await getEventAttendees(slug);
+  return attendees.find((a) => a.accessToken && a.accessToken === token) || null;
 }
 
 /** Full roster for one event — staff-only (the check-in panel). */
 export async function getAttendeeRoster(slug: string): Promise<Attendee[]> {
-  assertConfigured();
-  const records = await listRecords(ATTENDEES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, { baseId: BASE_ID });
-  return records.map(toAttendee).sort((a, b) => a.screenName.localeCompare(b.screenName));
+  const attendees = await getEventAttendees(slug);
+  return attendees.sort((a, b) => a.screenName.localeCompare(b.screenName));
 }
 
-export async function setCheckedIn(attendeeId: string, checkedIn: boolean): Promise<void> {
+export async function setCheckedIn(slug: string, attendeeId: string, checkedIn: boolean): Promise<void> {
   assertConfigured();
   await updateRecord(
     ATTENDEES_TABLE,
@@ -367,6 +407,8 @@ export async function setCheckedIn(attendeeId: string, checkedIn: boolean): Prom
     { "Checked In": checkedIn, "Checked In At": checkedIn ? new Date().toISOString() : null },
     { baseId: BASE_ID },
   );
+  // Roll call flips their view to the group chat on the next poll.
+  expire("attendees", slug);
 }
 
 /** Every RSVP'd but never-registered person for the waiver-reminder nudge
@@ -419,7 +461,11 @@ function toMessage(r: { id: string; createdTime: string; fields: AirtableFields 
  *  hand the result to a client; use getVisibleMessages instead. */
 async function getAllMessages(slug: string): Promise<CommsMessage[]> {
   assertConfigured();
-  const records = await listRecords(MESSAGES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, { baseId: BASE_ID });
+  const records = await listRecords(MESSAGES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: MESSAGES_CACHE_SECONDS,
+    tags: [commsTag("messages", slug)],
+  });
   return records.map(toMessage).sort((a, b) => (a.createdTime < b.createdTime ? -1 : 1));
 }
 
@@ -490,5 +536,7 @@ export async function postMessage(input: PostMessageInput): Promise<{ id: string
     },
     { baseId: BASE_ID, typecast: true },
   );
+  // Sender (and everyone else, SOS especially) sees it on the next poll.
+  expire("messages", input.eventSlug);
   return { id: created.id };
 }
