@@ -1449,14 +1449,26 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .event-cover img.event-cover-img{ position:relative; width:100%; height:100%; object-fit:contain; }
 .card-media.event-card-media{ aspect-ratio:1/1; }
 
-/* Event detail page — flyer beside the details on desktop, stacked on mobile */
+/* Event detail page — flyer (+ gallery on past events) beside the details
+ * on desktop. On mobile the two column wrappers use display:contents so
+ * their children interleave: flyer, details, gallery, photo upload. */
 .event-detail-grid{ display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:var(--sp-6); align-items:start; }
-.event-detail-cover{
-  position:sticky; top:96px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border);
-  background:var(--bg-elevated);
-}
+.event-detail-side{ position:sticky; top:96px; }
+.event-detail-side.has-gallery{ position:static; }
+.event-detail-cover{ border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border); background:var(--bg-elevated); }
 .event-detail-cover img{ display:block; width:100%; height:auto; max-height:80vh; object-fit:contain; }
+.event-detail-gallery{ margin-top:var(--sp-4); }
+.event-detail-gallery h2{ margin-bottom:var(--sp-2); }
+/* Narrow column: big photo on top, a strip of small thumbnails underneath */
+.event-detail-gallery .gallery{ grid-template-columns:1fr; }
+.event-detail-gallery .gallery-thumbs{ grid-template-columns:repeat(6,1fr); gap:6px; }
+@media (max-width:640px){ .event-detail-gallery .gallery-thumbs{ grid-template-columns:repeat(4,1fr); } }
 @media (max-width:900px){
   .event-detail-grid{ grid-template-columns:1fr; gap:var(--sp-4); }
-  .event-detail-cover{ position:static; }
+  .event-detail-side, .event-detail-main{ display:contents; }
+  .event-detail-cover{ order:1; }
+  .event-detail-info{ order:2; }
+  .event-detail-gallery{ order:3; margin-top:0; }
+  .event-detail-upload{ order:4; }
+  .event-detail-upload h2{ margin-top:0; }
 }
