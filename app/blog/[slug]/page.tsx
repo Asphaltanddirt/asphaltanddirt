@@ -34,16 +34,35 @@ export async function generateMetadata({
   };
 }
 
-/** Parses **bold** markers into <strong> — the only inline markdown the
- *  blog body model supports right now. */
-function renderInline(text: string) {
+function renderBold(text: string, keyPrefix: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={i}>{part.slice(2, -2)}</strong>
+      <strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>
     ) : (
       part
     ),
   );
+}
+
+/** Parses the inline markdown the blog body model supports: **bold** and
+ *  [link text](https://…). Source links open in a new tab and are underlined
+ *  so they read as links, not just orange text. */
+function renderInline(text: string) {
+  return text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g).flatMap((part, i) => {
+    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (!link) return renderBold(part, String(i));
+    return [
+      <a
+        key={i}
+        href={link[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 3 }}
+      >
+        {link[1]}
+      </a>,
+    ];
+  });
 }
 
 export default async function BlogPostPage({

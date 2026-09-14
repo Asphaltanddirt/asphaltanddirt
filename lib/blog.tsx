@@ -36,6 +36,73 @@ export interface BlogPost {
 // is ready to publish.
 export const posts: BlogPost[] = [
   {
+    slug: "e36-m3-ownership-would-you-daily-one",
+    title: "E36 M3 Ownership: Would You Still Daily a 1990s Performance Car?",
+    seoTitle: "E36 M3 Ownership: Would You Daily One Today?",
+    excerpt:
+      "The E36 M3 still gives enthusiasts plenty to argue about. Whether you should drive one every day comes down to who’s doing the wrenching, what downtime costs you, and how much compromise you actually enjoy.",
+    metaDescription:
+      "E36 M3 ownership brings driving feel, aging parts and real upkeep. Would you still daily a 1990s performance car—or keep it for weekends?",
+    category: "Culture",
+    date: "2026-09-14",
+    image: { src: "/img/blog/e36-m3-daily-driver.jpg", alt: "Would You Daily It? — a black BMW E36 M3 coupe parked on a wet city street at dusk, with a skyline behind it" },
+    body: [
+      { type: "paragraph", text: "The test drive is easy. The real E36 M3 ownership test starts on a Tuesday morning, when you need to get to work and the car has developed a new opinion about starting." },
+      { type: "paragraph", text: "You can love a 1990s performance car and still get tired of arranging your life around it. You can also drive one regularly without starring in an endless roadside-assistance documentary." },
+      { type: "paragraph", text: "Both owners exist. The interesting question is what separates their experiences—and which one your budget, garage and commute would turn you into." },
+
+      { type: "heading", text: "Why the E36 Still Gets Under Your Skin" },
+      { type: "paragraph", text: "A recent Savagegeese E36 M3 review sparked a useful [argument on r/cars](https://www.reddit.com/r/cars/comments/1w9sitp/bmw_e36_m3_makes_new_bmws_look_bad_savagegeese/). Some owners defended the car’s mechanical simplicity and driving feel. Others talked about deteriorating plastics, difficult-to-find trim and the cost of paying someone else to keep an old car sorted." },
+      { type: "paragraph", text: "That is a better conversation than declaring that every new BMW has lost the plot." },
+      { type: "paragraph", text: "The confirmed hardware helps explain the appeal. [BMW’s archive](https://www.bmwgroup-classic.com/en/models/bmw-classics/product-description-page.ad-1521-1.bmw-m3-coupe-e36-us-model.html) lists the U.S. E36 M3 at 240 horsepower, with its inline-six growing from 2,990 to 3,152 cc during the production run. Those are U.S.-market specifications; European cars had different engines." },
+      { type: "paragraph", text: "But the case for owning one goes beyond horsepower." },
+      { type: "paragraph", text: "For an enthusiast who values steering feedback, a manual gearbox and a car that feels manageable on an ordinary road, the attraction is understandable. You don’t need to chase a lap record—or somebody’s taillights—to enjoy how a car responds." },
+
+      { type: "heading", text: "E36 M3 Ownership Changes With Who Holds the Wrench" },
+      { type: "paragraph", text: "Imagine two owners facing the same repair." },
+      { type: "paragraph", text: "One has tools, space, experience and a free Saturday. The other has street parking, a packed schedule and a shop charging for diagnosis and labor. The parts invoice could be identical. The ownership experience won’t be." },
+      { type: "paragraph", text: "This is where discussions of E36 M3 maintenance get messy. “Easy to work on” describes access and complexity. It doesn’t tell you how often your particular car will need attention, whether you can finish the job tonight, or what happens when a second problem appears halfway through." },
+      { type: "paragraph", text: "The discussion also contains an important distinction: keeping the drivetrain running and keeping the whole car feeling right are separate jobs. An owner may be happy with the engine while fighting door trim, interior fittings or other small failures." },
+      { type: "paragraph", text: "We don’t have a verified average annual maintenance bill from this thread. We also don’t have evidence that every E36 is headed for catastrophic engine work. Treat both the bargain-running-cost claims and the doom stories as individual experiences." },
+      { type: "paragraph", text: "Your tolerance for unfinished little jobs belongs in the budget, too." },
+
+      { type: "heading", text: "Buy the Condition You Can Live With" },
+      { type: "paragraph", text: "A cheap purchase price can leave room for repairs. It can also conceal a car whose previous owners postponed everything that didn’t stop it moving." },
+      { type: "paragraph", text: "Before buying, pay an independent specialist familiar with the platform to inspect the actual car. Ask about cooling-system condition, leaks, suspension wear, previous damage, corrosion and the quality of modifications. Have them separate immediate work from things that can sensibly wait." },
+      { type: "paragraph", text: "Then ask for documentation." },
+      { type: "paragraph", text: "“Cooling system done” is a starting point for questions. Which components, when, and with what parts? A folder of invoices gives you something to evaluate; a seller’s confidence mainly tells you they would like you to buy the car." },
+      { type: "paragraph", text: "For Northeast buyers, put it on a lift. Have someone inspect the underside, mounting areas and evidence of earlier rust repairs. Shiny paint deserves less of your attention than the condition underneath it." },
+      { type: "paragraph", text: "A purchase inspection cannot predict every failure. It can give you a much better starting point than hoping the previous owner’s definition of “sorted” matches yours." },
+
+      { type: "heading", text: "Your Commute Gets a Vote" },
+      { type: "paragraph", text: "Daily driving an E36 M3 means asking it to handle the boring stuff reliably: traffic, bad weather, errands, parking and getting home when you’re already tired." },
+      { type: "paragraph", text: "That’s a different assignment from taking it out whenever conditions suit you." },
+      { type: "paragraph", text: "Be honest about backup transportation. If a delayed part means borrowing another car, the inconvenience may be manageable. If it means missing shifts or paying for several days of transportation you hadn’t budgeted for, downtime becomes a much bigger deal." },
+      { type: "paragraph", text: "The same applies to comfort. Working air conditioning, useful headlights, a quiet-enough cabin and seats you can tolerate matter more on the fortieth commute than the first test drive." },
+      { type: "paragraph", text: "Anyone commuting in a modified Jeep knows this negotiation. The capability or character you wanted has to coexist with Monday morning. Street cars and trail rigs both get judged by the life around them." },
+
+      { type: "heading", text: "Safety Deserves a Straight Answer" },
+      { type: "paragraph", text: "The safety argument in old-car discussions tends to swing between nostalgia and disaster predictions. Neither tells you enough about the vehicle you’re considering." },
+      { type: "paragraph", text: "[IIHS has documented substantial improvements in crash protection](https://www.iihs.org/news/detail/iihs-crashworthiness-tests-save-nearly-50-000-lives-since-programs-launch) over the past three decades. Its 1996-versus-2026 Chevrolet Blazer demonstration showed dramatically different occupant-compartment performance." },
+      { type: "paragraph", text: "That is evidence of progress in those vehicles. It cannot give us an E36-specific crash outcome." },
+      { type: "paragraph", text: "A well-maintained older car still belongs to the safety era in which it was designed. Driving carefully matters, but it cannot guarantee protection from somebody else’s mistake." },
+      { type: "paragraph", text: "You get to decide how much that weighs in your purchase. Someone prioritizing newer crash protection for a long commute or family transport has made a reasonable choice. Loving older performance cars doesn’t require dismissing that concern." },
+
+      { type: "heading", text: "Get the Daily-Driver Basics Right Before Adding More" },
+      { type: "paragraph", text: "Our advice: spend the first round of attention on making the car dependable and pleasant in its current form." },
+      { type: "paragraph", text: "Resolve identified faults. Get suitable tires, sound brakes and suspension, and an alignment appropriate to how you use it. Check that the ordinary equipment works. Establish what maintenance has actually been completed before ordering the modifications you’ve been saving screenshots of." },
+      { type: "paragraph", text: "A lower stance or louder exhaust can be enjoyable. Each change should earn its place on a car you have to live with every day." },
+      { type: "paragraph", text: "Give yourself time to learn what the car needs and what you actually want from it. The first month of commuting can edit a build list pretty quickly." },
+
+      { type: "heading", text: "So, Would We Still Daily One?" },
+      { type: "paragraph", text: "Yes—with a sound starting point, money reserved for maintenance and a workable plan for downtime." },
+      { type: "paragraph", text: "For the owner who enjoys the upkeep, that involvement can be part of the appeal. For somebody who needs their only car to demand very little attention, an E36 may fit better as a weekend car—or remain something they appreciate without owning." },
+      { type: "paragraph", text: "There’s no prize for suffering through a commute to prove you’re an enthusiast." },
+      { type: "paragraph", text: "The aim is to build a life with more driving you enjoy. Sometimes that means keeping the old BMW. Sometimes it means choosing something newer and spending your Saturdays somewhere other than under a dashboard." },
+      { type: "paragraph", text: "**If an E36 M3 were your only car, what would make you hand over the keys first: a repair bill you couldn’t absorb, a week of downtime, or the daily comfort and safety trade-offs?**" },
+    ],
+  },
+  {
     slug: "dodge-charger-hurricane-does-muscle-need-a-v8",
     title: "The New Charger Has the Power. Does It Have the Soul?",
     seoTitle: "Dodge Charger Hurricane: Does Muscle Need a V8?",
