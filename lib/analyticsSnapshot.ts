@@ -216,7 +216,8 @@ async function pullVercelAnalytics(now: Date) {
     });
 
     await attempt(`utm ${w.tag}`, async () => {
-      const filter = "eventName eq 'utm_landing'";
+      // utm_source=test is reserved for checking the tracking works — never counted.
+      const filter = "eventName eq 'utm_landing' and eventData/utm_source ne 'test'";
       for (const r of await query("events", "eventData/utm", w.start, { filter })) {
         if (!r["eventData/utm"]) continue;
         push(w, "visitors_from_utm", `utm:${r["eventData/utm"]}`, Number(r.visitors ?? 0), "Arrivals via a UTM-tagged link, as source / medium");
