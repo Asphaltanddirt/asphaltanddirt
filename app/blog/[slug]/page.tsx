@@ -107,6 +107,32 @@ export default async function BlogPostPage({
               <h2 key={i} className="mt-4" style={{ fontSize: 24 }}>{block.text}</h2>
             ) : block.type === "subheading" ? (
               <h3 key={i} className="mt-3" style={{ fontSize: 19 }}>{block.text}</h3>
+            ) : block.type === "table" ? (
+              <div key={i} className="post-table-wrap mt-3">
+                <table className="post-table">
+                  {block.caption && <caption>{block.caption}</caption>}
+                  <thead>
+                    <tr>
+                      {block.headers.map((h, j) => (
+                        <th key={j} scope="col">{renderInline(h)}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.map((row, r) => (
+                      <tr key={r}>
+                        {row.map((cell, c) =>
+                          c === 0 ? (
+                            <th key={c} scope="row">{renderInline(cell)}</th>
+                          ) : (
+                            <td key={c}>{renderInline(cell)}</td>
+                          ),
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p key={i}>{renderInline(block.text)}</p>
             ),

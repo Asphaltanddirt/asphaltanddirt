@@ -7,7 +7,10 @@ export type BlogCategory = "Builds" | "Trail & Travel" | "Gear" | "Events" | "Cu
 export type BlogBlock =
   | { type: "heading"; text: string }
   | { type: "subheading"; text: string }
-  | { type: "paragraph"; text: string };
+  | { type: "paragraph"; text: string }
+  /** A real comparison table (specs, prices, trims). Cells take the same
+   *  inline markdown as paragraphs. `caption` says what's being compared. */
+  | { type: "table"; caption?: string; headers: string[]; rows: string[][] };
 
 export interface BlogPost {
   slug: string;
