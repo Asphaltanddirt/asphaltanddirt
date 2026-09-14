@@ -97,7 +97,7 @@ export default async function BlogPostPage({
         <h1 className="mt-2" style={{ fontSize: "clamp(32px,5vw,48px)" }}>{post.title}</h1>
         <p className="lead mt-2">{post.excerpt}</p>
 
-        <div className="build-thumb mt-4" style={{ aspectRatio: "16/9", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+        <div className="build-thumb mt-4" style={{ aspectRatio: "16/10", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <BlogCover src={post.image.src} alt={post.image.alt} />
         </div>
 
