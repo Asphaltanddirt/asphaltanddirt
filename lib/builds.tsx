@@ -165,7 +165,7 @@ export const builds: Build[] = [
     slug: "iron-bandit",
     nameLines: ["Iron", "Bandit"],
     vehicle: "2012 Jeep Wrangler JK Sport (2-Door)",
-    lead: "Built to do it all — rock crawling and bombing down rough trails, and just as comfortable on the ride home, whether that's 5 miles or 250.",
+    lead: "Dan's 2012 Jeep Wrangler JK Sport on 37-inch Nitto Trail Grapplers, a MetalCloak 4.5\" Game Changer lift and a G2 Core 44 front axle. Built to do it all — rock crawling and bombing down rough trails, and just as comfortable on the ride home, whether that's 5 miles or 250.",
     kicker: "Dan's Trail Build",
     category: "trail-built",
     stats: [

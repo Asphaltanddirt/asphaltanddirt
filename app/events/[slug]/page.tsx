@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEventBySlug, getApprovedEventPhotoSubmissions, isPastEvent } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import RsvpForm from "@/components/RsvpForm";
 import BuildGallery from "@/components/BuildGallery";
 import EventPhotoSubmissionForm from "@/components/EventPhotoSubmissionForm";
@@ -29,6 +30,7 @@ export async function generateMetadata({
   return {
     title: event.title,
     description: event.publicBlurb || `${event.title} — ${formatEventDate(event.date)}`,
+    alternates: { canonical: `${SITE_URL}/events/${event.slug}` },
   };
 }
 
@@ -46,8 +48,27 @@ export default async function EventDetailPage({
   const galleryImages = [...event.galleryPhotos, ...submittedPhotos].map((photo) => ({ src: photo.url, alt: photo.alt }));
   const hasGallery = galleryImages.length > 0;
 
+  // Event structured data: the public facts only (never the exact meetup spot).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    startDate: event.date,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    url: `${SITE_URL}/events/${event.slug}`,
+    ...(event.publicBlurb && { description: [event.publicBlurb, ...event.atAGlance.map((f) => (f.label ? `${f.label}: ${f.value}` : f.value))].join(" ") }),
+    ...(event.generalArea && { location: { "@type": "Place", name: event.generalArea, address: event.generalArea } }),
+    organizer: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    isAccessibleForFree: true,
+  };
+
   return (
     <section className="section-pt-tight section-pb-tight">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="container">
         <Link href="/events/all" className="back-link mb-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>
@@ -83,6 +104,26 @@ export default async function EventDetailPage({
                 </p>
               )}
               {event.publicBlurb && <p className="lead mt-3">{event.publicBlurb}</p>}
+
+              {!past && event.atAGlance.length > 0 && (
+                <div className="event-glance">
+                  <h2 className="eyebrow">At A Glance</h2>
+                  <dl>
+                    {event.atAGlance.map((fact, i) =>
+                      fact.label ? (
+                        <div key={i}>
+                          <dt>{fact.label}</dt>
+                          <dd>{fact.value}</dd>
+                        </div>
+                      ) : (
+                        <div key={i} className="event-glance-note">
+                          <dd>{fact.value}</dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </div>
+              )}
 
               {past ? (
                 <>

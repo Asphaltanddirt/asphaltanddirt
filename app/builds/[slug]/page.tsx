@@ -27,14 +27,24 @@ export async function generateMetadata({
   if (!build) return {};
 
   const name = build.nameLines.join(" ");
-  const description = `${build.vehicle} — full spec sheet, photo gallery, and build story.`;
+  // Put the vehicle and the headline mods in the title/description, not just the
+  // build's nickname: names like "Iron Bandit" collide with other famous builds,
+  // and search/AI engines need the make, model and specs to match the page.
+  const vehicle = build.vehicle.replace(/\s*\([^)]*\)\s*$/, "");
+  const keySpecs = (build.listingSpecs || [])
+    .filter((s) => s.label !== "Engine")
+    .slice(0, 2)
+    .map((s) => s.value)
+    .join(", ");
+  const title = `${name}: ${vehicle} Build Specs`;
+  const description = `${name} is a ${build.vehicle}${keySpecs ? ` with ${keySpecs}` : ""}. Full spec sheet, photo gallery, and build story.`;
   const url = `${SITE_URL}/builds/${build.slug}`;
   return {
-    title: `${name} Build`,
+    title,
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${name} Build`,
+      title,
       description,
       url,
       type: "article",
@@ -91,8 +101,11 @@ export default async function BuildDetailPage({
               )}
               {build.badge && <div className={`badge-outline mb-0${build.isAmbassador ? " mt-2" : ""}`}>{build.badge}</div>}
               <h1 className={build.badge || build.isAmbassador ? "mt-2" : undefined} style={{ fontSize: "clamp(48px,7vw,84px)" }}>
-                {build.nameLines.map((line) => (
-                  <span className="line" key={line}>{line}</span>
+                {/* The space keeps the text "Iron Bandit" (not "IronBandit") for
+                    crawlers and screen readers; .line is display:block so it
+                    doesn't change the stacked look. */}
+                {build.nameLines.map((line, i) => (
+                  <span className="line" key={line}>{i > 0 ? " " : ""}{line}</span>
                 ))}
               </h1>
               <div className="accent-text mt-2" style={{ fontWeight: 800, letterSpacing: ".03em" }}>{build.vehicle}</div>

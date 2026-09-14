@@ -1487,6 +1487,16 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .event-cover img.event-cover-img{ position:relative; width:100%; height:100%; object-fit:contain; }
 .card-media.event-card-media{ aspect-ratio:1/1; }
 
+/* Event page "At A Glance" — public quick facts (times, vehicle, what to bring). */
+.event-glance{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 20px; margin:var(--sp-3) 0; }
+.event-glance h2.eyebrow{ margin:0 0 10px; }
+.event-glance dl{ margin:0; display:grid; gap:8px; }
+.event-glance dl > div{ display:grid; grid-template-columns:120px 1fr; gap:12px; font-size:14.5px; }
+.event-glance dt{ color:var(--text-muted); font-weight:600; }
+.event-glance dd{ margin:0; color:var(--text); }
+.event-glance .event-glance-note{ grid-template-columns:1fr; }
+@media (max-width:480px){ .event-glance dl > div{ grid-template-columns:1fr; gap:2px; } }
+
 /* Blog post comparison tables — scroll sideways inside their own box on
  * narrow screens instead of widening the page. */
 .post-table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:var(--sp-2); }

@@ -44,6 +44,10 @@ export interface EventDetail extends EventSummary {
    *  confirmation email either way. */
   meetupPoint: string;
   meetupPublic: boolean;
+  /** PUBLIC quick facts from "At A Glance", one "Label: Value" per line
+   *  (meet/roll-out time, vehicle requirement, what to bring). Shown on the
+   *  event page and in its Event structured data. Never the exact meetup spot. */
+  atAGlance: { label: string; value: string }[];
   /** Public recap write-up — only relevant once the event's date has
    *  passed. Empty until the team writes one. */
   recap: string;
@@ -130,6 +134,14 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
     fullDetails: (record.fields["Full Details"] as string) || "",
     meetupPoint: (record.fields["Meetup Point"] as string) || "",
     meetupPublic: Boolean(record.fields["Show Meetup Publicly"]),
+    atAGlance: ((record.fields["At A Glance"] as string) || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const i = line.indexOf(":");
+        return i > 0 ? { label: line.slice(0, i).trim(), value: line.slice(i + 1).trim() } : { label: "", value: line };
+      }),
     recap: (record.fields.Recap as string) || "",
     galleryPhotos,
   };
