@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import UtmLanding from "@/components/UtmLanding";
 import SiteChrome from "@/components/SiteChrome";
 import { CartProvider } from "@/components/CartContext";
 import CartDrawer from "@/components/CartDrawer";
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <CartDrawer />
         </CartProvider>
         <Analytics />
+        <UtmLanding />
       </body>
     </html>
   );

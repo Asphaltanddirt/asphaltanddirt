@@ -6,9 +6,9 @@
  *     - Fourthwall (Open API, Basic Auth)  -> Audience Snapshot: Merch revenue / orders / units
  *     - YouTube Data API v3 (YOUTUBE_API_KEY) -> Audience Snapshot: subscribers
  *                                             -> Performance: per-video + channel lifetime views, upload count
- *     - Vercel Web Analytics API (VERCEL_API_TOKEN) -> Performance: site pageviews/visitors
- *       broken down by utm_source (bio-link attribution — facebook/instagram/tiktok/x/youtube),
- *       rolling 7d and 28d
+ *     - Vercel Web Analytics API (VERCEL_API_TOKEN) -> Performance (scope Website): visitors +
+ *       pageviews, visitors by referrer / page / device, and social-link attribution from the
+ *       site's own utm_landing event — rolling 7d and 28d, all on the current plan
  *
  *   OAuth (runs if GOOGLE_OAUTH_* present):
  *     - YouTube Analytics API -> Performance: channel + per-video views / watch time /
@@ -61,7 +61,7 @@ export interface SnapshotResult {
   dryRun: boolean;
   fourthwall: { ok: boolean; skipped?: string; realOrders?: number; revenue?: number; units?: number };
   youtube: { ok: boolean; skipped?: string; subscribers?: number; videos?: number };
-  vercelAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number };
+  vercelAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number; warnings?: string[] };
   youtubeAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number };
   searchConsole: { ok: boolean; skipped?: string; error?: string; rows?: number };
   written: { performance: number; audienceSnapshot: number };
@@ -123,11 +123,20 @@ async function pullYouTube(videoIds: string[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Vercel Web Analytics (bio-link attribution via UTM source)
+// Vercel Web Analytics — site traffic + social-link attribution
 // ---------------------------------------------------------------------------
 
-const VERCEL_ANALYTICS_URL = "https://api.vercel.com/v1/query/web-analytics/visits/aggregate";
+const VERCEL_QUERY_URL = "https://api.vercel.com/v1/query/web-analytics";
 
+/**
+ * Everything here is on the current plan (no Web Analytics Plus add-on):
+ *   - site totals, visitors by referrer, top pages, device split
+ *   - social-link attribution via the site's own `utm_landing` custom event
+ *     (components/UtmLanding.tsx), grouped by its properties. Vercel's native
+ *     UTM dimensions are add-on-gated (402), but custom-event properties aren't.
+ * If the add-on is ever enabled, the native utmSource breakdown is pulled too.
+ * Each query is independent: one failing doesn't drop the others.
+ */
 async function pullVercelAnalytics(now: Date) {
   const token = process.env.VERCEL_API_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID;
@@ -136,54 +145,111 @@ async function pullVercelAnalytics(now: Date) {
   }
   const teamId = process.env.VERCEL_TEAM_ID;
 
-  // Vercel Web Analytics isn't subject to the multi-day finalization lag that
-  // YouTube Analytics / Search Console have, so windows run through today.
+  // No multi-day finalization lag like YouTube Analytics / Search Console.
   const end = isoDate(now);
-  const windows: { label: "Rolling 7 days" | "Rolling 28 days"; start: string }[] = [
-    { label: "Rolling 7 days", start: isoDate(daysAgo(now, 6)) },
-    { label: "Rolling 28 days", start: isoDate(daysAgo(now, 27)) },
+  const windows: { label: "Rolling 7 days" | "Rolling 28 days"; tag: string; start: string }[] = [
+    { label: "Rolling 7 days", tag: "7d", start: isoDate(daysAgo(now, 6)) },
+    { label: "Rolling 28 days", tag: "28d", start: isoDate(daysAgo(now, 27)) },
   ];
 
-  const out: { fields: AirtableFields }[] = [];
-  for (const w of windows) {
-    const tag = w.label === "Rolling 7 days" ? "7d" : "28d";
-    const params = new URLSearchParams({ projectId, since: w.start, until: end, by: "utmSource", limit: "15" });
+  async function query(kind: "visits" | "events", by: string, start: string, extra: Record<string, string> = {}) {
+    const params = new URLSearchParams({ projectId: projectId as string, since: start, until: end, by, limit: "20", ...extra });
     if (teamId) params.set("teamId", teamId);
-
-    const res = await fetch(`${VERCEL_ANALYTICS_URL}?${params.toString()}`, {
+    const res = await fetch(`${VERCEL_QUERY_URL}/${kind}/aggregate?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(`Vercel Web Analytics ${res.status}: ${JSON.stringify(data)}`);
+    if (!res.ok) throw Object.assign(new Error(`Vercel Web Analytics ${res.status}: ${JSON.stringify(data)}`), { status: res.status });
+    return (data.data ?? []) as Record<string, string | number>[];
+  }
 
-    for (const row of (data.data ?? []) as { utmSource?: string; pageviews?: number; visitors?: number }[]) {
-      // Blank utmSource = direct/organic traffic with no bio link involved —
-      // still worth a baseline row so the social sources have something to compare against.
-      const source = (row.utmSource || "direct").toString();
-      const slug = source.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const push = (metric: string, value: number) =>
-        out.push({
-          fields: {
-            observation_id: `VERCEL-utm-${slug}-${metric}-${tag}-${end}`,
-            scope: "Website",
-            entity_id: `utm_source:${source}`,
-            observed_date: end,
-            period_start: w.start,
-            period_end: end,
-            window: w.label,
-            metric: `${metric}_from_utm_source`,
-            value,
-            unit: "count",
-            source: `Vercel Web Analytics API (cron, data through ${end})`,
-            notes: `utm_source = ${source}`,
-          },
-        });
-      push("pageviews", Number(row.pageviews ?? 0));
-      push("visitors", Number(row.visitors ?? 0));
+  const out: { fields: AirtableFields }[] = [];
+  const errors: string[] = [];
+  const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "none";
+  const push = (
+    w: (typeof windows)[number],
+    metric: string,
+    entity: string,
+    value: number,
+    notes: string,
+  ) =>
+    out.push({
+      fields: {
+        observation_id: `VERCEL-${metric}-${slug(entity)}-${w.tag}-${end}`,
+        scope: "Website",
+        entity_id: entity,
+        observed_date: end,
+        period_start: w.start,
+        period_end: end,
+        window: w.label,
+        metric,
+        value,
+        unit: "count",
+        source: `Vercel Web Analytics API (cron, data through ${end})`,
+        notes,
+      },
+    });
+
+  async function attempt(label: string, fn: () => Promise<void>) {
+    try {
+      await fn();
+    } catch (e) {
+      // 402 = add-on-gated dimension; expected until/unless Web Analytics Plus is on.
+      if ((e as { status?: number }).status !== 402) errors.push(`${label}: ${String(e)}`);
     }
   }
-  return { ok: true as const, rows: out.length, data: out };
+
+  for (const w of windows) {
+    await attempt(`totals ${w.tag}`, async () => {
+      const rows = await query("visits", "environment", w.start);
+      const prod = rows.find((r) => r.environment === "production") ?? { visitors: 0, pageviews: 0 };
+      push(w, "visitors_total", "site", Number(prod.visitors ?? 0), "Unique visitors, production site");
+      push(w, "pageviews_total", "site", Number(prod.pageviews ?? 0), "Pageviews, production site");
+    });
+
+    await attempt(`referrers ${w.tag}`, async () => {
+      for (const r of await query("visits", "referrerHostname", w.start)) {
+        const host = String(r.referrerHostname || "(no referrer)");
+        push(w, "visitors_from_referrer", `referrer:${host}`, Number(r.visitors ?? 0), "No referrer = direct, or a link opened inside an app that hides it (FB/IG/TikTok)");
+      }
+    });
+
+    await attempt(`utm ${w.tag}`, async () => {
+      const filter = "eventName eq 'utm_landing'";
+      for (const r of await query("events", "eventData/utm", w.start, { filter })) {
+        if (!r["eventData/utm"]) continue;
+        push(w, "visitors_from_utm", `utm:${r["eventData/utm"]}`, Number(r.visitors ?? 0), "Arrivals via a UTM-tagged link, as source / medium");
+      }
+      for (const r of await query("events", "eventData/utm_source", w.start, { filter })) {
+        if (!r["eventData/utm_source"]) continue;
+        push(w, "visitors_from_utm_source", `utm_source:${r["eventData/utm_source"]}`, Number(r.visitors ?? 0), "Arrivals via a UTM-tagged link, by platform");
+      }
+    });
+
+    // Native UTM dimension — only returns data with the Web Analytics Plus add-on.
+    await attempt(`native utm ${w.tag}`, async () => {
+      for (const r of await query("visits", "utmSource", w.start)) {
+        push(w, "visitors_from_utm_source_native", `utm_source:${r.utmSource || "(none)"}`, Number(r.visitors ?? 0), "Vercel native UTM dimension (add-on)");
+      }
+    });
+  }
+
+  const month = windows[1];
+  await attempt("pages 28d", async () => {
+    for (const r of await query("visits", "route", month.start)) {
+      push(month, "visitors_by_page", `page:${r.route}`, Number(r.visitors ?? 0), "Visitors per page route (Others = everything past the top 20)");
+    }
+  });
+  await attempt("devices 28d", async () => {
+    for (const r of await query("visits", "deviceType", month.start)) {
+      if (!r.deviceType) continue;
+      push(month, "visitors_by_device", `device:${r.deviceType}`, Number(r.visitors ?? 0), "Visitors by device type");
+    }
+  });
+
+  if (!out.length && errors.length) return { ok: false as const, error: errors.join(" | ") };
+  return { ok: true as const, rows: out.length, data: out, ...(errors.length ? { warnings: errors } : {}) };
 }
 
 // ---------------------------------------------------------------------------
@@ -597,7 +663,7 @@ export async function runAnalyticsSnapshot(
       ? { ok: true, subscribers: yt.subscribers, videos: Object.keys(yt.perVideo).length }
       : { ok: false, skipped: yt.skipped },
     vercelAnalytics: vercel.ok
-      ? { ok: true, rows: "rows" in vercel ? vercel.rows : undefined }
+      ? { ok: true, rows: "rows" in vercel ? vercel.rows : undefined, warnings: "warnings" in vercel ? vercel.warnings : undefined }
       : { ok: false, skipped: "skipped" in vercel ? vercel.skipped : undefined, error: "error" in vercel ? vercel.error : undefined },
     youtubeAnalytics: yta,
     searchConsole: gsc,
