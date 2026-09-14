@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
 import BlogList from "@/components/BlogList";
+import BlogCover from "@/components/BlogCover";
 import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
 export const metadata: Metadata = {
@@ -65,8 +66,7 @@ export default function BlogPage() {
             {EDITORS_PICKS.map((post) => (
               <div className="card" key={post.slug}>
                 <div className="card-media">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={post.image.src} alt={post.image.alt} />
+                  <BlogCover src={post.image.src} alt={post.image.alt} />
                 </div>
                 <div className="card-body">
                   <h3>{post.title}</h3>

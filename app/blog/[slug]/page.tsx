@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BlogCover from "@/components/BlogCover";
 import { getPostBySlug, getPublishedPosts } from "@/lib/blog";
 import { SITE_URL } from "@/lib/site";
 
@@ -97,8 +98,7 @@ export default async function BlogPostPage({
         <p className="lead mt-2">{post.excerpt}</p>
 
         <div className="build-thumb mt-4" style={{ aspectRatio: "16/9", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.image.src} alt={post.image.alt} />
+          <BlogCover src={post.image.src} alt={post.image.alt} />
         </div>
 
         <div className="mt-4">

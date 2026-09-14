@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import BlogCover from "@/components/BlogCover";
 import type { BlogCategory, BlogPost } from "@/lib/blog";
 
 const CATEGORIES: { key: "All" | BlogCategory; icon: React.ReactNode }[] = [
@@ -88,8 +89,7 @@ export default function BlogArchive({ posts }: { posts: BlogPost[] }) {
             {visiblePosts.map((post) => (
               <div className="card" key={post.slug}>
                 <div className="card-media">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={post.image.src} alt={post.image.alt} />
+                  <BlogCover src={post.image.src} alt={post.image.alt} />
                 </div>
                 <div className="card-body">
                   <div className="tag-row">
