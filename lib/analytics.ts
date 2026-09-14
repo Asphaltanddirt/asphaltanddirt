@@ -20,5 +20,16 @@ export function track(eventName: string, props: Record<string, string | number |
     console.log("[analytics]", eventName, props);
     return;
   }
+  // Vercel's <Analytics /> sets up window.va inside a Suspense boundary, so on a
+  // first page load it can mount after components that track right away (e.g.
+  // UtmLanding) — and its track() silently drops events when window.va isn't
+  // there yet. This is the same queue shim @vercel/analytics installs itself:
+  // early events wait in window.vaq and are sent once the script loads.
+  const w = window as unknown as { va?: (...params: unknown[]) => void; vaq?: unknown[][] };
+  if (!w.va) {
+    w.va = (...params: unknown[]) => {
+      (w.vaq = w.vaq || []).push(params);
+    };
+  }
   vercelTrack(eventName, props);
 }
