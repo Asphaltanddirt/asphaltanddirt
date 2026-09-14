@@ -36,14 +36,17 @@ export async function POST(req: NextRequest) {
     if (!folderId) return NextResponse.json({ error: "Submission has no folder." }, { status: 500 });
 
     const files = await listSubmissionFiles(folderId);
-    const photos = files.filter((f) => f.mimeType.startsWith("image/")).length;
+    const photoFiles = files.filter((f) => f.mimeType.startsWith("image/"));
     const videoFiles = files.filter((f) => f.mimeType.startsWith("video/"));
+    const photos = photoFiles.length;
     const videos = videoFiles.length;
-    // Videos never get a preview on the row (too big for Airtable), so list a
-    // direct play link for each — otherwise a video submission looks empty.
-    const videoLinks = videoFiles
-      .map((f) => `${f.name} (${Math.round(Number(f.size || 0) / 1024 / 1024)} MB): https://drive.google.com/file/d/${f.id}/view`)
-      .join("\n");
+    // A direct link per original. Videos get no preview on the row (too big for
+    // Airtable) and photo previews are downsized, so these are how staff open
+    // the real files without digging through the folder.
+    const linkLines = (list: typeof files) =>
+      list
+        .map((f) => `${f.name} (${Math.max(1, Math.round(Number(f.size || 0) / 1024 / 1024))} MB): https://drive.google.com/file/d/${f.id}/view`)
+        .join("\n");
     const expected = Number(body.expected) || 0;
     const status = photos + videos >= expected && expected > 0 ? "Complete" : "Partial";
     const alreadyClosed = record.fields["Upload Status"] === "Complete" || record.fields["Upload Status"] === "Partial";
@@ -51,7 +54,8 @@ export async function POST(req: NextRequest) {
     await updateSubmission(submissionId, {
       "Photo Count": photos,
       "Video Count": videos,
-      "Video Links": videoLinks,
+      "Photo Links": linkLines(photoFiles),
+      "Video Links": linkLines(videoFiles),
       "Upload Status": status,
     });
 
