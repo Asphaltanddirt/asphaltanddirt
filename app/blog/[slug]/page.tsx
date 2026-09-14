@@ -105,6 +105,8 @@ export default async function BlogPostPage({
           {post.body?.map((block, i) =>
             block.type === "heading" ? (
               <h2 key={i} className="mt-4" style={{ fontSize: 24 }}>{block.text}</h2>
+            ) : block.type === "subheading" ? (
+              <h3 key={i} className="mt-3" style={{ fontSize: 19 }}>{block.text}</h3>
             ) : (
               <p key={i}>{renderInline(block.text)}</p>
             ),

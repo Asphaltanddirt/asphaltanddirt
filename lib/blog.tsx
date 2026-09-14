@@ -1,9 +1,13 @@
 export type BlogCategory = "Builds" | "Trail & Travel" | "Gear" | "Events" | "Culture";
 
 /** A single content block in a post body. Supports the minimum structure a
- *  real article needs — section headings plus paragraphs — with **bold**
- *  inline emphasis parsed at render time (see renderInline in the post page). */
-export type BlogBlock = { type: "heading"; text: string } | { type: "paragraph"; text: string };
+ *  real article needs — section headings (h2), subheadings (h3, e.g. numbered
+ *  steps) plus paragraphs — with **bold** and [text](https://…) links parsed at
+ *  render time (see renderInline in the post page). */
+export type BlogBlock =
+  | { type: "heading"; text: string }
+  | { type: "subheading"; text: string }
+  | { type: "paragraph"; text: string };
 
 export interface BlogPost {
   slug: string;
@@ -35,6 +39,87 @@ export interface BlogPost {
 // will start linking to /blog/{slug} automatically) whenever a real post
 // is ready to publish.
 export const posts: BlogPost[] = [
+  {
+    slug: "bronco-hardtop-wind-noise-diagnose-before-you-buy",
+    title: "Bronco Hardtop Wind Noise: Find the Source Before Buying a Fix",
+    seoTitle: "Bronco Hardtop Wind Noise: Diagnose Before You Buy",
+    excerpt:
+      "A noisy Bronco roof does not automatically need another seal, headliner or trim piece. Locate the whistle first—or risk buying the right part for the wrong problem.",
+    metaDescription:
+      "Bronco hardtop wind noise can come from several places. Learn what to inspect, what Ford documented and what owners are still testing.",
+    category: "Gear",
+    date: "2026-09-14",
+    image: { src: "/img/blog/bronco-hardtop-wind-noise.jpg", alt: "Find the Noise First — a mud-splattered black four-door Ford Bronco hardtop on a wet forest trail at sunset" },
+    body: [
+      { type: "paragraph", text: "The whistle starts at 55 mph." },
+      { type: "paragraph", text: "You order weatherstrip, a headliner and the factory trim piece everybody is talking about. The noise is still there, but your wallet is noticeably quieter." },
+      { type: "paragraph", text: "Bronco hardtop wind noise is frustrating because “the roof” is not one possible source. Removable panels, seals, latches, door glass, roof racks and accessories can all create noise—or make it sound like it is coming from somewhere else." },
+      { type: "paragraph", text: "Before you buy a fix, find the actual problem." },
+
+      { type: "heading", text: "Why One Roof Noise Can Have Several Causes" },
+      { type: "paragraph", text: "A removable hardtop gives the Bronco much of its character. It also creates more joints, seals and attachment points than a fixed steel roof." },
+      { type: "paragraph", text: "That does not mean every Bronco is defective. It means a whistle near your right ear may come from a front panel seam, the side glass, a damaged seal or airflow around an accessory. A rattle over rough pavement points toward a different problem than a clean whistle that begins at one repeatable speed." },
+      { type: "paragraph", text: "Start by describing the noise instead of naming the part you want to replace." },
+      { type: "paragraph", text: "Is it a whistle, a broad rushing sound or a mechanical rattle? Does it begin after removing and reinstalling a panel? Does wind direction matter? Did it appear after adding a rack, light bar or other accessory?" },
+      { type: "paragraph", text: "Those details are more useful than “my roof is loud.”" },
+
+      { type: "heading", text: "The C-Pillar Trim Discussion: What Is Confirmed?" },
+      { type: "paragraph", text: "A recent [Bronco6G discussion](https://www.bronco6g.com/forum/threads/psa-on-secret-ish-oem-trim-piece-to-reduce-roof-noise-c-pillar-molding-cover.138321/) started after the owner of a 2024 Bronco replaced a molded-in-color roof with a used painted modular roof. The owner noticed movement near the forward lower corner of the rear roof section, immediately behind the C-pillar." },
+      { type: "paragraph", text: "After investigating, the owner installed two molding pieces with a vertical rubber edge and reported a subjective reduction in roof noise during a short drive. The discussion grew as other members compared vehicles, corrected the ordering information and checked whether their Broncos already had the pieces." },
+      { type: "paragraph", text: "The thread eventually identified the right- and left-side Ford catalog numbers as **M2DZ-78255A34-CA** and **M2DZ-78255A35-CA**. Retail parts catalogs recognize those numbers as Ford door-window-frame moldings. [Right-side catalog listing](https://www.fordpartsgiant.com/parts/ford-moulding-door-window-frame_m2dz-78255a34-ca.html) · [Left-side catalog listing](https://www.fordpartsgiant.com/parts/ford-moulding-door-window-frame_m2dz-78255a35-ca.html)" },
+      { type: "paragraph", text: "That is the confirmed part." },
+      { type: "paragraph", text: "The rest needs a label. The original poster reported seeing the pieces on 26 new 2026 Broncos at two dealerships, including vehicles with molded-in-color and painted modular roofs. That is one owner’s field check, not a Ford production record. The suggestion that Ford introduced the parts specifically to reduce cabin noise is also an owner theory." },
+      { type: "paragraph", text: "Ford has not, in the material we reviewed, described these moldings as a universal wind-noise retrofit. We also do not have a controlled before-and-after sound test proving how much difference they make." },
+      { type: "paragraph", text: "Useful lead? Absolutely." },
+      { type: "paragraph", text: "Universal fix? Not established." },
+
+      { type: "heading", text: "Ford Has a Wind-Noise Bulletin—For a Different Area" },
+      { type: "paragraph", text: "Ford did publish [Technical Service Bulletin 25-2219](https://static.nhtsa.gov/odi/tsbs/2025/MC-11018621-0001.pdf) on May 22, 2025, covering some 2024–2025 Broncos in North America. It addresses wind noise isolated to the hardtop’s **front panel-to-panel seal**." },
+      { type: "paragraph", text: "The service procedure calls for inspecting the seal-to-panel interface. If light is visible through the specified area, the bulletin directs a technician to apply a 40 mm strip of 3M soft butyl strip-caulk beneath the seal. Ford lists 0.3 hours for the operation." },
+      { type: "paragraph", text: "That bulletin matters because it confirms that Ford has documented one specific hardtop wind-noise condition." },
+      { type: "paragraph", text: "It does not confirm the C-pillar theory. The locations and proposed remedies are different. It is not a recall, it does not say every 2024 or 2025 Bronco is affected, and it does not automatically establish warranty coverage for every noisy roof." },
+      { type: "paragraph", text: "A dealer can check the current bulletin, vehicle eligibility and coverage using the VIN." },
+
+      { type: "heading", text: "Diagnose Bronco Hardtop Wind Noise in This Order" },
+      { type: "paragraph", text: "Throwing parts at a noise is still throwing parts at a noise, even when the parts arrive in a box with a blue oval." },
+
+      { type: "subheading", text: "1. Remove the Easy Variables" },
+      { type: "paragraph", text: "Empty loose gear from the cabin and cargo area. Check whether the sound changes with removable accessories, provided they can be removed according to their instructions." },
+      { type: "paragraph", text: "If the noise started immediately after fitting a roof rack or another exterior accessory, begin there. Airflow around an add-on can create a whistle that appears to come through the roof." },
+
+      { type: "subheading", text: "2. Inspect, Clean and Reseat the Panels" },
+      { type: "paragraph", text: "Ford’s [Bronco owner’s manual](https://www.fordservicecontent.com/Ford_Content/Catalog/owner_information/2024_Ford_Bronco_Owners_Manual_version_1_om_EN-US.pdf) tells owners to position the hardtop correctly, keep the panel seals clear of dust and debris, and make sure the rear panel’s locating pins sit flush when installed." },
+      { type: "paragraph", text: "Look for folded, displaced, dirty or visibly damaged seals. Confirm that panels and latches are seated as the manual describes. If a panel or seal is damaged, Ford directs owners to an authorized dealer." },
+      { type: "paragraph", text: "Do not start cutting, drilling or “improving” the roof structure. Ford specifically warns against modifying the roof panels." },
+
+      { type: "subheading", text: "3. Locate the Sound Without Becoming the Distraction" },
+      { type: "paragraph", text: "Note the speed and conditions under which the noise begins. If another adult can ride along and listen safely, have the passenger identify the general area while the driver concentrates on driving." },
+      { type: "paragraph", text: "Do not reach for panels, hold a phone near the roof or attempt roadside science while moving." },
+      { type: "paragraph", text: "A recording can help determine whether the sound is repeatable, but a phone application is not a calibrated acoustic test. Use it to compare the same vehicle under similar conditions, not to declare laboratory-grade results." },
+
+      { type: "subheading", text: "4. Match the Suspected Area to the Remedy" },
+      { type: "paragraph", text: "A whistle at the front panel seam may justify asking whether TSB 25-2219 applies. A gap or missing trim behind the C-pillar makes the molding discussion more relevant. Noise that appeared after reinstalling the roof points back toward panel position, seals and latches." },
+      { type: "paragraph", text: "If the sound is near the side glass, buying rear-roof trim may accomplish precisely nothing." },
+      { type: "paragraph", text: "Change one variable at a time. Otherwise, even a successful repair will not tell you what fixed it." },
+
+      { type: "subheading", text: "5. Confirm Parts by VIN" },
+      { type: "paragraph", text: "The Bronco6G discussion itself shows why this matters. Members initially worked from engineering numbers molded into parts before identifying the catalog numbers used for ordering." },
+      { type: "paragraph", text: "Before spending money, have a dealer or reliable catalog check the part against your VIN, roof type and body style. Also check whether your Bronco already has it." },
+      { type: "paragraph", text: "Buying the right part twice is still buying the wrong solution." },
+
+      { type: "heading", text: "Quiet Enough for the Road Between Trails" },
+      { type: "paragraph", text: "A Bronco does not need luxury-car silence to be a good daily driver. It also should not force you to turn up the podcast every time you reach highway speed." },
+      { type: "paragraph", text: "This is the same diagnostic discipline used on the asphalt side of the garage. When a track car develops a vibration, you do not replace the entire suspension because somebody online fixed a vaguely similar shake with control arms. You reproduce the condition, isolate the source and verify the repair." },
+      { type: "paragraph", text: "Trail rigs deserve the same care. A useful modification solves the problem your vehicle actually has without creating another one." },
+
+      { type: "heading", text: "Our Take" },
+      { type: "paragraph", text: "The C-pillar molding discovery is exactly the kind of owner investigation that makes enthusiast forums valuable. People compared vehicles, challenged early assumptions and corrected the part numbers." },
+      { type: "paragraph", text: "But the thread is a starting point, not a service manual." },
+      { type: "paragraph", text: "Begin with the free checks. Clean and reseat the panels, inspect the seals, remove obvious variables and locate the noise. Check Ford’s applicable service information. Only then decide whether you need a dealer repair, an adjustment or a pair of moldings." },
+      { type: "paragraph", text: "The best Bronco wind noise fix is the one aimed at the gap making the noise." },
+      { type: "paragraph", text: "**If your Bronco whistles at highway speed, where did you finally trace it—the front panel seam, side glass, C-pillar area or an accessory—and what single change actually stopped it?**" },
+    ],
+  },
   {
     slug: "e36-m3-ownership-would-you-daily-one",
     title: "E36 M3 Ownership: Would You Still Daily a 1990s Performance Car?",
