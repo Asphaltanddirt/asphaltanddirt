@@ -43,7 +43,7 @@ export default function BlogPage() {
             <div className="promo-banner mt-3">
               <div className="promo-media">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/img/blog/best-overland-routes-featured.jpg" alt="A Toyota Tacoma with a bed topper on a gravel road, snowy mountains and a paved highway in the distance" />
+                <img src="/img/blog/best-overland-routes.jpg" alt="Best Overland Routes — a Toyota 4Runner on a dusty mountain switchback with a paved highway winding through the valley below" />
               </div>
               <div className="promo-copy">
                 <span className="badge-outline" style={{ width: "fit-content" }}>Trail &amp; Travel</span>
