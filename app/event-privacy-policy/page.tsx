@@ -8,12 +8,14 @@ export const metadata: Metadata = {
 
 export const POLICY_VERSION = "PRIVACY-1.0";
 
-/** TODO — still to fill before this is final: effective date, mailing
- *  address, retention periods (§10), and the specific security measures
- *  (§11). Everything else reflects the stack as actually built
- *  (Airtable / Resend / Vercel). */
+/** TODO — still to fill before this is final: the mailing address (Jose is
+ *  getting a mailbox). Effective date, retention periods and safeguards were
+ *  filled 2026-09-15 and reflect the stack as actually built (Airtable /
+ *  Google Drive / Resend / Vercel). Retention promises need a scheduled cleanup
+ *  to stay true: Tailgate records don't delete themselves. */
 const TBD = "[TBD]";
 const ORGANIZER = "JLDA Holding Corp d/b/a Asphalt & Dirt";
+const EFFECTIVE = "Version 1.0 — Effective September 15, 2026";
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -98,6 +100,7 @@ If you believe a child under 13 has submitted information directly without an ap
 
 Service providers we use:
 • Registration records, signed agreements, and communications data: Airtable (airtable.com/privacy).
+• Event photos and videos: Google Drive (policies.google.com/privacy).
 • Email delivery: Resend (resend.com/legal/privacy-policy).
 • Website hosting and site analytics: Vercel (vercel.com/legal/privacy-policy).
 • Processing locations: primarily the United States.
@@ -138,7 +141,16 @@ We will review and respond to requests in accordance with applicable law and the
     heading: "How Long We Keep Information",
     body: `We retain information only for identified operational, safety, recordkeeping, or legal purposes. Retention depends on the category of information and applicable obligations.
 
-Retention schedule: ${TBD}. Signed agreements, parental permissions, acceptance records, routine registration and attendance information, emergency contacts, communications accounts and messages, technical and security logs, event media and permission records, incident/insurance/legal records, and backup copies each have their own retention period, to be stated here.
+Retention schedule:
+
+• Signed agreements, parental permissions, and acceptance records: 7 years after the event, or until the youngest child named turns 21, whichever is later.
+• Registration and attendance information: 3 years after the event.
+• Emergency contact information: 90 days after the event, unless an incident occurred.
+• Communications accounts and messages: 2 years after the event.
+• Technical and security logs: up to 90 days.
+• Event media: for as long as we use it. Media permission records: 7 years after the event.
+• Incident, insurance, and legal records: 7 years, or until any related claim is resolved, whichever is later.
+• Backup copies: removed on our service providers' own backup schedules after the original is deleted.
 
 Relevant information may be retained longer when required by law or reasonably needed for an active claim, investigation, or legal hold. Records concerning minors may require a different retention period from adult records.
 
@@ -148,7 +160,14 @@ When information is no longer needed, we delete, securely dispose of, or de-iden
     heading: "Information Security",
     body: `We use safeguards appropriate to the information we handle.
 
-Our safeguards include: ${TBD}.
+Our safeguards include:
+
+• Access to registration records, signed agreements, and communications data is limited to Asphalt & Dirt staff accounts.
+• Participants' telephone numbers, email addresses, legal names, and emergency contacts are shown only to staff, never to other participants.
+• Personal communications links and staff links use random access codes, and each event has its own staff code.
+• The website is served only over encrypted (HTTPS) connections.
+• Our service providers encrypt the data they store and the data sent to and from them.
+• The credentials our website uses to reach those providers stay on our servers and are never sent to participants' browsers.
 
 No system or transmission method is completely secure. Participants should protect account credentials and report suspected unauthorized access to the contact listed below.
 
@@ -214,7 +233,7 @@ export default function EventPrivacyPolicyPage() {
       <div className="container" style={{ maxWidth: 760 }}>
         <div className="eyebrow accent">Policy ID: {POLICY_VERSION}</div>
         <h1 className="mt-2">Event Registration, Communications &amp; Media Privacy Policy</h1>
-        <p className="lead mt-2">Version 1.0 — September 12, 2026</p>
+        <p className="lead mt-2">{EFFECTIVE}</p>
 
         <div className="mt-6">
           {SECTIONS.map((section, i) => (
@@ -228,7 +247,7 @@ export default function EventPrivacyPolicyPage() {
         </div>
 
         <p style={{ color: "var(--text-dim)", fontSize: 13 }}>
-          Policy ID: {POLICY_VERSION} &middot; Version 1.0 — September 12, 2026
+          Policy ID: {POLICY_VERSION} &middot; {EFFECTIVE}
         </p>
       </div>
     </section>
