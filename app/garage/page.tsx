@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { getPublishedEvents } from "@/lib/events";
+import GarageTaskList from "@/components/GarageTaskList";
+import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
@@ -53,7 +55,15 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     );
   }
 
-  const events = await getPublishedEvents().catch(() => ({ upcoming: [], past: [] }));
+  const today = todayNY();
+  const thisWeek = weekOf(today);
+  const [events, allTasks] = await Promise.all([
+    getPublishedEvents().catch(() => ({ upcoming: [], past: [] })),
+    getTasksFor(session.email).catch(() => []),
+  ]);
+  // This week's work plus anything still open from before — nothing quietly
+  // disappears just because the week rolled over.
+  const tasks = allTasks.filter((t) => (t.due ? weekOf(t.due) <= thisWeek : true) && (!t.done || t.due >= today));
   const nextEvent = events.upcoming[0];
   const firstName = session.name.split(" ")[0] || "there";
 
@@ -100,6 +110,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           <p className="garage-empty">No events on the calendar yet.</p>
         )}
 
+        <h2 className="garage-section">Your week</h2>
+        <GarageTaskList tasks={tasks} today={today} />
+
+        <h2 className="garage-section">The Garage</h2>
         <div className="garage-tiles">
           {tiles.map((tile) =>
             tile.href ? (
