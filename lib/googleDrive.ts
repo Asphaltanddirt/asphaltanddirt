@@ -216,3 +216,23 @@ export async function getUploadOffset(uploadUrl: string, size: number): Promise<
 export async function listSubmissionFiles(folderId: string): Promise<DriveFile[]> {
   return listChildren(folderId, `mimeType != '${FOLDER_MIME}'`);
 }
+
+/** One named file in a folder, once its upload has finished. */
+export async function findFileInFolder(folderId: string, name: string): Promise<DriveFile | null> {
+  const files = await listChildren(folderId, `name = '${escapeQuery(name)}' and mimeType != '${FOLDER_MIME}'`);
+  return files[0] ?? null;
+}
+
+/**
+ * The raw bytes of a Drive file, passing the browser's Range header through so
+ * a <video> can seek and a long download can resume. Tailgate streams originals
+ * this way: the Shared Drive stays private, and our route checks who's asking
+ * before anything is fetched.
+ */
+export async function fetchDriveMedia(fileId: string, range: string | null): Promise<Response> {
+  if (!/^[A-Za-z0-9_-]+$/.test(fileId)) throw new Error("Not a Drive file ID.");
+  return fetch(`${DRIVE_API}/files/${fileId}?alt=media&supportsAllDrives=true`, {
+    headers: { Authorization: `Bearer ${await accessToken()}`, ...(range ? { Range: range } : {}) },
+    cache: "no-store",
+  });
+}

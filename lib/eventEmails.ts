@@ -177,7 +177,7 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0 0 16px;">Here&apos;s your personal link to the group chat for <strong>${esc(event.title)}</strong>. We&apos;ll check everyone in at the safety meeting before the group chat opens up &mdash; until then this connects you straight to staff.</p>
+        <p style="margin:0 0 16px;">Here&apos;s your personal link to the group chat for <strong>${esc(event.title)}</strong>. We&apos;ll check everyone in at Staging before we roll out, and that&apos;s when the group chat opens up &mdash; until then this connects you straight to staff. Once you&apos;re in, you can post photos and videos from the day right in the chat.</p>
       </td>
     </tr>
     <tr>

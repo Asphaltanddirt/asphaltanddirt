@@ -1,4 +1,4 @@
-import { listRecords, createRecord, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { listRecords, createRecord, updateRecord, deleteRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
@@ -31,6 +31,7 @@ const SETTINGS_TABLE = "Event Settings";
 const MESSAGES_TABLE = "Messages";
 const ATTENDEES_TABLE = "Attendees";
 const SIGNATURES_TABLE = "Waiver Signatures";
+const LIKES_TABLE = "Likes";
 
 // Chat is open for 48 hours from the reminder email (Activated At), e.g. 7 PM
 // the day before a 9-5 event through 7 PM the day after.
@@ -56,12 +57,15 @@ const DEFAULT_END_TIME = "17:00"; // 9-5 unless Event End Time says otherwise
 const SETTINGS_CACHE_SECONDS = 300;
 const ATTENDEES_CACHE_SECONDS = 300;
 const MESSAGES_CACHE_SECONDS = 60;
+const LIKES_CACHE_SECONDS = 60;
 
-function commsTag(kind: "settings" | "attendees" | "messages", slug: string) {
+type CacheKind = "settings" | "attendees" | "messages" | "likes";
+
+function commsTag(kind: CacheKind, slug: string) {
   return `comms-${kind}:${slug}`;
 }
 
-function expire(kind: "settings" | "attendees" | "messages", slug: string) {
+function expire(kind: CacheKind, slug: string) {
   revalidateTag(commsTag(kind, slug), { expire: 0 });
 }
 
@@ -488,6 +492,8 @@ export async function setCheckedIn(slug: string, attendeeId: string, checkedIn: 
 
 export type Channel = "Chat" | "Announcements" | "Staff";
 export type SosType = "Mechanical" | "Stuck" | "Lost" | "Emergency";
+export type MediaKind = "Photo" | "Video";
+export type MediaStatus = "Uploading" | "Ready" | "Failed";
 
 export interface CommsMessage {
   id: string;
@@ -502,9 +508,19 @@ export interface CommsMessage {
   channel: Channel;
   sosType: SosType | null;
   body: string;
+  /** Small preview (a still frame for videos). The original is in Drive. */
   photoUrl: string | null;
   isStaff: boolean;
   createdTime: string;
+  /** Null on a text message. */
+  mediaKind: MediaKind | null;
+  mediaStatus: MediaStatus | null;
+  driveFileId: string;
+  driveFileName: string;
+  mediaSubmissionId: string;
+  mediaSize: number;
+  /** Staff tapped Hide. Attendees never receive a hidden message. */
+  hidden: boolean;
 }
 
 function toMessage(r: { id: string; createdTime: string; fields: AirtableFields }): CommsMessage {
@@ -521,6 +537,13 @@ function toMessage(r: { id: string; createdTime: string; fields: AirtableFields 
     photoUrl: photo?.url || null,
     isStaff: Boolean(r.fields["Is Staff"]),
     createdTime: r.createdTime,
+    mediaKind: (r.fields["Media Kind"] as MediaKind) || null,
+    mediaStatus: (r.fields["Media Status"] as MediaStatus) || null,
+    driveFileId: (r.fields["Drive File Id"] as string) || "",
+    driveFileName: (r.fields["Drive File Name"] as string) || "",
+    mediaSubmissionId: (r.fields["Media Submission Id"] as string) || "",
+    mediaSize: Number(r.fields["Media Size"]) || 0,
+    hidden: Boolean(r.fields.Hidden),
   };
 }
 
@@ -557,11 +580,16 @@ export type MessageViewer =
  *  - Checked-in attendees additionally see the group chat. What they said
  *    privately never becomes public retroactively.
  *
+ *  - Photo/video posts only appear once the original has finished uploading
+ *    to Drive, and a post staff has hidden reaches staff only.
+ *
  *  Keyed on the attendee record ID, never the screen name — names are
  *  hand-typed, so they collide and they change.
  */
 export function visibleMessagesFor(messages: CommsMessage[], viewer: MessageViewer): CommsMessage[] {
   return messages.filter((m) => {
+    if (m.mediaKind && m.mediaStatus !== "Ready") return false;
+    if (m.hidden && viewer.kind !== "staff") return false;
     if (m.sosType || m.channel === "Announcements") return true;
     if (viewer.kind === "staff") return m.channel === "Chat" || m.channel === "Staff";
     if (m.channel === "Chat") return viewer.checkedIn;
@@ -570,9 +598,143 @@ export function visibleMessagesFor(messages: CommsMessage[], viewer: MessageView
   });
 }
 
-/** The only message list that should ever leave the server. */
-export async function getVisibleMessages(slug: string, viewer: MessageViewer): Promise<CommsMessage[]> {
-  return visibleMessagesFor(await getAllMessages(slug), viewer);
+/** What a phone receives for one message: no Drive IDs or cross-base record
+ *  IDs, plus the like count and whether this viewer liked it. */
+export interface FeedMessage {
+  id: string;
+  attendeeId: string | null;
+  replyToAttendeeId: string | null;
+  authorName: string;
+  vehicleCallsign: string;
+  channel: Channel;
+  sosType: SosType | null;
+  body: string;
+  photoUrl: string | null;
+  isStaff: boolean;
+  createdTime: string;
+  mediaKind: MediaKind | null;
+  mediaSize: number;
+  fileName: string;
+  hidden: boolean;
+  likeCount: number;
+  likedByMe: boolean;
+}
+
+/** The only message list that should ever leave the server. `likerKey` is
+ *  who's asking, for the filled-in heart (see likerKeyFor). */
+export async function getVisibleMessages(slug: string, viewer: MessageViewer, likerKey = ""): Promise<FeedMessage[]> {
+  const [messages, likes] = await Promise.all([getAllMessages(slug), getEventLikes(slug)]);
+  return visibleMessagesFor(messages, viewer).map((m) => {
+    const mine = likes.filter((l) => l.messageId === m.id);
+    return {
+      id: m.id,
+      attendeeId: m.attendeeId,
+      replyToAttendeeId: m.replyToAttendeeId,
+      authorName: m.authorName,
+      vehicleCallsign: m.vehicleCallsign,
+      channel: m.channel,
+      sosType: m.sosType,
+      body: m.body,
+      photoUrl: m.photoUrl,
+      isStaff: m.isStaff,
+      createdTime: m.createdTime,
+      mediaKind: m.mediaKind,
+      mediaSize: m.mediaSize,
+      fileName: m.driveFileName.replace(/^\d+ /, ""),
+      hidden: m.hidden,
+      likeCount: mine.length,
+      likedByMe: Boolean(likerKey) && mine.some((l) => l.likerKey === likerKey),
+    };
+  });
+}
+
+/** One message this viewer is allowed to see, or null. What the media, like
+ *  and hide routes check before touching anything. */
+export async function getVisibleMessage(slug: string, viewer: MessageViewer, messageId: string): Promise<CommsMessage | null> {
+  return visibleMessagesFor(await getAllMessages(slug), viewer).find((m) => m.id === messageId) || null;
+}
+
+/** Any message by ID, ignoring visibility — server-side upload steps only,
+ *  where the caller already proved it opened this post (signed token). */
+export async function getMessageForUpload(slug: string, messageId: string): Promise<CommsMessage | null> {
+  return (await getAllMessages(slug)).find((m) => m.id === messageId) || null;
+}
+
+export async function updateMessage(slug: string, messageId: string, fields: AirtableFields): Promise<void> {
+  assertConfigured();
+  await updateRecord(MESSAGES_TABLE, messageId, fields, { baseId: BASE_ID });
+  expire("messages", slug);
+}
+
+// ---------------------------------------------------------------------------
+// Likes (photos only). One row per like, so two people tapping at once can't
+// overwrite each other the way a shared counter field would.
+// ---------------------------------------------------------------------------
+
+interface Like {
+  id: string;
+  messageId: string;
+  likerKey: string;
+}
+
+async function getEventLikes(slug: string): Promise<Like[]> {
+  assertConfigured();
+  const records = await listRecords(LIKES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: LIKES_CACHE_SECONDS,
+    tags: [commsTag("likes", slug)],
+  });
+  return records.map((r) => ({
+    id: r.id,
+    messageId: (r.fields["Message Id"] as string) || "",
+    likerKey: (r.fields["Liker Key"] as string) || "",
+  }));
+}
+
+/** Attendees like as themselves (record ID). Staff share one code, so a staff
+ *  phone likes as the name it's posting under. */
+export function likerKeyFor(viewer: { staff: boolean; attendeeId?: string; staffName?: string }): string {
+  if (viewer.staff) return `staff:${(viewer.staffName || "Staff").trim().toLowerCase().slice(0, 60)}`;
+  return viewer.attendeeId || "";
+}
+
+export async function setLike(
+  slug: string,
+  messageId: string,
+  liker: { key: string; name: string },
+  liked: boolean,
+): Promise<{ likeCount: number; liked: boolean }> {
+  assertConfigured();
+  const likes = (await getEventLikes(slug)).filter((l) => l.messageId === messageId);
+  const mine = likes.filter((l) => l.likerKey === liker.key);
+  if (liked && mine.length === 0) {
+    await createRecord(
+      LIKES_TABLE,
+      { "Liker Key": liker.key, "Event Slug": slug, "Message Id": messageId, "Liker Name": liker.name },
+      { baseId: BASE_ID },
+    );
+  } else if (!liked) {
+    for (const like of mine) await deleteRecord(LIKES_TABLE, like.id, { baseId: BASE_ID });
+  }
+  expire("likes", slug);
+  const others = likes.length - mine.length;
+  return { likeCount: others + (liked ? 1 : 0), liked };
+}
+
+/** Who's calling a Tailgate API: staff (by code) or an attendee (by their
+ *  personal token). Null when neither checks out. */
+export async function resolveCommsCaller(
+  settings: CommsSettings,
+  credentials: { token?: string | null; staffCode?: string | null },
+): Promise<{ staff: true; attendee: null; viewer: MessageViewer } | { staff: false; attendee: Attendee; viewer: MessageViewer } | null> {
+  if (isStaffCode(settings, credentials.staffCode)) return { staff: true, attendee: null, viewer: { kind: "staff" } };
+  const attendee = await getAttendeeByToken(settings.eventSlug, credentials.token || "");
+  if (!attendee) return null;
+  return {
+    staff: false,
+    attendee,
+    viewer: { kind: "attendee", attendeeId: attendee.id, checkedIn: attendee.checkedIn },
+  };
 }
 
 export interface PostMessageInput {
@@ -585,6 +747,7 @@ export interface PostMessageInput {
   sosType?: SosType;
   body: string;
   isStaff: boolean;
+  media?: { kind: MediaKind; fileName: string; size: number; submissionId: string };
 }
 
 export async function postMessage(input: PostMessageInput): Promise<{ id: string }> {
@@ -601,6 +764,15 @@ export async function postMessage(input: PostMessageInput): Promise<{ id: string
       ...(input.sosType ? { "SOS Type": input.sosType } : {}),
       Body: input.body,
       "Is Staff": input.isStaff,
+      ...(input.media
+        ? {
+            "Media Kind": input.media.kind,
+            "Media Status": "Uploading",
+            "Drive File Name": input.media.fileName,
+            "Media Size": input.media.size,
+            "Media Submission Id": input.media.submissionId,
+          }
+        : {}),
     },
     { baseId: BASE_ID, typecast: true },
   );

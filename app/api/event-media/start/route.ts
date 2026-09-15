@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
         "Rights Consent": true,
         "Upload Status": "Uploading",
         "Drive Folder": folderUrl(folderId),
+        Source: "Event page",
       },
       { baseId: MEDIA_BASE_ID, typecast: true },
     );

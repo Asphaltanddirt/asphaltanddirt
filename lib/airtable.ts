@@ -122,6 +122,10 @@ export async function updateRecord(
   });
 }
 
+export async function deleteRecord(table: string, recordId: string, options?: { baseId?: string }): Promise<void> {
+  await request(table, `/${recordId}`, { method: "DELETE", baseId: options?.baseId });
+}
+
 /** Upserts records in batches of 10 (Airtable's per-request limit), matching
  *  existing records on `mergeOnFields` (must be real field names, not IDs).
  *  Records not matching any existing row are created; matches are updated. */

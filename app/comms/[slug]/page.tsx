@@ -64,7 +64,7 @@ export default async function CommsPage({
   const trail = trailStateFor(settings, isStaff);
   const [messages, roster] = await Promise.all([
     // On the trail an attendee only gets the channel screen — no message list.
-    !isStaff && trail.status === "On trail" ? Promise.resolve([]) : getVisibleMessages(slug, viewer),
+    !isStaff && trail.status === "On trail" ? Promise.resolve([]) : getVisibleMessages(slug, viewer, attendee ? attendee.id : ""),
     isStaff ? getAttendeeRoster(slug) : Promise.resolve([]),
   ]);
 

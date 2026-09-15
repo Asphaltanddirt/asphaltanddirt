@@ -8,6 +8,7 @@ import {
   isStaffCode,
   getAttendeeByToken,
   trailStateFor,
+  likerKeyFor,
   type Channel,
 } from "@/lib/eventComms";
 
@@ -52,7 +53,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     return NextResponse.json({ messages: [], trail, checkedIn });
   }
 
-  const messages = await getVisibleMessages(slug, viewer);
+  // Who's asking, so their own likes show as a filled heart. A staff phone
+  // likes under the name it posts as (sent along with the poll).
+  const likerKey = staff
+    ? likerKeyFor({ staff: true, staffName: req.nextUrl.searchParams.get("name") || "" })
+    : likerKeyFor({ staff: false, attendeeId: viewer.kind === "attendee" ? viewer.attendeeId : "" });
+  const messages = await getVisibleMessages(slug, viewer, likerKey);
   return NextResponse.json({ messages, trail, ...(checkedIn === undefined ? {} : { checkedIn }) });
 }
 
