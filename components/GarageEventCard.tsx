@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { EventResponse } from "@/lib/garageEvents";
 
@@ -61,7 +62,9 @@ export default function GarageEventCard({
   return (
     <article className="garage-event" id={slug}>
       <div className="garage-event-date">{date}</div>
-      <h2>{title}</h2>
+      <h2>
+        <Link href={`/garage/events/${slug}`}>{title}</Link>
+      </h2>
       {area && <p className="garage-event-area">{area}</p>}
       {blurb && <p className="garage-event-blurb">{blurb}</p>}
 

@@ -101,7 +101,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
         <h1 className="garage-hi">Hey {firstName}.</h1>
 
         {nextEvent ? (
-          <Link href={`/garage/events#${nextEvent.slug}`} className="garage-next">
+          <Link href={`/garage/events/${nextEvent.slug}`} className="garage-next">
             <span className="garage-next-label">Next up</span>
             <strong>{nextEvent.title}</strong>
             <span className="garage-next-date">{formatDate(nextEvent.date)}{nextEvent.generalArea ? ` · ${nextEvent.generalArea}` : ""}</span>

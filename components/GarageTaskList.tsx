@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { GarageTask } from "@/lib/garageTasks";
 
@@ -46,13 +47,16 @@ export default function GarageTaskList({ tasks, today }: { tasks: GarageTask[]; 
           const when = label(task.due);
           return (
             <li key={task.id} className={done ? "garage-task is-done" : "garage-task"}>
-              <label>
-                <input type="checkbox" checked={done} onChange={() => toggle(task)} />
-                <span className="garage-task-main">
-                  <span className="garage-task-title">{task.title}</span>
-                  {task.details && <span className="garage-task-details">{task.details}</span>}
-                </span>
-              </label>
+              <input
+                type="checkbox"
+                checked={done}
+                onChange={() => toggle(task)}
+                aria-label={done ? `Mark "${task.title}" not done` : `Mark "${task.title}" done`}
+              />
+              <Link href={`/garage/tasks/${task.id}`} className="garage-task-main">
+                <span className="garage-task-title">{task.title}</span>
+                {task.details && <span className="garage-task-details">{task.details}</span>}
+              </Link>
               {when && (
                 <span className={when === "Overdue" ? "garage-task-when late" : "garage-task-when"}>{when}</span>
               )}

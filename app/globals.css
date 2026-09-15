@@ -1844,3 +1844,20 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .garage-task.is-done{ opacity:.7; }
 .garage-task-when{ flex:none; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); padding-top:3px; }
 .garage-task-when.late{ color:var(--accent); }
+.garage-task-main{ display:flex; flex-direction:column; gap:2px; flex:1; color:var(--text); }
+.garage-task-main:hover .garage-task-title{ color:var(--accent); }
+.garage-event h2 a{ color:var(--text); }
+.garage-event h2 a:hover{ color:var(--accent); }
+.garage-event-title{ font-size:clamp(24px,6vw,32px); margin:2px 0 6px; }
+.garage-event-flyer{ margin-bottom:var(--sp-2); border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border); background:var(--bg-elevated); }
+.garage-event-flyer img{ display:block; width:100%; height:auto; }
+.garage-block-btn{ display:flex; width:100%; justify-content:center; margin:var(--sp-2) 0; }
+.garage-panel{ margin-top:var(--sp-3); padding:14px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); }
+.garage-panel h2{ font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; }
+.garage-panel p{ margin:0 0 8px; font-size:14.5px; color:var(--text-muted); white-space:pre-wrap; }
+.garage-panel p:last-child{ margin-bottom:0; }
+.garage-panel strong{ color:var(--text); }
+.garage-glance{ margin:0; display:grid; gap:6px; }
+.garage-glance dt{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); }
+.garage-glance dd{ margin:0; font-size:14.5px; }
+.garage-links{ display:flex; flex-wrap:wrap; gap:16px; margin-top:var(--sp-3); font-size:14px; }
