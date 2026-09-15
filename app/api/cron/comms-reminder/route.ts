@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventBySlug, listRsvpsForEvent } from "@/lib/events";
-import { getSettingsDueForReminder, getSettingsToClose, markActivated, markClosedEmailSent, getAttendeeRoster } from "@/lib/eventComms";
+import { getSettingsDueForReminder, getSettingsToClose, markActivated, markClosedEmailSent, getAttendeesForEmail } from "@/lib/eventComms";
 import { buildWaiverInvite, buildCommsClosing } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
@@ -90,7 +90,7 @@ async function run(req: NextRequest) {
     }
 
     const recapUrl = `${SITE_URL}/events/${settings.eventSlug}#photos`;
-    const attendees = await getAttendeeRoster(settings.eventSlug);
+    const attendees = await getAttendeesForEmail(settings.eventSlug);
 
     let sent = 0;
     let failed = 0;

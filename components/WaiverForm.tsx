@@ -66,6 +66,8 @@ export default function WaiverForm({
   const [acceptedElectronicSignature, setAcceptedElectronicSignature] = useState(false);
   const [acknowledgedPrivacyNotice, setAcknowledgedPrivacyNotice] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  // New sign-ups go straight into Tailgate; a repeat sign-up gets the link by email.
+  const [commsPath, setCommsPath] = useState("");
   const [error, setError] = useState("");
 
   const busy = status === "submitting";
@@ -137,6 +139,19 @@ export default function WaiverForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+      if (typeof data.commsPath === "string" && data.commsPath) {
+        // Remembered on this phone, so scanning the sign-up QR again later
+        // offers "Open Tailgate" instead of the whole waiver.
+        try {
+          window.localStorage.setItem(`ad-tailgate-link:${slug}`, data.commsPath);
+        } catch {
+          // Storage blocked; the emailed link still works.
+        }
+        setCommsPath(data.commsPath);
+        setStatus("success");
+        window.location.assign(data.commsPath);
+        return;
+      }
       setStatus("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -152,10 +167,22 @@ export default function WaiverForm({
             <path d="M20 6 9 17l-5-5" />
           </svg>
         </div>
-        <h2>You&apos;re Registered</h2>
-        <p className="lead" style={{ maxWidth: 480 }}>
-          Check your email — we just sent your personal link to the group chat for {eventTitle}.
-        </p>
+        {commsPath ? (
+          <>
+            <h2>You&apos;re In</h2>
+            <p className="lead" style={{ maxWidth: 480 }}>
+              Opening Tailgate for {eventTitle}. We also emailed you the link, so you can get back in any time.
+            </p>
+            <a className="btn btn-primary" href={commsPath}>Open Tailgate</a>
+          </>
+        ) : (
+          <>
+            <h2>You Were Already Signed Up</h2>
+            <p className="lead" style={{ maxWidth: 480 }}>
+              We saved your changes and emailed your personal Tailgate link for {eventTitle} to {email.trim()} again.
+            </p>
+          </>
+        )}
       </div>
     );
   }

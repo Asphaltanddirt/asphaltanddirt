@@ -465,10 +465,29 @@ export async function getAttendeeByToken(slug: string, token: string): Promise<A
   return attendees.find((a) => a.accessToken && a.accessToken === token) || null;
 }
 
-/** Full roster for one event — staff-only (the check-in panel). */
-export async function getAttendeeRoster(slug: string): Promise<Attendee[]> {
+/** Everyone signed up for an event, with emails — server-side sends only
+ *  (the thank-you email). Never hand this to a client. */
+export async function getAttendeesForEmail(slug: string): Promise<Attendee[]> {
+  return getEventAttendees(slug);
+}
+
+/** What a staff phone gets for Staging. No access tokens, emails or legal
+ *  names: those stay on the server, so a shared staff code can't be used to
+ *  sign in as someone else. */
+export interface RosterEntry {
+  id: string;
+  screenName: string;
+  vehicleCallsign: string;
+  checkedIn: boolean;
+  phone: string;
+}
+
+/** Full roster for one event — staff-only (Staging). */
+export async function getAttendeeRoster(slug: string): Promise<RosterEntry[]> {
   const attendees = await getEventAttendees(slug);
-  return attendees.sort((a, b) => a.screenName.localeCompare(b.screenName));
+  return attendees
+    .sort((a, b) => a.screenName.localeCompare(b.screenName))
+    .map((a) => ({ id: a.id, screenName: a.screenName, vehicleCallsign: a.vehicleCallsign, checkedIn: a.checkedIn, phone: a.phone }));
 }
 
 export async function setCheckedIn(slug: string, attendeeId: string, checkedIn: boolean): Promise<void> {

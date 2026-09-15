@@ -3,6 +3,7 @@ import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import { getWaiver } from "@/lib/waivers";
 import WaiverForm from "@/components/WaiverForm";
+import TailgateReturn from "@/components/TailgateReturn";
 
 export const metadata: Metadata = {
   title: "Event Chat Sign-Up",
@@ -41,8 +42,10 @@ export default async function WaiverPage({ params }: { params: Promise<{ slug: s
         <div className="eyebrow accent">{eventTitle}</div>
         <h1 className="mt-2">Sign Up For Tailgate</h1>
         <p className="lead mt-2">
-          Read and sign below, then we&apos;ll email you a personal link to the group chat — no app, no login.
+          Read and sign below and you&apos;re straight into the group chat. No app, no login. We&apos;ll email you the
+          link too.
         </p>
+        <TailgateReturn slug={slug} />
         <div className="mt-4">
           <WaiverForm slug={slug} eventTitle={eventTitle} waiver={waiver} />
         </div>

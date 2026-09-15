@@ -9,6 +9,7 @@ import {
   getAttendeeByToken,
   trailStateFor,
   likerKeyFor,
+  getAttendeeRoster,
   type Channel,
 } from "@/lib/eventComms";
 
@@ -58,8 +59,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   const likerKey = staff
     ? likerKeyFor({ staff: true, staffName: req.nextUrl.searchParams.get("name") || "" })
     : likerKeyFor({ staff: false, attendeeId: viewer.kind === "attendee" ? viewer.attendeeId : "" });
-  const messages = await getVisibleMessages(slug, viewer, likerKey);
-  return NextResponse.json({ messages, trail, ...(checkedIn === undefined ? {} : { checkedIn }) });
+  // Staff also get the roster on every poll, so a walk-up who signs up at the
+  // trailhead shows up in Staging without anyone reloading.
+  const [messages, roster] = await Promise.all([
+    getVisibleMessages(slug, viewer, likerKey),
+    staff ? getAttendeeRoster(slug) : Promise.resolve(undefined),
+  ]);
+  return NextResponse.json({ messages, trail, ...(checkedIn === undefined ? {} : { checkedIn }), ...(roster ? { roster } : {}) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

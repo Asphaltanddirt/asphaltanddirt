@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCommsSettings, isCommsOpen, submitWaiver, type WaiverChild } from "@/lib/eventComms";
+import { findAttendeeByEmail, getCommsSettings, isCommsOpen, submitWaiver, type WaiverChild } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import { buildPersonalCommsLink } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
@@ -85,6 +85,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // exclusive, so the decline wins and the fields are stored empty.
   const emergencyContactDeclined = body.emergencyContactDeclined === true;
 
+  // Checked before saving: a brand-new sign-up is handed their chat link right
+  // here, so a walk-up at the trailhead goes straight in without waiting on
+  // email. Someone re-signing with an email that's already registered only
+  // gets it by email, or anyone could type another person's address and
+  // take over their chat.
+  const alreadyRegistered = Boolean(await findAttendeeByEmail(slug, email));
+
   const attendee = await submitWaiver({
     eventSlug: slug,
     waiverVersion: settings.waiverVersion,
@@ -122,5 +129,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     }
   }
 
-  return NextResponse.json({ status: "ok" });
+  return NextResponse.json({
+    status: "ok",
+    alreadyRegistered,
+    ...(alreadyRegistered ? {} : { commsPath: `/comms/${slug}?token=${attendee.accessToken}` }),
+  });
 }

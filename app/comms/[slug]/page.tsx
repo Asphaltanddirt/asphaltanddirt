@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode, trailStateFor, type MessageViewer } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import CommsChat from "@/components/CommsChat";
+import QRCode from "qrcode";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Event Chat",
@@ -68,8 +70,16 @@ export default async function CommsPage({
     isStaff ? getAttendeeRoster(slug) : Promise.resolve([]),
   ]);
 
+  // Staff can pull up the sign-up QR on their own phone for a walk-up to scan.
+  const signupUrl = `${SITE_URL}/comms/${slug}/waiver`;
+  const signupQrSvg = isStaff
+    ? await QRCode.toString(signupUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } })
+    : "";
+
   return (
     <CommsChat
+      signupUrl={signupUrl}
+      signupQrSvg={signupQrSvg}
       slug={slug}
       eventTitle={event?.title || "Event Chat"}
       initialMessages={messages}

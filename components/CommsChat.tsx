@@ -97,6 +97,8 @@ export default function CommsChat({
   attendeeCheckedIn,
   initialRoster,
   initialTrail,
+  signupUrl,
+  signupQrSvg,
 }: {
   slug: string;
   eventTitle: string;
@@ -108,6 +110,9 @@ export default function CommsChat({
   attendeeCheckedIn: boolean;
   initialRoster: Attendee[];
   initialTrail: Trail;
+  /** Staff only: the sign-up page, and its QR as an SVG string for walk-ups. */
+  signupUrl: string;
+  signupQrSvg: string;
 }) {
   const [tab, setTab] = useState<Tab>("Chat");
   const [announceMode, setAnnounceMode] = useState(false);
@@ -130,6 +135,8 @@ export default function CommsChat({
   const [saves, setSaves] = useState<Record<string, "loading" | File>>({});
   const listRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showQr, setShowQr] = useState(false);
+  const qrCloseRef = useRef<HTMLButtonElement>(null);
   const uploading = pending.some((p) => p.state === "sending");
   // A finished post drops off the pending list once the feed has it.
   const visiblePending = pending.filter((p) => !(p.state === "done" && messages.some((m) => m.id === p.messageId)));
@@ -147,6 +154,17 @@ export default function CommsChat({
   // time the phone locks and the page reloads. Per-device rather than
   // per-code: the crew shares one staff code by design (it goes on printed
   // signage), so the code can't say who's holding it.
+  // Remember this attendee's personal link on the phone, so scanning the
+  // sign-up QR again (closed tab, dead battery) offers "Open Tailgate".
+  useEffect(() => {
+    if (isStaff || !token) return;
+    try {
+      window.localStorage.setItem(`ad-tailgate-link:${slug}`, `/comms/${slug}?token=${token}`);
+    } catch {
+      // Storage blocked; the emailed link still works.
+    }
+  }, [isStaff, token, slug]);
+
   const staffNameKey = `ad-comms-staff-name:${slug}`;
   useEffect(() => {
     if (!isStaff) return;
@@ -197,6 +215,7 @@ export default function CommsChat({
           if (Array.isArray(data.messages)) setMessages(data.messages);
           if (typeof data.checkedIn === "boolean") setCheckedIn(data.checkedIn);
           if (data.trail) setTrail(data.trail);
+          if (Array.isArray(data.roster)) setRoster(data.roster);
         }
       } catch {
         // Silent — next poll retries.
@@ -466,12 +485,14 @@ export default function CommsChat({
     }
   }
 
-  async function toggleCheckIn(id: string, next: boolean) {
+  async function toggleCheckIn(ids: string[], next: boolean) {
+    // Flip it on screen right away; the server's roster replaces it.
+    setRoster((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, checkedIn: next } : a)));
     try {
       const res = await fetch(`/api/comms/${slug}/checkin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffCode, attendeeId: id, checkedIn: next }),
+        body: JSON.stringify({ staffCode, attendeeIds: ids, checkedIn: next }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && Array.isArray(data.roster)) setRoster(data.roster);
@@ -518,8 +539,19 @@ export default function CommsChat({
   // anyone who looked.
   const visibleMessages = messages;
 
-  const notCheckedIn = roster.filter((a) => !a.checkedIn);
   const alreadyCheckedIn = roster.filter((a) => a.checkedIn);
+  // Rigs: people grouped by vehicle name, typed by hand at sign-up, so
+  // "Red JK" and "red  jk" count as one rig.
+  const rigs = Object.values(
+    roster.reduce<Record<string, { key: string; name: string; people: Attendee[] }>>((acc, a) => {
+      const key = a.vehicleCallsign.trim().toLowerCase().replace(/\s+/g, " ") || `solo:${a.id}`;
+      (acc[key] ||= { key, name: a.vehicleCallsign.trim() || a.screenName, people: [] }).people.push(a);
+      return acc;
+    }, {}),
+  )
+    .map((r) => ({ ...r, allIn: r.people.every((a) => a.checkedIn) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const rigsIn = rigs.filter((r) => r.allIn).length;
   const updatedAt = trail.channelUpdatedAt ? formatTime(trail.channelUpdatedAt) : "";
 
   // Attendees on the trail: the channel and the emergency note, nothing to
@@ -581,7 +613,7 @@ export default function CommsChat({
             Chat
           </button>
           <button type="button" className={tab === "Staging" ? "comms-tab active" : "comms-tab"} onClick={() => setTab("Staging")}>
-            Staging · {alreadyCheckedIn.length}/{roster.length}
+            Staging · {rigsIn}/{rigs.length}
           </button>
         </div>
       )}
@@ -646,59 +678,88 @@ export default function CommsChat({
 
       {tab === "Staging" ? (
         <div className="comms-messages" ref={listRef}>
-          {roster.length === 0 ? (
-            <p style={{ color: "var(--text-dim)", fontSize: 14, textAlign: "center", marginTop: 24 }}>Nobody&apos;s registered yet.</p>
-          ) : (
-            <p className="comms-staging-count">
-              <strong>{alreadyCheckedIn.length}</strong> of {roster.length} checked in
-            </p>
-          )}
-          {/* Not-checked-in first: roll call works down a shrinking list
-           *  rather than hunting through people already done. */}
+          <div className="comms-staging-head">
+            {roster.length === 0 ? (
+              <p className="comms-staging-count">Nobody&apos;s signed up yet.</p>
+            ) : (
+              <p className="comms-staging-count">
+                <strong>{rigsIn}</strong> of {rigs.length} {rigs.length === 1 ? "rig" : "rigs"} · {alreadyCheckedIn.length} of{" "}
+                {roster.length} {roster.length === 1 ? "person" : "people"} checked in
+              </p>
+            )}
+            {signupQrSvg && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowQr(true)}>
+                Walk-Up QR
+              </button>
+            )}
+          </div>
+          {/* Rigs still waiting first: roll call works down a shrinking list
+           *  rather than hunting through rigs already done. A rig is
+           *  everyone who signed up under the same vehicle name. */}
           {([
-            { label: `Not Checked In · ${notCheckedIn.length}`, people: notCheckedIn },
-            { label: `Checked In · ${alreadyCheckedIn.length}`, people: alreadyCheckedIn },
+            { label: `Waiting · ${rigs.length - rigsIn}`, list: rigs.filter((r) => !r.allIn) },
+            { label: `Checked In · ${rigsIn}`, list: rigs.filter((r) => r.allIn) },
           ] as const).map((group) =>
-            group.people.length === 0 ? null : (
+            group.list.length === 0 ? null : (
               <div key={group.label}>
                 <div className="comms-roster-group">{group.label}</div>
-                {group.people.map((a) => (
-                  <div key={a.id} className="comms-roster-row">
-                    <div>
-                      <strong>{a.screenName}</strong>
-                      <span style={{ color: "var(--text-dim)", marginLeft: 6 }}>{a.vehicleCallsign}</span>
-                      {a.phone && (
-                        <a className="comms-roster-phone" href={`tel:${a.phone.replace(/[^\d+]/g, "")}`}>
-                          {a.phone}
-                        </a>
-                      )}
-                      <button type="button" className="comms-roster-rename" onClick={() => rename(a.id, a.screenName)}>
-                        Rename
-                      </button>
-                      {/* Lets staff open a private line with someone who
-                       *  hasn't messaged first — Reply only exists on a
-                       *  message they already sent. */}
-                      {!a.checkedIn && (
+                {group.list.map((rig) => (
+                  <div key={rig.key} className={rig.allIn ? "comms-rig is-in" : "comms-rig"}>
+                    {rig.people.length > 1 && (
+                      <div className="comms-rig-head">
+                        <span>
+                          <strong>{rig.name}</strong> · {rig.people.length} people
+                        </span>
                         <button
                           type="button"
-                          className="comms-roster-rename"
-                          onClick={() => {
-                            setReplyTo({ id: a.id, name: a.screenName });
-                            setAnnounceMode(false);
-                            setTab("Chat");
-                          }}
+                          className={rig.allIn ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+                          onClick={() => toggleCheckIn(rig.people.map((a) => a.id), !rig.allIn)}
                         >
-                          Message
+                          {rig.allIn ? "Rig Checked In" : "Check In Rig"}
                         </button>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className={a.checkedIn ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
-                      onClick={() => toggleCheckIn(a.id, !a.checkedIn)}
-                    >
-                      {a.checkedIn ? "Checked In" : "Check In"}
-                    </button>
+                      </div>
+                    )}
+                    {rig.people.map((a) => (
+                      <div key={a.id} className="comms-roster-row">
+                        <div>
+                          <strong>{a.screenName}</strong>
+                          {rig.people.length === 1 && (
+                            <span style={{ color: "var(--text-dim)", marginLeft: 6 }}>{a.vehicleCallsign}</span>
+                          )}
+                          {a.phone && (
+                            <a className="comms-roster-phone" href={`tel:${a.phone.replace(/[^\d+]/g, "")}`}>
+                              {a.phone}
+                            </a>
+                          )}
+                          <button type="button" className="comms-roster-rename" onClick={() => rename(a.id, a.screenName)}>
+                            Rename
+                          </button>
+                          {/* Lets staff open a private line with someone who
+                           *  hasn't messaged first — Reply only exists on a
+                           *  message they already sent. */}
+                          {!a.checkedIn && (
+                            <button
+                              type="button"
+                              className="comms-roster-rename"
+                              onClick={() => {
+                                setReplyTo({ id: a.id, name: a.screenName });
+                                setAnnounceMode(false);
+                                setTab("Chat");
+                              }}
+                            >
+                              Message
+                            </button>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className={a.checkedIn ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+                          onClick={() => toggleCheckIn([a.id], !a.checkedIn)}
+                        >
+                          {a.checkedIn ? "Checked In" : "Check In"}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -938,6 +999,24 @@ export default function CommsChat({
             </button>
           </form>
         </>
+      )}
+
+      {showQr && (
+        <div
+          className="comms-qr"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="comms-qr-title"
+          onKeyDown={(e) => e.key === "Escape" && setShowQr(false)}
+        >
+          <h2 id="comms-qr-title" className="comms-wordmark">Tailgate</h2>
+          <p className="comms-qr-lead">Scan to sign up and get in the chat</p>
+          <div className="comms-qr-code" role="img" aria-label="QR code for the sign-up page" dangerouslySetInnerHTML={{ __html: signupQrSvg }} />
+          <p className="comms-qr-url">{signupUrl.replace(/^https?:\/\//, "")}</p>
+          <button ref={qrCloseRef} type="button" className="btn btn-primary" onClick={() => setShowQr(false)} autoFocus>
+            Done
+          </button>
+        </div>
       )}
     </div>
   );

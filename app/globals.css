@@ -1451,7 +1451,38 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 
 /* Tailgate 2.0 part 2: Staging count, photo/video posts, likes, save, hide. */
-.comms-staging-count{ margin:0 0 4px; font-size:14px; color:var(--text-muted); }
+.comms-staging-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; }
+.comms-staging-count{ margin:0; font-size:14px; color:var(--text-muted); }
+.comms-rig{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.comms-rig:has(.comms-rig-head){ padding:8px; border:1px solid var(--border); border-radius:var(--radius-md); }
+.comms-rig.is-in:has(.comms-rig-head){ border-color:rgba(248,96,0,.45); }
+.comms-rig-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 6px 2px; font-size:13px; color:var(--text-muted); }
+.comms-rig-head strong{ color:var(--text); font-size:15px; }
+.comms-rig .comms-roster-row{ margin-bottom:0; }
+.comms-qr{
+  position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:var(--sp-3); text-align:center; background:var(--garage-grain), var(--ad-black);
+}
+.comms-qr .comms-wordmark{ margin:0; }
+.comms-qr-lead{ margin:0; font-size:18px; color:var(--text); }
+.comms-qr-code{ width:min(78vw, 340px); padding:14px; background:#fff; border-radius:var(--radius-md); }
+.comms-qr-code svg{ display:block; width:100%; height:auto; }
+.comms-qr-url{ margin:0; font-size:13px; color:var(--text-muted); word-break:break-all; }
+
+/* Tailgate sign-up page: already signed up / lost your link. */
+.tailgate-return{ margin-top:var(--sp-3); }
+.tailgate-return-saved{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius-md);
+}
+.tailgate-return-saved p{ margin:0; }
+.tailgate-return-lost{ margin:0; font-size:14px; color:var(--text-muted); }
+.tailgate-return-lost button{ background:none; border:none; padding:0; color:var(--accent); font:inherit; font-weight:700; text-decoration:underline; cursor:pointer; }
+.tailgate-return-form{ display:flex; flex-direction:column; gap:8px; padding:14px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); }
+.tailgate-return-form label{ font-size:13px; font-weight:700; }
+.tailgate-return-form p{ margin:0; }
+.tailgate-return-row{ display:flex; flex-wrap:wrap; gap:8px; }
+.tailgate-return-row input{ flex:1 1 200px; min-width:0; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:16px; }
 .comms-staging-count strong{ font-family:var(--font-display); font-size:22px; color:var(--accent); font-variant-numeric:tabular-nums; }
 .comms-msg-media{ max-width:min(100%, 460px); }
 .comms-media{ margin:0; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
