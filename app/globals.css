@@ -1795,3 +1795,31 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .garage-tile-label, .garage-tile-sub{ position:relative; }
 .garage-tile-label{ font-family:var(--font-display); font-weight:800; font-size:26px; text-transform:uppercase; letter-spacing:.02em; line-height:1; }
 .garage-tile-sub{ font-size:13px; color:var(--ad-gray); }
+.garage-back{ display:inline-flex; align-items:center; gap:6px; color:var(--white); }
+.garage-back svg{ width:20px; height:20px; }
+.garage-screen-title{ font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+.garage-section{ font-size:16px; letter-spacing:.06em; color:var(--text-muted); margin:var(--sp-3) 0 var(--sp-2); }
+.garage-tile.is-soon{ opacity:.55; }
+.garage-soon{
+  position:absolute; top:10px; right:10px; padding:3px 9px; border-radius:999px;
+  background:rgba(0,0,0,.72); border:1px solid var(--border); color:var(--ad-gray);
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+}
+.garage-event{ padding:16px 18px; margin-bottom:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); }
+.garage-event h2{ font-size:20px; margin:2px 0 4px; }
+.garage-event-date{ font-family:var(--font-display); font-weight:700; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+.garage-event-area{ margin:0 0 6px; font-size:13.5px; color:var(--text-muted); }
+.garage-event-blurb{ margin:0 0 10px; font-size:14.5px; color:var(--text-muted); }
+.garage-answer{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0; }
+.garage-answer-btn{
+  flex:1 1 90px; min-height:44px; padding:8px 14px; border-radius:var(--radius-sm);
+  border:1.5px solid var(--border); background:transparent; color:var(--text); font-weight:700; cursor:pointer;
+}
+.garage-answer-btn.active{ border-color:var(--accent); background:var(--accent); color:var(--ad-black); }
+.garage-answer-btn:disabled{ opacity:.6; cursor:default; }
+.garage-event-crew{ margin:10px 0 0; font-size:13.5px; color:var(--text-muted); }
+.garage-event-crew strong{ color:var(--text); }
+.garage-event-details{ margin-top:10px; border-top:1px solid var(--border-soft); padding-top:10px; }
+.garage-event-details summary{ cursor:pointer; font-size:13.5px; font-weight:700; color:var(--accent); }
+.garage-event-details p{ margin:8px 0 0; font-size:14px; color:var(--text-muted); white-space:pre-wrap; }
+.garage-event-meetup{ color:var(--text) !important; }

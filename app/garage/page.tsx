@@ -57,15 +57,17 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   const nextEvent = events.upcoming[0];
   const firstName = session.name.split(" ")[0] || "there";
 
-  const tiles = [
-    { href: "/garage/events", label: "Events", sub: "RSVP, details, event day", img: "/img/garage/tile-events.jpg" },
+  // `href: null` = built next; the tile shows "Coming soon" instead of leading
+  // to a dead page.
+  const tiles: { href: string | null; label: string; sub: string; img: string }[] = [
+    { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.jpg" },
     ...(canRunEvents(session)
-      ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
+      ? [{ href: null, label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
       : []),
-    { href: "/garage/media", label: "Media", sub: "Photos and video", img: "/img/garage/tile-media.jpg" },
-    { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
+    { href: null, label: "Media", sub: "Photos and video", img: "/img/garage/tile-media.jpg" },
+    { href: null, label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
-      ? [{ href: "/garage/team", label: "Team", sub: "Owners only", img: "/img/garage/tile-team.jpg" }]
+      ? [{ href: null, label: "Team", sub: "Owners only", img: "/img/garage/tile-team.jpg" }]
       : []),
   ];
 
@@ -99,12 +101,20 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
         )}
 
         <div className="garage-tiles">
-          {tiles.map((tile) => (
-            <Link key={tile.href} href={tile.href} className="garage-tile" style={{ backgroundImage: `url(${tile.img})` }}>
-              <span className="garage-tile-label">{tile.label}</span>
-              <span className="garage-tile-sub">{tile.sub}</span>
-            </Link>
-          ))}
+          {tiles.map((tile) =>
+            tile.href ? (
+              <Link key={tile.label} href={tile.href} className="garage-tile" style={{ backgroundImage: `url(${tile.img})` }}>
+                <span className="garage-tile-label">{tile.label}</span>
+                <span className="garage-tile-sub">{tile.sub}</span>
+              </Link>
+            ) : (
+              <div key={tile.label} className="garage-tile is-soon" style={{ backgroundImage: `url(${tile.img})` }}>
+                <span className="garage-tile-label">{tile.label}</span>
+                <span className="garage-tile-sub">{tile.sub}</span>
+                <span className="garage-soon">Coming soon</span>
+              </div>
+            ),
+          )}
         </div>
       </div>
     </div>

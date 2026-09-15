@@ -1,0 +1,71 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import GarageBack from "@/components/GarageBack";
+import GarageEventCard from "@/components/GarageEventCard";
+import { getSession } from "@/lib/garageAuth";
+import { getEventResponses } from "@/lib/garageEvents";
+import { getPublishedEvents, getEventBySlug } from "@/lib/events";
+
+export const metadata: Metadata = {
+  title: "Events · A and D Garage",
+  robots: { index: false, follow: false },
+};
+
+function formatDate(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export default async function GarageEventsPage() {
+  const session = await getSession();
+  if (!session) redirect("/garage");
+
+  const { upcoming, past } = await getPublishedEvents().catch(() => ({ upcoming: [], past: [] }));
+  const shown = [...upcoming, ...past.slice(0, 3)];
+
+  // The crew view shows the private meetup spot and run-of-show, which only
+  // the per-event record carries.
+  const [details, responses] = await Promise.all([
+    Promise.all(shown.map((e) => getEventBySlug(e.slug).catch(() => null))),
+    getEventResponses(shown.map((e) => e.slug)),
+  ]);
+  const mine = new Map(responses.filter((r) => r.email === session.email).map((r) => [r.eventSlug, r.response]));
+
+  return (
+    <div className="garage">
+      <GarageBack title="Events" />
+      <div className="garage-body">
+        {shown.length === 0 && <p className="garage-empty">No events on the calendar yet.</p>}
+
+        {upcoming.length > 0 && <h2 className="garage-section">Coming up</h2>}
+        {shown.map((event, i) => {
+          const detail = details[i];
+          const isPast = i >= upcoming.length;
+          return (
+            <div key={event.slug}>
+              {isPast && i === upcoming.length && <h2 className="garage-section">Recently</h2>}
+              <GarageEventCard
+                slug={event.slug}
+                title={event.title}
+                date={formatDate(event.date)}
+                area={event.generalArea}
+                blurb={event.publicBlurb}
+                meetup={detail?.meetupPoint || ""}
+                details={detail?.fullDetails || ""}
+                initialResponse={mine.get(event.slug) || null}
+                others={responses
+                  .filter((r) => r.eventSlug === event.slug && r.email !== session.email)
+                  .map((r) => ({ name: r.name || r.email, response: r.response }))}
+                isPast={isPast}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
