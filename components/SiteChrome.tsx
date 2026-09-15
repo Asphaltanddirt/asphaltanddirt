@@ -15,7 +15,9 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   // Event Comms is a focused in-field tool (people are standing in a
   // parking lot with one hand on the phone) — every /comms/* page skips
   // the header/footer too, not just an exact path.
-  if (BARE_PATHS.has(pathname) || pathname.startsWith("/comms/")) {
+  // A&D Garage is the crew's own app, not a page of the public site: its own
+  // header lives inside it, so the site chrome stays out of the way.
+  if (BARE_PATHS.has(pathname) || pathname.startsWith("/comms/") || pathname === "/garage" || pathname.startsWith("/garage/")) {
     return <main id="main">{children}</main>;
   }
 
