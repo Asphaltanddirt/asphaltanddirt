@@ -163,6 +163,7 @@ When information is no longer needed, we delete, securely dispose of, or de-iden
 Our safeguards include:
 
 • Access to registration records, signed agreements, and communications data is limited to Asphalt & Dirt staff accounts.
+• The accounts that administer those records are protected with two-step verification.
 • Participants' telephone numbers, email addresses, legal names, and emergency contacts are shown only to staff, never to other participants.
 • Personal communications links and staff links use random access codes, and each event has its own staff code.
 • The website is served only over encrypted (HTTPS) connections.
