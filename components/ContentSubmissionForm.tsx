@@ -95,7 +95,7 @@ export default function ContentSubmissionForm() {
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="email">Your A&amp;D Ambassador Email</label>
-            <input type="email" id="email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="email" name="email" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="month">Month</label>

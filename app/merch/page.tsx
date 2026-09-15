@@ -135,7 +135,7 @@ export default async function MerchPage() {
       <section className="section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Shop By Collection</div>
+            <h2 className="eyebrow">Shop By Collection</h2>
             <Link href="/merch/all" className="view-all">
               View Full Shop
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -157,7 +157,7 @@ export default async function MerchPage() {
       <section className="section-alt section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Featured Items</div>
+            <h2 className="eyebrow">Featured Items</h2>
           </div>
           <ProductGrid products={featured} />
         </div>
@@ -166,7 +166,7 @@ export default async function MerchPage() {
       <section className="section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">New Releases</div>
+            <h2 className="eyebrow">New Releases</h2>
           </div>
           <ProductGrid products={newReleases} />
         </div>
@@ -199,7 +199,7 @@ export default async function MerchPage() {
         <section className="section-pt-tight section-pb-tight">
           <div className="container">
             <div className="section-head">
-              <div className="eyebrow">What Our Customers Say</div>
+              <h2 className="eyebrow">What Our Customers Say</h2>
             </div>
             <TestimonialGrid testimonials={testimonials} />
           </div>

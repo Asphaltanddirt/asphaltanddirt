@@ -59,7 +59,7 @@ export default async function EventsPage() {
       <section className="section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Events</div>
+            <h2 className="eyebrow">Events</h2>
             <Link href="/events/all" className="view-all">
               All Events
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -105,7 +105,7 @@ export default async function EventsPage() {
       <section className="section-alt section-pt-tight section-pb-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Ride Recaps &amp; Highlights</div>
+            <h2 className="eyebrow">Ride Recaps &amp; Highlights</h2>
             <Link href="/events/recaps" className="view-all">
               View All Recaps
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

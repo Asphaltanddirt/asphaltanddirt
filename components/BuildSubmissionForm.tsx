@@ -123,11 +123,11 @@ export default function BuildSubmissionForm() {
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
-            <input type="text" id="name" name="name" required disabled={busy} />
+            <input autoComplete="name" type="text" id="name" name="name" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="email" name="email" required disabled={busy} />
           </div>
         </div>
         <div className="form-field">

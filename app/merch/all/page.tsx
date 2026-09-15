@@ -24,7 +24,7 @@ export default async function AllProductsPage() {
     <section className="section-pt-tight section-pb-tight">
       <div className="container">
         <div className="section-head">
-          <div className="eyebrow">Shop All Merch</div>
+          <h1 className="eyebrow">Shop All Merch</h1>
         </div>
         <Suspense fallback={null}>
           <AllProductsClient

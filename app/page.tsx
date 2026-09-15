@@ -81,7 +81,7 @@ export default async function HomePage() {
         <section className="section-pt-tight section-pb-tight">
           <div className="container">
             <div className="section-head">
-              <div className="eyebrow">What The Crew Says</div>
+              <h2 className="eyebrow">What The Crew Says</h2>
               <Link href="/community" className="view-all">
                 More From The Community
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -96,7 +96,7 @@ export default async function HomePage() {
         <div className="container two-col">
           <div>
             <div className="section-head">
-              <div className="eyebrow">The Latest Episode</div>
+              <h2 className="eyebrow">The Latest Episode</h2>
               <Link href="/podcast" className="view-all">
                 View All Episodes
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -137,7 +137,7 @@ export default async function HomePage() {
       <section className="section-pt-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Rep The Culture</div>
+            <h2 className="eyebrow">Rep The Culture</h2>
             <Link href="/merch" className="view-all">
               Shop All Merch
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

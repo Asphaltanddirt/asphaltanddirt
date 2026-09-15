@@ -16,13 +16,19 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   // parking lot with one hand on the phone) — every /comms/* page skips
   // the header/footer too, not just an exact path.
   if (BARE_PATHS.has(pathname) || pathname.startsWith("/comms/")) {
-    return <>{children}</>;
+    return <main id="main">{children}</main>;
   }
 
   return (
     <>
+      {/* First thing a keyboard user reaches: jump past the nav. */}
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <Header />
-      {children}
+      <main id="main" tabIndex={-1}>
+        {children}
+      </main>
       <Footer returnTo={pathname} />
     </>
   );

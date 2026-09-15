@@ -93,7 +93,7 @@ export default function BlogList({ posts, children }: { posts: BlogPost[]; child
       <section className="section-alt section-pt-tight">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Latest Stories</div>
+            <h2 className="eyebrow">Latest Stories</h2>
             <Link href="/blog/all" className="view-all">
               View All Stories
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

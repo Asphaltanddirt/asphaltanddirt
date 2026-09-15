@@ -209,11 +209,11 @@ export default function WaiverForm({
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-legal">Full Legal Name</label>
-            <input id="w-legal" value={legalName} onChange={(e) => setLegalName(e.target.value)} required disabled={busy} maxLength={120} />
+            <input id="w-legal" autoComplete="name" value={legalName} onChange={(e) => setLegalName(e.target.value)} required disabled={busy} maxLength={120} />
           </div>
           <div className="form-field">
             <label htmlFor="w-phone">Telephone</label>
-            <input id="w-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required disabled={busy} maxLength={40} />
+            <input id="w-phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required disabled={busy} maxLength={40} />
           </div>
         </div>
         {/* Email and its confirmation share a row so they're side by side on
@@ -222,13 +222,14 @@ export default function WaiverForm({
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-email">Email <span className="optional">(Your chat link goes here)</span></label>
-            <input id="w-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} maxLength={120} />
+            <input id="w-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} maxLength={120} />
           </div>
           <div className="form-field">
             <label htmlFor="w-email-confirm">Confirm Email</label>
             <input
               id="w-email-confirm"
               type="email"
+              autoComplete="email"
               value={confirmEmail}
               onChange={(e) => setConfirmEmail(e.target.value)}
               required
@@ -245,7 +246,7 @@ export default function WaiverForm({
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-screen">Screen Name <span className="optional">(shown in chat)</span></label>
-            <input id="w-screen" value={screenName} onChange={(e) => setScreenName(e.target.value)} required disabled={busy} maxLength={60} />
+            <input id="w-screen" autoComplete="nickname" value={screenName} onChange={(e) => setScreenName(e.target.value)} required disabled={busy} maxLength={60} />
           </div>
           <div className="form-field">
             <label htmlFor="w-vehicle">Vehicle / Callsign</label>

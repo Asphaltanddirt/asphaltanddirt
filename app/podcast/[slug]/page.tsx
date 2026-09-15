@@ -259,7 +259,7 @@ export default async function EpisodePage({
       <section className="section-alt">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</div>
+            <h2 className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</h2>
             <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
               {isTrailEvent ? "View All Recaps" : "View All Episodes"}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

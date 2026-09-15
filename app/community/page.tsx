@@ -129,7 +129,7 @@ export default async function CommunityPage() {
         <section className="section-pb-tight">
           <div className="container">
             <div className="section-head">
-              <div className="eyebrow">Real People, Real Rides</div>
+              <h2 className="eyebrow">Real People, Real Rides</h2>
               <Link href="/events/all" className="view-all">
                 See All Events
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -143,7 +143,7 @@ export default async function CommunityPage() {
       {testimonials.length > 0 && (
         <section className="section-alt section-pt-tight section-pb-tight">
           <div className="container">
-            <div className="section-head"><div className="eyebrow">What Our Community Says</div></div>
+            <div className="section-head"><h2 className="eyebrow">What Our Community Says</h2></div>
             <TestimonialGrid testimonials={testimonials} />
           </div>
         </section>
@@ -153,7 +153,7 @@ export default async function CommunityPage() {
         <section className="section-pt-tight section-pb-tight">
           <div className="container">
             <div className="section-head">
-              <div className="eyebrow">Tag Us On TikTok To Be Featured</div>
+              <h2 className="eyebrow">Tag Us On TikTok To Be Featured</h2>
             </div>
             <SocialProofGrid posts={socialProof} />
           </div>

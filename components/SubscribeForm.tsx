@@ -141,16 +141,16 @@ export default function SubscribeForm({
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" required disabled={busy} />
+            <input autoComplete="given-name" type="text" id="firstName" name="firstName" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="email" name="email" required disabled={busy} />
           </div>
         </div>
         <div className="form-field">
           <label htmlFor="phone">Phone <span className="optional">(Optional)</span></label>
-          <input type="tel" id="phone" name="phone" placeholder="For the rare day-of update, not spam" disabled={busy} />
+          <input autoComplete="tel" type="tel" id="phone" name="phone" placeholder="For the rare day-of update, not spam" disabled={busy} />
         </div>
       </div>
 

@@ -133,11 +133,11 @@ export default function ReviewSubmissionForm() {
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
-            <input type="text" id="name" name="name" required disabled={busy} />
+            <input autoComplete="name" type="text" id="name" name="name" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="email">Email <span className="optional">(Never published)</span></label>
-            <input type="email" id="email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="email" name="email" required disabled={busy} />
           </div>
         </div>
         <div className="form-field">
@@ -155,8 +155,8 @@ export default function ReviewSubmissionForm() {
 
       <div className="form-section">
         <div className="form-field">
-          <label htmlFor="quote">Your Rating</label>
-          <div className="star-input" role="radiogroup" aria-label="Your rating">
+          <span className="form-label" id="rating-label">Your Rating</span>
+          <div className="star-input" role="radiogroup" aria-labelledby="rating-label">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 type="button"

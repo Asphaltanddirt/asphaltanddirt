@@ -114,16 +114,16 @@ export default function GuestIntakeForm() {
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
-            <input type="text" id="name" name="name" required disabled={busy} />
+            <input autoComplete="name" type="text" id="name" name="name" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="email">Email <span className="optional">(Never published)</span></label>
-            <input type="email" id="email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="email" name="email" required disabled={busy} />
           </div>
         </div>
         <div className="form-field">
           <label htmlFor="phone">Phone <span className="optional">(Optional, never published)</span></label>
-          <input type="tel" id="phone" name="phone" disabled={busy} />
+          <input autoComplete="tel" type="tel" id="phone" name="phone" disabled={busy} />
         </div>
       </div>
 

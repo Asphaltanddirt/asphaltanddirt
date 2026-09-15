@@ -93,11 +93,11 @@ export default function RsvpForm({ slug }: { slug: string }) {
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="rsvp-name">Name</label>
-            <input type="text" id="rsvp-name" name="name" required disabled={busy} />
+            <input autoComplete="name" type="text" id="rsvp-name" name="name" required disabled={busy} />
           </div>
           <div className="form-field">
             <label htmlFor="rsvp-email">Email</label>
-            <input type="email" id="rsvp-email" name="email" required disabled={busy} />
+            <input autoComplete="email" type="email" id="rsvp-email" name="email" required disabled={busy} />
           </div>
         </div>
         <div className="form-row">
