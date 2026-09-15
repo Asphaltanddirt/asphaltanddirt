@@ -593,6 +593,15 @@ async function getAllMessages(slug: string): Promise<CommsMessage[]> {
   return records.map(toMessage).sort((a, b) => (a.createdTime < b.createdTime ? -1 : 1));
 }
 
+/** Photos posted in an event's Tailgate, for the Garage's media review.
+ *  Server-only: the whole feed is read, then only the photo posts come back. */
+export async function getTailgatePhotos(slug: string): Promise<{ id: string; photoUrl: string; authorName: string; hidden: boolean }[]> {
+  const messages = await getAllMessages(slug);
+  return messages
+    .filter((m) => m.mediaKind === "Photo" && m.mediaStatus === "Ready" && m.photoUrl)
+    .map((m) => ({ id: m.id, photoUrl: m.photoUrl as string, authorName: m.authorName, hidden: m.hidden }));
+}
+
 export type MessageViewer =
   | { kind: "staff" }
   | { kind: "attendee"; attendeeId: string; checkedIn: boolean };

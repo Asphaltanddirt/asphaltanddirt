@@ -1,4 +1,5 @@
 import { listRecords, createRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { getHiddenPhotoKeys } from "@/lib/garageMedia";
 
 /**
  * Site-authored events — the A&D Events base (AIRTABLE_EVENTS_BASE_ID) is
@@ -184,6 +185,25 @@ export async function getApprovedEventPhotoSubmissions(
     });
 }
 
+/** Every photo submitted for one event, one entry per file, whether or not the
+ *  old Approved box is ticked — the Garage reviews them all and hides only what
+ *  someone flags. */
+export async function getEventSubmissionPhotos(
+  eventRecordId: string,
+): Promise<{ key: string; url: string; name: string }[]> {
+  assertConfigured();
+  const records = await listRecords(PHOTO_SUBMISSIONS_TABLE, undefined, { baseId: BASE_ID, revalidate: 60 });
+  const photos: { key: string; url: string; name: string }[] = [];
+  for (const record of records) {
+    if (!((record.fields.Event as string[]) || []).includes(eventRecordId)) continue;
+    const name = (record.fields.Name as string) || "A community member";
+    ((record.fields.Photo as { url: string }[] | undefined) || []).forEach((photo, i) => {
+      photos.push({ key: `submission|${record.id}|${i}`, url: photo.url, name });
+    });
+  }
+  return photos;
+}
+
 export interface CommunityPhoto {
   url: string;
   alt: string;
@@ -208,6 +228,7 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, { baseId: BASE_ID, revalidate: 900 }),
   ]);
 
+  const hidden = await getHiddenPhotoKeys();
   const byRecordId = new Map(eventRecords.map((r) => [r.id, r]));
   const photos: CommunityPhoto[] = [];
 
@@ -229,9 +250,11 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     const slug = (event.fields.Slug as string) || "";
     if (!slug) continue;
     const submitted = (record.fields.Photo as { url: string }[] | undefined) || [];
-    for (const photo of submitted) {
+    submitted.forEach((photo, i) => {
+      // Flagged in A&D Garage = off the site, wherever it would have shown.
+      if (hidden.has(`submission|${record.id}|${i}`)) return;
       photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
-    }
+    });
   }
 
   // Deterministic shuffle: a fixed seed per revalidation window keeps the

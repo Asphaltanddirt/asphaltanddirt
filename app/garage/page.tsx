@@ -74,7 +74,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     ...(canRunEvents(session)
       ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
       : []),
-    { href: null, label: "Media", sub: "Photos and video", img: "/img/garage/tile-media.jpg" },
+    { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
     { href: null, label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
       ? [{ href: null, label: "Team", sub: "Owners only", img: "/img/garage/tile-team.jpg" }]
