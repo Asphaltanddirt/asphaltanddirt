@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
+import HeroVideo from "@/components/HeroVideo";
 import PlatformGrid from "@/components/PlatformGrid";
 import { episodes } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs } from "@/lib/fourthwall";
@@ -22,9 +23,7 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
-        <video className="hero-bg" poster="/img/podcast/hero.jpg" autoPlay muted loop playsInline>
-          <source src="/video/intro.mp4" type="video/mp4" />
-        </video>
+        <HeroVideo src="/video/intro.mp4" poster="/img/podcast/hero.jpg" />
         <div className="hero-scrim" />
         <div className="container hero-inner">
           <div className="hero-content">

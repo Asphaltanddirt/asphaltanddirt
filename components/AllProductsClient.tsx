@@ -27,25 +27,25 @@ export default function AllProductsClient({
 
   return (
     <>
-      <div className="chip-row mb-0" style={{ borderBottom: "1px solid var(--border-soft)", paddingBottom: "var(--sp-3)", marginBottom: "var(--sp-3)" }}>
-        <div
-          className={`chip${filter === "all" ? " active" : ""}`}
-          onClick={() => setFilter("all")}
-          role="button"
-          tabIndex={0}
-        >
+      <div className="chip-row mb-0" role="group" aria-label="Filter products by collection" style={{ borderBottom: "1px solid var(--border-soft)", paddingBottom: "var(--sp-3)", marginBottom: "var(--sp-3)" }}>
+        <button
+                type="button"
+                className={`chip${filter === "all" ? " active" : ""}`}
+                aria-pressed={filter === "all"}
+                onClick={() => setFilter("all")}
+              >
           All
-        </div>
+        </button>
         {collections.map((c) => (
-          <div
+          <button
             key={c.slug}
-            className={`chip${filter === c.slug ? " active" : ""}`}
-            onClick={() => setFilter(c.slug)}
-            role="button"
-            tabIndex={0}
-          >
+                type="button"
+                className={`chip${filter === c.slug ? " active" : ""}`}
+                aria-pressed={filter === c.slug}
+                onClick={() => setFilter(c.slug)}
+              >
             {c.name}
-          </div>
+          </button>
         ))}
       </div>
 

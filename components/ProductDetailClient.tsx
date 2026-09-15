@@ -87,10 +87,11 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
             {product.colors.length > 1 && (
               <div className="pdp-option-group">
                 <div className="pdp-option-label">Color: {color.colorName}</div>
-                <div className="pdp-swatches">
+                <div className="pdp-swatches" role="group" aria-label="Color">
                   {product.colors.map((c, i) => (
                     <button
                       key={c.colorName}
+                      aria-pressed={i === colorIndex}
                       className={`pdp-swatch${i === colorIndex ? " active" : ""}`}
                       style={{ background: c.swatch }}
                       aria-label={c.colorName}
@@ -114,10 +115,12 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                   </button>
                 )}
               </div>
-              <div className="pdp-sizes">
+              <div className="pdp-sizes" role="group" aria-label="Size">
                 {color.sizes.map((s, i) => (
                   <button
                     key={s.variantId}
+                    type="button"
+                    aria-pressed={i === sizeIndex}
                     className={`pdp-size-btn${i === sizeIndex ? " active" : ""}`}
                     disabled={!s.inStock}
                     onClick={() => setSizeIndex(i)}

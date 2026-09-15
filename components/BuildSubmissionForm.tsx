@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
 
@@ -15,7 +14,6 @@ type Status = "idle" | "submitting" | "success" | "error";
 type Photo = { file: File; url: string };
 
 export default function BuildSubmissionForm() {
-  const router = useRouter();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -84,7 +82,6 @@ export default function BuildSubmissionForm() {
 
       track("build_submission", { result: "success" });
       setStatus("success");
-      setTimeout(() => router.push("/builds"), 3500);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setStatus("error");
@@ -102,7 +99,7 @@ export default function BuildSubmissionForm() {
         <h2>Your Build Is In!</h2>
         <p className="lead" style={{ maxWidth: 480 }}>
           Thanks for sharing your rig with the Asphalt &amp; Dirt community. We&apos;ll reach out if
-          we feature it. Taking you back to Builds&hellip;
+          we feature it.
         </p>
         <Link href="/builds" className="btn btn-primary">Back To Builds</Link>
       </div>

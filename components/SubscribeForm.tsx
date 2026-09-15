@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useState } from "react";
 import { track } from "@/lib/analytics";
 
 // How long the "You're In!" confirmation stays up before sending them back
 // to the page they subscribed from — long enough to read, not long enough
 // to feel stuck.
-const REDIRECT_DELAY_MS = 2500;
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -26,19 +25,12 @@ export default function SubscribeForm({
   /** Site-relative path to send them back to after the confirmation shows. */
   returnTo?: string;
 }) {
-  const router = useRouter();
   const [topics, setTopics] = useState<string[]>(defaultTopics);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
 
   const busy = status === "submitting";
-
-  useEffect(() => {
-    if (status !== "success" || !returnTo) return;
-    const timer = setTimeout(() => router.push(returnTo), REDIRECT_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [status, returnTo, router]);
 
   function toggleTopic(value: string) {
     setTopics((prev) => (prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]));
@@ -103,10 +95,11 @@ export default function SubscribeForm({
             ? "Watch your inbox — the welcome email is on its way."
             : "You're set. We'll email you when there's an update."}
         </p>
+        {/* A button, not a timed redirect: people finish reading at their own pace. */}
         {returnTo && (
-          <p style={{ fontSize: 13, color: "var(--text-dim)", marginTop: "var(--sp-2)" }}>
-            Taking you back to where you were…
-          </p>
+          <Link href={returnTo} className="btn btn-primary">
+            Back To Where You Were
+          </Link>
         )}
       </div>
     );

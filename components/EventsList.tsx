@@ -38,12 +38,13 @@ export default function EventsList({ events }: { events: EventSummary[] }) {
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
           </svg>
           <input
+            aria-label="Search events"
             placeholder="Search events..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value as SortOption)}>
+        <select className="sort-select" aria-label="Sort events" value={sort} onChange={(e) => setSort(e.target.value as SortOption)}>
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
         </select>
@@ -79,8 +80,13 @@ export default function EventsList({ events }: { events: EventSummary[] }) {
           })}
         </div>
       ) : (
-        <p className="mb-0">No events match your search &mdash; try a different term.</p>
+        <p className="mb-0" aria-hidden="true">No events match your search &mdash; try a different term.</p>
       )}
+      <p className="sr-only" role="status">
+        {visibleEvents.length
+          ? `${visibleEvents.length} event${visibleEvents.length === 1 ? "" : "s"} shown`
+          : "No events match your search. Try a different term."}
+      </p>
     </>
   );
 }

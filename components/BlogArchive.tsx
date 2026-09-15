@@ -69,17 +69,17 @@ export default function BlogArchive({ posts }: { posts: BlogPost[] }) {
 
   return (
     <>
-      <div className="chip-row" style={{ borderBottom: "1px solid var(--border-soft)", paddingBottom: "var(--sp-3)" }}>
+      <div className="chip-row" role="group" aria-label="Filter stories by category" style={{ borderBottom: "1px solid var(--border-soft)", paddingBottom: "var(--sp-3)" }}>
         {CATEGORIES.map((c) => (
-          <div
+          <button
             key={c.key}
-            className={`chip${filter === c.key ? " active" : ""}`}
-            onClick={() => setFilter(c.key)}
-            role="button"
-            tabIndex={0}
-          >
+                type="button"
+                className={`chip${filter === c.key ? " active" : ""}`}
+                aria-pressed={filter === c.key}
+                onClick={() => setFilter(c.key)}
+              >
             {c.icon} {c.key === "All" ? "All Stories" : c.key}
-          </div>
+          </button>
         ))}
       </div>
 

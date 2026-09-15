@@ -83,31 +83,32 @@ export default function BuildsList({ builds }: { builds: Build[] }) {
   return (
     <>
       <div className="filter-row">
-        <div className="chip-row">
+        <div className="chip-row" role="group" aria-label="Filter builds">
           {FILTERS.map((f) => (
-            <div
+            <button
               key={f.key}
-              className={`chip${filter === f.key ? " active" : ""}`}
-              onClick={() => setFilter(f.key)}
-              role="button"
-              tabIndex={0}
-            >
+                type="button"
+                className={`chip${filter === f.key ? " active" : ""}`}
+                aria-pressed={filter === f.key}
+                onClick={() => setFilter(f.key)}
+              >
               {f.icon} {f.label}
-            </div>
+            </button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className="filter-controls">
           <div className="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
             </svg>
             <input
+              aria-label="Search builds"
               placeholder="Search builds..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value as SortOption)}>
+          <select className="sort-select" aria-label="Sort builds" value={sort} onChange={(e) => setSort(e.target.value as SortOption)}>
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="az">A–Z</option>
@@ -150,8 +151,15 @@ export default function BuildsList({ builds }: { builds: Build[] }) {
           ))}
         </div>
       ) : (
-        <p className="mb-0">No builds match your search &mdash; try a different filter or term.</p>
+        <p className="mb-0" aria-hidden="true">No builds match your search &mdash; try a different filter or term.</p>
       )}
+      {/* Announces the result count as filters and search change, without
+          moving focus out of the search box. */}
+      <p className="sr-only" role="status">
+        {visibleBuilds.length
+          ? `${visibleBuilds.length} build${visibleBuilds.length === 1 ? "" : "s"} shown`
+          : "No builds match your search. Try a different filter or term."}
+      </p>
     </>
   );
 }

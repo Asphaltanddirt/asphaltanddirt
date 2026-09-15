@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
 
@@ -61,7 +60,6 @@ type Photo = { file: File; url: string };
 type PhotoKind = "self" | "build";
 
 export default function AmbassadorApplicationForm() {
-  const router = useRouter();
   const [selfPhotos, setSelfPhotos] = useState<Photo[]>([]);
   const [buildPhotos, setBuildPhotos] = useState<Photo[]>([]);
   const [compressing, setCompressing] = useState(false);
@@ -222,7 +220,6 @@ export default function AmbassadorApplicationForm() {
 
       track("ambassador_application", { result: "success" });
       setStatus("success");
-      setTimeout(() => router.push("/"), 3500);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setStatus("error");
@@ -240,7 +237,7 @@ export default function AmbassadorApplicationForm() {
         <h2>Application Submitted!</h2>
         <p className="lead" style={{ maxWidth: 480 }}>
           Thanks for putting yourself out there. Check your inbox &mdash; we just sent a
-          confirmation with what happens next. Taking you back home&hellip;
+          confirmation with what happens next.
         </p>
         <Link href="/" className="btn btn-primary">Back To Home</Link>
       </div>

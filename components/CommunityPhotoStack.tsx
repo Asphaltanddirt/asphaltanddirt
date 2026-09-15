@@ -1,26 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { CommunityPhoto } from "@/lib/events";
 
 const ADVANCE_MS = 5000;
 /** How many cards peek out behind the front one. */
 const VISIBLE_DEPTH = 3;
 
+function subscribeReducedMotion(onChange: () => void) {
+  const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  query?.addEventListener("change", onChange);
+  return () => query?.removeEventListener("change", onChange);
+}
+
 export default function CommunityPhotoStack({ photos }: { photos: CommunityPhoto[] }) {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // Hovering or focusing the deck pauses it for a moment; the Pause button
+  // stops it until they press Play (WCAG 2.2.2). Reduced motion starts stopped.
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState<boolean | null>(null);
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+    () => false,
+  );
+  const stopped = userPaused ?? reducedMotion;
 
-  // Auto-advance, unless the visitor has asked for reduced motion or is
-  // hovering (reading a caption / about to click through).
   useEffect(() => {
-    if (photos.length < 2) return;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || paused) return;
+    if (photos.length < 2 || stopped || hoverPaused) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % photos.length), ADVANCE_MS);
     return () => clearInterval(timer);
-  }, [photos.length, paused]);
+  }, [photos.length, stopped, hoverPaused]);
 
   if (photos.length === 0) return null;
 
@@ -30,8 +41,10 @@ export default function CommunityPhotoStack({ photos }: { photos: CommunityPhoto
     <div className="photo-stack-wrap">
       <div
         className="photo-stack"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
+        onMouseEnter={() => setHoverPaused(true)}
+        onMouseLeave={() => setHoverPaused(false)}
+        onFocus={() => setHoverPaused(true)}
+        onBlur={() => setHoverPaused(false)}
       >
         {photos.map((photo, i) => {
           // Position relative to the front card, wrapping around the deck.
@@ -70,6 +83,17 @@ export default function CommunityPhotoStack({ photos }: { photos: CommunityPhoto
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
           </button>
           <span className="photo-stack-count">{index + 1} / {photos.length}</span>
+          <button
+            type="button"
+            onClick={() => setUserPaused(!stopped)}
+            aria-label={stopped ? "Play slideshow" : "Pause slideshow"}
+          >
+            {stopped ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" /></svg>
+            )}
+          </button>
           <button type="button" onClick={() => advance(1)} aria-label="Next photo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
           </button>
