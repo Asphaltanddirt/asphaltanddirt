@@ -62,7 +62,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   const tiles: { href: string | null; label: string; sub: string; img: string }[] = [
     { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.jpg" },
     ...(canRunEvents(session)
-      ? [{ href: null, label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
+      ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
       : []),
     { href: null, label: "Media", sub: "Photos and video", img: "/img/garage/tile-media.jpg" },
     { href: null, label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },

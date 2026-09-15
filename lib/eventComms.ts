@@ -1,5 +1,6 @@
 import { listRecords, createRecord, updateRecord, deleteRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
+import { getSession, canRunEvents } from "@/lib/garageAuth";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
 
@@ -254,6 +255,19 @@ export function isCommsOpen(settings: CommsSettings | null): boolean {
 export function isStaffCode(settings: CommsSettings | null, provided: string | null | undefined): boolean {
   if (!settings || !settings.staffCode || !provided) return false;
   return provided === settings.staffCode;
+}
+
+/** Staff is either the event's staff code (the old shared link) or someone
+ *  signed in to A&D Garage as Owner/Staff. The Garage is the way forward: the
+ *  name on their messages comes from their Google account instead of a prompt,
+ *  and there's no code to pass around. Returns the name to post under. */
+export async function staffViewer(
+  settings: CommsSettings | null,
+  providedCode: string | null | undefined,
+): Promise<{ isStaff: boolean; staffName: string }> {
+  const session = await getSession();
+  if (session && canRunEvents(session)) return { isStaff: true, staffName: session.name };
+  return { isStaff: isStaffCode(settings, providedCode), staffName: "" };
 }
 
 // ---------------------------------------------------------------------------

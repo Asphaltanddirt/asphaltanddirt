@@ -1823,3 +1823,6 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .garage-event-details summary{ cursor:pointer; font-size:13.5px; font-weight:700; color:var(--accent); }
 .garage-event-details p{ margin:8px 0 0; font-size:14px; color:var(--text-muted); white-space:pre-wrap; }
 .garage-event-meetup{ color:var(--text) !important; }
+/* Crew already know the event; the public blurb is a reminder, not the pitch. */
+.garage-event-blurb{ display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.garage-lead{ margin:0 0 var(--sp-3); color:var(--text-muted); font-size:14.5px; }

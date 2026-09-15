@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCommsSettings, isCommsOpen, isStaffCode, setCheckedIn, getAttendeeRoster, renameAttendee } from "@/lib/eventComms";
+import { getCommsSettings, isCommsOpen, staffViewer, setCheckedIn, getAttendeeRoster, renameAttendee } from "@/lib/eventComms";
 
 const MAX_SCREEN_NAME = 60;
 
@@ -17,7 +17,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!isStaffCode(settings, body.staffCode)) {
+  const { isStaff } = await staffViewer(settings, body.staffCode);
+  if (!isStaff) {
     return NextResponse.json({ error: "Staff only." }, { status: 403 });
   }
   // One person, or a whole rig at once (everyone who signed up under the

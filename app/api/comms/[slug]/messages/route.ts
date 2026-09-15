@@ -5,7 +5,7 @@ import {
   postMessage,
   type MessageViewer,
   isCommsOpen,
-  isStaffCode,
+  staffViewer,
   getAttendeeByToken,
   trailStateFor,
   likerKeyFor,
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   // the entire event's chat — including every private staff-line
   // conversation — to anyone who knew the slug.
   const token = req.nextUrl.searchParams.get("token") || "";
-  const staff = isStaffCode(settings, req.nextUrl.searchParams.get("staff"));
+  const { isStaff: staff, staffName: garageName } = await staffViewer(settings, req.nextUrl.searchParams.get("staff"));
 
   let viewer: MessageViewer;
   let checkedIn: boolean | undefined;
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   // Who's asking, so their own likes show as a filled heart. A staff phone
   // likes under the name it posts as (sent along with the poll).
   const likerKey = staff
-    ? likerKeyFor({ staff: true, staffName: req.nextUrl.searchParams.get("name") || "" })
+    ? likerKeyFor({ staff: true, staffName: garageName || req.nextUrl.searchParams.get("name") || "" })
     : likerKeyFor({ staff: false, attendeeId: viewer.kind === "attendee" ? viewer.attendeeId : "" });
   // Staff also get the roster on every poll, so a walk-up who signs up at the
   // trailhead shows up in Staging without anyone reloading.
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   }
 
   const text = (body.text || "").trim().slice(0, MAX_BODY_LENGTH);
-  const staff = isStaffCode(settings, body.staffCode);
+  const { isStaff: staff, staffName: garageName } = await staffViewer(settings, body.staffCode);
 
   if (!text) {
     return NextResponse.json({ error: "A message is required." }, { status: 400 });
@@ -114,7 +114,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     // Whoever is on comms names themselves on their own device. Claimed, not
     // verified — but anyone holding the staff code is staff by definition, so
     // what's missing here is attribution, not authentication.
-    authorName = (body.staffName || "").trim().slice(0, 60) || "Staff";
+    // A Garage sign-in names itself; the shared-code path still asks the phone.
+    authorName = garageName || (body.staffName || "").trim().slice(0, 60) || "Staff";
     vehicleCallsign = "";
     // A reply addressed to one person goes onto the Staff line tagged with
     // their record ID, so it reaches them and nobody else. Without the tag a

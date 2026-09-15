@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCommsSettings, getVisibleMessage, isCommsOpen, isStaffCode, updateMessage } from "@/lib/eventComms";
+import { getCommsSettings, getVisibleMessage, isCommsOpen, staffViewer, updateMessage } from "@/lib/eventComms";
 import { updateSubmission } from "@/lib/eventMedia";
 
 /** Staff: hide a post from attendees right away (a photo also leaves the
@@ -15,7 +15,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
-  if (!isStaffCode(settings, body.staffCode)) return NextResponse.json({ error: "Staff only." }, { status: 403 });
+  const { isStaff } = await staffViewer(settings, body.staffCode);
+  if (!isStaff) return NextResponse.json({ error: "Staff only." }, { status: 403 });
 
   const message = await getVisibleMessage(slug, { kind: "staff" }, body.messageId || "");
   if (!message) return NextResponse.json({ error: "Not found." }, { status: 404 });

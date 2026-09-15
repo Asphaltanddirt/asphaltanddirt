@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCommsSettings, isCommsOpen, isStaffCode, updateTrail, trailStateFor } from "@/lib/eventComms";
+import { getCommsSettings, isCommsOpen, staffViewer, updateTrail, trailStateFor } from "@/lib/eventComms";
 
 const MAX_CHANNEL = 12;
 
@@ -22,7 +22,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!isStaffCode(settings, body.staffCode)) {
+  const { isStaff } = await staffViewer(settings, body.staffCode);
+  if (!isStaff) {
     return NextResponse.json({ error: "Staff only." }, { status: 403 });
   }
 

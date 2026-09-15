@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode, trailStateFor, type MessageViewer } from "@/lib/eventComms";
+import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, staffViewer, trailStateFor, type MessageViewer } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import CommsChat from "@/components/CommsChat";
 import QRCode from "qrcode";
@@ -23,7 +23,7 @@ export default async function CommsPage({
 
   const [settings, event] = await Promise.all([getCommsSettings(slug), getEventBySlug(slug)]);
   const open = isCommsOpen(settings);
-  const isStaff = isStaffCode(settings, staffParam);
+  const { isStaff, staffName } = await staffViewer(settings, staffParam);
 
   if (!open || !settings) {
     return (
@@ -85,6 +85,7 @@ export default async function CommsPage({
       initialMessages={messages}
       isStaff={isStaff}
       staffCode={isStaff ? staffParam || "" : ""}
+      garageStaffName={staffName}
       attendeeName={attendee?.screenName || ""}
       attendeeVehicle={attendee?.vehicleCallsign || ""}
       attendeeCheckedIn={attendee?.checkedIn || false}

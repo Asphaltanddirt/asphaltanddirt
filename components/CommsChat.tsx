@@ -119,6 +119,7 @@ export default function CommsChat({
   initialTrail,
   signupUrl,
   signupQrSvg,
+  garageStaffName,
 }: {
   slug: string;
   eventTitle: string;
@@ -133,10 +134,13 @@ export default function CommsChat({
   /** Staff only: the sign-up page, and its QR as an SVG string for walk-ups. */
   signupUrl: string;
   signupQrSvg: string;
+  /** Set when staff got here by signing in to A&D Garage: their Google name.
+   *  Then there's nothing to ask and nothing to remember on the device. */
+  garageStaffName: string;
 }) {
   const [tab, setTab] = useState<Tab>("Chat");
   const [announceMode, setAnnounceMode] = useState(false);
-  const [staffName, setStaffName] = useState("");
+  const [staffName, setStaffName] = useState(garageStaffName);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [roster, setRoster] = useState<Attendee[]>(initialRoster);
@@ -187,7 +191,8 @@ export default function CommsChat({
 
   const staffNameKey = `ad-comms-staff-name:${slug}`;
   useEffect(() => {
-    if (!isStaff) return;
+    // Signed in through the Garage: Google already told us who this is.
+    if (!isStaff || garageStaffName) return;
     let stored = "";
     try {
       stored = window.localStorage.getItem(staffNameKey) || "";
@@ -205,7 +210,7 @@ export default function CommsChat({
       }
     }
     setStaffName(stored);
-  }, [isStaff, staffNameKey]);
+  }, [isStaff, staffNameKey, garageStaffName]);
 
   // Credential on every poll — the endpoint refuses anonymous callers and
   // tailors the response to who's asking.
@@ -611,9 +616,11 @@ export default function CommsChat({
             {isStaff ? (
               <>
                 Posting as <strong style={{ color: "var(--text)" }}>{staffName || "Staff"}</strong>
-                <button type="button" className="comms-roster-rename" onClick={changeStaffName}>
-                  Change
-                </button>
+                {!garageStaffName && (
+                  <button type="button" className="comms-roster-rename" onClick={changeStaffName}>
+                    Change
+                  </button>
+                )}
               </>
             ) : (
               `${attendeeName} · ${attendeeVehicle}`
