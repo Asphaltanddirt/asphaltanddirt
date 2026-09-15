@@ -80,6 +80,26 @@ const MAX_ATTACHMENTS = 10;
 // for the phone's share sheet.
 const SHARE_SHEET_MAX_BYTES = 250 * 1024 * 1024;
 
+/** window.prompt, or null where the browser blocks it (some in-app browsers,
+ *  e.g. links opened inside Facebook or Messenger, throw instead of asking). */
+function ask(message: string, value?: string): string | null {
+  try {
+    return window.prompt(message, value);
+  } catch {
+    return null;
+  }
+}
+
+/** window.confirm, treated as "yes" where the browser blocks dialogs, so a
+ *  staff button still works there instead of doing nothing. */
+function confirmed(message: string): boolean {
+  try {
+    return window.confirm(message);
+  } catch {
+    return true;
+  }
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
@@ -175,7 +195,7 @@ export default function CommsChat({
       // Private mode / blocked storage — fall through and just ask.
     }
     if (!stored) {
-      stored = (window.prompt("Who's on comms? (shown on your messages)") || "").trim();
+      stored = (ask("Who's on comms? (shown on your messages)") || "").trim();
       if (stored) {
         try {
           window.localStorage.setItem(staffNameKey, stored);
@@ -420,7 +440,7 @@ export default function CommsChat({
 
   /** Staff: hide a post from attendees (and the gallery), or put it back. */
   async function toggleHidden(m: Message) {
-    if (!m.hidden && !window.confirm("Hide this post from everyone? Staff can still see it and put it back.")) return;
+    if (!m.hidden && !confirmed("Hide this post from everyone? Staff can still see it and put it back.")) return;
     try {
       const res = await fetch(`/api/comms/${slug}/hide`, {
         method: "POST",
@@ -468,7 +488,7 @@ export default function CommsChat({
 
   /** Staff: Roll out / Change channel / Trail over. */
   async function trailAction(action: "rollout" | "channel" | "over") {
-    if (action === "over" && !window.confirm("Trail over? Chat comes back for everyone, and the thank-you email goes out in 3 hours.")) return;
+    if (action === "over" && !confirmed("Trail over? Chat comes back for everyone, and the thank-you email goes out in 3 hours.")) return;
     setError("");
     try {
       const res = await fetch(`/api/comms/${slug}/trail`, {
@@ -503,7 +523,7 @@ export default function CommsChat({
 
   /** Hand the phone to someone else, or fix a typo in your own name. */
   function changeStaffName() {
-    const next = window.prompt("Who's on comms? (shown on your messages)", staffName);
+    const next = ask("Who's on comms? (shown on your messages)", staffName);
     if (next === null) return;
     const trimmed = next.trim();
     setStaffName(trimmed);
@@ -518,7 +538,7 @@ export default function CommsChat({
   /** Fix a name someone fat-fingered at sign-up ("Rache1"), without making
    *  them re-register. Safe because nothing keys off the screen name. */
   async function rename(id: string, current: string) {
-    const next = window.prompt("Screen name for the roll call and chat:", current);
+    const next = ask("Screen name for the roll call and chat:", current);
     if (next === null || !next.trim() || next.trim() === current) return;
     try {
       const res = await fetch(`/api/comms/${slug}/checkin`, {
