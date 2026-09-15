@@ -87,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // still post (e.g. an announcement people see when they get signal).
   if (!staff && settings.trailStatus === "On trail") {
     return NextResponse.json(
-      { error: "Chat is paused while we're on the trail. Use the radio; in an emergency call 911." },
+      { error: "Chat is paused while we're on the trail. Call staff on the trail channel or flag down a staff vehicle; in an emergency call 911." },
       { status: 403 },
     );
   }

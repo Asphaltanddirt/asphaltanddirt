@@ -289,7 +289,11 @@ export default function CommsChat({
           <p className="comms-trail-updated">Updated {updatedAt} · channel changes are called over the radio</p>
         )}
         <p className="comms-trail-emergency">
-          <strong>In an emergency</strong>, get hold of staff on the radio and/or call <strong>911</strong>.
+          {/* Staff run lead + sweep (extra staff mixed into the group) and
+           *  monitor both channels, so calling it on the trail channel or
+           *  flagging a staff vehicle down both reach them. */}
+          <strong>Need staff?</strong> Call it on channel {trail.trailChannel || "the trail channel"} or flag down a
+          staff vehicle: lead, sweep, or one in the group. <strong>Emergency:</strong> call <strong>911</strong>.
         </p>
         <p className="comms-trail-note">Eyes on the trail. Chat comes back when the trail ends.</p>
       </div>
