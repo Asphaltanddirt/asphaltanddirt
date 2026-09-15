@@ -1826,3 +1826,7 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 /* Crew already know the event; the public blurb is a reminder, not the pitch. */
 .garage-event-blurb{ display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .garage-lead{ margin:0 0 var(--sp-3); color:var(--text-muted); font-size:14.5px; }
+/* Installed to the Home Screen, the app runs under the notch and home bar. */
+.garage-header{ padding-top:calc(12px + env(safe-area-inset-top)); }
+.garage-body{ padding-bottom:calc(var(--sp-8) + env(safe-area-inset-bottom)); }
+.garage-signin{ padding-top:calc(var(--sp-3) + env(safe-area-inset-top)); padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom)); }
