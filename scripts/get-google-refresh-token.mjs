@@ -38,14 +38,18 @@ const PORT = 53682;
 const REDIRECT_URI = `http://localhost:${PORT}`;
 // Default: the analytics cron's scopes. `GOOGLE_TOKEN_PURPOSE=drive` mints a
 // separate Drive-only token (event media uploads) so the analytics token is
-// never replaced or widened.
+// never replaced or widened. `GOOGLE_TOKEN_PURPOSE=youtube` mints a
+// YouTube-manage token for caption work (download/upload caption tracks),
+// kept local and separate from both.
 const SCOPES =
   process.env.GOOGLE_TOKEN_PURPOSE === "drive"
     ? "https://www.googleapis.com/auth/drive"
-    : [
+    : process.env.GOOGLE_TOKEN_PURPOSE === "youtube"
+      ? "https://www.googleapis.com/auth/youtube.force-ssl"
+      : [
         "https://www.googleapis.com/auth/yt-analytics.readonly",
-        "https://www.googleapis.com/auth/webmasters.readonly",
-      ].join(" ");
+          "https://www.googleapis.com/auth/webmasters.readonly",
+        ].join(" ");
 
 const authUrl =
   "https://accounts.google.com/o/oauth2/v2/auth?" +
