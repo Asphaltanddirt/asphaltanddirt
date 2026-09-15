@@ -31,6 +31,7 @@ export async function generateMetadata({
     title: event.title,
     description: event.publicBlurb || `${event.title} — ${formatEventDate(event.date)}`,
     alternates: { canonical: `${SITE_URL}/events/${event.slug}` },
+    ...(event.unlisted && { robots: { index: false, follow: false } }),
   };
 }
 
@@ -68,10 +69,12 @@ export default async function EventDetailPage({
 
   return (
     <section className="section-pt-tight section-pb-tight">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {!event.unlisted && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       <div className="container">
         <Link href="/events/all" className="back-link mb-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M11 18 5 12l6-6M5 12h14" /></svg>

@@ -36,6 +36,9 @@ export interface EventSummary {
 }
 
 export interface EventDetail extends EventSummary {
+  /** Reachable by direct link only (test events, private invites) — keep it
+   *  out of search engines too. */
+  unlisted: boolean;
   /** PRIVATE — never render this on a public page. Only for the RSVP
    *  confirmation email, built server-side. */
   fullDetails: string;
@@ -123,13 +126,16 @@ export async function getNextUpcomingEvent(): Promise<EventSummary | null> {
   return upcoming[0] || null;
 }
 
-/** One Published event by slug, including its private Full Details — the
- *  caller is responsible for never rendering fullDetails on a public page. */
+/** One Published or Unlisted event by slug, including its private Full
+ *  Details — the caller is responsible for never rendering fullDetails on a
+ *  public page. Unlisted = a real, working event (RSVP, Tailgate, emails) that
+ *  only people with the link can reach: it's left out of every list, the
+ *  sitemap and the newsletter, which all read getPublishedEvents instead. */
 export async function getEventBySlug(slug: string): Promise<EventDetail | null> {
   assertConfigured();
   const records = await listRecords(
     EVENTS_TABLE,
-    `AND({Status} = 'Published', {Slug} = '${escapeFormulaString(slug)}')`,
+    `AND(OR({Status} = 'Published', {Status} = 'Unlisted'), {Slug} = '${escapeFormulaString(slug)}')`,
     { baseId: BASE_ID },
   );
   const record = records[0];
@@ -139,6 +145,7 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
   );
   return {
     ...toSummary(record),
+    unlisted: record.fields.Status === "Unlisted",
     fullDetails: (record.fields["Full Details"] as string) || "",
     meetupPoint: (record.fields["Meetup Point"] as string) || "",
     meetupPublic: Boolean(record.fields["Show Meetup Publicly"]),
