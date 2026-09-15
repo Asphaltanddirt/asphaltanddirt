@@ -14,12 +14,16 @@ import { revalidateTag } from "next/cache";
  * a link unique to them — never a link or QR anyone could stumble onto or
  * share publicly. At the safety meeting, staff does roll call and checks
  * each person in; until then their messages route to a staff-only line,
- * not the group. SOS bypasses all of that — visible to everyone, staff
- * included, at all times within its window.
+ * not the group.
+ *
+ * Tailgate 2.0 (2026-09-14): no SOS alerts — staff can't help a flat tire 45
+ * minutes away, so the trail screen tells people to reach staff on the radio
+ * and/or call 911 instead. When staff taps Roll out, attendees stop seeing
+ * chat and see only the trail radio channel; Trail over brings chat back.
  *
  * Nothing here ever gets auto-deleted — the chat's *public availability*
- * expires (see isCommsOpen/isSosOpen), but every row and Photo attachment
- * stays in Airtable permanently for the team's records.
+ * expires (see isCommsOpen), but every row and Photo attachment stays in
+ * Airtable permanently for the team's records.
  */
 
 const BASE_ID = process.env.AIRTABLE_EVENT_COMMS_BASE_ID;
@@ -28,10 +32,8 @@ const MESSAGES_TABLE = "Messages";
 const ATTENDEES_TABLE = "Attendees";
 const SIGNATURES_TABLE = "Waiver Signatures";
 
-// SOS is tighter (covers the ride + ~2hrs home) than general chat (extra
-// day for photos/"great time today" wrap-up talk) — both anchored to the
-// same Activated At timestamp, just different durations.
-const SOS_WINDOW_HOURS = 24;
+// Chat is open for 48 hours from the reminder email (Activated At), e.g. 7 PM
+// the day before a 9-5 event through 7 PM the day after.
 const CHAT_WINDOW_HOURS = 48;
 const DEFAULT_END_TIME = "17:00"; // 9-5 unless Event End Time says otherwise
 
@@ -89,6 +91,9 @@ function nyDateTime(dateStr: string, timeStr: string): Date {
   return new Date(utcGuess.getTime() - offsetMin * 60000);
 }
 
+/** Where the ride is. Blank in Airtable = not rolled out yet. */
+export type TrailStatus = "Not started" | "On trail" | "Trail over";
+
 export interface CommsSettings {
   id: string;
   eventSlug: string;
@@ -98,9 +103,17 @@ export interface CommsSettings {
   active: boolean;
   activatedAt: string | null; // ISO datetime, null until the reminder cron stamps it
   waiverVersion: WaiverVersion;
+  trailStatus: TrailStatus;
+  /** Shown to everyone on the trail screen. */
+  trailChannel: string;
+  /** STAFF ONLY — never send this to an attendee. */
+  staffChannel: string;
+  channelUpdatedAt: string | null;
+  trailOverAt: string | null;
 }
 
 function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
+  const status = r.fields["Trail Status"] as string | undefined;
   return {
     id: r.id,
     eventSlug: (r.fields["Event Slug"] as string) || "",
@@ -110,7 +123,54 @@ function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
     active: Boolean(r.fields.Active),
     activatedAt: (r.fields["Activated At"] as string) || null,
     waiverVersion: ((r.fields["Waiver Version"] as WaiverVersion) || "ONE-DAY-1.0"),
+    trailStatus: status === "On trail" || status === "Trail over" ? status : "Not started",
+    trailChannel: (r.fields["Trail Channel"] as string) || "",
+    staffChannel: (r.fields["Staff Channel"] as string) || "",
+    channelUpdatedAt: (r.fields["Channel Updated At"] as string) || null,
+    trailOverAt: (r.fields["Trail Over At"] as string) || null,
   };
+}
+
+/** What a viewer is allowed to know about the ride. The staff channel only
+ *  ever goes to staff — attendees radio on the trail channel. */
+export interface TrailState {
+  status: TrailStatus;
+  trailChannel: string;
+  staffChannel?: string;
+  channelUpdatedAt: string | null;
+}
+
+export function trailStateFor(settings: CommsSettings, isStaff: boolean): TrailState {
+  return {
+    status: settings.trailStatus,
+    trailChannel: settings.trailChannel,
+    ...(isStaff ? { staffChannel: settings.staffChannel } : {}),
+    channelUpdatedAt: settings.channelUpdatedAt,
+  };
+}
+
+/** Staff trail controls. Roll out and Change channel both set the channels;
+ *  Roll out also flips the status (chat goes dark for attendees). Trail over
+ *  brings chat back and starts the 3-hour clock on the thank-you email. */
+export async function updateTrail(
+  settings: Pick<CommsSettings, "id" | "eventSlug">,
+  action: "rollout" | "channel" | "over",
+  channels?: { trailChannel: string; staffChannel: string },
+): Promise<void> {
+  assertConfigured();
+  const now = new Date().toISOString();
+  const fields: AirtableFields =
+    action === "over"
+      ? { "Trail Status": "Trail over", "Trail Over At": now }
+      : {
+          ...(action === "rollout" ? { "Trail Status": "On trail", "Rolled Out At": now } : {}),
+          "Trail Channel": channels?.trailChannel || "",
+          "Staff Channel": channels?.staffChannel || "",
+          "Channel Updated At": now,
+        };
+  await updateRecord(SETTINGS_TABLE, settings.id, fields, { baseId: BASE_ID });
+  // Every phone switches on its next poll, not after the settings cache window.
+  expire("settings", settings.eventSlug);
 }
 
 export async function getCommsSettings(slug: string): Promise<CommsSettings | null> {
@@ -125,8 +185,8 @@ export async function getCommsSettings(slug: string): Promise<CommsSettings | nu
 }
 
 /** The reminder email's target send time: event end time minus 22 hours —
- *  for a 9-5 event that's 7pm the night before, giving the 24h SOS window
- *  a 2-hour buffer past the event's actual end (the ride home). */
+ *  for a 9-5 event that's 7pm the night before. It also opens Tailgate, so
+ *  the 48-hour window runs to 7pm the day after. */
 export function reminderSendTime(settings: Pick<CommsSettings, "eventDate" | "eventEndTime">): Date {
   const end = nyDateTime(settings.eventDate, settings.eventEndTime);
   return new Date(end.getTime() - 22 * 60 * 60 * 1000);
@@ -140,9 +200,13 @@ export async function getSettingsDueForReminder(now = new Date()): Promise<Comms
   return records.map(toSettings).filter((s) => s.eventDate && reminderSendTime(s) <= now);
 }
 
-/** Every settings row that's past its 48-hour chat window but hasn't had
- *  its closing ("thanks for coming") email sent yet — what the hourly
- *  cron's closing sweep sends to. */
+/** The thank-you email goes this long after staff taps Trail over. */
+export const THANK_YOU_DELAY_HOURS = 3;
+
+/** Every event whose thank-you email (photo upload link) is due and not sent:
+ *  3 hours after staff tapped Trail over, or — if nobody ever tapped it — at
+ *  the end of the 48-hour window, so it still goes out. What the hourly
+ *  cron's thank-you sweep sends to. */
 export async function getSettingsToClose(now = new Date()): Promise<CommsSettings[]> {
   assertConfigured();
   const records = await listRecords(
@@ -150,10 +214,11 @@ export async function getSettingsToClose(now = new Date()): Promise<CommsSetting
     `AND({Activated At} != BLANK(), {Closed Email Sent} = BLANK())`,
     { baseId: BASE_ID },
   );
+  const hoursSince = (iso: string) => (now.getTime() - new Date(iso).getTime()) / (1000 * 60 * 60);
   return records.map(toSettings).filter((s) => {
     if (!s.activatedAt) return false;
-    const hoursSince = (now.getTime() - new Date(s.activatedAt).getTime()) / (1000 * 60 * 60);
-    return hoursSince >= CHAT_WINDOW_HOURS;
+    if (s.trailOverAt && hoursSince(s.trailOverAt) >= THANK_YOU_DELAY_HOURS) return true;
+    return hoursSince(s.activatedAt) >= CHAT_WINDOW_HOURS;
   });
 }
 
@@ -182,14 +247,6 @@ export function isCommsOpen(settings: CommsSettings | null): boolean {
   return hours !== null && hours < CHAT_WINDOW_HOURS;
 }
 
-/** SOS specifically — tighter 24-hour window, but note callers should also
- *  allow SOS any time isCommsOpen is true and this is within its own
- *  window; SOS never opens *before* general comms does. */
-export function isSosOpen(settings: CommsSettings | null): boolean {
-  const hours = hoursSinceActivation(settings);
-  return hours !== null && hours < SOS_WINDOW_HOURS;
-}
-
 export function isStaffCode(settings: CommsSettings | null, provided: string | null | undefined): boolean {
   if (!settings || !settings.staffCode || !provided) return false;
   return provided === settings.staffCode;
@@ -208,6 +265,9 @@ export interface Attendee {
   email: string;
   accessToken: string;
   checkedIn: boolean;
+  /** STAFF ONLY — from the sign-up form, so staff can call someone who isn't
+   *  answering chat. Never include it in anything an attendee receives. */
+  phone: string;
 }
 
 function toAttendee(r: { id: string; fields: AirtableFields }): Attendee {
@@ -220,6 +280,7 @@ function toAttendee(r: { id: string; fields: AirtableFields }): Attendee {
     email: (r.fields.Email as string) || "",
     accessToken: (r.fields["Access Token"] as string) || "",
     checkedIn: Boolean(r.fields["Checked In"]),
+    phone: (r.fields.Phone as string) || "",
   };
 }
 
@@ -281,6 +342,7 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
         "Screen Name": input.screenName,
         "Vehicle Callsign": input.vehicleCallsign,
         "Legal Name": input.legalName,
+        ...(input.phone ? { Phone: input.phone } : {}),
         "Waiver Agreed At": signedAt,
       },
       { baseId: BASE_ID },
@@ -290,6 +352,7 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
       screenName: input.screenName,
       vehicleCallsign: input.vehicleCallsign,
       legalName: input.legalName,
+      phone: input.phone || existing.phone,
     };
   } else {
     const accessToken = crypto.randomBytes(16).toString("hex");
@@ -301,11 +364,12 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
         "Vehicle Callsign": input.vehicleCallsign,
         "Legal Name": input.legalName,
         Email: input.email,
+        ...(input.phone ? { Phone: input.phone } : {}),
         "Access Token": accessToken,
         "Waiver Agreed At": signedAt,
         "Checked In": false,
       },
-      { baseId: BASE_ID },
+      { baseId: BASE_ID, typecast: true },
     );
     attendee = toAttendee({ id: created.id, fields: { ...created, "Access Token": accessToken } });
   }
@@ -482,7 +546,7 @@ export type MessageViewer =
  * it — hiding messages in the browser is not privacy, since the full set
  * would still sit in the page payload and the API response.
  *
- *  - SOS and Announcements reach everyone. Announcements matter most to the
+ *  - Announcements (and SOS alerts from before Tailgate 2.0) reach everyone. Announcements matter most to the
  *    people who AREN'T checked in yet ("safety meeting in 10"), so they
  *    deliberately reach the staff line too.
  *  - Staff sees the group chat plus every private line.
@@ -540,7 +604,7 @@ export async function postMessage(input: PostMessageInput): Promise<{ id: string
     },
     { baseId: BASE_ID, typecast: true },
   );
-  // Sender (and everyone else, SOS especially) sees it on the next poll.
+  // Sender (and everyone else) sees it on the next poll.
   expire("messages", input.eventSlug);
   return { id: created.id };
 }

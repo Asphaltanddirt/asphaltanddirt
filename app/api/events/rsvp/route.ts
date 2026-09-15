@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
   if (!slug || !name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
   }
+  // Staff call people who aren't answering Tailgate chat on the day.
+  if (!phone || phone.replace(/\D/g, "").length < 10) {
+    return NextResponse.json({ error: "A phone number is required so staff can reach you on the day." }, { status: 400 });
+  }
 
   const event = await getEventBySlug(slug);
   if (!event) {

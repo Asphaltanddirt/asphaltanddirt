@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEventBySlug, getApprovedEventPhotoSubmissions, isPastEvent } from "@/lib/events";
+import { getEventBySlug, getApprovedEventPhotoSubmissions, isPastEvent, uploadsOpen } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import RsvpForm from "@/components/RsvpForm";
@@ -44,6 +44,9 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const past = isPastEvent(event.date);
+  // Uploads open on the day itself, not the day after — the Tailgate thank-you
+  // email goes out the same evening and links straight to #photos.
+  const canUpload = uploadsOpen(event.date);
   const submittedPhotos = past ? await getApprovedEventPhotoSubmissions(event.id) : [];
   const galleryImages = [...event.galleryPhotos, ...submittedPhotos].map((photo) => ({ src: photo.url, alt: photo.alt }));
   const hasGallery = galleryImages.length > 0;
@@ -155,8 +158,8 @@ export default async function EventDetailPage({
               )}
             </div>
 
-            {past && (
-              <div className="event-detail-upload">
+            {canUpload && (
+              <div className="event-detail-upload" id="photos">
                 <h2 className="mt-6">Got Photos Or Video From The Day?</h2>
                 <p style={{ color: "var(--text-dim)" }}>
                   Send them here in full quality. We look at everything by hand, and approved photos show up in the gallery.

@@ -6,7 +6,7 @@ const MAX_SCREEN_NAME = 60;
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const settings = await getCommsSettings(slug);
-  if (!isCommsOpen(settings)) {
+  if (!settings || !isCommsOpen(settings)) {
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
 

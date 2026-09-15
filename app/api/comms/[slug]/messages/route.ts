@@ -5,20 +5,18 @@ import {
   postMessage,
   type MessageViewer,
   isCommsOpen,
-  isSosOpen,
   isStaffCode,
   getAttendeeByToken,
+  trailStateFor,
   type Channel,
-  type SosType,
 } from "@/lib/eventComms";
 
 const MAX_BODY_LENGTH = 500;
-const SOS_TYPES: SosType[] = ["Mechanical", "Stuck", "Lost", "Emergency"];
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const settings = await getCommsSettings(slug);
-  if (!isCommsOpen(settings)) {
+  if (!settings || !isCommsOpen(settings)) {
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
   // Every caller must prove who they are. Without this the endpoint handed
@@ -43,20 +41,30 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     checkedIn = attendee.checkedIn;
   }
 
+  // Trail state rides along on every poll, so Roll out / a channel change /
+  // Trail over reaches each phone the next time it has signal. The staff
+  // channel is only included for staff.
+  const trail = trailStateFor(settings, staff);
+
+  // On the trail, attendees get the channel screen and nothing else — no
+  // message list to scroll while driving.
+  if (!staff && trail.status === "On trail") {
+    return NextResponse.json({ messages: [], trail, checkedIn });
+  }
+
   const messages = await getVisibleMessages(slug, viewer);
-  return NextResponse.json({ messages, ...(checkedIn === undefined ? {} : { checkedIn }) });
+  return NextResponse.json({ messages, trail, ...(checkedIn === undefined ? {} : { checkedIn }) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const settings = await getCommsSettings(slug);
-  if (!isCommsOpen(settings)) {
+  if (!settings || !isCommsOpen(settings)) {
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
 
   let body: {
     text?: string;
-    sosType?: string;
     staffCode?: string;
     token?: string;
     announcementFromStaff?: boolean;
@@ -70,14 +78,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   }
 
   const text = (body.text || "").trim().slice(0, MAX_BODY_LENGTH);
-  const sosType = SOS_TYPES.includes(body.sosType as SosType) ? (body.sosType as SosType) : undefined;
   const staff = isStaffCode(settings, body.staffCode);
 
-  if (sosType && !isSosOpen(settings)) {
-    return NextResponse.json({ error: "SOS is no longer active for this event." }, { status: 403 });
-  }
   if (!text) {
     return NextResponse.json({ error: "A message is required." }, { status: 400 });
+  }
+  // Chat is closed for attendees while the group is on the trail. Staff can
+  // still post (e.g. an announcement people see when they get signal).
+  if (!staff && settings.trailStatus === "On trail") {
+    return NextResponse.json(
+      { error: "Chat is paused while we're on the trail. Use the radio; in an emergency call 911." },
+      { status: 403 },
+    );
   }
 
   let authorName: string;
@@ -89,9 +101,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (staff) {
     // Whoever is on comms names themselves on their own device. Claimed, not
     // verified — but anyone holding the staff code is staff by definition, so
-    // what's missing here is attribution, not authentication. Without it every
-    // staff message reads "Staff" and nobody knows which of the four is
-    // talking (or, on a staff SOS, whose rig is stuck).
+    // what's missing here is attribution, not authentication.
     authorName = (body.staffName || "").trim().slice(0, 60) || "Staff";
     vehicleCallsign = "";
     // A reply addressed to one person goes onto the Staff line tagged with
@@ -107,10 +117,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     attendeeId = attendee.id;
     authorName = attendee.screenName;
     vehicleCallsign = attendee.vehicleCallsign;
-    // SOS always reaches the group regardless of check-in status; a normal
-    // message only reaches the group once staff has checked them in at
-    // roll call — until then it goes to the staff-only line.
-    channel = sosType ? "Chat" : attendee.checkedIn ? "Chat" : "Staff";
+    // A normal message only reaches the group once staff has checked them in
+    // at roll call — until then it goes to the staff-only line.
+    channel = attendee.checkedIn ? "Chat" : "Staff";
   }
 
   const { id } = await postMessage({
@@ -120,7 +129,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     authorName,
     vehicleCallsign,
     channel,
-    sosType,
     body: text,
     isStaff: staff,
   });

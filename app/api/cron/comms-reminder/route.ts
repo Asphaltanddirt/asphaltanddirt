@@ -19,10 +19,10 @@ const TEAM_EMAIL = process.env.EVENT_COMMS_TEAM_EMAIL || "team@asphaltanddirt.co
  *     been activated yet — opens the 48h/24h windows (Activated At) and
  *     emails the *waiver* link (not the chat directly) to every RSVP, plus
  *     one team-inbox copy to paste into the FB group.
- *  2. Closing: events whose 48h chat window has elapsed and haven't had
- *     their closing email sent — emails every registered attendee (people
- *     who actually signed the waiver, not just RSVP'd) a thanks + link to
- *     the recap/gallery page.
+ *  2. Thank-you: 3 hours after staff taps Trail over (or at the end of the 48h
+ *     window if nobody did) — emails every registered attendee (people who
+ *     actually signed the waiver, not just RSVP'd) a thanks + the photo and
+ *     video upload link, which never expires.
  *
  * Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Also accepts
  * `ADMIN_API_SECRET` for manual runs. Schedule is in vercel.json.
@@ -78,7 +78,7 @@ async function run(req: NextRequest) {
     reminders.push({ slug: settings.eventSlug, title: event.title, recipients: recipients.length, sent, failed });
   }
 
-  // --- Sweep 2: closing emails (48h window elapsed) ---
+  // --- Sweep 2: thank-you emails (Trail over + 3h, or the 48h window elapsed) ---
   const dueToClose = await getSettingsToClose(now);
   const closings = [];
 
@@ -89,7 +89,7 @@ async function run(req: NextRequest) {
       continue;
     }
 
-    const recapUrl = `${SITE_URL}/events/${settings.eventSlug}`;
+    const recapUrl = `${SITE_URL}/events/${settings.eventSlug}#photos`;
     const attendees = await getAttendeeRoster(settings.eventSlug);
 
     let sent = 0;

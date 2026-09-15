@@ -9,6 +9,7 @@ interface Message {
   authorName: string;
   vehicleCallsign: string;
   channel: "Chat" | "Announcements" | "Staff";
+  /** Only on messages from before Tailgate 2.0 (SOS alerts were removed). */
   sosType: "Mechanical" | "Stuck" | "Lost" | "Emergency" | null;
   body: string;
   isStaff: boolean;
@@ -20,18 +21,21 @@ interface Attendee {
   screenName: string;
   vehicleCallsign: string;
   checkedIn: boolean;
+  /** Staff-only roster field. */
+  phone?: string;
 }
 
-const SOS_OPTIONS: { type: "Mechanical" | "Stuck" | "Lost" | "Emergency"; label: string }[] = [
-  { type: "Mechanical", label: "Mechanical" },
-  { type: "Stuck", label: "Stuck" },
-  { type: "Lost", label: "Lost" },
-  { type: "Emergency", label: "Emergency" },
-];
+export interface Trail {
+  status: "Not started" | "On trail" | "Trail over";
+  trailChannel: string;
+  /** Only ever present for staff. */
+  staffChannel?: string;
+  channelUpdatedAt: string | null;
+}
 
-// Steady rate, no slow-down when the chat goes quiet — the first message
-// after a lull may be an SOS. Polls are cheap: the server answers from a
-// shared cache (see lib/eventComms.ts), not a fresh Airtable read.
+// Steady rate: a Roll out, channel change or Trail over should reach every
+// phone within a few seconds of it getting signal. Polls are cheap: the server
+// answers from a shared cache (see lib/eventComms.ts), not a fresh Airtable read.
 const POLL_MS = 4000;
 
 function formatTime(iso: string) {
@@ -50,6 +54,7 @@ export default function CommsChat({
   attendeeVehicle,
   attendeeCheckedIn,
   initialRoster,
+  initialTrail,
 }: {
   slug: string;
   eventTitle: string;
@@ -60,6 +65,7 @@ export default function CommsChat({
   attendeeVehicle: string;
   attendeeCheckedIn: boolean;
   initialRoster: Attendee[];
+  initialTrail: Trail;
 }) {
   const [tab, setTab] = useState<Tab>("Chat");
   const [announceMode, setAnnounceMode] = useState(false);
@@ -68,6 +74,10 @@ export default function CommsChat({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [roster, setRoster] = useState<Attendee[]>(initialRoster);
   const [checkedIn, setCheckedIn] = useState(attendeeCheckedIn);
+  const [trail, setTrail] = useState<Trail>(initialTrail);
+  const [channelForm, setChannelForm] = useState<null | "rollout" | "channel">(null);
+  const [trailCh, setTrailCh] = useState(initialTrail.trailChannel);
+  const [staffCh, setStaffCh] = useState(initialTrail.staffChannel || "");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -134,6 +144,7 @@ export default function CommsChat({
           const data = await res.json();
           if (Array.isArray(data.messages)) setMessages(data.messages);
           if (typeof data.checkedIn === "boolean") setCheckedIn(data.checkedIn);
+          if (data.trail) setTrail(data.trail);
         }
       } catch {
         // Silent — next poll retries.
@@ -159,7 +170,7 @@ export default function CommsChat({
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages, tab]);
 
-  async function send(text: string, sosType?: string) {
+  async function send(text: string) {
     if (!text.trim() || sending) return;
     setSending(true);
     setError("");
@@ -169,7 +180,6 @@ export default function CommsChat({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text,
-          sosType,
           staffCode: isStaff ? staffCode : undefined,
           token: isStaff ? undefined : token,
           announcementFromStaff: isStaff && announceMode,
@@ -188,6 +198,25 @@ export default function CommsChat({
       setError(err instanceof Error ? err.message : "Couldn't send that — try again.");
     } finally {
       setSending(false);
+    }
+  }
+
+  /** Staff: Roll out / Change channel / Trail over. */
+  async function trailAction(action: "rollout" | "channel" | "over") {
+    if (action === "over" && !window.confirm("Trail over? Chat comes back for everyone, and the thank-you email goes out in 3 hours.")) return;
+    setError("");
+    try {
+      const res = await fetch(`/api/comms/${slug}/trail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffCode, action, trailChannel: trailCh, staffChannel: staffCh }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Couldn't update the trail. Try again.");
+      if (data.trail) setTrail(data.trail);
+      setChannelForm(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't update the trail. Try again.");
     }
   }
 
@@ -245,9 +274,34 @@ export default function CommsChat({
 
   const notCheckedIn = roster.filter((a) => !a.checkedIn);
   const alreadyCheckedIn = roster.filter((a) => a.checkedIn);
+  const updatedAt = trail.channelUpdatedAt ? formatTime(trail.channelUpdatedAt) : "";
+
+  // Attendees on the trail: the channel and the emergency note, nothing to
+  // scroll or type while driving. The next poll with signal flips it back.
+  if (!isStaff && trail.status === "On trail") {
+    return (
+      <div className="comms-chat comms-trail" role="status" aria-live="polite">
+        <span className="comms-wordmark" aria-hidden="true">Tailgate</span>
+        <div className="eyebrow accent">{eventTitle} · On Trail</div>
+        <div className="comms-trail-label">Radio channel</div>
+        <div className="comms-trail-channel">{trail.trailChannel || "—"}</div>
+        {updatedAt && (
+          <p className="comms-trail-updated">Updated {updatedAt} · channel changes are called over the radio</p>
+        )}
+        <p className="comms-trail-emergency">
+          <strong>In an emergency</strong>, get hold of staff on the radio and/or call <strong>911</strong>.
+        </p>
+        <p className="comms-trail-note">Eyes on the trail. Chat comes back when the trail ends.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="comms-chat">
+      {/* Tailgate look: compact hero so the chat below keeps most of the screen. */}
+      <div className="comms-hero" aria-hidden="true">
+        <span className="comms-wordmark">Tailgate</span>
+      </div>
       <div className={isStaff ? "comms-header comms-header-staff" : "comms-header"}>
         <div>
           <div className="eyebrow accent" style={{ fontSize: 11 }}>{eventTitle}</div>
@@ -282,27 +336,62 @@ export default function CommsChat({
         </div>
       )}
 
+      {/* Staff trail controls. Staff see both channels; attendees only ever
+       *  receive the trail channel (the server leaves the staff one out). */}
+      {isStaff && (
+        <div className="comms-trail-bar">
+          <div className="comms-trail-bar-status">
+            <span className={`comms-trail-pill ${trail.status === "On trail" ? "on" : trail.status === "Trail over" ? "over" : ""}`}>
+              {trail.status === "Not started" ? "Not rolled out" : trail.status}
+            </span>
+            {trail.status === "On trail" && (
+              <span className="comms-trail-bar-channels">
+                Trail <strong>CH {trail.trailChannel}</strong>
+                {trail.staffChannel && <> · Staff <strong>CH {trail.staffChannel}</strong></>}
+                {updatedAt && <span className="comms-trail-bar-updated"> · {updatedAt}</span>}
+              </span>
+            )}
+          </div>
+          {channelForm ? (
+            <form
+              className="comms-trail-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                trailAction(channelForm);
+              }}
+            >
+              <label>
+                Trail CH
+                <input value={trailCh} onChange={(e) => setTrailCh(e.target.value)} inputMode="numeric" maxLength={12} required />
+              </label>
+              <label>
+                Staff CH
+                <input value={staffCh} onChange={(e) => setStaffCh(e.target.value)} inputMode="numeric" maxLength={12} />
+              </label>
+              <button className="btn btn-primary btn-sm" type="submit">{channelForm === "rollout" ? "Roll Out" : "Update"}</button>
+              <button className="btn btn-outline btn-sm" type="button" onClick={() => setChannelForm(null)}>Cancel</button>
+            </form>
+          ) : (
+            <div className="comms-trail-actions">
+              {trail.status !== "On trail" && (
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setChannelForm("rollout")}>Roll Out</button>
+              )}
+              {trail.status === "On trail" && (
+                <>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setChannelForm("channel")}>Change Channel</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => trailAction("over")}>Trail Over</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {!isStaff && !checkedIn && (
         <p className="comms-notice">
           This goes to <strong>staff only</strong> — nobody else on the ride can see it. The group chat opens once
-          you&apos;re checked in at the safety meeting. Need help right now? Use SOS, it reaches everyone.
+          you&apos;re checked in at the safety meeting.
         </p>
-      )}
-
-      {tab !== "Roster" && (
-        <div className="comms-sos-row">
-          {SOS_OPTIONS.map((opt) => (
-            <button
-              key={opt.type}
-              type="button"
-              className="comms-sos-btn"
-              disabled={sending}
-              onClick={() => send(`Needs help — ${opt.label}`, opt.type)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
       )}
 
       {tab === "Roster" ? (
@@ -322,6 +411,11 @@ export default function CommsChat({
                     <div>
                       <strong>{a.screenName}</strong>
                       <span style={{ color: "var(--text-dim)", marginLeft: 6 }}>{a.vehicleCallsign}</span>
+                      {a.phone && (
+                        <a className="comms-roster-phone" href={`tel:${a.phone.replace(/[^\d+]/g, "")}`}>
+                          {a.phone}
+                        </a>
+                      )}
                       <button type="button" className="comms-roster-rename" onClick={() => rename(a.id, a.screenName)}>
                         Rename
                       </button>

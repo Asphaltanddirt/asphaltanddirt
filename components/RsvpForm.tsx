@@ -28,8 +28,8 @@ export default function RsvpForm({ slug }: { slug: string }) {
     const phone = ((data.get("phone") as string) || "").trim();
     const alreadyInFbGroup = (data.get("alreadyInFbGroup") as string) || "Not Sure";
 
-    if (!name || !email) {
-      setErrorMsg("Please fill out your name and email.");
+    if (!name || !email || phone.replace(/\D/g, "").length < 10) {
+      setErrorMsg("Please fill out your name, email and a phone number we can reach you at on the day.");
       setStatus("error");
       return;
     }
@@ -44,7 +44,7 @@ export default function RsvpForm({ slug }: { slug: string }) {
           slug,
           name,
           email,
-          phone: phone || undefined,
+          phone,
           alreadyInFbGroup,
           joinEventUpdatesList,
           joinNewsletter,
@@ -102,8 +102,17 @@ export default function RsvpForm({ slug }: { slug: string }) {
         </div>
         <div className="form-row">
           <div className="form-field">
-            <label htmlFor="rsvp-phone">Phone <span className="optional">(Optional)</span></label>
-            <input type="tel" id="rsvp-phone" name="phone" placeholder="For the rare day-of update" disabled={busy} />
+            <label htmlFor="rsvp-phone">Phone</label>
+            <input
+              type="tel"
+              id="rsvp-phone"
+              name="phone"
+              autoComplete="tel"
+              required
+              aria-describedby="rsvp-phone-help"
+              disabled={busy}
+            />
+            <small id="rsvp-phone-help" className="form-help">Staff only, so we can reach you on the day. Never shown to other riders.</small>
           </div>
           <div className="form-field">
             <label htmlFor="rsvp-fb">Already In Our Facebook Group?</label>

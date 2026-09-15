@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRecord, isAirtableConfigured } from "@/lib/airtable";
-import { getEventBySlug, isPastEvent } from "@/lib/events";
+import { getEventBySlug, uploadsOpen } from "@/lib/events";
 import {
   createSubmissionFolder,
   createUploadSession,
@@ -89,8 +89,8 @@ export async function POST(req: NextRequest) {
 
   const event = body.eventSlug ? await getEventBySlug(body.eventSlug) : null;
   if (!event) return NextResponse.json({ error: "We couldn't find that event." }, { status: 404 });
-  if (!isPastEvent(event.date)) {
-    return NextResponse.json({ error: "Photo sharing opens once the event has happened." }, { status: 400 });
+  if (!uploadsOpen(event.date)) {
+    return NextResponse.json({ error: "Photo sharing opens on the day of the event." }, { status: 400 });
   }
 
   try {

@@ -193,6 +193,9 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
 
 /** Sent when the 48-hour chat window closes — thanks + a nudge toward the
  *  event's Recap & Gallery page (lib/events.ts) to view or add photos. */
+/** Tailgate's thank-you email: goes out 3 hours after staff taps Trail over
+ *  (or at the end of the 48-hour window if nobody did). Its job is getting
+ *  photos and video in, so the upload link leads and it's clear it never expires. */
 export function buildCommsClosing(input: { recipientName: string; event: EventDetail; recapUrl: string }): EventEmail {
   const { recipientName, event, recapUrl } = input;
   const first = esc(firstNameOf(recipientName));
@@ -200,22 +203,28 @@ export function buildCommsClosing(input: { recipientName: string; event: EventDe
   const bodyRows = `
     <tr>
       <td align="center" style="padding:40px 32px 8px;">
-        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Thanks For Coming</p>
+        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Thanks For Riding With Us</p>
         <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title)}</h1>
       </td>
     </tr>
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0 0 16px;">The group chat for <strong>${esc(event.title)}</strong> is now closed. Thanks for being part of it &mdash; got photos or video from the day? Drop them on the recap page for everyone to see.</p>
+        <p style="margin:0 0 16px;">Thanks for coming out to <strong>${esc(event.title)}</strong>. Got photos or video from the day? Send them in full quality. Big video files are fine.</p>
+        <p style="margin:0 0 16px;"><strong>How:</strong> tap the button, pick your photos and videos, add your name, and hit send. We look at everything, and the best shots end up in the event gallery.</p>
       </td>
     </tr>
     <tr>
-      <td align="center" style="padding:8px 32px 24px;">
-        <a href="${recapUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">View Recap &amp; Add Photos &rarr;</a>
+      <td align="center" style="padding:8px 32px 8px;">
+        <a href="${recapUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Upload Photos &amp; Video &rarr;</a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:8px 32px 24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#7a746c;">
+        This link doesn&rsquo;t expire. Come back any time you find more.
       </td>
     </tr>
   `;
 
-  return { subject: `Thanks for coming: ${event.title}`, html: shell(`Thanks for coming to ${event.title}`, bodyRows) };
+  return { subject: `Thanks for riding: send us your photos from ${event.title}`, html: shell(`Send your photos and video from ${event.title}`, bodyRows) };
 }

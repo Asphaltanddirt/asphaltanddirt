@@ -92,6 +92,14 @@ export function isPastEvent(date: string): boolean {
   return date < new Date().toISOString().slice(0, 10);
 }
 
+/** The event's day has arrived (America/New_York) — photo and video uploads
+ *  open then, so the Tailgate thank-you email that goes out 3 hours after the
+ *  trail ends (same evening) links to a working upload form. */
+export function uploadsOpen(date: string): boolean {
+  const todayNy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+  return date <= todayNy;
+}
+
 /** Upcoming and past merged into one list, newest date first — the 3-wide
  *  showcase panel on the Events page. New events (almost always dated
  *  further out than what's already on the books) naturally slot in at the

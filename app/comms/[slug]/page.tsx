@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode, type MessageViewer } from "@/lib/eventComms";
+import { getCommsSettings, getVisibleMessages, getAttendeeByToken, getAttendeeRoster, isCommsOpen, isStaffCode, trailStateFor, type MessageViewer } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
 import CommsChat from "@/components/CommsChat";
 
@@ -23,7 +23,7 @@ export default async function CommsPage({
   const open = isCommsOpen(settings);
   const isStaff = isStaffCode(settings, staffParam);
 
-  if (!open) {
+  if (!open || !settings) {
     return (
       <section className="section-pt-tight section-pb-tight">
         <div className="container" style={{ maxWidth: 480, textAlign: "center" }}>
@@ -61,8 +61,10 @@ export default async function CommsPage({
     ? { kind: "staff" }
     : { kind: "attendee", attendeeId: attendee!.id, checkedIn: attendee!.checkedIn };
 
+  const trail = trailStateFor(settings, isStaff);
   const [messages, roster] = await Promise.all([
-    getVisibleMessages(slug, viewer),
+    // On the trail an attendee only gets the channel screen — no message list.
+    !isStaff && trail.status === "On trail" ? Promise.resolve([]) : getVisibleMessages(slug, viewer),
     isStaff ? getAttendeeRoster(slug) : Promise.resolve([]),
   ]);
 
@@ -77,6 +79,7 @@ export default async function CommsPage({
       attendeeVehicle={attendee?.vehicleCallsign || ""}
       attendeeCheckedIn={attendee?.checkedIn || false}
       initialRoster={roster}
+      initialTrail={trail}
     />
   );
 }
