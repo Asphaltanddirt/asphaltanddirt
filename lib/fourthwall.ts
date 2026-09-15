@@ -32,6 +32,9 @@ type FourthwallProduct = {
   description: string;
   images: FourthwallProductImage[];
   variants: FourthwallProductVariant[];
+  /** SOLD_OUT when the shop owner marks the whole product unavailable in
+   *  Fourthwall, even though each variant's stock still says UNLIMITED. */
+  state?: { type: string };
 };
 
 export type Product = {
@@ -70,7 +73,8 @@ function reshapeProduct(product: FourthwallProduct): Product | undefined {
   // correct for every product and this no longer needs a special case.
   const image = product.images[0];
   const inStock =
-    firstVariant.stock.type === "UNLIMITED" || (firstVariant.stock.inStock ?? 0) > 0;
+    product.state?.type !== "SOLD_OUT" &&
+    (firstVariant.stock.type === "UNLIMITED" || (firstVariant.stock.inStock ?? 0) > 0);
 
   return {
     id: product.id,
@@ -427,6 +431,7 @@ type FourthwallProductDetail = {
   slug: string;
   description: string;
   variants: FourthwallVariantDetail[];
+  state?: { type: string };
   sizeGuide?: {
     previewUrl?: string | null;
     fileUrl?: string | null;
@@ -450,7 +455,8 @@ function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
         sizes: [],
       });
     }
-    const inStock = v.stock.type === "UNLIMITED" || (v.stock.inStock ?? 0) > 0;
+    const inStock =
+      product.state?.type !== "SOLD_OUT" && (v.stock.type === "UNLIMITED" || (v.stock.inStock ?? 0) > 0);
     colorMap.get(colorName)!.sizes.push({
       variantId: v.id,
       name: v.attributes.size?.name ?? "One Size",
