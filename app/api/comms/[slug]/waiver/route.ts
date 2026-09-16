@@ -4,6 +4,8 @@ import { getEventBySlug } from "@/lib/events";
 import { buildPersonalCommsLink } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
+import { waiverForEvent } from "@/lib/waiverContext";
+import { waiverSnapshot } from "@/lib/waivers";
 
 const MAX_LENGTH = 120;
 
@@ -57,6 +59,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "Please acknowledge the privacy policy to continue." }, { status: 400 });
   }
 
+  // The document is rebuilt here, not trusted from the browser: it decides
+  // the rules below and is stored word for word with the signature.
+  const event = await getEventBySlug(slug);
+  const waiver = waiverForEvent(settings, event);
+
   const rawChildren = Array.isArray(body.children) ? body.children : [];
   const children: WaiverChild[] = rawChildren
     .map((c) => {
@@ -67,6 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         relationship: clean(child.relationship),
         mediaConsent: child.mediaConsent === true,
         attendanceDates: clean(child.attendanceDates),
+        vehicle: clean(child.vehicle),
       };
     })
     .filter((c) => c.name)
@@ -84,6 +92,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // rather not share it) — but a decline and a fill-in are mutually
   // exclusive, so the decline wins and the fields are stored empty.
   const emergencyContactDeclined = body.emergencyContactDeclined === true;
+  const adultParticipating = body.adultParticipating === true;
+  const postingTermsAccepted = body.postingTermsAccepted === true;
+
+  if (waiver.v11) {
+    // Children ride only with a parent or legal guardian who attends (section 8).
+    if (children.length > 0 && !adultParticipating) {
+      return NextResponse.json(
+        { error: "A parent or legal guardian listing children must attend and supervise them." },
+        { status: 400 },
+      );
+    }
+    if (children.some((c) => !c.vehicle)) {
+      return NextResponse.json({ error: "Please say which vehicle each child is riding in." }, { status: 400 });
+    }
+    if (!postingTermsAccepted) {
+      return NextResponse.json({ error: "Please accept the photo and video posting terms." }, { status: 400 });
+    }
+    const hasContact = Boolean(clean(body.emergencyContactName) && clean(body.emergencyContactPhone));
+    if (waiver.collectsEmergencyContact && !emergencyContactDeclined && !hasContact) {
+      return NextResponse.json(
+        { error: "Add an emergency contact, or choose that you don't have one to provide." },
+        { status: 400 },
+      );
+    }
+  }
 
   // Checked before saving: a brand-new sign-up is handed their chat link right
   // here, so a walk-up at the trailhead goes straight in without waiting on
@@ -100,7 +133,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     legalName,
     email,
     phone,
-    adultParticipating: body.adultParticipating === true,
+    adultParticipating,
     adultMediaConsent: body.adultMediaConsent === true,
     adultAttendanceDates: clean(body.adultAttendanceDates),
     signature,
@@ -114,9 +147,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     acceptedElectronicSignature,
     acknowledgedPrivacyNotice,
     children,
+    postingTermsAccepted,
+    agreementSnapshot: waiverSnapshot(waiver),
+    eventState: waiver.v11 ? settings.eventState || "New Jersey" : "",
+    venue: waiver.v11 ? settings.venue || event?.generalArea || "" : "",
+    eventDate: settings.eventDate,
   });
 
-  const event = await getEventBySlug(slug);
   if (event) {
     const commsUrl = `${SITE_URL}/comms/${slug}?token=${attendee.accessToken}`;
     try {

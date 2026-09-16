@@ -109,6 +109,15 @@ async function createFolder(name: string, parentId: string): Promise<string> {
   return folder.id;
 }
 
+/** Moves a file or folder to the Shared Drive's trash (Drive empties it after
+ *  30 days). Used by the retention cron for rejected submissions. */
+export async function trashDriveItem(fileId: string): Promise<void> {
+  await driveJson<DriveFile>(`/files/${encodeURIComponent(fileId)}?supportsAllDrives=true&fields=id`, {
+    method: "PATCH",
+    body: JSON.stringify({ trashed: true }),
+  });
+}
+
 export function folderUrl(folderId: string) {
   return `https://drive.google.com/drive/folders/${folderId}`;
 }

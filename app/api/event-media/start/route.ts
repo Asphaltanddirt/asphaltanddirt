@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PRIVACY_POLICY_VERSION, UPLOAD_TERMS_VERSION } from "@/lib/waivers";
 import { createRecord, isAirtableConfigured } from "@/lib/airtable";
 import { getEventBySlug, uploadsOpen } from "@/lib/events";
 import {
@@ -25,6 +26,11 @@ interface StartBody {
   name?: string;
   email?: string;
   consent?: boolean;
+  ageConfirmed?: boolean;
+  signature?: string;
+  esign?: boolean;
+  privacyAck?: boolean;
+  permissionNotes?: string;
   company?: string;
   files?: { name?: string; type?: string; size?: number }[];
 }
@@ -53,9 +59,18 @@ export async function POST(req: NextRequest) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
-  if (body.consent !== true) {
-    return NextResponse.json({ error: "Please confirm you have the right to share these." }, { status: 400 });
+  // Upload terms UPLOAD-1.1: every acknowledgment is part of the terms.
+  if (body.consent !== true || body.ageConfirmed !== true) {
+    return NextResponse.json({ error: "Please confirm the upload acknowledgment." }, { status: 400 });
   }
+  const signature = (body.signature || "").trim().slice(0, 120);
+  if (!signature || body.esign !== true) {
+    return NextResponse.json({ error: "Please type your full legal name as your signature." }, { status: 400 });
+  }
+  if (body.privacyAck !== true) {
+    return NextResponse.json({ error: "Please acknowledge the privacy policy." }, { status: 400 });
+  }
+  const permissionNotes = (body.permissionNotes || "").trim().slice(0, 2000);
 
   const files = Array.isArray(body.files) ? body.files : [];
   if (files.length === 0) return NextResponse.json({ error: "Add at least one photo or video." }, { status: 400 });
@@ -105,6 +120,11 @@ export async function POST(req: NextRequest) {
         Event: [event.id],
         Approved: false,
         "Rights Consent": true,
+        "Age Confirmed": true,
+        Signature: signature,
+        "Terms Version": UPLOAD_TERMS_VERSION,
+        "Privacy Notice Acknowledged": PRIVACY_POLICY_VERSION,
+        ...(permissionNotes ? { "Permission Notes": permissionNotes } : {}),
         "Upload Status": "Uploading",
         "Drive Folder": folderUrl(folderId),
         Source: "Event page",

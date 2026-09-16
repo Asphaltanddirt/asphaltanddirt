@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCommsSettings, isCommsOpen, staffViewer, setCheckedIn, getAttendeeRoster, renameAttendee } from "@/lib/eventComms";
+import {
+  getCommsSettings,
+  isCommsOpen,
+  staffViewer,
+  setCheckedIn,
+  getAttendeeRoster,
+  renameAttendee,
+  resetAttendeeLink,
+} from "@/lib/eventComms";
+import { getEventBySlug } from "@/lib/events";
+import { buildPersonalCommsLink } from "@/lib/eventEmails";
+import { sendEmail } from "@/lib/resendEmail";
+import { SITE_URL } from "@/lib/site";
 
 const MAX_SCREEN_NAME = 60;
 
@@ -10,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "This chat isn't open." }, { status: 404 });
   }
 
-  let body: { staffCode?: string; attendeeId?: string; attendeeIds?: string[]; checkedIn?: boolean; screenName?: string };
+  let body: { staffCode?: string; attendeeId?: string; attendeeIds?: string[]; checkedIn?: boolean; screenName?: string; resetLink?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -33,7 +45,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // A rename and a check-in toggle come through the same staff-gated route;
   // `screenName` present means "fix this person's name", nothing else.
   const screenName = (body.screenName || "").trim().slice(0, MAX_SCREEN_NAME);
-  if (screenName) {
+  if (body.resetLink) {
+    // Lost or forwarded link: new token (the old link stops working) and the
+    // new link goes only to the email on file, never back to the staff phone.
+    const [attendee, event] = await Promise.all([resetAttendeeLink(slug, ids[0]), getEventBySlug(slug)]);
+    if (!attendee) {
+      return NextResponse.json({ error: "Couldn't find that person." }, { status: 404 });
+    }
+    let emailed = false;
+    if (attendee.email && event) {
+      try {
+        const built = buildPersonalCommsLink({
+          recipientName: attendee.screenName,
+          event,
+          commsUrl: `${SITE_URL}/comms/${slug}?token=${attendee.accessToken}`,
+        });
+        await sendEmail({ to: attendee.email, subject: built.subject, html: built.html });
+        emailed = true;
+      } catch (err) {
+        console.error("comms link reset email failed", err);
+      }
+    }
+    const roster = await getAttendeeRoster(slug);
+    return NextResponse.json({ status: "ok", emailed, roster });
+  } else if (screenName) {
     await renameAttendee(slug, ids[0], screenName);
   } else {
     for (const id of ids) await setCheckedIn(slug, id, Boolean(body.checkedIn));

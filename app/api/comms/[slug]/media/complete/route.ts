@@ -6,9 +6,10 @@ import { verifyMediaPost } from "@/lib/tailgateMedia";
 
 /**
  * Finishes one file of a post. Checks Drive for the file rather than trusting
- * the phone, then shows the post in the feed. A photo posted to the group goes
- * straight into the public gallery (staff Hide takes it back out); staff-line
- * photos and all videos stay out of it.
+ * the phone, then shows the post in the feed. Nothing reaches the public
+ * gallery from here: a photo posted to the group waits for staff approval in
+ * A&D Garage → Media (agreement 1.1 section 10, privacy policy PRIVACY-1.1);
+ * staff-line photos and all videos never enter the gallery.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         "Photo Count": isPhoto ? 1 : 0,
         "Video Count": isPhoto ? 0 : 1,
         [isPhoto ? "Photo Links" : "Video Links"]: link,
-        Approved: isPhoto && message.channel === "Chat" && !message.hidden,
+        Approved: false,
       });
     }
     return NextResponse.json({ status: "Ready" });

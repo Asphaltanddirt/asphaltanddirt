@@ -32,6 +32,7 @@ const SETTINGS_TABLE = "Event Settings";
 const MESSAGES_TABLE = "Messages";
 const ATTENDEES_TABLE = "Attendees";
 const SIGNATURES_TABLE = "Waiver Signatures";
+export const EMERGENCY_CONTACTS_TABLE = "Emergency Contacts";
 const LIKES_TABLE = "Likes";
 
 // Chat is open for 48 hours from the reminder email (Activated At), e.g. 7 PM
@@ -115,6 +116,9 @@ export interface CommsSettings {
   staffChannel: string;
   channelUpdatedAt: string | null;
   trailOverAt: string | null;
+  /** Agreement 1.1+: governing-law state and exact venue for the header. */
+  eventState: string;
+  venue: string;
 }
 
 function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
@@ -133,6 +137,8 @@ function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
     staffChannel: (r.fields["Staff Channel"] as string) || "",
     channelUpdatedAt: (r.fields["Channel Updated At"] as string) || null,
     trailOverAt: (r.fields["Trail Over At"] as string) || null,
+    eventState: (r.fields["Event State"] as string) || "",
+    venue: (r.fields.Venue as string) || "",
   };
 }
 
@@ -326,6 +332,8 @@ export interface WaiverChild {
   relationship: string;
   mediaConsent: boolean;
   attendanceDates?: string;
+  /** 1.1: which vehicle the child rides in. */
+  vehicle?: string;
 }
 
 export interface WaiverSubmission {
@@ -352,6 +360,14 @@ export interface WaiverSubmission {
   acceptedElectronicSignature: boolean;
   acknowledgedPrivacyNotice: boolean;
   children: WaiverChild[];
+  /** 1.1: accepted section 10 (media submissions) once for this event. */
+  postingTermsAccepted?: boolean;
+  /** The full agreement text as shown, with event details filled in. */
+  agreementSnapshot?: string;
+  eventState?: string;
+  venue?: string;
+  /** YYYY-MM-DD, for the emergency contact's deletion date. */
+  eventDate?: string;
 }
 
 /** Waiver acceptance. Writes two rows: the Attendee (chat identity + access
@@ -420,11 +436,17 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
     childFields[`Child ${n} Relationship`] = child.relationship;
     childFields[`Child ${n} Media Consent`] = child.mediaConsent;
     if (child.attendanceDates) childFields[`Child ${n} Attendance Dates`] = child.attendanceDates;
+    if (child.vehicle) childFields[`Child ${n} Vehicle`] = child.vehicle;
   });
+
+  // Emergency contacts live in their own table so they can be deleted 90 days
+  // after the event without touching the long-term signed agreement
+  // (privacy policy PRIVACY-1.1). The signature only records that one was given.
+  const hasEmergencyContact = Boolean(input.emergencyContactName || input.emergencyContactPhone);
 
   // The signature is the legally meaningful artifact — if this write fails
   // the caller should know, so it isn't swallowed like the email send is.
-  await createRecord(
+  const signatureRecord = await createRecord(
     SIGNATURES_TABLE,
     {
       "Legal Name": input.legalName,
@@ -437,12 +459,12 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
       ...(input.adultAttendanceDates ? { "Adult Attendance Dates": input.adultAttendanceDates } : {}),
       Signature: input.signature,
       "Signed At": signedAt,
-      ...(input.emergencyContactName ? { "Emergency Contact Name": input.emergencyContactName } : {}),
-      ...(input.emergencyContactPhone ? { "Emergency Contact Phone": input.emergencyContactPhone } : {}),
-      ...(input.emergencyContactRelationship
-        ? { "Emergency Contact Relationship": input.emergencyContactRelationship }
-        : {}),
+      ...(hasEmergencyContact ? { "Emergency Contact Given": true } : {}),
       ...(input.emergencyContactDeclined ? { "No Emergency Contact": true } : {}),
+      ...(input.postingTermsAccepted ? { "Posting Terms Accepted": true } : {}),
+      ...(input.eventState ? { "Event State": input.eventState } : {}),
+      ...(input.venue ? { Venue: input.venue } : {}),
+      ...(input.agreementSnapshot ? { "Agreement Snapshot": input.agreementSnapshot } : {}),
       "Accepted Adult Terms": input.acceptedAdultTerms,
       "Accepted Parental Authority": input.acceptedParentalAuthority,
       "Accepted Media Scope": input.acceptedMediaScope,
@@ -452,6 +474,26 @@ export async function submitWaiver(input: WaiverSubmission): Promise<Attendee> {
     },
     { baseId: BASE_ID, typecast: true },
   );
+
+  if (hasEmergencyContact) {
+    const eventDate = input.eventDate || signedAt.slice(0, 10);
+    const deleteAfter = new Date(`${eventDate}T12:00:00Z`);
+    deleteAfter.setUTCDate(deleteAfter.getUTCDate() + 90);
+    await createRecord(
+      EMERGENCY_CONTACTS_TABLE,
+      {
+        "Contact Name": input.emergencyContactName || "",
+        Phone: input.emergencyContactPhone || "",
+        Relationship: input.emergencyContactRelationship || "",
+        "Event Slug": input.eventSlug,
+        "Participant Legal Name": input.legalName,
+        "Signature Record Id": signatureRecord.id,
+        "Event Date": eventDate,
+        "Delete After": deleteAfter.toISOString().slice(0, 10),
+      },
+      { baseId: BASE_ID, typecast: true },
+    );
+  }
 
   return attendee;
 }
@@ -477,6 +519,20 @@ export async function renameAttendee(slug: string, attendeeId: string, screenNam
   assertConfigured();
   await updateRecord(ATTENDEES_TABLE, attendeeId, { "Screen Name": screenName }, { baseId: BASE_ID });
   expire("attendees", slug);
+}
+
+/** Staff "Reset Link": a lost or forwarded link gets a fresh Access Token,
+ *  so the old link stops working the moment the cache is expired. Returns the
+ *  updated attendee (server-side only, it carries the new token and email). */
+export async function resetAttendeeLink(slug: string, attendeeId: string): Promise<Attendee | null> {
+  assertConfigured();
+  const attendees = await getEventAttendees(slug);
+  const attendee = attendees.find((a) => a.id === attendeeId);
+  if (!attendee) return null;
+  const accessToken = crypto.randomBytes(16).toString("hex");
+  await updateRecord(ATTENDEES_TABLE, attendeeId, { "Access Token": accessToken }, { baseId: BASE_ID });
+  expire("attendees", slug);
+  return { ...attendee, accessToken };
 }
 
 /** Every attendee for one event, from the shared cache (see top of file).

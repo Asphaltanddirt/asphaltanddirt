@@ -558,6 +558,25 @@ export default function CommsChat({
     }
   }
 
+  /** Lost phone or a forwarded link: the old link stops working and a new
+   *  one is emailed to the address they signed up with. */
+  async function resetLink(id: string, name: string) {
+    if (!confirmed(`Reset ${name}'s link? Their old link stops working and a new one is emailed to them.`)) return;
+    try {
+      const res = await fetch(`/api/comms/${slug}/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffCode, attendeeId: id, resetLink: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Couldn't reset the link. Try again.");
+      if (Array.isArray(data.roster)) setRoster(data.roster);
+      if (!data.emailed) setError(`${name}'s old link is off, but the new email didn't send. Try Reset Link again.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't reset the link. Try again.");
+    }
+  }
+
   // No filtering here on purpose. Who sees what is decided server-side in
   // lib/eventComms.ts (visibleMessagesFor) — hiding messages in the browser
   // would leave them sitting in the page payload and the API response for
@@ -760,6 +779,9 @@ export default function CommsChat({
                           )}
                           <button type="button" className="comms-roster-rename" onClick={() => rename(a.id, a.screenName)}>
                             Rename
+                          </button>
+                          <button type="button" className="comms-roster-rename" onClick={() => resetLink(a.id, a.screenName)}>
+                            Reset Link
                           </button>
                           {/* Lets staff open a private line with someone who
                            *  hasn't messaged first — Reply only exists on a
@@ -970,7 +992,7 @@ export default function CommsChat({
               </ul>
               <p>
                 Only post what you took or have permission to share.
-                {(isStaff || checkedIn) && " Photos posted here also go in the event's public gallery."}
+                {(isStaff || checkedIn) && " Everyone checked in sees it right away; photos reach the event's public gallery only after staff approve them."}
               </p>
             </div>
           )}

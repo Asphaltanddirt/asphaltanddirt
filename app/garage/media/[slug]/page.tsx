@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GaragePhotoGrid, { type GaragePhoto } from "@/components/GaragePhotoGrid";
-import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
+import { canRunEvents, canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
+import GaragePhotoReview from "@/components/GaragePhotoReview";
+import { getPendingPhotos } from "@/lib/eventMedia";
 import { getPhotoMarks } from "@/lib/garageMedia";
 import { getEventBySlug, getEventGalleryPhotos, getEventSubmissionPhotos } from "@/lib/events";
 import { getTailgatePhotos } from "@/lib/eventComms";
@@ -25,11 +27,12 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const [tailgate, uploads, gallery, marks] = await Promise.all([
+  const [tailgate, uploads, gallery, marks, pending] = await Promise.all([
     getTailgatePhotos(slug).catch(() => []),
     getEventSubmissionPhotos(event.id).catch(() => []),
     getEventGalleryPhotos(slug).catch(() => []),
     getPhotoMarks().catch(() => []),
+    canRunEvents(session) ? getPendingPhotos(event.id).catch(() => []) : Promise.resolve([]),
   ]);
   const byKey = new Map(marks.map((m) => [m.key, m]));
   const me = session.email.toLowerCase();
@@ -84,6 +87,7 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
         <p className="garage-event-area">
           {photos.length} photo{photos.length === 1 ? "" : "s"}
         </p>
+        {pending.length > 0 && <GaragePhotoReview photos={pending} />}
         <GaragePhotoGrid photos={photos} eventSlug={slug} canRestore={canSeeOwnerOnly(session)} />
       </div>
     </div>

@@ -96,3 +96,53 @@ export async function updateSubmission(recordId: string, fields: Record<string, 
 export function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+export interface PendingPhoto {
+  submissionId: string;
+  index: number;
+  url: string;
+  name: string;
+  source: string;
+  permissionNotes: string;
+  submittedAt: string;
+}
+
+/** Photos waiting for staff approval before the public gallery: not yet
+ *  approved, not rejected, finished uploading. One entry per photo file;
+ *  approval is per submission (a Tailgate post is one photo per submission). */
+export async function getPendingPhotos(eventRecordId: string): Promise<PendingPhoto[]> {
+  const records = await listRecords(
+    MEDIA_TABLE,
+    `AND(NOT({Approved}), NOT({Rejected}), {Upload Status} = 'Complete')`,
+    { baseId: MEDIA_BASE_ID },
+  );
+  const out: PendingPhoto[] = [];
+  for (const r of records) {
+    if (!((r.fields.Event as string[]) || []).includes(eventRecordId)) continue;
+    ((r.fields.Photo as { url: string; thumbnails?: { large?: { url: string } } }[] | undefined) || []).forEach((p, i) => {
+      out.push({
+        submissionId: r.id,
+        index: i,
+        url: p.thumbnails?.large?.url || p.url,
+        name: (r.fields.Name as string) || "Someone",
+        source: (r.fields.Source as string) || "Event page",
+        permissionNotes: (r.fields["Permission Notes"] as string) || "",
+        submittedAt: r.createdTime,
+      });
+    });
+  }
+  return out.sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
+}
+
+/** Staff decision on a submission: approve publishes it to the gallery,
+ *  reject keeps it off (and starts the 90-day deletion clock). */
+export async function reviewSubmission(recordId: string, decision: "approve" | "reject", by: string) {
+  await updateRecord(
+    MEDIA_TABLE,
+    recordId,
+    decision === "approve"
+      ? { Approved: true, Rejected: false, "Reviewed By": by, "Reviewed At": new Date().toISOString() }
+      : { Approved: false, Rejected: true, "Reviewed By": by, "Reviewed At": new Date().toISOString() },
+    { baseId: MEDIA_BASE_ID },
+  );
+}

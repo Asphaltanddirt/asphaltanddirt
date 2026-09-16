@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PRIVACY_POLICY_PATH, PRIVACY_POLICY_VERSION, type WaiverDocument } from "@/lib/waivers";
+import { PRIVACY_POLICY_LABEL, PRIVACY_POLICY_PATH, type WaiverDocument } from "@/lib/waivers";
 
 interface ChildEntry {
   name: string;
@@ -9,9 +9,27 @@ interface ChildEntry {
   relationship: string;
   mediaConsent: boolean;
   attendanceDates: string;
+  vehicle: string;
 }
 
-const emptyChild: ChildEntry = { name: "", age: "", relationship: "", mediaConsent: false, attendanceDates: "" };
+const emptyChild: ChildEntry = { name: "", age: "", relationship: "", mediaConsent: false, attendanceDates: "", vehicle: "" };
+
+/** Yes / No media choice (1.1). Nothing picked means no permission. */
+function MediaChoice({ name, value, onChange, disabled, label }: { name: string; value: boolean | null; onChange: (v: boolean) => void; disabled: boolean; label: string }) {
+  return (
+    <fieldset className="waiver-choice">
+      <legend>{label}</legend>
+      <label className="waiver-check">
+        <input type="radio" name={name} checked={value === true} onChange={() => onChange(true)} disabled={disabled} />
+        Yes, I consent
+      </label>
+      <label className="waiver-check">
+        <input type="radio" name={name} checked={value === false} onChange={() => onChange(false)} disabled={disabled} />
+        No, I decline
+      </label>
+    </fieldset>
+  );
+}
 
 /** Renders a waiver section body: blank-line-separated paragraphs, with
  *  "• " lines grouped into a list. */
@@ -65,6 +83,12 @@ export default function WaiverForm({
   const [acceptedMediaScope, setAcceptedMediaScope] = useState(false);
   const [acceptedElectronicSignature, setAcceptedElectronicSignature] = useState(false);
   const [acknowledgedPrivacyNotice, setAcknowledgedPrivacyNotice] = useState(false);
+  const [postingTermsAccepted, setPostingTermsAccepted] = useState(false);
+  // 1.1 asks Yes/No explicitly; null = not answered (treated as no).
+  const [adultMediaChoice, setAdultMediaChoice] = useState<boolean | null>(null);
+  const [childMediaChoices, setChildMediaChoices] = useState<(boolean | null)[]>([]);
+  const [emergencyChoice, setEmergencyChoice] = useState<"" | "provide" | "decline">("");
+  const v11 = Boolean(waiver.v11);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   // New sign-ups go straight into Tailgate; a repeat sign-up gets the link by email.
   const [commsPath, setCommsPath] = useState("");
@@ -104,11 +128,28 @@ export default function WaiverForm({
       setError("Please acknowledge the privacy policy to continue.");
       return;
     }
-    const namedChildren = children.filter((c) => c.name.trim());
+    const namedChildren = children
+      .map((c, i) => ({ ...c, mediaConsent: v11 ? childMediaChoices[i] === true : c.mediaConsent }))
+      .filter((c) => c.name.trim());
     if (namedChildren.length > 0 && !acceptedParentalAuthority) {
       setError("Please confirm you're the parent or legal guardian of the children listed.");
       return;
     }
+    if (v11) {
+      if (namedChildren.some((c) => !c.vehicle.trim())) {
+        setError("Please say which vehicle each child is riding in.");
+        return;
+      }
+      if (!postingTermsAccepted) {
+        setError("Please accept the photo and video posting terms.");
+        return;
+      }
+      if (waiver.collectsEmergencyContact && !emergencyChoice) {
+        setError("Please choose whether you'll give an emergency contact.");
+        return;
+      }
+    }
+    const declined = v11 ? emergencyChoice === "decline" : noEmergencyContact;
 
     setStatus("submitting");
     try {
@@ -121,14 +162,15 @@ export default function WaiverForm({
           phone,
           screenName,
           vehicleCallsign,
-          adultParticipating,
-          adultMediaConsent,
+          adultParticipating: v11 && namedChildren.length > 0 ? true : adultParticipating,
+          adultMediaConsent: v11 ? adultMediaChoice === true : adultMediaConsent,
           adultAttendanceDates,
           signature,
-          emergencyContactName: noEmergencyContact ? "" : emergencyName,
-          emergencyContactPhone: noEmergencyContact ? "" : emergencyPhone,
-          emergencyContactRelationship: noEmergencyContact ? "" : emergencyRelationship,
-          emergencyContactDeclined: noEmergencyContact,
+          emergencyContactName: declined ? "" : emergencyName,
+          emergencyContactPhone: declined ? "" : emergencyPhone,
+          emergencyContactRelationship: declined ? "" : emergencyRelationship,
+          emergencyContactDeclined: declined,
+          postingTermsAccepted,
           acceptedAdultTerms,
           acceptedParentalAuthority,
           acceptedMediaScope,
@@ -192,6 +234,13 @@ export default function WaiverForm({
       <div className="form-section">
         <div className="form-section-title">{waiver.title}</div>
         <p className="form-section-hint">{waiver.subtitle}</p>
+        {waiver.header && waiver.header.length > 0 && (
+          <div className="waiver-header">
+            {waiver.header.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        )}
         {waiver.notice && <p className="waiver-notice">{waiver.notice}</p>}
         <div className="waiver-text">
           {waiver.sections.map((section, i) => (
@@ -275,14 +324,26 @@ export default function WaiverForm({
           </div>
         )}
 
-        <label className="waiver-check">
-          <input type="checkbox" checked={adultParticipating} onChange={(e) => setAdultParticipating(e.target.checked)} disabled={busy} />
-          I am also {waiver.participationLabel} (leave unticked if you&apos;re only signing for children)
-        </label>
-        <label className="waiver-check">
-          <input type="checkbox" checked={adultMediaConsent} onChange={(e) => setAdultMediaConsent(e.target.checked)} disabled={busy} />
-          <strong>Media permission:</strong>&nbsp;I consent to photo, video, and audio of me being used as described above
-        </label>
+        {v11 ? (
+          <MediaChoice
+            name="w-media"
+            label="My optional media choice under section 9"
+            value={adultMediaChoice}
+            onChange={setAdultMediaChoice}
+            disabled={busy}
+          />
+        ) : (
+          <>
+            <label className="waiver-check">
+              <input type="checkbox" checked={adultParticipating} onChange={(e) => setAdultParticipating(e.target.checked)} disabled={busy} />
+              I am also {waiver.participationLabel} (leave unticked if you&apos;re only signing for children)
+            </label>
+            <label className="waiver-check">
+              <input type="checkbox" checked={adultMediaConsent} onChange={(e) => setAdultMediaConsent(e.target.checked)} disabled={busy} />
+              <strong>Media permission:</strong>&nbsp;I consent to photo, video, and audio of me being used as described above
+            </label>
+          </>
+        )}
       </div>
 
       <div className="form-section">
@@ -290,6 +351,7 @@ export default function WaiverForm({
         <p className="form-section-hint">
           Only if you&apos;re bringing children you&apos;re the parent or legal guardian of. Up to 4 — more require a signed
           paper attachment.
+          {v11 && " You must attend and supervise them. Anyone 18 or older signs their own agreement."}
         </p>
         {children.map((child, i) => (
           <div key={i} className="waiver-child">
@@ -308,6 +370,12 @@ export default function WaiverForm({
                 <label htmlFor={`c-rel-${i}`}>Relationship To You</label>
                 <input id={`c-rel-${i}`} value={child.relationship} onChange={(e) => updateChild(i, { relationship: e.target.value })} disabled={busy} maxLength={60} />
               </div>
+              {v11 && (
+                <div className="form-field">
+                  <label htmlFor={`c-vehicle-${i}`}>Vehicle They Ride In</label>
+                  <input id={`c-vehicle-${i}`} value={child.vehicle} onChange={(e) => updateChild(i, { vehicle: e.target.value })} placeholder="e.g. Red JK" required disabled={busy} maxLength={60} />
+                </div>
+              )}
               {waiver.collectsAttendanceDates && (
                 <div className="form-field">
                   <label htmlFor={`c-dates-${i}`}>Attendance Dates</label>
@@ -315,11 +383,24 @@ export default function WaiverForm({
                 </div>
               )}
             </div>
-            <label className="waiver-check">
-              <input type="checkbox" checked={child.mediaConsent} onChange={(e) => updateChild(i, { mediaConsent: e.target.checked })} disabled={busy} />
-              Media permission for this child
-            </label>
-            <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => setChildren((prev) => prev.filter((_, j) => j !== i))}>
+            {v11 ? (
+              <MediaChoice
+                name={`c-media-${i}`}
+                label="Media under section 9 for this child"
+                value={childMediaChoices[i] ?? null}
+                onChange={(v) => setChildMediaChoices((prev) => { const next = [...prev]; next[i] = v; return next; })}
+                disabled={busy}
+              />
+            ) : (
+              <label className="waiver-check">
+                <input type="checkbox" checked={child.mediaConsent} onChange={(e) => updateChild(i, { mediaConsent: e.target.checked })} disabled={busy} />
+                Media permission for this child
+              </label>
+            )}
+            <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => {
+              setChildren((prev) => prev.filter((_, j) => j !== i));
+              setChildMediaChoices((prev) => prev.filter((_, j) => j !== i));
+            }}>
               Remove
             </button>
           </div>
@@ -331,7 +412,47 @@ export default function WaiverForm({
         )}
       </div>
 
-      {waiver.collectsEmergencyContact && (
+      {waiver.collectsEmergencyContact && v11 && (
+        <div className="form-section">
+          <div className="form-section-title">Emergency Contact</div>
+          <p className="form-section-hint">
+            An emergency contact is optional. Providing one may help us reach someone if you cannot communicate. Please
+            tell that person you have given us their details for event safety. Declining does not prevent emergency
+            assistance but may make notification harder.
+          </p>
+          <fieldset className="waiver-choice">
+            <legend>Select one</legend>
+            <label className="waiver-check">
+              <input type="radio" name="w-ec-choice" checked={emergencyChoice === "provide"} onChange={() => setEmergencyChoice("provide")} disabled={busy} />
+              I will provide a contact.
+            </label>
+            <label className="waiver-check">
+              <input type="radio" name="w-ec-choice" checked={emergencyChoice === "decline"} onChange={() => setEmergencyChoice("decline")} disabled={busy} />
+              I do not have a contact to provide or prefer not to share one.
+            </label>
+          </fieldset>
+          {emergencyChoice === "provide" && (
+            <>
+              <div className="form-row">
+                <div className="form-field">
+                  <label htmlFor="w-ec-name">Contact Name</label>
+                  <input id="w-ec-name" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} required disabled={busy} maxLength={120} />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="w-ec-phone">Phone</label>
+                  <input id="w-ec-phone" type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} required disabled={busy} maxLength={40} />
+                </div>
+              </div>
+              <div className="form-field">
+                <label htmlFor="w-ec-rel">Relationship</label>
+                <input id="w-ec-rel" value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} required disabled={busy} maxLength={60} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {waiver.collectsEmergencyContact && !v11 && (
         <div className="form-section">
           <div className="form-section-title">
             Emergency Contact {noEmergencyContact && <span className="optional">(Skipped)</span>}
@@ -379,11 +500,15 @@ export default function WaiverForm({
           <input type="checkbox" checked={acceptedAdultTerms} onChange={(e) => setAcceptedAdultTerms(e.target.checked)} disabled={busy} />
           {waiver.version === "POP-UP-1.0"
             ? "I am at least 18 and have read, understand, and accept the communications and privacy terms."
-            : "I am at least 18, have read and understand this agreement, and voluntarily accept it, including the adult liability release."}
+            : v11
+              ? "Required: I am at least 18, have read and understand this agreement, and voluntarily accept it, including the adult release in section 5."
+              : "I am at least 18, have read and understand this agreement, and voluntarily accept it, including the adult liability release."}
         </label>
         <label className="waiver-check">
           <input type="checkbox" checked={acceptedParentalAuthority} onChange={(e) => setAcceptedParentalAuthority(e.target.checked)} disabled={busy} />
-          If children are listed, I confirm my authority and give the stated parental permissions.
+          {v11
+            ? "If children are listed: I confirm my authority, give the stated parental permissions, and will attend and supervise as required by section 8."
+            : "If children are listed, I confirm my authority and give the stated parental permissions."}
         </label>
         {waiver.collectsMediaScopeAcknowledgment && (
           <label className="waiver-check">
@@ -391,9 +516,17 @@ export default function WaiverForm({
             I understand that media permission applies only to people for whom consent is selected.
           </label>
         )}
+        {v11 && (
+          <label className="waiver-check">
+            <input type="checkbox" checked={postingTermsAccepted} onChange={(e) => setPostingTermsAccepted(e.target.checked)} disabled={busy} />
+            Required: for any photo or video I post in Tailgate during this event, I have the necessary rights and permissions and accept the media-submission terms in section 10.
+          </label>
+        )}
         <label className="waiver-check">
           <input type="checkbox" checked={acceptedElectronicSignature} onChange={(e) => setAcceptedElectronicSignature(e.target.checked)} disabled={busy} />
-          If signing electronically, I intend my electronic signature to serve as my signature on this agreement.
+          {v11
+            ? "If signing electronically: I intend my typed full legal name to be my signature on this agreement and the choices recorded here."
+            : "If signing electronically, I intend my electronic signature to serve as my signature on this agreement."}
         </label>
 
         <div className="waiver-privacy">
@@ -403,17 +536,15 @@ export default function WaiverForm({
               Read the Privacy Policy &rarr;
             </a>
             <br />
-            Policy ID: {PRIVACY_POLICY_VERSION} &middot; Version 1.0 — September 12, 2026
+            {PRIVACY_POLICY_LABEL}
           </p>
           <label className="waiver-check">
             <input type="checkbox" checked={acknowledgedPrivacyNotice} onChange={(e) => setAcknowledgedPrivacyNotice(e.target.checked)} disabled={busy} />
-            I acknowledge that the Privacy Policy has been made available to me and explains how registration
-            information, communications data, children&apos;s information, and event media are handled.
+            Required: The Event Privacy Policy has been made available to me and explains registration information,
+            staff access, attendee communications, children&apos;s information, public media, service providers, and
+            retention. This acknowledgment is not photo or video permission, consent to optional marketing, or a
+            substitute for any separately required parental consent.
           </label>
-          <p className="form-section-hint" style={{ marginTop: 8, marginBottom: 0 }}>
-            This acknowledgment does not grant photo/video permission, consent to optional marketing, or replace any
-            separately required parental consent. Your media choices are recorded separately in this registration.
-          </p>
         </div>
 
         <div className="form-field mt-3">

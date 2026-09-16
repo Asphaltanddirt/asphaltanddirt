@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PRIVACY_POLICY_LABEL, PRIVACY_POLICY_VERSION } from "@/lib/waivers";
 
 export const metadata: Metadata = {
   title: "Event Registration, Communications & Media Privacy Policy",
@@ -6,156 +7,146 @@ export const metadata: Metadata = {
     "How Asphalt & Dirt handles registration information, communications data, children's information, and event media.",
 };
 
-export const POLICY_VERSION = "PRIVACY-1.0";
-
-/** Effective date, retention periods and safeguards were filled 2026-09-15 and
- *  reflect the stack as actually built (Airtable / Google Drive / Resend /
- *  Vercel). Retention promises need a scheduled cleanup to stay true: Tailgate
- *  records don't delete themselves. The mailing address is the same one the
- *  email footers use (NEWSLETTER_MAILING_ADDRESS), so changing it there changes
- *  it everywhere (Jose 9/16: his address for now, no paid mailbox). */
+/** PRIVACY-1.1, published 2026-09-16. Merges the reviewed 1.1 replacement
+ *  sections (staff access, media approval, providers, retention) into the 1.0
+ *  policy. The label comes from lib/waivers.ts so the policy and every form show
+ *  the same ID and date. Retention promises are kept by /api/cron/retention
+ *  (lib/retention.ts: emergency contacts, rejected submissions); messages and
+ *  signed agreements aren't due before 2028 / 2033. Backups: Airtable snapshots up to a year
+ *  on the Team plan, Google up to 6 months, Resend logs 30 days, so "one year".
+ *  The mailing address is the email-footer one (NEWSLETTER_MAILING_ADDRESS). */
 const MAILING_ADDRESS = process.env.NEWSLETTER_MAILING_ADDRESS || "[TBD]";
-const ORGANIZER = "JLDA Holding Corp d/b/a Asphalt & Dirt";
-const EFFECTIVE = "Version 1.0 — Effective September 15, 2026";
+const ORGANIZER = "JLDA Holdings Corp, a New Jersey corporation d/b/a Asphalt & Dirt";
+const POLICY_VERSION = PRIVACY_POLICY_VERSION;
+const EFFECTIVE = PRIVACY_POLICY_LABEL.split(" | ").slice(1).join(" · ");
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "What This Policy Covers",
-    body: `This policy explains how ${ORGANIZER} ("the Organizer") collects, uses, shares, and retains personal information in connection with:
+    body: `This policy explains how ${ORGANIZER} ("A&D" or "the Organizer") collects, uses, shares, and retains personal information in connection with:
 • One-day off-road events.
 • Multi-day off-road events.
 • Pop-up meetups, including meals, car shows, and social gatherings.
 • Event registration, signed agreements, and parental permissions.
-• Our backup communications system.
-• Event photographs, videos, and audio recordings.
+• Tailgate, our event communications system.
+• Event photographs, videos, and audio recordings, including media you submit.
 
 It applies to information handled by the Organizer. Independently operated venues, government agencies, social media platforms, and other services may handle information under their own privacy policies.
 
-This policy explains our information practices. It is not a liability waiver, and acknowledging it does not grant photo/video permission or consent to unrelated marketing.`,
+This policy explains our information practices. It is not a liability waiver, and acknowledging it does not grant photo or video permission or consent to optional marketing.`,
   },
   {
     heading: "Information We Collect",
-    body: `Registration and agreement information. We collect the information requested on the applicable registration form, which may include: adult legal name, email address, and telephone number; event selection and attendance dates; whether the adult is participating; signature, signing date, agreement version, and acceptance records; photo, video, and audio permission choices; and emergency contact name, telephone number, and relationship.
+    body: `Registration and agreement information. We collect the information requested on the applicable registration form, which may include: adult legal name, email address, and telephone number; screen name and vehicle name; event selection and attendance dates; whether the adult is participating; signature, signing date, agreement version, the accepted agreement text, and acceptance records; photo, video, and audio permission choices; and, if you choose to provide one, an emergency contact's name, telephone number, and relationship.
 
-When a parent or legal guardian registers a child, we also collect the child's legal name, age, relationship to the signing adult, attendance information where applicable, and the adult's permission choices.
+When a parent or legal guardian registers a child, we also collect the child's legal name, age, relationship to the signing adult, the vehicle the child will ride in, attendance information where applicable, and the adult's permission choices for that child.
 
-Communications information. We process the information needed to provide and administer the backup communications system, including display names, vehicle callsigns, group membership, and messages users submit.
+Communications information. We process the information needed to provide and administer Tailgate, including screen names, vehicle names, check-in status, and messages and media users submit.
+
+Submitted media. When you send photos or videos through an event page or Tailgate, we collect the files, your name and email address, your permission choices and notes, your signature and the terms version you accepted, and your confirmation that you are 18 or older.
 
 Technical information. Our services and their providers may process technical information such as IP addresses, browser and device information, access times, and error records. The providers involved are identified below.
-
-Event media. We may collect photographs, videos, and audio recordings during events and media voluntarily submitted to us. Our use of identifiable event media is governed by the separate media choices in the applicable event agreement.
 
 Safety and incident information. If an incident occurs, we may receive information reasonably needed to seek assistance, document the incident, communicate with those involved, or handle an insurance or legal matter. Please avoid sending unnecessary medical or other sensitive information through group channels.`,
   },
   {
     heading: "Why We Use Information",
-    body: `We use personal information to register participants and administer events; document agreements, parental permissions, and media choices; coordinate attendance and distribute event instructions; provide and manage communications access; protect participants' contact information from unnecessary disclosure to other users; respond to questions, safety concerns, and misuse reports; contact emergency contacts or emergency services when appropriate; maintain necessary incident, insurance, and legal records; publish and manage event media in accordance with permission choices; maintain system reliability and security; and meet applicable legal obligations.
+    body: `We use personal information to register participants and administer events; document agreements, parental permissions, and media choices; coordinate check-in, attendance, and event instructions; provide and manage Tailgate access; protect participants' contact information from unnecessary disclosure to other attendees; respond to questions, safety concerns, and misuse reports; contact emergency contacts or emergency services when appropriate; maintain necessary incident and legal records; review, publish, and manage event media in accordance with permission choices; maintain system reliability and security; and meet applicable legal obligations.
 
 Information required to administer participation may be necessary to complete registration. Media permission is separate and may be declined.`,
   },
   {
-    heading: "What Other Participants Can See",
-    body: `The backup communications system is configured to help participants communicate without sharing their last names, email addresses, or telephone numbers with other participants.
+    heading: "Staff Access And Attendee Visibility",
+    body: `${ORGANIZER} uses private registration information to record event agreements, administer participation, coordinate check-in, and support event safety. Authorized event staff may access information needed for those tasks. The staff roster includes attendee telephone numbers, vehicle identifiers, and check-in status. Staff may use roster information for safety and event coordination, not unrelated personal purposes.
 
-Participants should use the designated display name or identifier. Other users may see that identifier and information shared in channels or groups they can access.
+Tailgate shows your screen name and vehicle name to other attendees. It does not display your private registration fields, such as legal name, email address, or telephone number, in attendee profiles. Messages or media you choose to share may reveal your identity or other information. Other viewers may copy that content; screen names do not guarantee anonymity.
 
-Private registration information, including children's legal names, signatures, and emergency contacts, is not intended for participant-visible profiles or channels.
+Before staff check you in, messages you send through Tailgate go to staff only. After check-in, group messages and posted media are visible to other checked-in participants when chat is open. Staff access is not continuous monitoring. Trail messaging closes at Roll Out and reopens when staff end trail mode. Closing chat or ending your access does not delete stored records.
 
-Do not post your own or anyone else's private information in group communications. Information voluntarily disclosed may be heard, seen, copied, or redistributed by recipients.
+Your Tailgate link provides personal access, may be stored on your device, and is emailed to you. Protect it like a password. Someone with the link or access to the device may use your account. Tell staff or contact team@asphaltanddirt.com if access is compromised; staff can reset your link so the old one stops working and a new one is emailed to you.
 
-These features reduce unnecessary disclosure but do not guarantee anonymity or confidentiality.`,
+Children's legal names, signatures, and emergency contacts are never shown in attendee-visible profiles or channels. Do not post your own or anyone else's private information in group communications.`,
   },
   {
     heading: "GMRS, Recording, And Location",
-    body: `GMRS radio is our primary event communication method. The backup system provides an additional way to communicate, especially for participants without a GMRS radio.
+    body: `GMRS radio is our primary event communication method. Tailgate provides an additional way to communicate, especially for participants without a GMRS radio.
 
-GMRS transmissions may be heard by others, and FCC call-sign identification requirements still apply. The backup system's privacy features do not make GMRS transmissions private.
+GMRS transmissions may be heard by others, and FCC call-sign identification requirements still apply. Tailgate's privacy features do not make GMRS transmissions private.
 
-Neither this policy nor an event waiver authorizes recording private conversations.
+Neither this policy nor an event agreement authorizes recording private conversations.
 
-Voice recording and transcription: the backup communications system is text-only. It does not record, transmit, or transcribe voice.
+Voice recording and transcription: Tailgate is text, photo, and video only. It does not record, transmit, or transcribe voice calls.
 
-Location information: the backup communications system does not collect, display, or share precise location. Participants describe their own position in their own words when they choose to.`,
+Location information: Tailgate does not collect, display, or share precise location. Participants describe their own position in their own words when they choose to.`,
+  },
+  {
+    heading: "Event Media And Public Galleries",
+    body: `Photos posted in Tailgate are visible to checked-in participants when posted but require staff approval before publication in the public event gallery. Videos do not enter the public gallery automatically. Media submitted through the event page also requires review before publication. Publicly published media may be accessible worldwide, indexed by search engines, copied, and shared beyond A&D's control.
+
+We record optional media permission separately for adults and each listed child. A person may decline and still participate. An unselected media choice does not grant permission. An uploader's permission to use a file does not replace the permissions needed from identifiable people. Our media permission does not authorize publication of private registration information or children's full names.
+
+We may reject, hide, or remove a submission, and we review requests concerning media we control at team@asphaltanddirt.com. Removing an item from A&D's pages may not remove copies already made by others, and we may be unable to retrieve printed materials already distributed. This does not limit any legal removal or withdrawal rights.`,
   },
   {
     heading: "Children's Information",
-    body: `Event registration and agreement signing must be completed by an adult. Parents or legal guardians provide the information needed to register their children.
+    body: `Event registration and agreement signing must be completed by an adult. Parents or legal guardians provide children's participation details and media choices, and the signing parent or guardian must attend with the child.
 
-We use children's registration information to document permission, administer participation, support appropriate supervision and emergency assistance, and record media choices.
+We use children's registration information to document permission, administer participation, support supervision and emergency assistance, and record media choices.
 
-Children's legal names and private registration details must not be placed in participant-visible profiles or group channels. Our event media permission does not authorize publication of children's full names.
+Tailgate accounts and uploads are restricted to adults aged 18 or older; children do not receive accounts through this registration. If you believe a child has submitted information directly, contact team@asphaltanddirt.com so we can review the account and the applicable requirements.
 
-Children under 13 must not create an account or independently submit information through the backup system under this policy. Parents should manage event coordination on their behalf.
-
-Participants aged 13–17 may use the system only where the service permits their age group and a parent or legal guardian authorizes use.
-
-If we introduce direct online collection from children under 13, we will first establish the notices, parental consent, and other safeguards required by applicable law.
-
-A parent or legal guardian may contact us to request access to, correction of, or deletion of their child's information or to discuss permission choices. We may verify the requester's identity and authority. Legal record-retention requirements may limit deletion.
-
-If you believe a child under 13 has submitted information directly without an appropriate process, contact us so we can investigate and take appropriate action.`,
+A parent or legal guardian may contact us to request access to, correction of, or deletion of their child's information or to discuss permission choices. We may verify the requester's identity and authority. The retention schedule below may limit deletion.`,
   },
   {
     heading: "Service Providers And Other Recipients",
-    body: `Authorized organizers and volunteers. Personnel who need information for registration, communications administration, participant support, safety, or incident handling. Access reflects their responsibilities.
+    body: `Authorized staff. People who need information for registration, communications administration, participant support, safety, or incident handling. Access reflects their responsibilities.
 
-Service providers we use:
-• Registration records, signed agreements, and communications data: Airtable (airtable.com/privacy).
-• Event photos and videos: Google Drive (policies.google.com/privacy).
+Service providers. These providers process relevant information to supply their services:
+• Agreement, registration, and Tailgate records: Airtable (airtable.com/privacy).
+• Media storage: Google Drive (policies.google.com/privacy).
 • Email delivery: Resend (resend.com/legal/privacy-policy).
 • Website hosting and site analytics: Vercel (vercel.com/legal/privacy-policy).
 • Processing locations: primarily the United States.
 
-Emergency and professional assistance. Emergency responders, emergency contacts, insurers, legal advisers, or other appropriate professionals when needed for assistance, claims, or legal obligations.
+Emergency and professional assistance. Emergency responders, emergency contacts, legal advisers, or other appropriate professionals when needed for assistance, claims, or legal obligations.
 
 Authorities and legal requests. Recipients required by applicable law or valid legal process, or when disclosure is reasonably necessary to address fraud, security incidents, or threats to safety.
 
-Public audiences. People who view event media published under the applicable media permission. Posting media publicly allows others to view, copy, or redistribute it.
+Public audiences. People who view event media published under the applicable media permission.
 
 Venues and government agencies generally collect their own registrations, permits, payments, and waivers directly. We do not routinely send participant registration information to venues.`,
   },
   {
     heading: "Cookies, Analytics, And Advertising",
-    body: `Our registration pages and communications services may use cookies or similar technology to maintain sessions, support security, remember settings, and operate forms.
+    body: `Our registration pages and Tailgate may use cookies or similar technology, including your device's local storage, to maintain sessions, support security, remember settings, and operate forms.
 
 Analytics: we use Vercel Web Analytics, which reports aggregate page traffic. It does not use cross-site tracking cookies to build advertising profiles.
 
 We do not sell personal information or share it for cross-context behavioral advertising, and we do not use participant information for targeted advertising.
 
-Optional promotional email: our newsletter is entirely separate from event registration. People opt in themselves, and every newsletter includes an unsubscribe link. Registering for an event does not subscribe you to it.
-
-Operational event messages are separate from optional promotional subscriptions. Publicly posting media with permission is also separate from selling participant data.`,
-  },
-  {
-    heading: "Photo, Video, And Audio Choices",
-    body: `Media permission is collected separately for each adult and child on the applicable event form.
-
-An unselected media choice does not grant permission. Declining media permission does not prevent participation.
-
-When permission is granted, we may use event media for the purposes described in that event agreement. We do not use that permission to publish private registration information or children's full names.
-
-To request a change to future media use or removal of an identifiable image from channels we control, contact us with enough information to locate the material.
-
-We will review and respond to requests in accordance with applicable law and the relevant permission. We may be unable to retrieve printed materials already distributed or copies made by independent third parties. This does not limit any legal removal or withdrawal rights.`,
+Optional promotional email: our newsletter is entirely separate from event registration. People opt in themselves, and every newsletter includes an unsubscribe link. Registering for an event does not subscribe you to it. Operational event messages are separate from optional promotional subscriptions.`,
   },
   {
     heading: "How Long We Keep Information",
-    body: `We retain information only for identified operational, safety, recordkeeping, or legal purposes. Retention depends on the category of information and applicable obligations.
+    body: `We use the following schedule for information collected under this policy version. We restrict access to retained records and delete information when its retention period expires unless a specific legal requirement, unresolved claim, or documented preservation duty requires us to keep it longer. We retain only the information needed for that purpose and review the exception when it ends.
 
-Retention schedule:
+Adult agreements and participation records. We retain signed agreements, the accepted text and version, necessary signature evidence, and participation records for seven years after the event ends.
 
-• Signed agreements, parental permissions, and acceptance records: 7 years after the event, or until the youngest child named turns 21, whichever is later.
-• Registration and attendance information: 3 years after the event.
-• Emergency contact information: 90 days after the event, unless an incident occurred.
-• Communications accounts and messages: 2 years after the event.
-• Technical and security logs: up to 90 days.
-• Event media: for as long as we use it. Media permission records: 7 years after the event.
-• Incident, insurance, and legal records: 7 years, or until any related claim is resolved, whichever is later.
-• Backup copies: removed on our service providers' own backup schedules after the original is deleted.
+Children's participation records. We retain parental permissions, relevant participation and incident records, and necessary signature evidence until the later of seven years after the event ends or the child's 21st birthday. This schedule does not require retaining unrelated chat or emergency-contact details for that entire period.
 
-Relevant information may be retained longer when required by law or reasonably needed for an active claim, investigation, or legal hold. Records concerning minors may require a different retention period from adult records.
+Routine Tailgate messages. We retain routine messages for two years after the event ends. A message relevant to an incident or claim may instead be retained with the restricted incident record for the period applicable to that record.
 
-When information is no longer needed, we delete, securely dispose of, or de-identify it as appropriate. Deletion from active systems may precede removal from scheduled backups.`,
+Emergency contacts. We delete additional emergency-contact names and telephone numbers within 90 days after the event ends, except for information specifically needed for an unresolved incident or a legal preservation duty. The attendee's own registration contact information follows the participation-record schedule. Additional emergency contacts are stored separately from the long-term signed agreement.
+
+Submitted media. We delete rejected or unused submissions within 90 days after the event ends or submission, whichever is later. We review published or otherwise actively used media at least annually and remove files no longer needed for the permitted purposes. Withdrawal requests are handled as described in the media terms and applicable law.
+
+Media consent evidence. We retain the minimum evidence of consent and any withdrawal while the corresponding media remains in use and for three years after A&D's final use, or longer when the participation-record schedule or a specific legal preservation duty applies. Retaining proof of consent does not authorize new uses after withdrawal.
+
+Technical and security logs. Kept by our service providers for up to 90 days.
+
+Deletion and backups. We carry out scheduled deletion through manual or automated procedures. Deleted information may remain in restricted backups for up to one year before it is overwritten or securely deleted. Those copies are not used for ordinary operations, and deletion instructions are reapplied if a backup must be restored. Applicable legal obligations may require a different process.
+
+Earlier versions. Information collected under an earlier policy is handled in accordance with the promises applicable when it was collected, except where a lawful change or overriding legal obligation permits or requires otherwise.`,
   },
   {
     heading: "Information Security",
@@ -163,15 +154,15 @@ When information is no longer needed, we delete, securely dispose of, or de-iden
 
 Our safeguards include:
 
-• Access to registration records, signed agreements, and communications data is limited to Asphalt & Dirt staff accounts.
+• Access to registration records, signed agreements, and Tailgate data is limited to Asphalt & Dirt staff accounts.
 • The accounts that administer those records are protected with two-step verification.
 • Participants' telephone numbers, email addresses, legal names, and emergency contacts are shown only to staff, never to other participants.
-• Personal communications links and staff links use random access codes, and each event has its own staff code.
+• Personal Tailgate links use random access codes that staff can reset.
 • The website is served only over encrypted (HTTPS) connections.
 • Our service providers encrypt the data they store and the data sent to and from them.
 • The credentials our website uses to reach those providers stay on our servers and are never sent to participants' browsers.
 
-No system or transmission method is completely secure. Participants should protect account credentials and report suspected unauthorized access to the contact listed below.
+No system or transmission method is completely secure. Participants should protect their personal links and report suspected unauthorized access to the contact listed below.
 
 We will provide notices concerning security incidents where required by applicable law.`,
   },
@@ -195,7 +186,7 @@ Review their policies before submitting information. This policy does not contro
   },
   {
     heading: "Policy Changes",
-    body: `We may update this policy as our practices change. The published policy will identify its version and effective date.
+    body: `We may update this policy as our practices change. The published policy will identify its policy ID, version, and effective date, and every form will show the same label.
 
 For material changes, we will provide notice through an appropriate channel and obtain additional consent where required. A policy update does not itself expand previously granted media permission.`,
   },
@@ -248,9 +239,7 @@ export default function EventPrivacyPolicyPage() {
           ))}
         </div>
 
-        <p style={{ color: "var(--text-dim)", fontSize: 13 }}>
-          Policy ID: {POLICY_VERSION} &middot; {EFFECTIVE}
-        </p>
+        <p style={{ color: "var(--text-dim)", fontSize: 13 }}>{PRIVACY_POLICY_LABEL}</p>
       </div>
     </section>
   );

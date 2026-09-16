@@ -3,7 +3,8 @@ import { getCommsSettings, getVisibleMessage, isCommsOpen, staffViewer, updateMe
 import { updateSubmission } from "@/lib/eventMedia";
 
 /** Staff: hide a post from attendees right away (a photo also leaves the
- *  public gallery), or put it back. Nothing is deleted. */
+ *  public gallery and is marked rejected), or put it back. Unhiding never
+ *  publishes: the photo goes back to waiting for approval. Nothing is deleted. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const settings = await getCommsSettings(slug);
@@ -25,7 +26,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   try {
     await updateMessage(slug, message.id, { Hidden: hidden });
     if (message.mediaKind === "Photo" && message.mediaSubmissionId && message.channel === "Chat") {
-      await updateSubmission(message.mediaSubmissionId, { Approved: !hidden });
+      await updateSubmission(
+        message.mediaSubmissionId,
+        hidden ? { Approved: false, Rejected: true } : { Rejected: false },
+      );
     }
     return NextResponse.json({ hidden });
   } catch (err) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
 import { getEventBySlug } from "@/lib/events";
-import { getWaiver } from "@/lib/waivers";
+import { waiverForEvent } from "@/lib/waiverContext";
 import WaiverForm from "@/components/WaiverForm";
 import TailgateReturn from "@/components/TailgateReturn";
 
@@ -26,15 +26,7 @@ export default async function WaiverPage({ params }: { params: Promise<{ slug: s
   }
 
   const eventTitle = event?.title || "This Event";
-  const eventDate = event?.date
-    ? new Date(`${event.date}T00:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
-    : "the scheduled date";
-
-  const waiver = getWaiver(settings?.waiverVersion, {
-    eventName: eventTitle,
-    eventDate,
-    location: event?.generalArea || "the announced location",
-  });
+  const waiver = waiverForEvent(settings, event);
 
   return (
     <section className="section-pt-tight section-pb-tight">

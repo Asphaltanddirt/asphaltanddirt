@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
+import { ORGANIZER_V11, PRIVACY_POLICY_LABEL, PRIVACY_POLICY_PATH } from "@/lib/waivers";
 
 /**
  * Photo + video submissions for a past event. Files go straight from the
@@ -183,7 +184,10 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
     if (!name || !email) return setErrorMsg("Please fill out your name and email.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setErrorMsg("A valid email is required.");
     if (items.length === 0) return setErrorMsg("Add at least one photo or video.");
-    if (data.get("consent") !== "on") return setErrorMsg("Please confirm you have the right to share these.");
+    if (data.get("consent") !== "on") return setErrorMsg("Please confirm the upload acknowledgment.");
+    const signature = ((data.get("signature") as string) || "").trim();
+    if (!signature || data.get("esign") !== "on") return setErrorMsg("Please type your full legal name as your signature.");
+    if (data.get("privacy") !== "on") return setErrorMsg("Please acknowledge the privacy policy.");
 
     setErrorMsg("");
     setStatus("uploading");
@@ -198,6 +202,11 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
           name,
           email,
           consent: true,
+          ageConfirmed: true,
+          signature,
+          esign: true,
+          privacyAck: true,
+          permissionNotes: ((data.get("permissions") as string) || "").trim(),
           company: data.get("company") || "",
           files: items.map((i) => ({ name: i.file.name, type: i.file.type, size: i.file.size })),
         }),
@@ -282,7 +291,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
       <div className="form-section">
         <div className="form-row">
           <div className="form-field">
-            <label htmlFor="media-name">Full Name</label>
+            <label htmlFor="media-name">Full Legal Name</label>
             <input type="text" id="media-name" name="name" autoComplete="name" required disabled={busy} />
           </div>
           <div className="form-field">
@@ -361,11 +370,71 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
         )}
       </div>
 
+      <div className="form-section upload-terms">
+        <div className="form-section-title">Upload Terms</div>
+        <p>
+          You must be 18 or older to upload. Submitted files are stored with our service providers and reviewed before
+          any publication. Submission does not guarantee publication. Photos may be published in the event gallery;
+          video or audio may be used in other A&amp;D channels only when the required permissions cover that use.
+        </p>
+        <p>
+          I retain ownership and grant {ORGANIZER_V11} and its service providers a nonexclusive, royalty-free license to
+          store, reproduce, edit, display, and distribute these files worldwide in print and digital media for A&amp;D
+          event documentation, training, its website and public gallery, social media, advertising, and promotion. This
+          license does not authorize unlawful or misleading uses, endorsement of unrelated products, disclosure of
+          private information, or publication of a child&apos;s full name. It does not grant another person&apos;s
+          rights that I do not hold.
+        </p>
+        <p>
+          I may withdraw permission for future uses by emailing team@asphaltanddirt.com. After processing the request,
+          A&amp;D will stop new uses and take reasonable steps to remove affected media it controls. Already distributed
+          print materials and third-party copies may remain; applicable legal rights are preserved. My file license is
+          separate from any permission to use my own or another person&apos;s likeness.
+        </p>
+        <div className="form-field">
+          <label htmlFor="media-permissions">
+            Permission references or details <span className="optional">(Private, for staff review)</span>
+          </label>
+          <textarea
+            id="media-permissions"
+            name="permissions"
+            rows={3}
+            maxLength={2000}
+            disabled={busy}
+            placeholder="Who is recognizable in these, and how they gave permission"
+          />
+        </div>
+      </div>
+
       <label className="form-field-consent" htmlFor="media-consent">
         <input type="checkbox" id="media-consent" name="consent" disabled={busy} />
         <span>
-          I took these or have permission to share them, and Asphalt &amp; Dirt may review and publish them. If a child
-          is recognizable, I&apos;m their parent or guardian or have their OK.
+          Required: I am at least 18. I created these files or have the copyright owner&apos;s permission to grant the
+          license above. For every recognizable adult, and for the parent or legal guardian of every recognizable child,
+          I have written permission covering the proposed A&amp;D uses or have identified an existing A&amp;D consent
+          record for staff to verify. A child&apos;s permission alone is insufficient. I have not included anyone who
+          has declined or withdrawn the relevant permission, or anyone&apos;s private information. I can supply the
+          permission records on request.
+        </span>
+      </label>
+
+      <div className="form-field">
+        <label htmlFor="media-signature">Signature <span className="optional">(type your full legal name)</span></label>
+        <input type="text" id="media-signature" name="signature" autoComplete="name" required disabled={busy} maxLength={120} />
+      </div>
+      <label className="form-field-consent" htmlFor="media-esign">
+        <input type="checkbox" id="media-esign" name="esign" disabled={busy} />
+        <span>
+          Electronic signature: I intend my typed full legal name and submission of this form to record my acceptance of
+          these upload terms.
+        </span>
+      </label>
+      <label className="form-field-consent" htmlFor="media-privacy">
+        <input type="checkbox" id="media-privacy" name="privacy" disabled={busy} />
+        <span>
+          Privacy acknowledgment: The{" "}
+          <a href={PRIVACY_POLICY_PATH} target="_blank" rel="noopener">Event Privacy Policy</a> ({PRIVACY_POLICY_LABEL}) has
+          been made available to me. This does not grant media permission or optional marketing consent.
         </span>
       </label>
 

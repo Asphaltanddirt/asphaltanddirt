@@ -2091,3 +2091,17 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-social-stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px; margin:8px 0; }
 .garage-social-stat-grid label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--text-muted); }
 .garage-posting-due{ display:flex; flex-direction:column; gap:2px; margin:0 0 var(--sp-3); padding:14px 16px; border:1px solid var(--accent); border-radius:var(--radius-md); background:var(--bg-card); color:inherit; text-decoration:none; }
+
+/* Event agreement 1.1 (2026-09-16) */
+.waiver-header{ margin:0 0 12px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+.waiver-header p{ margin:0 0 4px; }
+.waiver-header p:last-child{ margin:0; }
+.waiver-choice{ border:0; padding:0; margin:8px 0; display:flex; flex-wrap:wrap; gap:4px 18px; }
+.waiver-choice legend{ font-weight:700; font-size:14px; margin-bottom:4px; width:100%; }
+.garage-review-grid{ display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); margin-top:10px; }
+.garage-review-item{ margin:0; display:flex; flex-direction:column; gap:6px; }
+.garage-review-item img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; }
+.garage-review-item figcaption{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-muted); }
+.garage-review-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.upload-terms p{ font-size:13.5px; color:var(--text-muted); margin:0 0 10px; }
+.form-field-consent a{ color:var(--accent); }
