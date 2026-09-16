@@ -74,7 +74,8 @@ export default function GarageEventCard({
       {area && <p className="garage-event-area">{area}</p>}
       {rsvps !== null && (
         <p className="garage-event-rsvp">
-          <strong>{rsvps}</strong> RSVP{rsvps === 1 ? "" : "s"} · <strong>{crewGoing}</strong> crew going
+          <strong>{rsvps}</strong> RSVP{rsvps === 1 ? "" : "s"} · <strong>{crewGoing}</strong> crew going ·{" "}
+          <Link href={`/garage/events/${slug}#who`}>See who&apos;s coming →</Link>
         </p>
       )}
       {blurb && <p className="garage-event-blurb">{blurb}</p>}

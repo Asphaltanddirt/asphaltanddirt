@@ -59,8 +59,8 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
-export default function BlogArchive({ posts }: { posts: BlogPost[] }) {
-  const [filter, setFilter] = useState<"All" | BlogCategory>("All");
+export default function BlogArchive({ posts, initialCategory }: { posts: BlogPost[]; initialCategory?: BlogCategory }) {
+  const [filter, setFilter] = useState<"All" | BlogCategory>(initialCategory ?? "All");
 
   const visiblePosts = useMemo(
     () => posts.filter((p) => filter === "All" || p.category === filter),

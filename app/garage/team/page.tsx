@@ -29,8 +29,8 @@ async function queueCounts() {
     }
   };
   const [applications, builds, reviews] = await Promise.all([
-    count(crewBase, "Applications", `OR({Status} = 'Needs Review', {Status} = BLANK())`),
-    count(buildsBase, "Build Submissions", `{Approved} = FALSE()`),
+    count(crewBase, "Applications", `OR({Review Decision} = BLANK(), {Review Decision} = 'Hold / Second Review', {Review Decision} = 'Exceptional Candidate / Crew Review')`),
+    count(buildsBase, process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions", `{Approved} = FALSE()`),
     count(reviewsBase, "Testimonials", `{Approved} = FALSE()`),
   ]);
   return { applications, builds, reviews };
@@ -70,11 +70,14 @@ export default async function GarageTeamPage() {
         <section className="garage-panel">
           <h2>Waiting on you</h2>
           <p>
-            {queue.applications ?? "–"} crew application{queue.applications === 1 ? "" : "s"} to review ·{" "}
+            <Link href="/garage/applications">
+              {queue.applications ?? "–"} crew application{queue.applications === 1 ? "" : "s"} to review
+            </Link>{" "}
+            ·{" "}
             {queue.builds ?? "–"} build{queue.builds === 1 ? "" : "s"} ·{" "}
             {queue.reviews ?? "–"} review{queue.reviews === 1 ? "" : "s"}
           </p>
-          <p className="garage-form-note">Open them in Airtable — the Garage will grow its own review screens later.</p>
+          <p className="garage-form-note">Applications are reviewed in the Garage. Builds and reviews are still approved in Airtable.</p>
         </section>
 
         <h2 className="garage-section">This week</h2>

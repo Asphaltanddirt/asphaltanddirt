@@ -81,7 +81,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
         {/* One "who's coming" picture: the public RSVPs plus the crew's own
             answers. Names, phones and the repeat-face check are for Owner/Staff
             (same rule as the Tailgate roster); emails never reach the screen. */}
-        <section className="garage-panel">
+        <section className="garage-panel" id="who">
           <h2>Who&apos;s coming</h2>
           <p className="garage-count">
             {(roster?.length ?? 0) + crew.going.length} <span>{past ? "on the list" : "expected"}</span>

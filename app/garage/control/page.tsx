@@ -80,7 +80,7 @@ export default async function ControlRoomPage() {
 
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
   const waiting = [
-    { label: "Crew applications", count: queues.applications, href: "https://airtable.com", external: true },
+    { label: "Crew applications", count: queues.applications, href: "/garage/applications", external: false },
     { label: "Builds to approve", count: queues.builds, href: "https://airtable.com", external: true },
     { label: "Reviews to approve", count: queues.reviews, href: "https://airtable.com", external: true },
     { label: "Flagged photos", count: queues.flagged, href: "/garage/media", external: false },

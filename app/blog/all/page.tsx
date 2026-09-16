@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BlogArchive from "@/components/BlogArchive";
-import { getAllPostsSorted } from "@/lib/blog";
+import { CATEGORY_SLUGS, getAllPostsSorted } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "All Stories",
   description: "Every story from the Asphalt & Dirt blog — builds, adventures, gear, and the people who keep the culture moving.",
 };
 
-export default function BlogArchivePage() {
+export default async function BlogArchivePage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const posts = getAllPostsSorted();
+  const { category } = await searchParams;
+  const initialCategory = category ? CATEGORY_SLUGS[category.toLowerCase()] : undefined;
 
   return (
     <section>
@@ -20,7 +22,7 @@ export default function BlogArchivePage() {
         </Link>
         <h1 className="mt-4" style={{ fontSize: "clamp(32px,5vw,48px)" }}>All Stories</h1>
         <div className="mt-4">
-          <BlogArchive posts={posts} />
+          <BlogArchive posts={posts} initialCategory={initialCategory} />
         </div>
       </div>
     </section>

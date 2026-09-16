@@ -79,8 +79,8 @@ const EMAILS: Record<number, WelcomeBody> = {
       p("Maybe you're here for the builds. Maybe you're looking for trail ideas. Maybe you spend way too much time researching gear you absolutely don't need. We understand.") +
       p("Here's where to start, depending on your lane:") +
       linkRow("Builds", `${SITE_URL}/builds`, "The rigs, from idea to trail.") +
-      linkRow("Trail &amp; travel", `${SITE_URL}/blog`, "Routes, trips, and what it takes to run them.") +
-      linkRow("Gear &amp; reviews", `${SITE_URL}/blog`, "The stuff we actually use — and what we'd skip.") +
+      linkRow("Trail &amp; travel", `${SITE_URL}/blog/all?category=trail-travel`, "Routes, trips, and what it takes to run them.") +
+      linkRow("Gear &amp; reviews", `${SITE_URL}/blog/all?category=gear`, "The stuff we actually use — and what we'd skip.") +
       linkRow("Podcast", `${SITE_URL}/podcast`, "Where horsepower meets mud.") +
       linkRow("Merch", `${SITE_URL}/merch`, "Shirts, patches, and drops.") +
       p("The more we know about what the Asphalt &amp; Dirt community actually cares about, the better we can decide what to build, test, ride, write about, and cover next.") +

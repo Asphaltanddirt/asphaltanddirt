@@ -98,7 +98,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
-      ? [{ href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" }]
+      ? [
+          { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" },
+          { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-crew.jpg" },
+        ]
       : []),
     ...(canSeeControlRoom(session)
       ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.jpg" }]
@@ -131,7 +134,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
             <span className="garage-next-date">{formatDate(nextEvent.date)}{nextEvent.generalArea ? ` · ${nextEvent.generalArea}` : ""}</span>
             {rsvps !== null && (
               <span className="garage-next-rsvp">
-                {rsvps} RSVP{rsvps === 1 ? "" : "s"} · {crewGoing} crew going
+                {rsvps} RSVP{rsvps === 1 ? "" : "s"} · {crewGoing} crew going · See who&apos;s coming →
               </span>
             )}
           </Link>

@@ -1280,3 +1280,13 @@ export function getEditorsPicks(): BlogPost[] {
     .filter((p) => p.editorsPick)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
+
+/** URL-friendly names for ?category= (links in emails land on a filtered list). */
+export const CATEGORY_SLUGS: Record<string, BlogCategory> = {
+  builds: "Builds",
+  "trail-travel": "Trail & Travel",
+  gear: "Gear",
+  events: "Events",
+  culture: "Culture",
+};
+
