@@ -224,7 +224,10 @@ function systems(): SystemRow[] {
     row("Google sign-in", process.env.GARAGE_GOOGLE_CLIENT_ID && process.env.AUTH_SECRET, "Working", "Off — nobody can sign in here"),
     row("Store (checkout)", process.env.FOURTHWALL_STOREFRONT_TOKEN, "Live", "Off — merch pages are empty"),
     row("Store (orders)", process.env.FOURTHWALL_API_USERNAME, "Reporting on", "Off — no order or commission reports"),
-    row("YouTube", process.env.YOUTUBE_REFRESH_TOKEN, "Connected", "Not connected — captions and stats are manual"),
+    // Only the read-only API key lives in Vercel. The captions token stays on
+    // Jose's laptop on purpose — it can edit the channel, and nothing the site
+    // serves needs it.
+    row("YouTube stats", process.env.YOUTUBE_API_KEY, "Key set", "No key — episode stats stop updating"),
     row("Scheduled jobs", process.env.CRON_SECRET, "Armed", "Off — reminders and weekly tasks won't run"),
   ];
 }
