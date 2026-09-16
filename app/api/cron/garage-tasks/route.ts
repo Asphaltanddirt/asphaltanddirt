@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateWeek } from "@/lib/garageTasks";
+import { generateSocialWeek } from "@/lib/garageSocial";
 
 export const maxDuration = 60;
 
@@ -15,7 +16,13 @@ export async function GET(req: NextRequest) {
   }
   try {
     const made = await generateWeek();
-    return NextResponse.json({ status: "ok", created: made.length, keys: made });
+    // The posting board's week, from the Posting Schedule. A failure here
+    // never blocks the tasks above.
+    const social = await generateSocialWeek().catch((err) => {
+      console.error("social week generation failed", err);
+      return [];
+    });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });

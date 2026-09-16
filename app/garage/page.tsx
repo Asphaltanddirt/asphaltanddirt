@@ -8,6 +8,7 @@ import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
 import { getDueReminders } from "@/lib/garageReminders";
+import { getPostsNeedingAttention } from "@/lib/garageSocial";
 
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
@@ -71,6 +72,9 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
   ]);
+  // Owners post the socials: today's and overdue posts, straight to the board.
+  const posting = canSeeOwnerOnly(session) ? await getPostsNeedingAttention(today).catch(() => []) : [];
+  const postingOverdue = posting.filter((p) => p.due < today).length;
   // The head count everyone asks about first, on the card they already look at.
   const [rsvps, crewGoing] = events.upcoming[0]
     ? await Promise.all([
@@ -100,6 +104,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     ...(canSeeOwnerOnly(session)
       ? [
           { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" },
+          { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-media.jpg" },
           { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-crew.jpg" },
         ]
       : []),
@@ -140,6 +145,21 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           </Link>
         ) : (
           <p className="garage-empty">No events on the calendar yet.</p>
+        )}
+
+        {posting.length > 0 && (
+          <Link href="/garage/social" className="garage-posting-due">
+            <span className="garage-next-label">Posting</span>
+            <strong>
+              {posting.length - postingOverdue > 0 && `${posting.length - postingOverdue} to post today`}
+              {posting.length - postingOverdue > 0 && postingOverdue > 0 && " · "}
+              {postingOverdue > 0 && `${postingOverdue} overdue`}
+            </strong>
+            <span className="garage-next-date">
+              {posting.slice(0, 3).map((p) => `${p.platform} (${p.topic})`).join(" · ")}
+              {posting.length > 3 && " …"} · Open the board →
+            </span>
+          </Link>
         )}
 
         <h2 className="garage-section">Your week</h2>

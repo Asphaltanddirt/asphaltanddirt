@@ -1,0 +1,312 @@
+import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { getPostBySlug } from "@/lib/blog";
+import { todayNY, weekOf } from "@/lib/garageTasks";
+
+/**
+ * The social posting board in A&D Garage (/garage/social).
+ *
+ * Two tables in the Analytics base:
+ *  - Posting Schedule: the repeating week, one row per slot (day, topic,
+ *    platform, time window). Change the week there, no deploy needed.
+ *  - Social Posts: the real posts, generated per week from the active slots.
+ *    Assets, caption and drafts live on the row; posting stamps the link,
+ *    who and when, and the TikTok test's 7-day numbers go on the same row.
+ *
+ * `Slot Key` = "<schedule record id>|<Monday>" stops a week being generated
+ * twice. Marking a Trail Talk post as posted writes it into that week's
+ * Newsletters row so the Thursday digest picks it up.
+ */
+
+const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const SCHEDULE = "Posting Schedule";
+const POSTS = "Social Posts";
+const NEWSLETTER_BASE_ID = process.env.AIRTABLE_NEWSLETTER_BASE_ID;
+const NEWSLETTERS = process.env.AIRTABLE_NEWSLETTERS_TABLE || "Newsletters";
+
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/**
+ * The 6-week TikTok timing test (1 PM vs 7 PM), from Mon 2026-09-21. Each week
+ * lists the slot for the four test posts in schedule order: Mon Feature
+ * carousel, Thu Alternate carousel, Fri Feature clip, Sat Alternate clip.
+ * Balanced so each weekday and format gets both times equally.
+ */
+const TEST_START = "2026-09-21";
+const TEST_WEEKS: ("1 PM" | "7 PM")[][] = [
+  ["1 PM", "1 PM", "7 PM", "7 PM"],
+  ["7 PM", "7 PM", "1 PM", "1 PM"],
+  ["1 PM", "7 PM", "1 PM", "7 PM"],
+  ["7 PM", "1 PM", "7 PM", "1 PM"],
+  ["1 PM", "7 PM", "7 PM", "1 PM"],
+  ["7 PM", "1 PM", "1 PM", "7 PM"],
+];
+
+export type PostStatus = "Planned" | "Posted" | "Skipped";
+
+export interface SocialAsset {
+  url: string;
+  thumb: string;
+  filename: string;
+  type: string;
+}
+
+export interface SocialPost {
+  id: string;
+  name: string;
+  weekOf: string;
+  due: string;
+  window: string;
+  topic: string;
+  platform: string;
+  asset: string;
+  status: PostStatus;
+  blogTitle: string;
+  blogUrl: string;
+  caption: string;
+  drafts: string[];
+  assets: SocialAsset[];
+  postUrl: string;
+  postedAt: string;
+  postedBy: string;
+  testSlot: string;
+  stats: { views: number | null; forYou: number | null; shares: number | null; saves: number | null; follows: number | null };
+  notes: string;
+  sort: number;
+}
+
+const num = (v: unknown) => (typeof v === "number" ? v : null);
+const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
+  const f = r.fields;
+  return {
+    id: r.id,
+    name: str(f.Name),
+    weekOf: str(f["Week Of"]).slice(0, 10),
+    due: str(f.Due).slice(0, 10),
+    window: str(f.Window),
+    topic: str(f.Topic),
+    platform: str(f.Platform),
+    asset: str(f.Asset),
+    status: (str(f.Status) as PostStatus) || "Planned",
+    blogTitle: str(f["Blog Title"]),
+    blogUrl: str(f["Blog URL"]),
+    caption: str(f.Caption),
+    drafts: str(f.Drafts)
+      .split(/\n\s*---\s*\n/)
+      .map((d) => d.trim())
+      .filter(Boolean),
+    assets: ((f.Assets as { url: string; filename: string; type: string; thumbnails?: { large?: { url: string } } }[] | undefined) || []).map(
+      (a) => ({ url: a.url, thumb: a.thumbnails?.large?.url || a.url, filename: a.filename, type: a.type }),
+    ),
+    postUrl: str(f["Post URL"]),
+    postedAt: str(f["Posted At"]),
+    postedBy: str(f["Posted By"]),
+    testSlot: str(f["Test Slot"]),
+    stats: {
+      views: num(f["Views 7d"]),
+      forYou: num(f["For You %"]),
+      shares: num(f["Shares 7d"]),
+      saves: num(f["Saves 7d"]),
+      follows: num(f["Follows 7d"]),
+    },
+    notes: str(f.Notes),
+    sort: 0,
+  };
+}
+
+export function isSocialConfigured() {
+  return isAirtableConfigured(BASE_ID);
+}
+
+/** A week's posts, in day order then schedule order. */
+export async function getWeekPosts(monday: string): Promise<SocialPost[]> {
+  if (!isSocialConfigured()) return [];
+  const [posts, schedule] = await Promise.all([
+    listRecords(POSTS, `IS_SAME({Week Of}, '${monday}', 'day')`, { baseId: BASE_ID }),
+    listRecords(SCHEDULE, undefined, { baseId: BASE_ID }),
+  ]);
+  const sortBySlot = new Map(schedule.map((s) => [s.id, Number(s.fields.Sort || 0)]));
+  return posts
+    .map((r) => {
+      const post = toPost(r);
+      post.sort = sortBySlot.get(str(r.fields["Slot Key"]).split("|")[0]) ?? 999;
+      return post;
+    })
+    .sort((a, b) => a.due.localeCompare(b.due) || a.sort - b.sort);
+}
+
+export async function getPost(id: string): Promise<SocialPost | null> {
+  if (!isSocialConfigured() || !/^rec[A-Za-z0-9]{14}$/.test(id)) return null;
+  const rows = await listRecords(POSTS, `RECORD_ID() = '${id}'`, { baseId: BASE_ID });
+  return rows[0] ? toPost(rows[0]) : null;
+}
+
+/** Posts due today or overdue and still Planned, for the Garage home. */
+export async function getPostsNeedingAttention(today = todayNY()): Promise<SocialPost[]> {
+  if (!isSocialConfigured()) return [];
+  const rows = await listRecords(
+    POSTS,
+    `AND({Status} = 'Planned', IS_BEFORE({Due}, DATEADD('${today}', 1, 'days')), IS_AFTER({Due}, DATEADD('${today}', -8, 'days')))`,
+    { baseId: BASE_ID },
+  );
+  return rows.map(toPost).sort((a, b) => a.due.localeCompare(b.due));
+}
+
+/** The Feature and Alternate blog posts for a week, from its Newsletters row. */
+async function weekBlogs(monday: string): Promise<{ feature: { title: string; url: string }; alternate: { title: string; url: string } }> {
+  const empty = { feature: { title: "", url: "" }, alternate: { title: "", url: "" } };
+  if (!isAirtableConfigured(NEWSLETTER_BASE_ID)) return empty;
+  try {
+    const rows = await listRecords(NEWSLETTERS, `IS_SAME({Week Of}, '${monday}', 'day')`, { baseId: NEWSLETTER_BASE_ID });
+    const f = rows[0]?.fields;
+    if (!f) return empty;
+    const titleFor = (url: string) => getPostBySlug(url.split("/blog/")[1]?.split(/[?#/]/)[0] || "")?.title || "";
+    const featureUrl = str(f["Feature - Post URL"]);
+    const alternateUrl = str(f["Also This Week - URL"]);
+    return {
+      feature: { title: titleFor(featureUrl), url: featureUrl },
+      alternate: { title: titleFor(alternateUrl) || str(f["Also This Week - Title"]), url: alternateUrl },
+    };
+  } catch {
+    return empty;
+  }
+}
+
+function testSlotsFor(monday: string): ("1 PM" | "7 PM")[] | null {
+  const weeks = Math.round((Date.parse(`${monday}T12:00:00Z`) - Date.parse(`${TEST_START}T12:00:00Z`)) / (7 * 86_400_000));
+  return weeks >= 0 && weeks < TEST_WEEKS.length ? TEST_WEEKS[weeks] : null;
+}
+
+/** Creates a week's posts from the active schedule. Safe to run repeatedly. */
+export async function generateSocialWeek(reference = todayNY()): Promise<string[]> {
+  if (!isSocialConfigured()) return [];
+  const monday = weekOf(reference);
+  const [schedule, existing, blogs] = await Promise.all([
+    listRecords(SCHEDULE, `{Active} = TRUE()`, { baseId: BASE_ID }),
+    listRecords(POSTS, `IS_SAME({Week Of}, '${monday}', 'day')`, { baseId: BASE_ID }),
+    weekBlogs(monday),
+  ]);
+  const already = new Set(existing.map((r) => str(r.fields["Slot Key"])));
+
+  // The week is usually built before Monday's Newsletters row names the
+  // Feature and Alternate posts, so each run fills in any blog links still missing.
+  for (const row of existing) {
+    const topic = str(row.fields.Topic);
+    const blog = topic === "Feature" ? blogs.feature : topic === "Alternate" ? blogs.alternate : null;
+    if (!blog?.url || str(row.fields["Blog URL"])) continue;
+    await updateRecord(POSTS, row.id, { "Blog URL": blog.url, ...(blog.title ? { "Blog Title": blog.title } : {}) }, { baseId: BASE_ID });
+  }
+  const testSlots = testSlotsFor(monday);
+  let testIndex = 0;
+  const made: string[] = [];
+
+  for (const slot of schedule.sort((a, b) => Number(a.fields.Sort || 0) - Number(b.fields.Sort || 0))) {
+    const f = slot.fields;
+    const isTest = f["TikTok Test"] === true;
+    const testSlot = isTest && testSlots ? testSlots[testIndex] : "";
+    if (isTest) testIndex += 1;
+
+    const key = `${slot.id}|${monday}`;
+    if (already.has(key)) continue;
+
+    const day = WEEKDAYS.indexOf(str(f.Weekday) || "Monday");
+    const due = new Date(`${monday}T12:00:00Z`);
+    due.setUTCDate(due.getUTCDate() + Math.max(day, 0));
+    const topic = str(f.Topic);
+    const blog = topic === "Feature" ? blogs.feature : topic === "Alternate" ? blogs.alternate : null;
+
+    await createRecord(
+      POSTS,
+      {
+        Name: str(f.Slot),
+        "Slot Key": key,
+        "Week Of": monday,
+        Due: due.toISOString().slice(0, 10),
+        Window: testSlot ? `${testSlot} (timing test)` : str(f.Window),
+        Topic: topic,
+        Platform: str(f.Platform),
+        Asset: str(f.Asset),
+        Status: "Planned",
+        ...(testSlot ? { "Test Slot": testSlot } : {}),
+        ...(blog?.title ? { "Blog Title": blog.title } : {}),
+        ...(blog?.url ? { "Blog URL": blog.url } : {}),
+        ...(f.Notes ? { Notes: str(f.Notes) } : {}),
+      },
+      { baseId: BASE_ID, typecast: true },
+    );
+    made.push(key);
+  }
+  return made;
+}
+
+/** "Title: ..." on the first line of a Trail Talk draft becomes the title. */
+export function splitDraft(draft: string): { title: string; body: string } {
+  const lines = draft.split("\n");
+  const match = lines[0]?.match(/^title:\s*(.+)$/i);
+  if (!match) return { title: "", body: draft.trim() };
+  return { title: match[1].trim(), body: lines.slice(1).join("\n").replace(/^\s*body:\s*/i, "").trim() };
+}
+
+export async function markPosted(post: SocialPost, input: { url: string; by: string; draftIndex?: number }) {
+  await updateRecord(
+    POSTS,
+    post.id,
+    { Status: "Posted", "Post URL": input.url || null, "Posted At": new Date().toISOString(), "Posted By": input.by },
+    { baseId: BASE_ID },
+  );
+
+  // Trail Talk feeds Thursday's newsletter.
+  if (post.topic === "Trail Talk" && isAirtableConfigured(NEWSLETTER_BASE_ID)) {
+    const draft = post.drafts[input.draftIndex ?? 0] || post.caption;
+    const { title, body } = splitDraft(draft || "");
+    const rows = await listRecords(NEWSLETTERS, `IS_SAME({Week Of}, '${post.weekOf}', 'day')`, { baseId: NEWSLETTER_BASE_ID });
+    if (rows[0]) {
+      await updateRecord(
+        NEWSLETTERS,
+        rows[0].id,
+        {
+          ...(title ? { "Trail Talk - Title": title } : {}),
+          ...(body ? { "Trail Talk - Body": body } : {}),
+          ...(input.url ? { "Trail Talk - Link": input.url } : {}),
+        },
+        { baseId: NEWSLETTER_BASE_ID },
+      );
+    }
+  }
+}
+
+export async function setStatus(id: string, status: PostStatus) {
+  await updateRecord(
+    POSTS,
+    id,
+    status === "Planned" ? { Status: "Planned", "Posted At": null, "Posted By": null } : { Status: status },
+    { baseId: BASE_ID },
+  );
+}
+
+export async function saveStats(id: string, stats: Partial<SocialPost["stats"]>) {
+  const map: Record<keyof SocialPost["stats"], string> = {
+    views: "Views 7d",
+    forYou: "For You %",
+    shares: "Shares 7d",
+    saves: "Saves 7d",
+    follows: "Follows 7d",
+  };
+  const fields: AirtableFields = {};
+  for (const [k, v] of Object.entries(stats)) fields[map[k as keyof SocialPost["stats"]]] = v ?? null;
+  await updateRecord(POSTS, id, fields, { baseId: BASE_ID });
+}
+
+export async function saveText(id: string, input: { caption?: string; drafts?: string; blogUrl?: string; blogTitle?: string }) {
+  const fields: AirtableFields = {};
+  if (input.caption !== undefined) fields.Caption = input.caption;
+  if (input.drafts !== undefined) fields.Drafts = input.drafts;
+  if (input.blogUrl !== undefined) fields["Blog URL"] = input.blogUrl || null;
+  if (input.blogTitle !== undefined) fields["Blog Title"] = input.blogTitle;
+  await updateRecord(POSTS, id, fields, { baseId: BASE_ID });
+}
+
+export async function addAsset(id: string, file: { filename: string; contentType: string; base64: string }) {
+  await uploadAttachment(id, "Assets", file, { baseId: BASE_ID });
+}
