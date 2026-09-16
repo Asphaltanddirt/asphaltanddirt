@@ -2037,3 +2037,6 @@ a.control-cell:hover{ border-color:var(--accent); }
 .media-kit-list li:first-child{ border-top:0; }
 .media-kit-list li span{ display:inline-block; min-width:120px; color:var(--text-muted); }
 .media-kit-list a{ color:var(--accent); text-decoration:underline; }
+
+.crew-already{ font-size:14px; color:var(--text-muted); }
+.crew-already a{ color:var(--accent); text-decoration:underline; }

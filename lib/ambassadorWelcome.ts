@@ -211,6 +211,18 @@ export function buildWelcomePart2(input: {
         </td>
       </tr>
       <tr>
+        <td style="padding:24px 32px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;">
+            <tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.8;color:#4a453f;">
+              <strong style="color:#1a1712;">Keep these handy:</strong><br>
+              <a href="${GUIDE_URL}" style="color:#f86000;text-decoration:underline;">Road &amp; Trail Crew Guide</a> &nbsp;&middot;&nbsp;
+              <a href="${MEDIA_KIT_URL}" style="color:#f86000;text-decoration:underline;">Media Kit</a> &nbsp;&middot;&nbsp;
+              <a href="${SITE}/ambassadors/agreement" style="color:#f86000;text-decoration:underline;">Your Agreement</a>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
         <td style="padding:32px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
           <p style="margin:0;font-weight:bold;color:#1a1712;">Real people. Real builds. Street to trail. Glad to have you.</p>
           <p style="margin:8px 0 0;color:#1a1712;">&mdash; Asphalt &amp; Dirt</p>

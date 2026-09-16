@@ -224,6 +224,11 @@ export default function AmbassadorsPage() {
           <Link href="/ambassadors/apply" className="btn btn-primary mt-3">
             Apply To Join The Crew
           </Link>
+          <p className="mt-3 mb-0 crew-already">
+            Already in the crew? <Link href="/ambassadors/guide">Crew Guide</Link> ·{" "}
+            <Link href="/ambassadors/media-kit">Media Kit</Link> ·{" "}
+            <Link href="/ambassadors/agreement">Agreement</Link>
+          </p>
         </div>
       </section>
     </>

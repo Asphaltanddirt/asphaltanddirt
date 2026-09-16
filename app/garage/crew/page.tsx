@@ -124,6 +124,17 @@ export default async function GarageCrewPage() {
             </section>
           </>
         )}
+
+        {/* Always here, so an ambassador who lost the welcome email can still
+            find the guide and media kit after signing in. */}
+        <section className="garage-panel">
+          <h2>Crew resources</h2>
+          <p className="garage-links garage-links-wrap">
+            <a href="/ambassadors/guide" target="_blank" rel="noopener">Crew Guide ↗</a>
+            <a href="/ambassadors/media-kit" target="_blank" rel="noopener">Media Kit ↗</a>
+            <a href="/ambassadors/agreement" target="_blank" rel="noopener">Agreement ↗</a>
+          </p>
+        </section>
       </div>
     </div>
   );
