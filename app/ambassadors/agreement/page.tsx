@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AgreementForm from "@/components/AgreementForm";
+import CrewResourceLinks from "@/components/CrewResourceLinks";
 import { AGREEMENT_INTRO, AGREEMENT_SECTIONS, AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function AmbassadorAgreementPage() {
           confirm your details, tell us where to ship your welcome kit, and accept. Once that&apos;s
           in, we&apos;ll send your personal discount code and tracking link.
         </p>
+        <CrewResourceLinks current="/ambassadors/agreement" />
 
         <div className="legal-doc mt-4">
           <p>{AGREEMENT_INTRO}</p>

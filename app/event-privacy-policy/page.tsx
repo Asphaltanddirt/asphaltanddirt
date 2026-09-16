@@ -8,12 +8,13 @@ export const metadata: Metadata = {
 
 export const POLICY_VERSION = "PRIVACY-1.0";
 
-/** TODO — still to fill before this is final: the mailing address (Jose is
- *  getting a mailbox). Effective date, retention periods and safeguards were
- *  filled 2026-09-15 and reflect the stack as actually built (Airtable /
- *  Google Drive / Resend / Vercel). Retention promises need a scheduled cleanup
- *  to stay true: Tailgate records don't delete themselves. */
-const TBD = "[TBD]";
+/** Effective date, retention periods and safeguards were filled 2026-09-15 and
+ *  reflect the stack as actually built (Airtable / Google Drive / Resend /
+ *  Vercel). Retention promises need a scheduled cleanup to stay true: Tailgate
+ *  records don't delete themselves. The mailing address is the same one the
+ *  email footers use (NEWSLETTER_MAILING_ADDRESS), so changing it there changes
+ *  it everywhere (Jose 9/16: his address for now, no paid mailbox). */
+const MAILING_ADDRESS = process.env.NEWSLETTER_MAILING_ADDRESS || "[TBD]";
 const ORGANIZER = "JLDA Holding Corp d/b/a Asphalt & Dirt";
 const EFFECTIVE = "Version 1.0 — Effective September 15, 2026";
 
@@ -202,7 +203,7 @@ For material changes, we will provide notice through an appropriate channel and 
     heading: "Contact Us",
     body: `For privacy questions or requests, contact ${ORGANIZER} at team@asphaltanddirt.com.
 
-Mailing address: ${TBD}.
+Mailing address: ${MAILING_ADDRESS}.
 
 Please identify the relevant event and the nature of your request. Avoid including unnecessary sensitive information.`,
   },

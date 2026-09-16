@@ -12,12 +12,18 @@
  */
 
 const LOGO = "https://www.asphaltanddirt.com/images/branding/asphalt-and-dirt-horizontal.png";
-const SITE = "https://asphaltanddirt.com";
-const MEDIA_KIT_URL = "https://claude.ai/code/artifact/6e4b1b2f-8986-427e-85d8-a18894f79cef";
+const SITE = "https://www.asphaltanddirt.com";
+// Public, unlisted pages on the site (was a private Claude artifact link that
+// ambassadors couldn't open).
+const GUIDE_URL = `${SITE}/ambassadors/guide`;
+const MEDIA_KIT_URL = `${SITE}/ambassadors/media-kit`;
 const CREW_EMAIL = "crew@asphaltanddirt.com";
 
-// tier -> { rate %, tier label } — mirrors the Ambassadors "Expected Rate"
-// formula and TIER_RATE in /api/accept-agreement.
+// tier -> { commission rate, tier label } — mirrors the Ambassadors "Expected
+// Rate" formula and TIER_RATE in /api/accept-agreement. The customer discount
+// is 10% at every tier (agreement: "Customer Discount Code"); only commission
+// changes by tier.
+const CUSTOMER_DISCOUNT = "10%";
 const TIER_INFO: Record<string, { rate: string; label: string }> = {
   "Road & Trail Member": { rate: "10%", label: "Tier 1" },
   "Featured Ambassador": { rate: "12%", label: "Tier 2" },
@@ -93,7 +99,7 @@ export function buildWelcomePart1(input: { name: string; tier?: string }): Welco
             <tr><td style="padding:20px 24px;">
               <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#1a1712;">Your starting tier: ${esc(tier)} — ${label}</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;">
-                <tr><td style="padding:2px 0;">&bull;&nbsp; ${rate} customer discount code</td></tr>
+                <tr><td style="padding:2px 0;">&bull;&nbsp; ${CUSTOMER_DISCOUNT} customer discount code</td></tr>
                 <tr><td style="padding:2px 0;">&bull;&nbsp; ${rate} commission on eligible tracked net merchandise sales</td></tr>
                 <tr><td style="padding:2px 0;">&bull;&nbsp; A welcome merch package, on us — more on that below</td></tr>
                 <tr><td style="padding:2px 0;">&bull;&nbsp; Road &amp; Trail Crew badge and digital media kit</td></tr>
@@ -114,7 +120,7 @@ export function buildWelcomePart1(input: { name: string; tier?: string }): Welco
         <td style="padding:32px 32px 0;">
           <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#1a1712;">Complete these steps to activate your ambassador code:</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.9;color:#4a453f;">
-            <tr><td>1.&nbsp; <a href="${SITE}/ambassadors" style="color:#f86000;text-decoration:underline;">Review the program overview</a></td></tr>
+            <tr><td>1.&nbsp; <a href="${GUIDE_URL}" style="color:#f86000;text-decoration:underline;">Read the Road &amp; Trail Crew Guide</a></td></tr>
             <tr><td>2.&nbsp; <a href="${SITE}/ambassadors/agreement" style="color:#f86000;text-decoration:underline;">Review and accept the Brand Ambassador Agreement</a></td></tr>
             <tr><td>3.&nbsp; Confirm your profile, social handles, and vehicle/build info (same form)</td></tr>
             <tr><td>4.&nbsp; <a href="${MEDIA_KIT_URL}" style="color:#f86000;text-decoration:underline;">Download your Ambassador Media Kit</a></td></tr>

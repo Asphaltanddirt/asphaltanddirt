@@ -1995,3 +1995,45 @@ a.control-cell:hover{ border-color:var(--accent); }
 }
 .garage-switch .garage-form-note{ margin-top:6px; }
 .garage-switch .garage-form-note:empty{ display:none; }
+
+/* Road & Trail Crew resources: guide + media kit (2026-09-16) */
+.crew-resource-links{ display:flex; flex-wrap:wrap; gap:8px; margin-top:var(--sp-3); }
+.crew-resource-links a, .crew-resource-links span{ padding:8px 14px; border:1px solid var(--border); border-radius:999px; font-size:13px; font-weight:600; color:var(--text-muted); text-decoration:none; }
+.crew-resource-links a:hover{ color:var(--text); border-color:var(--ad-gray); }
+.crew-resource-links span[aria-current]{ color:var(--ad-black); background:var(--accent); border-color:var(--accent); }
+.crew-guide{ max-width:760px; font-size:16px; line-height:1.7; color:var(--text-muted); }
+.crew-guide h2{ font-size:clamp(22px,3.4vw,28px); color:var(--text); margin:var(--sp-6) 0 var(--sp-2); }
+.crew-guide h2:first-child{ margin-top:0; }
+.crew-guide h3{ font-size:19px; color:var(--text); margin:var(--sp-4) 0 var(--sp-1); }
+.crew-guide h4{ font-family:var(--font-display); font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin:var(--sp-3) 0 6px; }
+.crew-guide p{ margin:0 0 var(--sp-2); }
+.crew-guide strong{ color:var(--text); }
+.crew-guide ul{ list-style:disc; padding-left:22px; margin:0 0 var(--sp-2); }
+.crew-guide li{ margin-bottom:6px; }
+.crew-guide a{ color:var(--accent); text-decoration:underline; }
+.crew-guide-card{ padding:20px 22px; margin:var(--sp-2) 0; }
+.crew-guide-card > :first-child{ margin-top:0; }
+.crew-guide-card > :last-child{ margin-bottom:0; }
+.crew-guide-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); margin:var(--sp-2) 0; }
+.crew-guide-cards .crew-guide-card{ margin:0; }
+.media-kit-h2{ margin-top:var(--sp-6); }
+.media-kit-sub{ max-width:62ch; color:var(--text-muted); margin:6px 0 0; }
+.media-kit-asset{ display:flex; flex-direction:column; gap:8px; padding:18px; }
+.media-kit-asset h3{ font-size:17px; margin:6px 0 0; }
+.media-kit-asset p{ margin:0; font-size:14px; color:var(--text-muted); flex:1; }
+.media-kit-preview{ display:grid; place-items:center; min-height:140px; padding:18px; border-radius:var(--radius-md); background:#2a2b2e repeating-conic-gradient(#232426 0 25%, #2a2b2e 0 50%) 0 0 / 20px 20px; }
+.media-kit-preview.is-square{ aspect-ratio:1/1; min-height:0; }
+.media-kit-preview img{ max-width:100%; max-height:260px; object-fit:contain; }
+.media-kit-preview.is-square img{ max-height:100%; }
+.media-kit-download{ align-self:flex-start; margin-top:4px; }
+.media-kit-colors{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); }
+.media-kit-color{ display:flex; flex-direction:column; gap:4px; font-size:14px; }
+.media-kit-swatch{ display:block; height:72px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:6px; }
+.media-kit-color code{ color:var(--text-muted); font-size:13px; }
+.media-kit-list{ padding:18px 20px; }
+.media-kit-list h3{ font-size:17px; margin:0 0 10px; }
+.media-kit-list ul{ list-style:none; padding:0; margin:0; }
+.media-kit-list li{ padding:7px 0; border-top:1px solid var(--border); font-size:14.5px; color:var(--text); }
+.media-kit-list li:first-child{ border-top:0; }
+.media-kit-list li span{ display:inline-block; min-width:120px; color:var(--text-muted); }
+.media-kit-list a{ color:var(--accent); text-decoration:underline; }

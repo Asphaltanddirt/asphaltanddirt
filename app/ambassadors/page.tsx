@@ -43,7 +43,7 @@ const TIERS = [
     blurb: "For members producing consistent content, engagement, or sales.",
     benefits: [
       "Everything in Road & Trail Member",
-      "A better discount code and commission rate",
+      "A higher commission rate",
       "Periodic complimentary product",
       "Priority features and collab opportunities",
       "Access to campaign briefs before they go public",

@@ -43,7 +43,7 @@ export function GET(req: NextRequest) {
   <div style="padding:20px 24px;border-top:1px solid #2a2824;color:#8a8178;font-size:12px;line-height:1.7;">
     <p style="margin:0 0 6px;">You're getting this because you ordered from asphaltanddirt.com and opted in to hear from us.</p>
     <p style="margin:0 0 6px;"><span style="text-decoration:underline;">Unsubscribe from these</span> — you'll still get order &amp; shipping updates.</p>
-    <p style="margin:0;">[mailing address]</p>
+    <p style="margin:0;">${process.env.NEWSLETTER_MAILING_ADDRESS || "[mailing address]"}</p>
   </div>
 </div>
 </body></html>`;
