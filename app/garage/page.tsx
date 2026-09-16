@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@/lib/garageAuth";
-import { getPublishedEvents } from "@/lib/events";
+import { canSeeControlRoom } from "@/lib/garageControl";
+import { getPublishedEvents, getRsvpSummaries } from "@/lib/events";
 import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
@@ -69,6 +70,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
   ]);
+  // The head count everyone asks about first, on the card they already look at.
+  const rsvps = events.upcoming[0]
+    ? (await getRsvpSummaries([events.upcoming[0].id]).catch(() => new Map())).get(events.upcoming[0].id)?.count ?? null
+    : null;
   // This week's work plus anything still open from before — nothing quietly
   // disappears just because the week rolled over.
   const tasks = allTasks.filter((t) => (t.due ? weekOf(t.due) <= thisWeek : true) && (!t.done || t.due >= today));
@@ -86,6 +91,9 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
       ? [{ href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" }]
+      : []),
+    ...(canSeeControlRoom(session)
+      ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.jpg" }]
       : []),
   ];
 
@@ -113,6 +121,11 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
             <span className="garage-next-label">Next up</span>
             <strong>{nextEvent.title}</strong>
             <span className="garage-next-date">{formatDate(nextEvent.date)}{nextEvent.generalArea ? ` · ${nextEvent.generalArea}` : ""}</span>
+            {rsvps !== null && (
+              <span className="garage-next-rsvp">
+                {rsvps} {rsvps === 1 ? "person has" : "people have"} RSVP&apos;d
+              </span>
+            )}
           </Link>
         ) : (
           <p className="garage-empty">No events on the calendar yet.</p>

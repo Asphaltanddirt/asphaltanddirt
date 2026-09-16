@@ -340,3 +340,34 @@ export async function listRsvpsForEvent(eventRecordId: string): Promise<RsvpReci
     .map((r) => ({ name: (r.fields.Name as string) || "", email: (r.fields.Email as string) || "" }))
     .filter((r) => r.email);
 }
+
+export interface RsvpSummary {
+  count: number;
+  /** First names only — a head count with faces on it, without putting
+   *  anyone's email or full name on a screen that doesn't need it. */
+  firstNames: string[];
+  /** The most recent RSVP date (YYYY-MM-DD), so "any new ones?" is answerable. */
+  latest: string | null;
+}
+
+/** How many people have RSVP'd, per event, in one read. Everything here comes
+ *  from the public RSVP form — separate from the crew's own Going/Maybe/Can't. */
+export async function getRsvpSummaries(eventRecordIds: string[]): Promise<Map<string, RsvpSummary>> {
+  const summaries = new Map<string, RsvpSummary>();
+  for (const id of eventRecordIds) summaries.set(id, { count: 0, firstNames: [], latest: null });
+  if (eventRecordIds.length === 0 || !isAirtableConfigured(BASE_ID)) return summaries;
+
+  const records = await listRecords(RSVPS_TABLE, `{Status} = 'Confirmed'`, { baseId: BASE_ID });
+  for (const record of records) {
+    const date = ((record.fields["RSVP Date"] as string) || "").slice(0, 10);
+    const first = ((record.fields.Name as string) || "").trim().split(/\s+/)[0] || "";
+    for (const eventId of (record.fields.Event as string[]) || []) {
+      const summary = summaries.get(eventId);
+      if (!summary) continue;
+      summary.count += 1;
+      if (first) summary.firstNames.push(first);
+      if (date && (!summary.latest || date > summary.latest)) summary.latest = date;
+    }
+  }
+  return summaries;
+}

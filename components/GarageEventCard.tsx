@@ -16,6 +16,7 @@ export default function GarageEventCard({
   blurb,
   meetup,
   details,
+  rsvps,
   initialResponse,
   others,
   isPast,
@@ -27,6 +28,8 @@ export default function GarageEventCard({
   blurb: string;
   meetup: string;
   details: string;
+  /** How many people have RSVP'd through the public form. */
+  rsvps: number | null;
   initialResponse: EventResponse | null;
   others: { name: string; response: EventResponse }[];
   isPast: boolean;
@@ -66,6 +69,11 @@ export default function GarageEventCard({
         <Link href={`/garage/events/${slug}`}>{title}</Link>
       </h2>
       {area && <p className="garage-event-area">{area}</p>}
+      {rsvps !== null && (
+        <p className="garage-event-rsvp">
+          <strong>{rsvps}</strong> {rsvps === 1 ? "person has" : "people have"} RSVP&apos;d
+        </p>
+      )}
       {blurb && <p className="garage-event-blurb">{blurb}</p>}
 
       {!isPast && (

@@ -234,6 +234,24 @@ export async function markActivated(settings: Pick<CommsSettings, "id" | "eventS
   expire("settings", settings.eventSlug);
 }
 
+/** The Control Room's Tailgate switch. Opening by hand stamps Activated At,
+ *  which starts the 48-hour window straight away — and takes the row out of
+ *  the reminder cron's reach, since that only picks up rows not yet activated.
+ *  The screen says so before you tap it. */
+export async function setTailgateOpen(
+  settings: Pick<CommsSettings, "id" | "eventSlug">,
+  open: boolean,
+): Promise<void> {
+  assertConfigured();
+  await updateRecord(
+    SETTINGS_TABLE,
+    settings.id,
+    open ? { Active: true, "Activated At": new Date().toISOString() } : { Active: false },
+    { baseId: BASE_ID },
+  );
+  expire("settings", settings.eventSlug);
+}
+
 export async function markClosedEmailSent(settings: Pick<CommsSettings, "id" | "eventSlug">): Promise<void> {
   assertConfigured();
   await updateRecord(SETTINGS_TABLE, settings.id, { "Closed Email Sent": new Date().toISOString() }, { baseId: BASE_ID });

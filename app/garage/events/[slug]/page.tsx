@@ -5,7 +5,7 @@ import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
 import { canRunEvents, getSession } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
-import { getEventBySlug, isPastEvent } from "@/lib/events";
+import { getEventBySlug, getRsvpSummaries, isPastEvent } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
@@ -36,10 +36,12 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   if (!event) notFound();
 
   const past = isPastEvent(event.date);
-  const [responses, settings] = await Promise.all([
+  const [responses, settings, rsvpSummaries] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
     canRunEvents(session) ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
+    getRsvpSummaries([event.id]).catch(() => new Map()),
   ]);
+  const rsvps = rsvpSummaries.get(event.id) || null;
   const mine = responses.find((r) => r.email === session.email)?.response || null;
   const going = responses.filter((r) => r.response === "Going");
   const maybe = responses.filter((r) => r.response === "Maybe");
@@ -103,8 +105,33 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           </section>
         )}
 
+        {/* The public head count, kept apart from the crew's own answers below.
+            First names only — nobody's email or full name belongs on a screen
+            that exists to answer "how many are coming?". */}
         <section className="garage-panel">
-          <h2>Who&apos;s in</h2>
+          <h2>RSVPs</h2>
+          {!rsvps ? (
+            <p className="garage-empty">Couldn&apos;t read the RSVP list.</p>
+          ) : rsvps.count === 0 ? (
+            <p className="garage-empty">{past ? "Nobody RSVP'd." : "Nobody's RSVP'd yet."}</p>
+          ) : (
+            <>
+              <p className="garage-count">
+                {rsvps.count} <span>{rsvps.count === 1 ? "person" : "people"}</span>
+              </p>
+              {canRunEvents(session) && rsvps.firstNames.length > 0 && <p>{rsvps.firstNames.join(", ")}</p>}
+              {rsvps.latest && (
+                <p className="garage-form-note">
+                  Latest on{" "}
+                  {new Date(`${rsvps.latest}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.
+                </p>
+              )}
+            </>
+          )}
+        </section>
+
+        <section className="garage-panel">
+          <h2>Who&apos;s in (crew)</h2>
           {responses.length === 0 ? (
             <p className="garage-empty">Nobody&apos;s answered yet.</p>
           ) : (

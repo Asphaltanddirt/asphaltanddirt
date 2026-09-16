@@ -4,7 +4,7 @@ import GarageBack from "@/components/GarageBack";
 import GarageEventCard from "@/components/GarageEventCard";
 import { getSession } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
-import { getPublishedEvents, getEventBySlug } from "@/lib/events";
+import { getPublishedEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
  *  open, and stale tasks or answers are worse than a moment's load. */
@@ -34,9 +34,10 @@ export default async function GarageEventsPage() {
 
   // The crew view shows the private meetup spot and run-of-show, which only
   // the per-event record carries.
-  const [details, responses] = await Promise.all([
+  const [details, responses, rsvps] = await Promise.all([
     Promise.all(shown.map((e) => getEventBySlug(e.slug).catch(() => null))),
     getEventResponses(shown.map((e) => e.slug)),
+    getRsvpSummaries(shown.map((e) => e.id)).catch(() => new Map()),
   ]);
   const mine = new Map(responses.filter((r) => r.email === session.email).map((r) => [r.eventSlug, r.response]));
 
@@ -61,6 +62,7 @@ export default async function GarageEventsPage() {
                 blurb={event.publicBlurb}
                 meetup={detail?.meetupPoint || ""}
                 details={detail?.fullDetails || ""}
+                rsvps={rsvps.get(event.id)?.count ?? null}
                 initialResponse={mine.get(event.slug) || null}
                 others={responses
                   .filter((r) => r.eventSlug === event.slug && r.email !== session.email)
