@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventCard from "@/components/GarageEventCard";
 import { getSession } from "@/lib/garageAuth";
-import { getEventResponses } from "@/lib/garageEvents";
+import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getPublishedEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
@@ -63,6 +63,7 @@ export default async function GarageEventsPage() {
                 meetup={detail?.meetupPoint || ""}
                 details={detail?.fullDetails || ""}
                 rsvps={rsvps.get(event.id)?.count ?? null}
+                crewGoing={crewPicture([], responses, event.slug).going.length}
                 initialResponse={mine.get(event.slug) || null}
                 others={responses
                   .filter((r) => r.eventSlug === event.slug && r.email !== session.email)

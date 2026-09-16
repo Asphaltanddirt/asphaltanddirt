@@ -60,3 +60,44 @@ export async function setEventResponse(input: CrewResponse): Promise<void> {
     { baseId: BASE_ID },
   );
 }
+
+/** The shared team@ inbox signs in too. Its answers aren't a person (it would
+ *  count Jose twice) and nobody chases it for one. */
+const SHARED_INBOXES = new Set(["team@asphaltanddirt.com"]);
+
+export interface CrewPicture {
+  going: string[];
+  maybe: string[];
+  cant: string[];
+  /** Active Garage people with no answer yet — the ones to chase. */
+  silent: string[];
+}
+
+/** Everyone on the crew for one event, sorted into their answer, with the
+ *  people who haven't answered named rather than just counted. */
+export function crewPicture(
+  users: { email: string; name: string }[],
+  responses: CrewResponse[],
+  slug: string,
+): CrewPicture {
+  // One answer per person, even if the table ever holds a duplicate row.
+  const seen = new Set<string>();
+  const forEvent = responses.filter((r) => {
+    if (r.eventSlug !== slug || SHARED_INBOXES.has(r.email) || seen.has(r.email)) return false;
+    seen.add(r.email);
+    return true;
+  });
+  const nameOf = (email: string, fallback: string) =>
+    users.find((u) => u.email === email)?.name || fallback || email;
+  const pick = (answer: EventResponse) =>
+    forEvent.filter((r) => r.response === answer).map((r) => nameOf(r.email, r.name));
+  const answered = new Set(forEvent.map((r) => r.email));
+  return {
+    going: pick("Going"),
+    maybe: pick("Maybe"),
+    cant: pick("Can't"),
+    silent: users
+      .filter((u) => !answered.has(u.email) && !SHARED_INBOXES.has(u.email))
+      .map((u) => u.name || u.email),
+  };
+}

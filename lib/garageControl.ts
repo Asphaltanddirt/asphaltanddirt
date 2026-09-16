@@ -2,7 +2,7 @@ import { listRecords, isAirtableConfigured } from "@/lib/airtable";
 import { SITE_URL } from "@/lib/site";
 import { getPublishedEvents, listRsvpsForEvent } from "@/lib/events";
 import { getAttendeeRoster, getCommsSettings, isCommsOpen, type CommsSettings } from "@/lib/eventComms";
-import { getEventResponses } from "@/lib/garageEvents";
+import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getPhotoMarks } from "@/lib/garageMedia";
 import { listGarageUsers, type GarageSession } from "@/lib/garageAuth";
 import { listActiveRecipients } from "@/lib/newsletterSubscribers";
@@ -149,15 +149,15 @@ async function nextEvent(): Promise<ControlEvent | null> {
     listGarageUsers().catch(() => []),
   ]);
 
-  const answered = new Set(responses.map((r) => r.email));
+  const crew = crewPicture(users, responses, event.slug);
   return {
     title: event.title,
     slug: event.slug,
     date: event.date,
     daysOut: daysBetween(todayNY(), event.date),
     rsvps,
-    crewGoing: responses.filter((r) => r.response === "Going").length,
-    crewSilent: users.filter((u) => !answered.has(u.email)).length,
+    crewGoing: crew.going.length,
+    crewSilent: crew.silent.length,
   };
 }
 

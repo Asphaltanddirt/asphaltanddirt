@@ -117,7 +117,7 @@ export default async function ControlRoomPage() {
                     : `${event.daysOut} days`
                 : "None"
             }
-            detail={event ? `${event.title} · ${event.rsvps ?? "–"} RSVP${event.rsvps === 1 ? "" : "s"}` : "Nothing on the calendar"}
+            detail={event ? `${event.title} · ${event.rsvps ?? "–"} RSVP${event.rsvps === 1 ? "" : "s"} · ${event.crewGoing} crew` : "Nothing on the calendar"}
             health={event ? (event.daysOut <= 3 ? "live" : "ok") : "warn"}
             href={event ? `/garage/events/${event.slug}` : undefined}
           />

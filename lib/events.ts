@@ -371,3 +371,62 @@ export async function getRsvpSummaries(eventRecordIds: string[]): Promise<Map<st
   }
   return summaries;
 }
+
+export interface RsvpPerson {
+  id: string;
+  name: string;
+  /** Staff-only on screen, same rule as the Tailgate roster. */
+  phone: string;
+  inFbGroup: "Yes" | "No" | "Not Sure" | "";
+  rsvpDate: string;
+  /** Titles of EARLIER events this same email RSVP'd to, oldest first. Empty
+   *  means this is their first RSVP with us. It's RSVPs, not check-ins, so it
+   *  says "RSVP'd before", never "came before". */
+  earlierEvents: string[];
+}
+
+/** The public RSVP list for one event, with names, for event-day use. Emails
+ *  are read (to spot repeat faces across events) but never returned. Two reads:
+ *  every Confirmed RSVP, and the Events table for dates and titles. */
+export async function getRsvpRoster(eventRecordId: string): Promise<RsvpPerson[]> {
+  assertConfigured();
+  const [rsvps, events] = await Promise.all([
+    listRecords(RSVPS_TABLE, `{Status} = 'Confirmed'`, { baseId: BASE_ID }),
+    listRecords(EVENTS_TABLE, undefined, { baseId: BASE_ID }),
+  ]);
+
+  const eventInfo = new Map(
+    events.map((e) => [e.id, { title: (e.fields.Title as string) || "", date: (e.fields.Date as string) || "" }]),
+  );
+  const thisDate = eventInfo.get(eventRecordId)?.date || "";
+
+  const eventsByEmail = new Map<string, Set<string>>();
+  for (const r of rsvps) {
+    const email = ((r.fields.Email as string) || "").trim().toLowerCase();
+    if (!email) continue;
+    const set = eventsByEmail.get(email) || new Set<string>();
+    for (const id of (r.fields.Event as string[]) || []) set.add(id);
+    eventsByEmail.set(email, set);
+  }
+
+  return rsvps
+    .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
+    .map((r): RsvpPerson => {
+      const email = ((r.fields.Email as string) || "").trim().toLowerCase();
+      const earlier = [...(eventsByEmail.get(email) || [])]
+        .filter((id) => id !== eventRecordId)
+        .map((id) => eventInfo.get(id))
+        .filter((e): e is { title: string; date: string } => Boolean(e && e.date && thisDate && e.date < thisDate))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map((e) => e.title);
+      return {
+        id: r.id,
+        name: ((r.fields.Name as string) || "").trim() || "(no name)",
+        phone: (r.fields.Phone as string) || "",
+        inFbGroup: (r.fields["Already In FB Group"] as RsvpPerson["inFbGroup"]) || "",
+        rsvpDate: ((r.fields["RSVP Date"] as string) || "").slice(0, 10),
+        earlierEvents: earlier,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

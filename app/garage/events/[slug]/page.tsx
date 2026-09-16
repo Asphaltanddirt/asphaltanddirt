@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
-import { canRunEvents, getSession } from "@/lib/garageAuth";
-import { getEventResponses } from "@/lib/garageEvents";
-import { getEventBySlug, getRsvpSummaries, isPastEvent } from "@/lib/events";
+import { canRunEvents, getSession, listGarageUsers } from "@/lib/garageAuth";
+import { crewPicture, getEventResponses } from "@/lib/garageEvents";
+import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
@@ -27,6 +27,12 @@ function formatDate(iso: string) {
   });
 }
 
+/** 5163040650 → (516) 304-0650; anything that isn't a plain US number stays as typed. */
+function formatPhone(raw: string) {
+  const d = raw.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+  return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : raw;
+}
+
 export default async function GarageEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession();
   if (!session) redirect("/garage");
@@ -36,17 +42,18 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   if (!event) notFound();
 
   const past = isPastEvent(event.date);
-  const [responses, settings, rsvpSummaries] = await Promise.all([
+  const staff = canRunEvents(session);
+  const [responses, settings, roster, users] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
-    canRunEvents(session) ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
-    getRsvpSummaries([event.id]).catch(() => new Map()),
+    staff ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
+    getRsvpRoster(event.id).catch((): RsvpPerson[] | null => null),
+    listGarageUsers().catch(() => []),
   ]);
-  const rsvps = rsvpSummaries.get(event.id) || null;
   const mine = responses.find((r) => r.email === session.email)?.response || null;
-  const going = responses.filter((r) => r.response === "Going");
-  const maybe = responses.filter((r) => r.response === "Maybe");
-  const cant = responses.filter((r) => r.response === "Can't");
+  const crew = crewPicture(users, responses, slug);
   const tailgateOpen = isCommsOpen(settings);
+  const firstTimers = roster ? roster.filter((p) => p.earlierEvents.length === 0).length : 0;
+  const notInGroup = roster ? roster.filter((p) => p.inFbGroup !== "Yes").length : 0;
 
   return (
     <div className="garage">
@@ -70,6 +77,87 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             Open Tailgate
           </Link>
         )}
+
+        {/* One "who's coming" picture: the public RSVPs plus the crew's own
+            answers. Names, phones and the repeat-face check are for Owner/Staff
+            (same rule as the Tailgate roster); emails never reach the screen. */}
+        <section className="garage-panel">
+          <h2>Who&apos;s coming</h2>
+          <p className="garage-count">
+            {(roster?.length ?? 0) + crew.going.length} <span>{past ? "on the list" : "expected"}</span>
+          </p>
+          <p>
+            {roster ? `${roster.length} RSVP${roster.length === 1 ? "" : "s"}` : "RSVPs unavailable"} ·{" "}
+            {crew.going.length} crew going
+            {crew.maybe.length > 0 && ` · ${crew.maybe.length} maybe`}
+          </p>
+        </section>
+
+        <section className="garage-panel">
+          <h2>RSVPs{roster ? ` (${roster.length})` : ""}</h2>
+          {!roster ? (
+            <p className="garage-empty">Couldn&apos;t read the RSVP list.</p>
+          ) : roster.length === 0 ? (
+            <p className="garage-empty">{past ? "Nobody RSVP'd." : "Nobody's RSVP'd yet."}</p>
+          ) : !staff ? (
+            <p>
+              {roster.length} {roster.length === 1 ? "person has" : "people have"} RSVP&apos;d.
+            </p>
+          ) : (
+            <>
+              <p className="garage-form-note">
+                {firstTimers} first-timer{firstTimers === 1 ? "" : "s"} · {roster.length - firstTimers} RSVP&apos;d before
+                {notInGroup > 0 && ` · ${notInGroup} not in the FB group`}
+              </p>
+              <ul className="garage-roster">
+                {roster.map((p) => (
+                  <li key={p.id} className="garage-roster-row">
+                    <div className="garage-roster-top">
+                      <strong>{p.name}</strong>
+                      {p.earlierEvents.length === 0 ? (
+                        <span className="garage-tag garage-tag-new">First RSVP</span>
+                      ) : (
+                        <span className="garage-tag">Back again</span>
+                      )}
+                    </div>
+                    <div className="garage-roster-meta">
+                      {p.phone && (
+                        <>
+                          <a className="garage-roster-phone" href={`tel:${p.phone.replace(/[^\d+]/g, "")}`}>
+                            {formatPhone(p.phone)}
+                          </a>{" "}
+                          ·{" "}
+                        </>
+                      )}
+                      FB group: {p.inFbGroup === "Not Sure" ? "not sure" : p.inFbGroup ? p.inFbGroup.toLowerCase() : "didn't say"}
+                      {p.rsvpDate &&
+                        ` · RSVP'd ${new Date(`${p.rsvpDate}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                      {p.earlierEvents.length > 0 && ` · Also RSVP'd: ${p.earlierEvents.join(", ")}`}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+
+        <section className="garage-panel">
+          <h2>Crew</h2>
+          {crew.going.length > 0 && <p><strong>Going:</strong> {crew.going.join(", ")}</p>}
+          {crew.maybe.length > 0 && <p><strong>Maybe:</strong> {crew.maybe.join(", ")}</p>}
+          {crew.cant.length > 0 && <p><strong>Can&apos;t:</strong> {crew.cant.join(", ")}</p>}
+          {!past && crew.silent.length > 0 && (
+            <p><strong>Hasn&apos;t answered:</strong> {crew.silent.join(", ")}</p>
+          )}
+          {crew.going.length + crew.maybe.length + crew.cant.length === 0 && (past || crew.silent.length === 0) && (
+            <p className="garage-empty">{past ? "No crew answers." : "Nobody's answered yet."}</p>
+          )}
+          {!past && (
+            <p className="garage-form-note">
+              Crew don&apos;t get the RSVP emails. The meetup spot and details are on this screen.
+            </p>
+          )}
+        </section>
 
         {/* Crew-only: the exact spot and the run-of-show. The public page keeps
             these behind an RSVP email. */}
@@ -104,44 +192,6 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             <p>{event.publicBlurb}</p>
           </section>
         )}
-
-        {/* The public head count, kept apart from the crew's own answers below.
-            First names only — nobody's email or full name belongs on a screen
-            that exists to answer "how many are coming?". */}
-        <section className="garage-panel">
-          <h2>RSVPs</h2>
-          {!rsvps ? (
-            <p className="garage-empty">Couldn&apos;t read the RSVP list.</p>
-          ) : rsvps.count === 0 ? (
-            <p className="garage-empty">{past ? "Nobody RSVP'd." : "Nobody's RSVP'd yet."}</p>
-          ) : (
-            <>
-              <p className="garage-count">
-                {rsvps.count} <span>{rsvps.count === 1 ? "person" : "people"}</span>
-              </p>
-              {canRunEvents(session) && rsvps.firstNames.length > 0 && <p>{rsvps.firstNames.join(", ")}</p>}
-              {rsvps.latest && (
-                <p className="garage-form-note">
-                  Latest on{" "}
-                  {new Date(`${rsvps.latest}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.
-                </p>
-              )}
-            </>
-          )}
-        </section>
-
-        <section className="garage-panel">
-          <h2>Who&apos;s in (crew)</h2>
-          {responses.length === 0 ? (
-            <p className="garage-empty">Nobody&apos;s answered yet.</p>
-          ) : (
-            <>
-              {going.length > 0 && <p><strong>Going:</strong> {going.map((r) => r.name || r.email).join(", ")}</p>}
-              {maybe.length > 0 && <p><strong>Maybe:</strong> {maybe.map((r) => r.name || r.email).join(", ")}</p>}
-              {cant.length > 0 && <p><strong>Can&apos;t:</strong> {cant.map((r) => r.name || r.email).join(", ")}</p>}
-            </>
-          )}
-        </section>
 
         <p className="garage-links">
           <a href={`/events/${slug}`} target="_blank" rel="noopener">Public event page ↗</a>

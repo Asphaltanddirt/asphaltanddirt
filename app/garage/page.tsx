@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { canSeeControlRoom } from "@/lib/garageControl";
 import { getPublishedEvents, getRsvpSummaries } from "@/lib/events";
+import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
@@ -71,9 +72,16 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
   ]);
   // The head count everyone asks about first, on the card they already look at.
-  const rsvps = events.upcoming[0]
-    ? (await getRsvpSummaries([events.upcoming[0].id]).catch(() => new Map())).get(events.upcoming[0].id)?.count ?? null
-    : null;
+  const [rsvps, crewGoing] = events.upcoming[0]
+    ? await Promise.all([
+        getRsvpSummaries([events.upcoming[0].id])
+          .then((m) => m.get(events.upcoming[0].id)?.count ?? null)
+          .catch(() => null),
+        getEventResponses([events.upcoming[0].slug])
+          .then((r) => crewPicture([], r, events.upcoming[0].slug).going.length)
+          .catch(() => 0),
+      ])
+    : [null, 0];
   // This week's work plus anything still open from before — nothing quietly
   // disappears just because the week rolled over.
   const tasks = allTasks.filter((t) => (t.due ? weekOf(t.due) <= thisWeek : true) && (!t.done || t.due >= today));
@@ -123,7 +131,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
             <span className="garage-next-date">{formatDate(nextEvent.date)}{nextEvent.generalArea ? ` · ${nextEvent.generalArea}` : ""}</span>
             {rsvps !== null && (
               <span className="garage-next-rsvp">
-                {rsvps} {rsvps === 1 ? "person has" : "people have"} RSVP&apos;d
+                {rsvps} RSVP{rsvps === 1 ? "" : "s"} · {crewGoing} crew going
               </span>
             )}
           </Link>
