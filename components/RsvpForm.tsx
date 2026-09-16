@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
+import { REQUIREMENTS_ACCEPT_LABEL } from "@/lib/vehicleRules";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-export default function RsvpForm({ slug }: { slug: string }) {
+export default function RsvpForm({ slug, hasRequirements = false }: { slug: string; hasRequirements?: boolean }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
   const [joinEventUpdatesList, setJoinEventUpdatesList] = useState(true);
   const [joinNewsletter, setJoinNewsletter] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
 
   const busy = status === "submitting";
 
@@ -34,6 +36,12 @@ export default function RsvpForm({ slug }: { slug: string }) {
       return;
     }
 
+    if (hasRequirements && !rulesAccepted) {
+      setErrorMsg("Please read the Requirements above and tick the box to agree.");
+      setStatus("error");
+      return;
+    }
+
     setStatus("submitting");
     setErrorMsg("");
     try {
@@ -48,6 +56,7 @@ export default function RsvpForm({ slug }: { slug: string }) {
           alreadyInFbGroup,
           joinEventUpdatesList,
           joinNewsletter,
+          requirementsAccepted: hasRequirements ? rulesAccepted : undefined,
         }),
       });
       const result = await res.json().catch(() => ({}));
@@ -123,6 +132,26 @@ export default function RsvpForm({ slug }: { slug: string }) {
             </select>
           </div>
         </div>
+        {hasRequirements && (
+          <div className="form-field">
+            <label>
+              Requirements <span className="optional">(Required)</span>
+            </label>
+            <div className="form-checkbox-group form-checkbox-group-stacked">
+              <label className={`form-checkbox${rulesAccepted ? " has-check" : ""}`}>
+                <input
+                  type="checkbox"
+                  name="requirementsAccepted"
+                  checked={rulesAccepted}
+                  onChange={(e) => setRulesAccepted(e.target.checked)}
+                  required
+                  disabled={busy}
+                />
+                {REQUIREMENTS_ACCEPT_LABEL}
+              </label>
+            </div>
+          </div>
+        )}
         <div className="form-field">
           <label>While You're Here <span className="optional">(Optional)</span></label>
           <div className="form-checkbox-group form-checkbox-group-stacked">

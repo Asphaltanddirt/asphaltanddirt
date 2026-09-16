@@ -58,6 +58,10 @@ export interface EventDetail extends EventSummary {
   /** Curated gallery photos from the Events table's Gallery Photos field
    *  (team-selected — Comms system pulls, FB group finds, etc). */
   galleryPhotos: { url: string; alt: string }[];
+  /** PUBLIC. The event's own requirements, one per line in Airtable. */
+  requirements: string[];
+  /** Venue Type choices, keys into lib/vehicleRules.ts ("State Forest (NJ)"). */
+  venueTypes: string[];
 }
 
 function toSummary(r: { id: string; fields: AirtableFields }): EventSummary {
@@ -166,6 +170,11 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
       }),
     recap: (record.fields.Recap as string) || "",
     galleryPhotos,
+    requirements: ((record.fields.Requirements as string) || "")
+      .split("\n")
+      .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+      .filter(Boolean),
+    venueTypes: (record.fields["Venue Type"] as string[]) || [],
   };
 }
 
@@ -300,6 +309,8 @@ export interface RsvpInput {
   alreadyInFbGroup: "Yes" | "No" | "Not Sure";
   joinEventUpdatesList: boolean;
   joinNewsletter: boolean;
+  /** The event's requirements they agreed to (lib/vehicleRules.ts), if any. */
+  requirementsAccepted?: string;
 }
 
 export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
@@ -314,6 +325,7 @@ export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
       "Already In FB Group": input.alreadyInFbGroup,
       "Join Event Updates List": input.joinEventUpdatesList,
       "Join Newsletter": input.joinNewsletter,
+      ...(input.requirementsAccepted ? { "Requirements Accepted": input.requirementsAccepted } : {}),
       "RSVP Date": new Date().toISOString().slice(0, 10),
       Status: "Confirmed",
     },

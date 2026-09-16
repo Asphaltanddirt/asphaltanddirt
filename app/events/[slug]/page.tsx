@@ -5,6 +5,8 @@ import { getEventBySlug, getApprovedEventPhotoSubmissions, isPastEvent, uploadsO
 import { socialLinks } from "@/lib/social";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import RsvpForm from "@/components/RsvpForm";
+import EventRequirementsSection from "@/components/EventRequirements";
+import { requirementsFor } from "@/lib/vehicleRules";
 import BuildGallery from "@/components/BuildGallery";
 import EventPhotoSubmissionForm from "@/components/EventPhotoSubmissionForm";
 
@@ -48,6 +50,7 @@ export default async function EventDetailPage({
   // Uploads open on the day itself, not the day after — the Tailgate thank-you
   // email goes out the same evening and links straight to #photos.
   const canUpload = uploadsOpen(event.date);
+  const requirements = requirementsFor(event);
   const submittedPhotos = past ? await getApprovedEventPhotoSubmissions(event.id) : [];
   const galleryImages = [...event.galleryPhotos, ...submittedPhotos].map((photo) => ({ src: photo.url, alt: photo.alt }));
   const hasGallery = galleryImages.length > 0;
@@ -155,8 +158,10 @@ export default async function EventDetailPage({
                     </p>
                   )}
 
+                  {requirements && <EventRequirementsSection requirements={requirements} />}
+
                   <h2 className="mt-6">RSVP</h2>
-                  <RsvpForm slug={event.slug} />
+                  <RsvpForm slug={event.slug} hasRequirements={Boolean(requirements)} />
                 </>
               )}
             </div>

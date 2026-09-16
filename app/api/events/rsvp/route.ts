@@ -4,6 +4,7 @@ import { buildRsvpConfirmation } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 import { addSubscriber, type Topic } from "@/lib/newsletterSubscribers";
 import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
+import { requirementsFor, requirementsRecord } from "@/lib/vehicleRules";
 
 const FB_GROUP_VALUES = new Set(["Yes", "No", "Not Sure"]);
 
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     alreadyInFbGroup?: string;
     joinEventUpdatesList?: boolean;
     joinNewsletter?: boolean;
+    requirementsAccepted?: boolean;
     company?: string; // honeypot
   };
   try {
@@ -50,6 +52,12 @@ export async function POST(req: NextRequest) {
   if (!event) {
     return NextResponse.json({ error: "That event couldn't be found." }, { status: 404 });
   }
+  // Nobody gets on the list without agreeing to the event's requirements
+  // (its own items plus state forest rules where they apply).
+  const requirements = requirementsFor(event);
+  if (requirements && body.requirementsAccepted !== true) {
+    return NextResponse.json({ error: "Please read the Requirements and tick the box to agree." }, { status: 400 });
+  }
 
   await createRsvp({
     eventRecordId: event.id,
@@ -59,6 +67,7 @@ export async function POST(req: NextRequest) {
     alreadyInFbGroup,
     joinEventUpdatesList,
     joinNewsletter,
+    requirementsAccepted: requirements ? requirementsRecord(requirements) : undefined,
   });
 
   // Best-effort: the RSVP is already saved even if the email or the Event

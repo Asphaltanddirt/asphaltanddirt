@@ -1,6 +1,7 @@
 import type { EventDetail } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
+import { requirementsFor } from "@/lib/vehicleRules";
 
 const LOGO = "https://www.asphaltanddirt.com/images/branding/asphalt-and-dirt-horizontal.png";
 const CREW_EMAIL = "crew@asphaltanddirt.com";
@@ -95,6 +96,7 @@ export function buildRsvpConfirmation(input: { rsvpName: string; alreadyInFbGrou
               `${event.generalArea ? `Area: ${event.generalArea}\n\n` : ""}We'll follow up with exact meetup details as it gets closer.`,
           )}</td></tr>
         </table>
+        ${requirementsBlock(event)}
         ${fbNudge}
         <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">View This Event On The Site &rarr;</a></p>
       </td>
@@ -102,6 +104,37 @@ export function buildRsvpConfirmation(input: { rsvpName: string; alreadyInFbGrou
   `;
 
   return { subject: `You're confirmed: ${event.title}`, html: shell(`You're confirmed for ${event.title}`, bodyRows) };
+}
+
+/** The event's Requirements (lib/vehicleRules.ts): its own items, then the
+ *  standard set for each Venue Type. Repeated in the email so riders have them offline at the
+ *  trailhead. Empty when the event has none. */
+function requirementsBlock(event: EventDetail): string {
+  const req = requirementsFor(event);
+  if (!req) return "";
+  const heading = (text: string, cite = "") =>
+    `<p style="margin:12px 0 4px;font-weight:bold;color:#1a1712;">${esc(text)}${cite ? ` <span style="font-weight:normal;color:#7a746c;font-size:12px;">(${esc(cite)})</span>` : ""}</p>`;
+  const list = (items: string[]) =>
+    `<ul style="margin:0;padding-left:20px;">${items.map((r) => `<li style="margin:0 0 4px;">${esc(r)}</li>`).join("")}</ul>`;
+  const own = req.items.length ? `${heading("For This Ride")}${list(req.items)}` : "";
+  const rules = req.ruleSets
+    .map(
+      (set) =>
+        `${heading(set.title)}<p style="margin:0 0 4px;">${esc(set.intro)}</p>${set.groups
+          .map((g) => `${heading(g.heading, g.cite)}${list(g.rules)}`)
+          .join("")}${
+          set.link
+            ? `<p style="margin:12px 0 0;"><a href="${set.link.url}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">${esc(set.link.label)} &rarr;</a></p>`
+            : ""
+        }`,
+    )
+    .join("");
+  return `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #ded9d3;border-left:3px solid ${ORANGE};margin-top:20px;">
+          <tr><td style="padding:18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;">
+            <p style="margin:0;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Requirements</p>${own}${rules}
+          </td></tr>
+        </table>`;
 }
 
 /** Admin-triggered update to everyone who RSVP'd to one event — a moved
