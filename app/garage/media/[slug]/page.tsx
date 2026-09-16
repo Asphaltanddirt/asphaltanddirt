@@ -4,8 +4,13 @@ import GarageBack from "@/components/GarageBack";
 import GaragePhotoGrid, { type GaragePhoto } from "@/components/GaragePhotoGrid";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getPhotoMarks } from "@/lib/garageMedia";
-import { getEventBySlug, getEventSubmissionPhotos } from "@/lib/events";
+import { getEventBySlug, getEventGalleryPhotos, getEventSubmissionPhotos } from "@/lib/events";
 import { getTailgatePhotos } from "@/lib/eventComms";
+
+/** Never served from a cache: the Garage is live data on a phone that stays
+ *  open, and stale tasks or answers are worse than a moment's load. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Event photos · A and D Garage",
@@ -20,15 +25,30 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
-  const [tailgate, uploads, marks] = await Promise.all([
+  const [tailgate, uploads, gallery, marks] = await Promise.all([
     getTailgatePhotos(slug).catch(() => []),
     getEventSubmissionPhotos(event.id).catch(() => []),
+    getEventGalleryPhotos(slug).catch(() => []),
     getPhotoMarks().catch(() => []),
   ]);
   const byKey = new Map(marks.map((m) => [m.key, m]));
   const me = session.email.toLowerCase();
 
   const photos: GaragePhoto[] = [
+    // What we put up ourselves (the event's Gallery Photos), then posts, then
+    // what visitors sent in.
+    ...gallery.map((p) => {
+      const mark = byKey.get(p.key);
+      return {
+        key: p.key,
+        url: p.url,
+        who: "On the site",
+        source: "Gallery" as const,
+        hidden: Boolean(mark?.hidden),
+        stars: mark?.starredBy.length || 0,
+        starredByMe: Boolean(mark?.starredBy.includes(me)),
+      };
+    }),
     ...tailgate.map((p) => {
       const mark = byKey.get(`tailgate|${p.id}`);
       return {

@@ -6,7 +6,7 @@ export interface GaragePhoto {
   key: string;
   url: string;
   who: string;
-  source: "Tailgate" | "Upload";
+  source: "Tailgate" | "Upload" | "Gallery";
   hidden: boolean;
   stars: number;
   starredByMe: boolean;
@@ -89,7 +89,7 @@ export default function GaragePhotoGrid({
             <img src={photo.url} alt={`From ${photo.who}`} loading="lazy" />
             <figcaption>
               <span className="garage-photo-who">
-                {photo.who} · {photo.source}
+                {photo.source === "Gallery" ? "On the site" : `${photo.who} · ${photo.source}`}
               </span>
               {photo.hidden && <span className="garage-photo-flagged">Hidden from the site</span>}
             </figcaption>

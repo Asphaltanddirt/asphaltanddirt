@@ -8,6 +8,11 @@ import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
  *  Google's branding check compares. */
+/** Never served from a cache: the Garage is live data on a phone that stays
+ *  open, and stale tasks or answers are worse than a moment's load. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "A and D Garage",
   description: "The Asphalt & Dirt crew app: events, Tailgate, photos and the team's own tools.",

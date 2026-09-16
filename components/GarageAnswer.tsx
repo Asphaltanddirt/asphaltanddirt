@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { EventResponse } from "@/lib/garageEvents";
 
@@ -13,6 +14,7 @@ export default function GarageAnswer({
   slug: string;
   initialResponse: EventResponse | null;
 }) {
+  const router = useRouter();
   const [response, setResponse] = useState<EventResponse | null>(initialResponse);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +32,7 @@ export default function GarageAnswer({
         body: JSON.stringify({ eventSlug: slug, response: next }),
       });
       if (!res.ok) throw new Error();
+      router.refresh();
     } catch {
       setResponse(previous);
       setError("Didn't save. Try again.");

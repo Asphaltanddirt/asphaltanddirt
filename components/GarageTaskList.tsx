@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { GarageTask } from "@/lib/garageTasks";
 
 /** This week's work for the signed-in person. Ticking is optimistic: the row
  *  moves the moment you tap, and rolls back if the save fails. */
 export default function GarageTaskList({ tasks, today }: { tasks: GarageTask[]; today: string }) {
+  const router = useRouter();
   const [state, setState] = useState<Record<string, boolean>>(
     Object.fromEntries(tasks.map((t) => [t.id, t.done])),
   );
@@ -23,6 +25,7 @@ export default function GarageTaskList({ tasks, today }: { tasks: GarageTask[]; 
         body: JSON.stringify({ id: task.id, done: next }),
       });
       if (!res.ok) throw new Error();
+      router.refresh();
     } catch {
       setState((prev) => ({ ...prev, [task.id]: !next }));
       setError("Didn't save. Try again.");

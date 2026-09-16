@@ -6,6 +6,11 @@ import { getSession } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
 import { getPublishedEvents, getEventBySlug } from "@/lib/events";
 
+/** Never served from a cache: the Garage is live data on a phone that stays
+ *  open, and stale tasks or answers are worse than a moment's load. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Events · A and D Garage",
   robots: { index: false, follow: false },

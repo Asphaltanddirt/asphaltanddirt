@@ -141,9 +141,15 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
   );
   const record = records[0];
   if (!record) return null;
-  const galleryPhotos = ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || []).map(
-    (photo) => ({ url: photo.url, alt: (record.fields.Title as string) || "Event photo" }),
-  );
+  const hidden = await getHiddenPhotoKeys();
+  const galleryPhotos = ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || [])
+    .map((photo, i) => ({
+      url: photo.url,
+      alt: (record.fields.Title as string) || "Event photo",
+      key: `gallery|${record.id}|${i}`,
+    }))
+    .filter((photo) => !hidden.has(photo.key))
+    .map(({ url, alt }) => ({ url, alt }));
   return {
     ...toSummary(record),
     unlisted: record.fields.Status === "Unlisted",
@@ -183,6 +189,22 @@ export async function getApprovedEventPhotoSubmissions(
       const photos = (r.fields.Photo as { url: string }[] | undefined) || [];
       return photos.map((photo) => ({ url: photo.url, alt: `Submitted by ${name}` }));
     });
+}
+
+/** The event's own Gallery Photos (the ones we put up ourselves), unfiltered,
+ *  so the Garage can review and flag them too. */
+export async function getEventGalleryPhotos(slug: string): Promise<{ key: string; url: string }[]> {
+  assertConfigured();
+  const records = await listRecords(EVENTS_TABLE, `{Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: 60,
+  });
+  const record = records[0];
+  if (!record) return [];
+  return ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || []).map((photo, i) => ({
+    key: `gallery|${record.id}|${i}`,
+    url: photo.url,
+  }));
 }
 
 /** Every photo submitted for one event, one entry per file, whether or not the
@@ -237,9 +259,10 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     const slug = (record.fields.Slug as string) || "";
     if (!slug) continue;
     const gallery = (record.fields["Gallery Photos"] as { url: string }[] | undefined) || [];
-    for (const photo of gallery) {
+    gallery.forEach((photo, i) => {
+      if (hidden.has(`gallery|${record.id}|${i}`)) return;
       photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
-    }
+    });
   }
 
   for (const record of submissionRecords) {
