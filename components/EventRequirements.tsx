@@ -1,10 +1,11 @@
 import type { EventRequirements } from "@/lib/vehicleRules";
 
 /** The event page's Requirements, closed until tapped: the event's own items
- *  first, then the standard set for each Venue Type. The RSVP form's checkbox agrees to all of it. */
+ *  first, then each linked venue's waiver/pass/rules links, then the standard
+ *  set for each Venue Type. The RSVP form's checkbox agrees to all of it. */
 export default function EventRequirementsSection({ requirements }: { requirements: EventRequirements }) {
-  const { items, ruleSets } = requirements;
-  const count = items.length + ruleSets.reduce((n, set) => n + set.groups.reduce((m, g) => m + g.rules.length, 0), 0);
+  const { items, venues, ruleSets } = requirements;
+  const count = items.length + venues.length + ruleSets.reduce((n, set) => n + set.groups.reduce((m, g) => m + g.rules.length, 0), 0);
   return (
     <details className="event-rules">
       <summary>
@@ -23,6 +24,37 @@ export default function EventRequirementsSection({ requirements }: { requirement
           </ul>
         </div>
       )}
+      {venues.map((venue) => (
+        <div key={venue.name} className="event-rules-group event-rules-venue">
+          <h3>{venue.name}</h3>
+          {venue.riderNotes.length > 0 && (
+            <ul>
+              {venue.riderNotes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          )}
+          {(venue.waiverUrl || venue.passUrl || venue.rulesUrl) && (
+            <p className="event-rules-links">
+              {venue.waiverUrl && (
+                <a className="btn btn-outline btn-sm" href={venue.waiverUrl} target="_blank" rel="noopener">
+                  Sign Their Waiver &rarr;
+                </a>
+              )}
+              {venue.passUrl && (
+                <a className="btn btn-outline btn-sm" href={venue.passUrl} target="_blank" rel="noopener">
+                  Get Your Pass &rarr;
+                </a>
+              )}
+              {venue.rulesUrl && (
+                <a href={venue.rulesUrl} target="_blank" rel="noopener">
+                  Park Rules &rarr;
+                </a>
+              )}
+            </p>
+          )}
+        </div>
+      ))}
       {ruleSets.map((rules) => (
         <div key={rules.version} className="event-rules-set">
           <h3>{rules.title}</h3>

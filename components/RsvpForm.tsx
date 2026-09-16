@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
-import { REQUIREMENTS_ACCEPT_LABEL } from "@/lib/vehicleRules";
+import { requirementsAcceptLabel } from "@/lib/vehicleRules";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-export default function RsvpForm({ slug, hasRequirements = false }: { slug: string; hasRequirements?: boolean }) {
+export default function RsvpForm({
+  slug,
+  hasRequirements = false,
+  needsVenueWaiver = false,
+}: {
+  slug: string;
+  hasRequirements?: boolean;
+  needsVenueWaiver?: boolean;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
@@ -147,7 +155,7 @@ export default function RsvpForm({ slug, hasRequirements = false }: { slug: stri
                   required
                   disabled={busy}
                 />
-                {REQUIREMENTS_ACCEPT_LABEL}
+                {requirementsAcceptLabel(needsVenueWaiver)}
               </label>
             </div>
           </div>

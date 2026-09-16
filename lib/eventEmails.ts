@@ -117,6 +117,22 @@ function requirementsBlock(event: EventDetail): string {
   const list = (items: string[]) =>
     `<ul style="margin:0;padding-left:20px;">${items.map((r) => `<li style="margin:0 0 4px;">${esc(r)}</li>`).join("")}</ul>`;
   const own = req.items.length ? `${heading("For This Ride")}${list(req.items)}` : "";
+  const link = (url: string, label: string) =>
+    `<a href="${esc(url)}" style="color:${ORANGE};font-weight:bold;text-decoration:none;margin-right:16px;">${label} &rarr;</a>`;
+  const venues = req.venues
+    .map(
+      (v) =>
+        `${heading(v.name)}${v.riderNotes.length ? list(v.riderNotes) : ""}${
+          v.waiverUrl || v.passUrl || v.rulesUrl
+            ? `<p style="margin:6px 0 0;">${[
+                v.waiverUrl ? link(v.waiverUrl, "Sign Their Waiver") : "",
+                v.passUrl ? link(v.passUrl, "Get Your Pass") : "",
+                v.rulesUrl ? link(v.rulesUrl, "Park Rules") : "",
+              ].join("")}</p>`
+            : ""
+        }`,
+    )
+    .join("");
   const rules = req.ruleSets
     .map(
       (set) =>
@@ -132,7 +148,7 @@ function requirementsBlock(event: EventDetail): string {
   return `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #ded9d3;border-left:3px solid ${ORANGE};margin-top:20px;">
           <tr><td style="padding:18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;">
-            <p style="margin:0;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Requirements</p>${own}${rules}
+            <p style="margin:0;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Requirements</p>${own}${venues}${rules}
           </td></tr>
         </table>`;
 }

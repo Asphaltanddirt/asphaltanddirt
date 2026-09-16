@@ -2,7 +2,8 @@
  * An event's Requirements: its own items from the Events table's
  * "Requirements" field (radios, tire size...) followed by the standard rule
  * set for each place ticked in "Venue Type" (State Forest, Private Land,
- * Off-Road Park). A&D follows the state rules to the letter (Jose,
+ * Off-Road Park), and the linked Venues' own waiver, pass and rules links
+ * (Jose is confirming each off-road park's waiver link, 2026-09-16). A&D follows the state rules to the letter (Jose,
  * 2026-09-16). One model feeds the event page's Requirements section, the
  * RSVP form's required checkbox and the confirmation email, so they never
  * disagree.
@@ -120,20 +121,44 @@ export const VEHICLE_RULES: Record<string, VehicleRuleSet> = {
 };
 
 
+/** A linked venue's public parts (mirrors EventVenue in lib/events.ts,
+ *  kept structural so this file stays importable from client components). */
+export interface RequirementVenue {
+  name: string;
+  waiverUrl: string;
+  passUrl: string;
+  rulesUrl: string;
+  riderNotes: string[];
+}
+
 export interface EventRequirements {
   /** This event's own requirements, in the order the team wrote them. */
   items: string[];
+  /** Linked venues with something riders need: a waiver, pass, rules or notes. */
+  venues: RequirementVenue[];
   /** One standard set per Venue Type ticked on the event. */
   ruleSets: VehicleRuleSet[];
 }
 
-export const REQUIREMENTS_ACCEPT_LABEL =
-  "I've read the Requirements. If I'm driving, my vehicle and I meet them, and I'll follow them for the whole ride.";
+export function requirementsAcceptLabel(needsVenueWaiver: boolean): string {
+  return needsVenueWaiver
+    ? "I've read the Requirements and I'll sign the venue's own waiver before the ride. If I'm driving, my vehicle and I meet them, and I'll follow them for the whole ride."
+    : "I've read the Requirements. If I'm driving, my vehicle and I meet them, and I'll follow them for the whole ride.";
+}
 
-export function requirementsFor(event: { requirements: string[]; venueTypes: string[] }): EventRequirements | null {
+export function needsVenueWaiver(req: EventRequirements | null): boolean {
+  return Boolean(req?.venues.some((v) => v.waiverUrl));
+}
+
+export function requirementsFor(event: {
+  requirements: string[];
+  venueTypes: string[];
+  venues: RequirementVenue[];
+}): EventRequirements | null {
   const ruleSets = event.venueTypes.map((type) => VEHICLE_RULES[type]).filter((set): set is VehicleRuleSet => Boolean(set));
-  if (event.requirements.length === 0 && ruleSets.length === 0) return null;
-  return { items: event.requirements, ruleSets };
+  const venues = event.venues.filter((v) => v.name && (v.waiverUrl || v.passUrl || v.rulesUrl || v.riderNotes.length));
+  if (event.requirements.length === 0 && ruleSets.length === 0 && venues.length === 0) return null;
+  return { items: event.requirements, venues, ruleSets };
 }
 
 /** What gets stored on the RSVP row (a single-line field): the event's items
@@ -142,6 +167,9 @@ export function requirementsFor(event: { requirements: string[]; venueTypes: str
 export function requirementsRecord(req: EventRequirements): string {
   return [
     ...(req.items.length ? [`Event: ${req.items.join("; ")}`] : []),
+    ...(req.venues.length
+      ? [`Venues: ${req.venues.map((v) => `${v.name}${v.waiverUrl ? " (waiver)" : ""}${v.riderNotes.length ? `: ${v.riderNotes.join("; ")}` : ""}`).join("; ")}`]
+      : []),
     ...(req.ruleSets.length ? [`Rules: ${req.ruleSets.map((set) => set.version).join(", ")}`] : []),
   ].join(" | ");
 }

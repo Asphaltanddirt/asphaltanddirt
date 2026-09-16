@@ -14,6 +14,7 @@ const BASE_ID = process.env.AIRTABLE_EVENTS_BASE_ID;
 const EVENTS_TABLE = "Events";
 const RSVPS_TABLE = "RSVPs";
 const PHOTO_SUBMISSIONS_TABLE = "Event Photo Submissions";
+const VENUES_TABLE = "Venues";
 
 function assertConfigured() {
   if (!isAirtableConfigured(BASE_ID)) {
@@ -34,6 +35,49 @@ export interface EventSummary {
   publicBlurb: string;
   photoUrl: string | null;
   facebookEventUrl: string;
+}
+
+export interface EventVenue {
+  name: string;
+  type: string;
+  waiverUrl: string;
+  passUrl: string;
+  rulesUrl: string;
+  riderNotes: string[];
+}
+
+/** Only real web links reach a public page or email. */
+function publicUrl(value: unknown): string {
+  return typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : "";
+}
+
+function lines(value: unknown): string[] {
+  return ((value as string) || "")
+    .split("\n")
+    .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+/** The event's linked Venues, public fields only. */
+async function getEventVenues(ids: string[]): Promise<EventVenue[]> {
+  if (ids.length === 0) return [];
+  const records = await listRecords(
+    VENUES_TABLE,
+    `OR(${ids.map((id) => `RECORD_ID() = '${escapeFormulaString(id)}'`).join(", ")})`,
+    { baseId: BASE_ID, revalidate: 300 },
+  );
+  const byId = new Map(records.map((r) => [r.id, r]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r))
+    .map((r) => ({
+      name: (r.fields.Name as string) || "",
+      type: (r.fields.Type as string) || "",
+      waiverUrl: publicUrl(r.fields["Waiver Link"]),
+      passUrl: publicUrl(r.fields["Pass / Entry Link"]),
+      rulesUrl: publicUrl(r.fields["Park Rules Link"]),
+      riderNotes: lines(r.fields["Rider Note"]),
+    }));
 }
 
 export interface EventDetail extends EventSummary {
@@ -60,8 +104,12 @@ export interface EventDetail extends EventSummary {
   galleryPhotos: { url: string; alt: string }[];
   /** PUBLIC. The event's own requirements, one per line in Airtable. */
   requirements: string[];
-  /** Venue Type choices, keys into lib/vehicleRules.ts ("State Forest (NJ)"). */
+  /** Venue Type choices plus the Type of each linked venue, keys into
+   *  lib/vehicleRules.ts ("State Forest (NJ)"). */
   venueTypes: string[];
+  /** PUBLIC parts of the linked Venues rows (waiver/pass/rules links, rider
+   *  notes). Contact details and notes never leave the server. */
+  venues: EventVenue[];
 }
 
 function toSummary(r: { id: string; fields: AirtableFields }): EventSummary {
@@ -145,7 +193,13 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
   );
   const record = records[0];
   if (!record) return null;
-  const hidden = await getHiddenPhotoKeys();
+  const [hidden, venues] = await Promise.all([
+    getHiddenPhotoKeys(),
+    getEventVenues((record.fields.Venue as string[]) || []).catch((err) => {
+      console.error("event venues lookup failed", err);
+      return [] as EventVenue[];
+    }),
+  ]);
   const galleryPhotos = ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || [])
     .map((photo, i) => ({
       url: photo.url,
@@ -170,11 +224,10 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
       }),
     recap: (record.fields.Recap as string) || "",
     galleryPhotos,
-    requirements: ((record.fields.Requirements as string) || "")
-      .split("\n")
-      .map((line) => line.replace(/^[-•*]\s*/, "").trim())
-      .filter(Boolean),
-    venueTypes: (record.fields["Venue Type"] as string[]) || [],
+    requirements: lines(record.fields.Requirements),
+    // Linking a park brings its type's rules along, so they can't be forgotten.
+    venueTypes: [...new Set([...((record.fields["Venue Type"] as string[]) || []), ...venues.map((v) => v.type).filter(Boolean)])],
+    venues,
   };
 }
 

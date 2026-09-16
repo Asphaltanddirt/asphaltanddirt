@@ -6,7 +6,7 @@ import { socialLinks } from "@/lib/social";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import RsvpForm from "@/components/RsvpForm";
 import EventRequirementsSection from "@/components/EventRequirements";
-import { requirementsFor } from "@/lib/vehicleRules";
+import { needsVenueWaiver, requirementsFor } from "@/lib/vehicleRules";
 import BuildGallery from "@/components/BuildGallery";
 import EventPhotoSubmissionForm from "@/components/EventPhotoSubmissionForm";
 
@@ -161,7 +161,7 @@ export default async function EventDetailPage({
                   {requirements && <EventRequirementsSection requirements={requirements} />}
 
                   <h2 className="mt-6">RSVP</h2>
-                  <RsvpForm slug={event.slug} hasRequirements={Boolean(requirements)} />
+                  <RsvpForm slug={event.slug} hasRequirements={Boolean(requirements)} needsVenueWaiver={needsVenueWaiver(requirements)} />
                 </>
               )}
             </div>
