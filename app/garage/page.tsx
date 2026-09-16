@@ -4,6 +4,8 @@ import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@
 import { getPublishedEvents } from "@/lib/events";
 import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
+import GarageReminders from "@/components/GarageReminders";
+import { getDueReminders } from "@/lib/garageReminders";
 
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
@@ -62,9 +64,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
 
   const today = todayNY();
   const thisWeek = weekOf(today);
-  const [events, allTasks] = await Promise.all([
+  const [events, allTasks, reminders] = await Promise.all([
     getPublishedEvents().catch(() => ({ upcoming: [], past: [] })),
     getTasksFor(session.email).catch(() => []),
+    getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
   ]);
   // This week's work plus anything still open from before — nothing quietly
   // disappears just because the week rolled over.
@@ -82,7 +85,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
-      ? [{ href: null, label: "Team", sub: "Owners only", img: "/img/garage/tile-team.jpg" }]
+      ? [{ href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" }]
       : []),
   ];
 
@@ -117,6 +120,9 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
 
         <h2 className="garage-section">Your week</h2>
         <GarageTaskList tasks={tasks} today={today} />
+
+        <h2 className="garage-section">Reminders</h2>
+        <GarageReminders reminders={reminders} today={today} />
 
         <h2 className="garage-section">The Garage</h2>
         <div className="garage-tiles">
