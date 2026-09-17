@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAirtableConfigured } from "@/lib/airtable";
 import { runAnalyticsSnapshot } from "@/lib/analyticsSnapshot";
+import { syncSocialStatsFromMeta } from "@/lib/socialStatsSync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Weekly: pulls the no-OAuth analytics we can get — Fourthwall merch totals and
- * YouTube public stats (subscribers, per-video lifetime views, channel views,
- * upload count) — into the "A&D Analytics" Airtable base.
+ * Weekly: pulls the analytics we can get — Fourthwall merch totals, YouTube
+ * public stats (subscribers, per-video lifetime views, channel views, upload
+ * count), Vercel/Search Console, and Meta (Instagram + Facebook Page) — into
+ * the "A&D Analytics" Airtable base. Then fills the posting board's 7-day
+ * numbers for any Instagram/Facebook post that has just aged into its window.
  *
  * Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Also accepts
  * `ADMIN_API_SECRET` for manual runs. Schedule is in vercel.json (Mondays).
@@ -33,8 +36,18 @@ async function run(req: NextRequest) {
   const dry = req.nextUrl.searchParams.get("dry") === "1";
 
   try {
-    const result = await runAnalyticsSnapshot(new Date(), { dryRun: dry });
-    return NextResponse.json({ status: "ok", result });
+    const now = new Date();
+    const result = await runAnalyticsSnapshot(now, { dryRun: dry });
+    // Board numbers are a separate write, and never a reason to fail the run.
+    let socialStats;
+    if (!dry) {
+      try {
+        socialStats = await syncSocialStatsFromMeta(now);
+      } catch (e) {
+        socialStats = { ok: false, error: String(e) };
+      }
+    }
+    return NextResponse.json({ status: "ok", result, socialStats });
   } catch (err) {
     console.error("analytics-snapshot cron error", err);
     return NextResponse.json({ error: "Snapshot failed.", detail: String(err) }, { status: 502 });

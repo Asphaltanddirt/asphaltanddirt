@@ -10,6 +10,11 @@
  *       pageviews, visitors by referrer / page / device, and social-link attribution from the
  *       site's own utm_landing event — rolling 7d and 28d, all on the current plan
  *
+ *   Meta (runs if META_GRAPH_TOKEN + an account id are present):
+ *     - Instagram  -> Audience Snapshot: followers, weekly reach, weekly views
+ *     - Facebook Page -> Audience Snapshot: followers, weekly reach
+ *     Instagram only keeps insights ~90 days, so this archive is the long memory.
+ *
  *   OAuth (runs if GOOGLE_OAUTH_* present):
  *     - YouTube Analytics API -> Performance: channel + per-video views / watch time /
  *       avg view duration for rolling 7d and 28d, plus traffic-source view split
@@ -28,6 +33,7 @@
 
 import { listRecords, upsertRecords, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { getOrdersInRange } from "@/lib/fourthwall-platform";
+import { facebookPage, instagramAccount, isMetaConfigured } from "@/lib/metaInsights";
 
 const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
 const YT_CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UCxW12IVrVrAx-UKFoNfq45Q";
@@ -64,6 +70,7 @@ export interface SnapshotResult {
   vercelAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number; warnings?: string[] };
   youtubeAnalytics: { ok: boolean; skipped?: string; error?: string; rows?: number };
   searchConsole: { ok: boolean; skipped?: string; error?: string; rows?: number };
+  meta: { ok: boolean; skipped?: string; error?: string; instagramFollowers?: number; facebookFollowers?: number; rows?: number };
   written: { performance: number; audienceSnapshot: number };
 }
 
@@ -645,6 +652,67 @@ export async function runAnalyticsSnapshot(
     }
   }
 
+  // --- Meta: Instagram + Facebook Page ---
+  let meta: SnapshotResult["meta"] = { ok: false, skipped: "META_GRAPH_TOKEN not configured" };
+  if (isMetaConfigured()) {
+    const since = daysAgo(now, 7);
+    const before = snapRows.length;
+    const errors: string[] = [];
+    let igFollowers: number | undefined;
+    let fbFollowers: number | undefined;
+
+    const push = (platform: string, metric: string, value: number | undefined, notes: string) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) return;
+      const key = `${platform}-${metric}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      snapRows.push({
+        fields: {
+          snapshot_id: `SNAP-${today}-${key}`,
+          platform,
+          snapshot_date: today,
+          metric,
+          unit: "count",
+          value,
+          period_start: isoDate(since),
+          period_end: today,
+          source: `Meta Graph API (cron ${today})`,
+          notes,
+        },
+      });
+    };
+
+    if (process.env.META_IG_USER_ID) {
+      try {
+        const ig = await instagramAccount(since, now);
+        igFollowers = ig.followers;
+        push("Instagram", "Followers", ig.followers, "Follower count at the time of the run.");
+        push("Instagram", "Weekly reach", ig.window.reach, "Accounts reached, 7 days. Instagram drops this after ~90 days.");
+        push("Instagram", "Weekly views", ig.window.views, "Views across the account, 7 days.");
+      } catch (e) {
+        errors.push(`instagram: ${String(e)}`);
+      }
+    }
+
+    if (process.env.META_PAGE_ID) {
+      try {
+        const fb = await facebookPage(since, now);
+        fbFollowers = fb.followers;
+        push("Facebook Page", "Followers", fb.followers, "Follower count at the time of the run.");
+        push(
+          "Facebook Page",
+          "Weekly reach",
+          fb.window.page_impressions_unique,
+          "People who saw any Page content, 7 days.",
+        );
+      } catch (e) {
+        errors.push(`facebook: ${String(e)}`);
+      }
+    }
+
+    meta = errors.length
+      ? { ok: false, error: errors.join("; "), instagramFollowers: igFollowers, facebookFollowers: fbFollowers, rows: snapRows.length - before }
+      : { ok: true, instagramFollowers: igFollowers, facebookFollowers: fbFollowers, rows: snapRows.length - before };
+  }
+
   if (!opts.dryRun) {
     if (perfRows.length) {
       await upsertRecords(PERFORMANCE_TABLE, perfRows, ["observation_id"], { baseId: BASE_ID });
@@ -668,6 +736,7 @@ export async function runAnalyticsSnapshot(
       : { ok: false, skipped: "skipped" in vercel ? vercel.skipped : undefined, error: "error" in vercel ? vercel.error : undefined },
     youtubeAnalytics: yta,
     searchConsole: gsc,
+    meta,
     written: { performance: perfRows.length, audienceSnapshot: snapRows.length },
   };
 }
