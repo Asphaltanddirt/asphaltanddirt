@@ -67,8 +67,8 @@ export const VEHICLE_RULES: Record<string, VehicleRuleSet> = {
       },
     ],
   },
-  // Private Land and Off-Road Park are first drafts (2026-09-16) for Jose to
-  // review. Venue-specific details go in the event's own Requirements.
+  // Private Land and Off-Road Park wording approved by Jose 2026-09-16.
+  // Park-specific details go in the Venues row's Rider Note.
   "Private Land": {
     version: "PRIVATE-LAND-1.0",
     title: "Private Land Rules",
