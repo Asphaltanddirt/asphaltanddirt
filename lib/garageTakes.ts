@@ -22,6 +22,8 @@ export interface GarageTake {
   summary: string;
   /** The companion blog post's slug, when there is one. */
   blogSlug?: string;
+  /** Explicit headline line breaks; falls back to the punctuation split. */
+  titleLines?: string[];
   transcript: string;
 }
 
@@ -64,6 +66,7 @@ it's the older M3, uh, great fun car. Would not mind owning one. Uh, the 370Z th
     summary:
       "Roof whistle starts the conversation, then Anthony gets into Bronco versus Wrangler: cabin space, daily driving, trail width, removable roofs and the aftermarket.",
     blogSlug: "bronco-hardtop-wind-noise-diagnose-before-you-buy",
+    titleLines: ["Bronco Hardtop Wind Noise:", "Anthony's Take on the", "Bronco vs. Jeep Debate"],
     transcript: `Well, well, well, guys, what do we have? An interesting topic. Everyone's talking about the, uh, new Ford Broncos. Everyone's finally realizing that, you know, they are actually whistling in certain areas, whether it be the seals around the roof or the C-pillars.
 
 Uh, you know, all cars have their issues, right? Um, my personal take on the Bronco, they look good with the bigger wheels and everything like that. Um, you know, but they are still IFS, a glorified Jeep. Uh, my personal opinion, right?
@@ -103,9 +106,10 @@ Catch you on the next one.`,
 /** Takes whose Friday has arrived, newest first. */
 /** Break a take title onto two lines at its question mark or colon, so the
  *  headline doesn't wrap mid-thought. Returns one line if there's no break. */
-export function takeTitleLines(title: string): string[] {
-  const m = title.match(/^(.*?[?:])\s+(.+)$/);
-  return m ? [m[1], m[2]] : [title];
+export function takeTitleLines(take: GarageTake): string[] {
+  if (take.titleLines?.length) return take.titleLines;
+  const m = take.title.match(/^(.*?[?:])\s+(.+)$/);
+  return m ? [m[1], m[2]] : [take.title];
 }
 
 export function publishedGarageTakes(today = new Date().toISOString().slice(0, 10)): GarageTake[] {

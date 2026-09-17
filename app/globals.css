@@ -552,8 +552,24 @@ h1 .line{ display:block; }
 .pair-box p{ margin:6px 0 0; color:var(--text-muted); font-size:14.5px; }
 /* Headline broken at its own punctuation instead of wherever the column ends */
 h1 .title-line{ display:block; }
-/* A lead under a full-width video needs a wider measure than the 46ch default */
-.lead-wide{ max-width:70ch; font-size:18px; }
+/* Garage Takes page banner — 16:9 art, cropped shorter on wide screens so it
+ * doesn't push the takes themselves below the fold. */
+.takes-banner{ border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; line-height:0; }
+.takes-banner img{ width:100%; height:auto; display:block; }
+@media (min-width:900px){
+  .takes-banner{ aspect-ratio:3/1; }
+  .takes-banner img{ height:100%; object-fit:cover; object-position:center; }
+}
+
+/* A take's summary sits in a panel under the video, like the blog's featured
+ * panel, with the A&D gradient washing left-to-right off an orange edge. */
+.take-summary{
+  border:1px solid var(--border); border-left:3px solid var(--accent);
+  border-radius:var(--radius-md); padding:var(--sp-3) var(--sp-4);
+  background:linear-gradient(100deg, rgba(248,96,0,.14) 0%, rgba(248,96,0,.04) 32%, var(--bg-elevated) 70%);
+}
+.take-summary p{ font-size:18px; color:var(--text); max-width:70ch; }
+@media (max-width:640px){ .take-summary{ padding:var(--sp-3); } .take-summary p{ font-size:16.5px; } }
 .card-body{ padding:var(--sp-3); display:flex; flex-direction:column; gap:10px; flex:1; }
 .card h3{ font-size:19px; }
 .card p{ font-size:14px; margin:0; }

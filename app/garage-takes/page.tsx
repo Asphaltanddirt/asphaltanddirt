@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   description:
     "Anthony's honest takes from the garage: what he'd daily, what he'd build, and what he'd leave alone. A new one every week, alongside that week's story.",
   alternates: { canonical: `${SITE_URL}/garage-takes` },
+  openGraph: {
+    title: "Garage Takes",
+    description: "Anthony's honest takes from the garage. A new one every week.",
+    url: `${SITE_URL}/garage-takes`,
+    images: [{ url: `${SITE_URL}/img/garage-takes/share.jpg`, width: 1200, height: 630, alt: "Garage Takes — Anthony's honest takes from the garage" }],
+  },
 };
 
 const day = (iso: string) =>
@@ -22,17 +28,30 @@ export default function GarageTakesPage() {
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <h1 className="mb-0">Garage Takes</h1>
+        {/* The banner carries the series name and the one-line description, so the
+            page doesn't repeat either underneath it. */}
+        <div className="takes-banner">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/img/garage-takes/banner.jpg"
+            alt="Garage Takes — Anthony's honest takes from the garage"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+          />
+          <h1 className="sr-only">Garage Takes</h1>
+        </div>
+
+        <div className="mt-3" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <p className="lead mb-0" style={{ maxWidth: "62ch" }}>
+            What he&apos;d daily, what he&apos;d build, and what he&apos;d leave alone. A new one every week, next to that
+            week&apos;s story.
+          </p>
           <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
             Full Playlist On YouTube
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </a>
         </div>
-        <p className="lead mt-2">
-          Anthony&apos;s honest takes from the garage: what he&apos;d daily, what he&apos;d build, and what he&apos;d leave
-          alone. A new one every week, next to that week&apos;s story.
-        </p>
 
         {takes.length ? (
           <div className="grid grid-2 mt-4">

@@ -63,7 +63,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
         </Link>
 
         <h1 className="mt-3">
-          {takeTitleLines(take.title).map((line, i) => (
+          {takeTitleLines(take).map((line, i) => (
             <span className="title-line" key={i}>{line}</span>
           ))}
         </h1>
@@ -73,7 +73,9 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
           <YouTubeEmbed videoId={take.videoId} title={take.title} thumbnail={`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`} eventContext="garage_take" />
         </div>
 
-        <p className="lead lead-wide mt-3">{take.summary}</p>
+        <div className="take-summary mt-3">
+          <p className="mb-0">{take.summary}</p>
+        </div>
 
         {post && (
           <div className="exp-box pair-box mt-3">
