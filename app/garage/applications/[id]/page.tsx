@@ -3,9 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageDecision from "@/components/GarageDecision";
 import GarageOnboarding from "@/components/GarageOnboarding";
+import { GarageInterview, GarageScoring } from "@/components/GarageScoring";
 import { getAmbassadorRecord, toOnboarding } from "@/lib/ambassadorOnboarding";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { getApplication } from "@/lib/garageApplications";
+import { getApplication, suggestedBand } from "@/lib/garageApplications";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,7 +42,7 @@ export default async function GarageApplicationPage({ params }: { params: Promis
           <div>
             <h1 className="garage-event-title">{app.name}</h1>
             <p className="garage-event-area">
-              {[app.location, app.applied && `Applied ${new Date(`${app.applied}T00:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric" })}`, app.score !== null && `Score ${app.score}`]
+              {[app.location, app.applied && `Applied ${new Date(`${app.applied}T00:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric" })}`, app.score !== null && `Score ${app.score} (${suggestedBand(app.score).toLowerCase()})`]
                 .filter(Boolean)
                 .join(" · ")}
             </p>
@@ -51,6 +52,16 @@ export default async function GarageApplicationPage({ params }: { params: Promis
             </p>
           </div>
         </div>
+
+        <section className="garage-panel">
+          <h2>Score</h2>
+          <GarageScoring id={app.id} initialScores={app.scores} initialNotes={app.reviewerNotes} />
+        </section>
+
+        <section className="garage-panel">
+          <h2>Interview</h2>
+          <GarageInterview id={app.id} initialDate={app.interviewDate} initialNotes={app.interviewNotes} />
+        </section>
 
         <section className="garage-panel">
           <h2>Decision</h2>

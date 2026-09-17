@@ -1,4 +1,5 @@
 import { listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { SCORE_CATEGORIES, type Scores } from "@/lib/applicationScoring";
 
 /**
  * Road & Trail Crew applications, for the owners' review screen in A&D Garage.
@@ -21,6 +22,9 @@ export const DECISIONS = [
 ] as const;
 export type Decision = (typeof DECISIONS)[number];
 
+export { SCORE_CATEGORIES, suggestedBand, weightedScore } from "@/lib/applicationScoring";
+export type { ScoreKey, Scores } from "@/lib/applicationScoring";
+
 export interface Application {
   id: string;
   name: string;
@@ -33,6 +37,10 @@ export interface Application {
   /** Their Ambassador record, once Accept has created it. */
   ambassadorId: string;
   score: number | null;
+  scores: Scores;
+  reviewerNotes: string;
+  interviewDate: string;
+  interviewNotes: string;
   photo: string;
   buildPhotos: string[];
   facts: { label: string; value: string }[];
@@ -61,7 +69,6 @@ const TEXT_FIELDS: [string, string][] = [
   ["Other Brand Relationships", "Other brand relationships"],
   ["Meaningful Engagement", "Meaningful engagement"],
   ["Additional Info", "Additional info"],
-  ["Reviewer Notes", "Reviewer notes"],
 ];
 
 function text(v: unknown): string {
@@ -85,6 +92,15 @@ function toApplication(r: { id: string; createdTime?: string; fields: AirtableFi
     status: text(f.Status),
     ambassadorId: ((f["Ambassador Record"] as string[] | undefined) || [])[0] || "",
     score: Number.isFinite(score) && f["Weighted Score"] !== undefined ? score : null,
+    scores: Object.fromEntries(
+      SCORE_CATEGORIES.map((c) => {
+        const v = Number(text(f[c.field]));
+        return [c.key, v >= 1 && v <= 5 ? v : null];
+      }),
+    ) as Scores,
+    reviewerNotes: text(f["Reviewer Notes"]),
+    interviewDate: text(f["Interview Date"]),
+    interviewNotes: text(f["Interview Notes"]),
     photo: attachments(f["Ambassador Photo"])[0] || "",
     buildPhotos: attachments(f["Build Photo(s)"]),
     facts: TEXT_FIELDS.map(([field, label]) => ({ label, value: text(f[field]) })).filter((x) => x.value),
@@ -116,4 +132,28 @@ export async function setDecision(id: string, decision: Decision | null): Promis
 /** Waiting on a decision: no Review Decision yet, or put on hold. */
 export function isWaiting(app: Application) {
   return !app.decision || app.decision === "Hold / Second Review" || app.decision === "Exceptional Candidate / Crew Review";
+}
+
+export interface ReviewEdit {
+  scores?: Partial<Scores>;
+  reviewerNotes?: string;
+  interviewDate?: string;
+  interviewNotes?: string;
+}
+
+/** Saves scores and review/interview notes. Only the parts given are written. */
+export async function saveReview(id: string, edit: ReviewEdit): Promise<Application> {
+  if (!isAirtableConfigured(BASE_ID)) throw new Error("Road & Trail Crew base is not configured.");
+  const fields: AirtableFields = {};
+  for (const c of SCORE_CATEGORIES) {
+    if (edit.scores && c.key in edit.scores) {
+      const v = edit.scores[c.key];
+      fields[c.field] = v ? String(v) : null;
+    }
+  }
+  if (edit.reviewerNotes !== undefined) fields["Reviewer Notes"] = edit.reviewerNotes.slice(0, 5000) || null;
+  if (edit.interviewNotes !== undefined) fields["Interview Notes"] = edit.interviewNotes.slice(0, 5000) || null;
+  if (edit.interviewDate !== undefined) fields["Interview Date"] = edit.interviewDate || null;
+  const updated = await updateRecord(TABLE, id, fields, { baseId: BASE_ID });
+  return toApplication(updated);
 }

@@ -22,7 +22,9 @@ export interface Onboarding {
   link: string;
   welcome2Sent: string;
   linkVisits: number;
-  kitSent: boolean;
+  kitSent: string;
+  shirtSize: string;
+  shippingAddress: string;
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -48,7 +50,9 @@ export function toOnboarding(r: AirtableRecord): Onboarding {
     link: str(f["Tracking Link"]) || (code ? referralLinkFor(code) : ""),
     welcome2Sent: done(f["Welcome 2 Sent"], f["Welcome 2 Sent Date"]),
     linkVisits: Number(f["Link Visits"]) || 0,
-    kitSent: f["Kit Sent"] === true,
+    kitSent: done(f["Kit Sent"], f["Kit Sent Date"]),
+    shirtSize: str(f["Shirt Size"]),
+    shippingAddress: str(f["Shipping Address"]),
   };
 }
 
@@ -118,4 +122,13 @@ export async function createAmbassadorCode(
     "Tracking Link": referralLinkFor(code),
   });
   return { ok: true, onboarding: toOnboarding(updated) };
+}
+
+/** Marks the welcome kit shipped (today) from the Garage. */
+export async function markKitSent(record: AirtableRecord): Promise<Onboarding> {
+  const updated = await updateRecord(AMBASSADORS_TABLE, record.id, {
+    "Kit Sent": true,
+    "Kit Sent Date": new Date().toISOString().slice(0, 10),
+  });
+  return toOnboarding(updated);
 }

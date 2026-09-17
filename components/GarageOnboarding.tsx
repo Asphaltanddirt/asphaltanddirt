@@ -15,7 +15,7 @@ function when(value: string) {
  */
 export default function GarageOnboarding({ initial }: { initial: Onboarding }) {
   const [ob, setOb] = useState(initial);
-  const [armed, setArmed] = useState<"" | "welcome1" | "code" | "welcome2">("");
+  const [armed, setArmed] = useState<"" | "welcome1" | "code" | "welcome2" | "kit">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
@@ -23,7 +23,7 @@ export default function GarageOnboarding({ initial }: { initial: Onboarding }) {
   const [percent, setPercent] = useState("10");
   const [canUseExisting, setCanUseExisting] = useState(false);
 
-  async function run(action: "welcome1" | "code" | "welcome2", useExisting = false) {
+  async function run(action: "welcome1" | "code" | "welcome2" | "kit", useExisting = false) {
     if (armed !== action && !useExisting) {
       setArmed(action);
       setError("");
@@ -48,9 +48,11 @@ export default function GarageOnboarding({ initial }: { initial: Onboarding }) {
       setNote(
         action === "code"
           ? "Code created in Fourthwall and saved."
-          : data.status === "already-sent"
-            ? "That email had already gone out."
-            : "Email sent.",
+          : action === "kit"
+            ? "Kit marked shipped."
+            : data.status === "already-sent"
+              ? "That email had already gone out."
+              : "Email sent.",
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "That didn't work. Try again.");
@@ -186,7 +188,21 @@ export default function GarageOnboarding({ initial }: { initial: Onboarding }) {
 
         <li className={ob.kitSent ? "is-done" : ""}>
           <h3>Welcome kit</h3>
-          <p>{ob.kitSent ? "Shipped." : "Not marked shipped yet (Kit Sent in Airtable)."}</p>
+          {ob.kitSent ? (
+            <p>Shipped{when(ob.kitSent) && ` ${when(ob.kitSent)}`}.</p>
+          ) : (
+            <>
+              <p>Patch, stickers and a shirt{ob.shirtSize ? `, size ${ob.shirtSize}` : ""}.</p>
+              {ob.shippingAddress ? (
+                <p className="garage-address">{ob.shippingAddress}</p>
+              ) : (
+                <p>Their shipping address comes in with the signed agreement.</p>
+              )}
+              <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => run("kit")}>
+                {armed === "kit" ? "Tap again: shipped today" : "Mark kit shipped"}
+              </button>
+            </>
+          )}
         </li>
       </ol>
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { createAmbassadorCode, getAmbassadorRecord, toOnboarding } from "@/lib/ambassadorOnboarding";
+import { createAmbassadorCode, getAmbassadorRecord, markKitSent, toOnboarding } from "@/lib/ambassadorOnboarding";
 import { sendAmbassadorWelcome } from "@/lib/ambassadorWelcomeSend";
 
 /**
@@ -8,6 +8,7 @@ import { sendAmbassadorWelcome } from "@/lib/ambassadorWelcomeSend";
  *   { ambassadorId, action: "welcome1" }
  *   { ambassadorId, action: "code", code, percent, useExisting? }
  *   { ambassadorId, action: "welcome2" }
+ *   { ambassadorId, action: "kit" }        (welcome kit shipped today)
  * Welcome 2 stays a button on purpose (Jose, 9/17): someone sees it go out.
  */
 export async function POST(req: NextRequest) {
@@ -41,6 +42,15 @@ export async function POST(req: NextRequest) {
         },
         { status: 502 },
       );
+    }
+  }
+
+  if (body.action === "kit") {
+    try {
+      return NextResponse.json({ status: "ok", onboarding: await markKitSent(record) });
+    } catch (err) {
+      console.error("garage mark kit sent failed", err);
+      return NextResponse.json({ error: "Couldn't save that. Try again." }, { status: 502 });
     }
   }
 
