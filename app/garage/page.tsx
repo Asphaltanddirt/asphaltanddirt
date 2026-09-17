@@ -111,6 +111,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-media.jpg" },
           { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-crew.jpg" },
           { href: "/garage/review", label: "Review", sub: "Builds, reviews, what the site features", img: "/img/garage/tile-media.jpg" },
+          { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-media.jpg" },
         ]
       : []),
     ...(canSeeControlRoom(session)
