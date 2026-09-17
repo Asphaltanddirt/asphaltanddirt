@@ -1,4 +1,4 @@
-import { listRecords, createRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { listRecords, createRecord, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { getApprovedPhotoDescriptions, getHiddenPhotoKeys } from "@/lib/garageMedia";
 
 /**
@@ -35,6 +35,10 @@ export interface EventSummary {
   publicBlurb: string;
   photoUrl: string | null;
   facebookEventUrl: string;
+  /** Crew Only status: a crew ride. Garage only, no public page or RSVPs. */
+  crewOnly: boolean;
+  /** Events → Drive Folder (set by the hourly event-drive cron). */
+  driveFolderUrl: string;
 }
 
 export interface EventVenue {
@@ -125,6 +129,8 @@ function toSummary(r: { id: string; fields: AirtableFields }): EventSummary {
     publicBlurb: (r.fields["Public Blurb"] as string) || "",
     photoUrl: photo?.url || null,
     facebookEventUrl: (r.fields["Facebook Event URL"] as string) || "",
+    crewOnly: r.fields.Status === "Crew Only",
+    driveFolderUrl: (r.fields["Drive Folder"] as string) || "",
   };
 }
 
@@ -142,6 +148,38 @@ export async function getPublishedEvents(): Promise<{ upcoming: EventSummary[]; 
   const upcoming = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const past = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
   return { upcoming, past };
+}
+
+/** What the crew sees in A&D Garage: Published events plus Crew Only rides,
+ *  split and sorted the same way as getPublishedEvents. */
+export async function getCrewEvents(): Promise<{ upcoming: EventSummary[]; past: EventSummary[] }> {
+  assertConfigured();
+  const records = await listRecords(EVENTS_TABLE, `OR({Status} = 'Published', {Status} = 'Crew Only')`, {
+    baseId: BASE_ID,
+    revalidate: 60,
+  });
+  const events = records.map(toSummary).filter((e) => e.slug && e.date);
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const past = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+  return { upcoming, past };
+}
+
+/** Events that should have a Drive folder but don't have the link yet: any
+ *  status except Draft and Cancelled, with a Title and Date. */
+export async function listEventsNeedingDriveFolder(): Promise<EventSummary[]> {
+  assertConfigured();
+  const records = await listRecords(
+    EVENTS_TABLE,
+    `AND(OR({Status} = 'Published', {Status} = 'Unlisted', {Status} = 'Crew Only'), {Title} != '', {Date} != BLANK(), {Drive Folder} = '')`,
+    { baseId: BASE_ID },
+  );
+  return records.map(toSummary).filter((e) => e.title && e.date);
+}
+
+export async function setEventDriveFolder(eventRecordId: string, url: string): Promise<void> {
+  assertConfigured();
+  await updateRecord(EVENTS_TABLE, eventRecordId, { "Drive Folder": url }, { baseId: BASE_ID });
 }
 
 /** `date` is today or later — for picking the button label/link (Details &
@@ -186,11 +224,17 @@ export async function getNextUpcomingEvent(): Promise<EventSummary | null> {
  *  public page. Unlisted = a real, working event (RSVP, Tailgate, emails) that
  *  only people with the link can reach: it's left out of every list, the
  *  sitemap and the newsletter, which all read getPublishedEvents instead. */
-export async function getEventBySlug(slug: string): Promise<EventDetail | null> {
+export async function getEventBySlug(
+  slug: string,
+  options: { includeCrewOnly?: boolean } = {},
+): Promise<EventDetail | null> {
   assertConfigured();
+  // Crew Only events never resolve for public callers (event page, RSVP,
+  // uploads, Tailgate). Only the Garage asks for them.
+  const statuses = ["Published", "Unlisted", ...(options.includeCrewOnly ? ["Crew Only"] : [])];
   const records = await listRecords(
     EVENTS_TABLE,
-    `AND(OR({Status} = 'Published', {Status} = 'Unlisted'), {Slug} = '${escapeFormulaString(slug)}')`,
+    `AND(OR(${statuses.map((st) => `{Status} = '${st}'`).join(", ")}), {Slug} = '${escapeFormulaString(slug)}')`,
     { baseId: BASE_ID },
   );
   const record = records[0];

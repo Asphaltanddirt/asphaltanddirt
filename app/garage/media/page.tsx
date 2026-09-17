@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import { getSession } from "@/lib/garageAuth";
-import { getPublishedEvents } from "@/lib/events";
+import { getCrewEvents } from "@/lib/events";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
  *  open, and stale tasks or answers are worse than a moment's load. */
@@ -24,7 +24,7 @@ export default async function GarageMediaPage() {
   const session = await getSession();
   if (!session) redirect("/garage");
 
-  const { upcoming, past } = await getPublishedEvents().catch(() => ({ upcoming: [], past: [] }));
+  const { upcoming, past } = await getCrewEvents().catch(() => ({ upcoming: [], past: [] }));
   const events = [...past, ...upcoming];
 
   return (

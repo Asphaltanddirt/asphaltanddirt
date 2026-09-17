@@ -28,6 +28,10 @@
     {
       "path": "/api/cron/retention",
       "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/cron/event-drive",
+      "schedule": "20 * * * *"
     }
   ]
 }

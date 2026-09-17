@@ -21,6 +21,7 @@ export default function GarageEventCard({
   initialResponse,
   others,
   isPast,
+  crewOnly = false,
 }: {
   slug: string;
   title: string;
@@ -36,6 +37,8 @@ export default function GarageEventCard({
   initialResponse: EventResponse | null;
   others: { name: string; response: EventResponse }[];
   isPast: boolean;
+  /** A crew ride (Crew Only status): no public page, no RSVPs. */
+  crewOnly?: boolean;
 }) {
   const [response, setResponse] = useState<EventResponse | null>(initialResponse);
   const [saving, setSaving] = useState(false);
@@ -71,6 +74,7 @@ export default function GarageEventCard({
       <h2>
         <Link href={`/garage/events/${slug}`}>{title}</Link>
       </h2>
+      {crewOnly && <span className="garage-tag">Crew ride</span>}
       {area && <p className="garage-event-area">{area}</p>}
       {rsvps !== null && (
         <p className="garage-event-rsvp">

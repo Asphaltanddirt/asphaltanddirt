@@ -38,7 +38,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   if (!session) redirect("/garage");
 
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const event = await getEventBySlug(slug, { includeCrewOnly: true });
   if (!event) notFound();
 
   const past = isPastEvent(event.date);
@@ -46,7 +46,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   const [responses, settings, roster, users] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
     staff ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
-    getRsvpRoster(event.id).catch((): RsvpPerson[] | null => null),
+    event.crewOnly ? Promise.resolve([] as RsvpPerson[]) : getRsvpRoster(event.id).catch((): RsvpPerson[] | null => null),
     listGarageUsers().catch(() => []),
   ]);
   const mine = responses.find((r) => r.email === session.email)?.response || null;
@@ -68,6 +68,11 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
 
         <div className="garage-event-date">{formatDate(event.date)}</div>
         <h1 className="garage-event-title">{event.title}</h1>
+        {event.crewOnly && (
+          <p className="garage-form-note">
+            <span className="garage-tag">Crew ride</span> Only the crew sees this. No public page, no RSVPs.
+          </p>
+        )}
         {event.generalArea && <p className="garage-event-area">{event.generalArea}</p>}
 
         {!past && <GarageAnswer slug={slug} initialResponse={mine} />}
@@ -76,6 +81,15 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           <Link href={`/comms/${slug}`} className="btn btn-primary garage-block-btn">
             Open Tailgate
           </Link>
+        )}
+
+        <Link href={`/garage/upload?event=${slug}`} className="btn btn-primary garage-block-btn">
+          Upload photos &amp; videos
+        </Link>
+        {event.driveFolderUrl && (
+          <a href={event.driveFolderUrl} target="_blank" rel="noopener" className="btn btn-outline garage-block-btn">
+            Open Drive folder ↗
+          </a>
         )}
 
         {/* One "who's coming" picture: the public RSVPs plus the crew's own
@@ -93,6 +107,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           </p>
         </section>
 
+        {!event.crewOnly && (
         <section className="garage-panel">
           <h2>RSVPs{roster ? ` (${roster.length})` : ""}</h2>
           {!roster ? (
@@ -140,6 +155,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             </>
           )}
         </section>
+        )}
 
         <section className="garage-panel">
           <h2>Crew</h2>
@@ -194,7 +210,9 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
         )}
 
         <p className="garage-links">
-          <a href={`/events/${slug}`} target="_blank" rel="noopener">Public event page ↗</a>
+          {!event.crewOnly && (
+            <a href={`/events/${slug}`} target="_blank" rel="noopener">Public event page ↗</a>
+          )}
           {event.facebookEventUrl && (
             <a href={event.facebookEventUrl} target="_blank" rel="noopener">Facebook event ↗</a>
           )}

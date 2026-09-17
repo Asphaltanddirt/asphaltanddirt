@@ -4,7 +4,7 @@ import GarageBack from "@/components/GarageBack";
 import GarageEventCard from "@/components/GarageEventCard";
 import { getSession } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
-import { getPublishedEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
+import { getCrewEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
  *  open, and stale tasks or answers are worse than a moment's load. */
@@ -29,13 +29,14 @@ export default async function GarageEventsPage() {
   const session = await getSession();
   if (!session) redirect("/garage");
 
-  const { upcoming, past } = await getPublishedEvents().catch(() => ({ upcoming: [], past: [] }));
+  // Published events plus Crew Only rides (those never show on the public site).
+  const { upcoming, past } = await getCrewEvents().catch(() => ({ upcoming: [], past: [] }));
   const shown = [...upcoming, ...past.slice(0, 3)];
 
   // The crew view shows the private meetup spot and run-of-show, which only
   // the per-event record carries.
   const [details, responses, rsvps] = await Promise.all([
-    Promise.all(shown.map((e) => getEventBySlug(e.slug).catch(() => null))),
+    Promise.all(shown.map((e) => getEventBySlug(e.slug, { includeCrewOnly: true }).catch(() => null))),
     getEventResponses(shown.map((e) => e.slug)),
     getRsvpSummaries(shown.map((e) => e.id)).catch(() => new Map()),
   ]);
@@ -62,7 +63,8 @@ export default async function GarageEventsPage() {
                 blurb={event.publicBlurb}
                 meetup={detail?.meetupPoint || ""}
                 details={detail?.fullDetails || ""}
-                rsvps={rsvps.get(event.id)?.count ?? null}
+                rsvps={event.crewOnly ? null : rsvps.get(event.id)?.count ?? null}
+                crewOnly={event.crewOnly}
                 crewGoing={crewPicture([], responses, event.slug).going.length}
                 initialResponse={mine.get(event.slug) || null}
                 others={responses

@@ -24,7 +24,7 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
   if (!session) redirect("/garage");
 
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const event = await getEventBySlug(slug, { includeCrewOnly: true });
   if (!event) notFound();
 
   const [tailgate, uploads, gallery, marks, pending] = await Promise.all([

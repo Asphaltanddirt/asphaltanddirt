@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { canSeeControlRoom } from "@/lib/garageControl";
-import { getPublishedEvents, getRsvpSummaries } from "@/lib/events";
+import { getCrewEvents, getRsvpSummaries } from "@/lib/events";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
@@ -68,7 +68,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   const today = todayNY();
   const thisWeek = weekOf(today);
   const [events, allTasks, reminders] = await Promise.all([
-    getPublishedEvents().catch(() => ({ upcoming: [], past: [] })),
+    getCrewEvents().catch(() => ({ upcoming: [], past: [] })),
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
   ]);
@@ -78,9 +78,12 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // The head count everyone asks about first, on the card they already look at.
   const [rsvps, crewGoing] = events.upcoming[0]
     ? await Promise.all([
-        getRsvpSummaries([events.upcoming[0].id])
-          .then((m) => m.get(events.upcoming[0].id)?.count ?? null)
-          .catch(() => null),
+        // Crew rides take no RSVPs, so there's no count to show.
+        events.upcoming[0].crewOnly
+          ? Promise.resolve(null)
+          : getRsvpSummaries([events.upcoming[0].id])
+              .then((m) => m.get(events.upcoming[0].id)?.count ?? null)
+              .catch(() => null),
         getEventResponses([events.upcoming[0].slug])
           .then((r) => crewPicture([], r, events.upcoming[0].slug).going.length)
           .catch(() => 0),
@@ -99,6 +102,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     ...(canRunEvents(session)
       ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
       : []),
+    { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-media.jpg" },
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)

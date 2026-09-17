@@ -1,12 +1,17 @@
 /**
- * Google Drive for event media: visitor photo/video submissions land in the
- * "A&D Trail Runs" Shared Drive, under
+ * Google Drive for event media, in the "A&D Trail Runs" Shared Drive. Every
+ * event gets one folder with the same layout (Drive protocol, 2026-09-17):
  *
- *   YYYY.MM.DD - Event Title / Attendee Submissions / <date time - Name> /
+ *   YYYY.MM.DD - Event Title /
+ *     1. Staff Uploads /         one folder per crew member who marks Going
+ *     2. Attendee Submissions /  <date time - Name (Source)> per upload
+ *     3. Best Of /               picks for the gallery, social and recap
+ *     4. Event Docs /            flyer, route map, permits
  *
- * matching the folder layout the team keeps by hand. If an event's folder (or
- * its Attendee Submissions subfolder) doesn't exist yet, it's created with the
- * standard three subfolders.
+ * The hourly event-drive cron makes the folders as soon as an event has a Title
+ * and Date (link saved on Events → Drive Folder), or the first upload does if
+ * that hasn't run yet. Older folder names are recognised and renamed to the
+ * standard ones. Rosters, waivers and emergency contacts never go in Drive.
  *
  * Files never pass through our server: we open a resumable upload session per
  * file and the visitor's browser PUTs the bytes straight to Google, so Vercel's
@@ -21,8 +26,14 @@ const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 
-export const EVENT_SUBFOLDERS = ["A&D Team Uploads", "Attendee Submissions", "Best Photo & Videos"] as const;
-const SUBMISSIONS_FOLDER = "Attendee Submissions";
+/** The standard subfolders, in order, with the older names each one replaces. */
+export const EVENT_FOLDER_LAYOUT = [
+  { name: "1. Staff Uploads", aliases: ["A&D Team Uploads", "Staff Submissions", "Staff Uploads"] },
+  { name: "2. Attendee Submissions", aliases: ["Attendee Submissions"] },
+  { name: "3. Best Of", aliases: ["Best Photo & Videos", "Best Photos & Videos", "Best Of"] },
+  { name: "4. Event Docs", aliases: ["Event Docs"] },
+] as const;
+export type EventSubfolder = (typeof EVENT_FOLDER_LAYOUT)[number]["name"];
 
 export function isDriveConfigured() {
   return Boolean(
@@ -80,14 +91,14 @@ function escapeQuery(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
-async function listChildren(parentId: string, extraQuery = ""): Promise<DriveFile[]> {
+async function listChildren(parentId: string, extraQuery = "", inDrive = driveId()): Promise<DriveFile[]> {
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
   do {
     const params = new URLSearchParams({
       q: `'${escapeQuery(parentId)}' in parents and trashed = false${extraQuery ? ` and ${extraQuery}` : ""}`,
       corpora: "drive",
-      driveId: driveId(),
+      driveId: inDrive,
       includeItemsFromAllDrives: "true",
       supportsAllDrives: "true",
       fields: "nextPageToken, files(id, name, mimeType, size)",
@@ -127,30 +138,121 @@ function eventFolderPrefix(isoDate: string) {
   return isoDate.slice(0, 10).replace(/-/g, ".");
 }
 
-/**
- * The event's "Attendee Submissions" folder, found by the event folder's date
- * prefix (so renaming the rest of the folder is fine). Missing pieces are
- * created: the event folder with all three standard subfolders, or just the
- * Attendee Submissions subfolder.
- */
-export async function getAttendeeSubmissionsFolder(event: { date: string; title: string }): Promise<string> {
-  const prefix = eventFolderPrefix(event.date);
-  const topLevel = await listChildren(driveId(), `mimeType = '${FOLDER_MIME}' and name contains '${escapeQuery(prefix)}'`);
-  const eventFolder = topLevel.find((f) => f.name.startsWith(prefix));
+/** Case, spacing and punctuation don't matter when matching folder names. */
+function sameName(a: string, b: string) {
+  const norm = (v: string) => v.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+  return norm(a) === norm(b);
+}
 
-  if (!eventFolder) {
-    const eventFolderId = await createFolder(`${prefix} - ${event.title}`, driveId());
-    let submissionsId = "";
-    for (const name of EVENT_SUBFOLDERS) {
-      const id = await createFolder(name, eventFolderId);
-      if (name === SUBMISSIONS_FOLDER) submissionsId = id;
-    }
-    return submissionsId;
+function safeFolderName(value: string) {
+  return value.replace(/[\\/]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+/** The folder ID inside a Drive folder link, if it is one. */
+export function folderIdFromUrl(url: string | null | undefined): string | null {
+  const match = (url || "").match(/\/folders\/([A-Za-z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+async function renameItem(fileId: string, name: string): Promise<void> {
+  await driveJson<DriveFile>(`/files/${encodeURIComponent(fileId)}?supportsAllDrives=true&fields=id`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  });
+}
+
+async function getItem(fileId: string): Promise<(DriveFile & { trashed?: boolean }) | null> {
+  try {
+    return await driveJson<DriveFile & { trashed?: boolean }>(
+      `/files/${encodeURIComponent(fileId)}?supportsAllDrives=true&fields=id,name,mimeType,trashed`,
+    );
+  } catch {
+    return null;
   }
+}
 
-  const subfolders = await listChildren(eventFolder.id, `mimeType = '${FOLDER_MIME}'`);
-  const existing = subfolders.find((f) => f.name.trim().toLowerCase() === SUBMISSIONS_FOLDER.toLowerCase());
-  return existing ? existing.id : createFolder(SUBMISSIONS_FOLDER, eventFolder.id);
+export interface EventForDrive {
+  date: string;
+  title: string;
+  /** Events → Drive Folder, when it's already been set. */
+  driveFolderUrl?: string | null;
+}
+
+/**
+ * The event's folder: the saved Drive Folder link first; otherwise the
+ * top-level folder with the event's date prefix (the rest of the name can be
+ * edited freely). If two events share a date, the one whose name matches the
+ * title wins; with no clear match a new folder is made rather than mixing two
+ * events' files.
+ */
+async function findEventFolder(event: EventForDrive): Promise<DriveFile | null> {
+  const savedId = folderIdFromUrl(event.driveFolderUrl);
+  if (savedId) {
+    const saved = await getItem(savedId);
+    if (saved && !saved.trashed) return saved;
+  }
+  const prefix = eventFolderPrefix(event.date);
+  const candidates = (
+    await listChildren(driveId(), `mimeType = '${FOLDER_MIME}' and name contains '${escapeQuery(prefix)}'`)
+  ).filter((f) => f.name.startsWith(prefix));
+  if (candidates.length <= 1) return candidates[0] || null;
+  const title = event.title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return (
+    candidates.find((f) => {
+      const rest = f.name.slice(prefix.length).toLowerCase().replace(/[^a-z0-9]+/g, "");
+      return rest && (rest.includes(title) || title.includes(rest));
+    }) || null
+  );
+}
+
+/**
+ * Makes sure the event's folder and its four standard subfolders exist, and
+ * returns their IDs. Safe to run again and again: existing folders are reused,
+ * old names are renamed to the standard ones, and nothing is moved or deleted.
+ */
+export async function ensureEventFolders(
+  event: EventForDrive,
+): Promise<{ eventFolderId: string; subfolders: Record<EventSubfolder, string> }> {
+  const prefix = eventFolderPrefix(event.date);
+  const found = await findEventFolder(event);
+  const eventFolderId = found
+    ? found.id
+    : await createFolder(`${prefix} - ${safeFolderName(event.title) || "Event"}`, driveId());
+
+  const existing = found ? await listChildren(eventFolderId, `mimeType = '${FOLDER_MIME}'`) : [];
+  const subfolders = {} as Record<EventSubfolder, string>;
+  for (const slot of EVENT_FOLDER_LAYOUT) {
+    const exact = existing.find((f) => sameName(f.name, slot.name));
+    if (exact) {
+      subfolders[slot.name] = exact.id;
+      continue;
+    }
+    const older = existing.find((f) => slot.aliases.some((alias) => sameName(f.name, alias)));
+    if (older) {
+      await renameItem(older.id, slot.name);
+      subfolders[slot.name] = older.id;
+      continue;
+    }
+    subfolders[slot.name] = await createFolder(slot.name, eventFolderId);
+  }
+  return { eventFolderId, subfolders };
+}
+
+/** Where visitor and Tailgate uploads go: the event's "2. Attendee Submissions". */
+export async function getAttendeeSubmissionsFolder(event: EventForDrive): Promise<string> {
+  const { subfolders } = await ensureEventFolders(event);
+  return subfolders["2. Attendee Submissions"];
+}
+
+/** A crew member's own folder under "1. Staff Uploads", made when they mark
+ *  Going. Matched by name, so answering twice never makes a second one. */
+export async function ensureStaffFolder(event: EventForDrive, personName: string): Promise<string> {
+  const { subfolders } = await ensureEventFolders(event);
+  const parent = subfolders["1. Staff Uploads"];
+  const name = safeFolderName(personName) || "Crew";
+  const existing = await listChildren(parent, `mimeType = '${FOLDER_MIME}'`);
+  const match = existing.find((f) => sameName(f.name, name));
+  return match ? match.id : createFolder(name, parent);
 }
 
 /** One folder per submission, e.g. "2026-09-27 18.42 - Bob Smith". */
@@ -244,4 +346,21 @@ export async function fetchDriveMedia(fileId: string, range: string | null): Pro
     headers: { Authorization: `Bearer ${await accessToken()}`, ...(range ? { Range: range } : {}) },
     cache: "no-store",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Vlogs: the "Vlog" Shared Drive, one folder per vlog ("2026-09-17 - E36 M3
+// Ownership"). Anthony uploads straight from his phone through the Garage.
+// ---------------------------------------------------------------------------
+
+/** Not secret: a Shared Drive ID only works for accounts that are members. */
+const VLOG_DRIVE_ID = process.env.GOOGLE_DRIVE_VLOG_DRIVE_ID || "0AAIW2pyBY3c5Uk9PVA";
+
+/** The folder for one vlog, made if it doesn't exist yet (same name = same folder,
+ *  so a second try on the same day doesn't scatter the files). */
+export async function ensureVlogFolder(name: string): Promise<string> {
+  const safe = safeFolderName(name) || "Vlog";
+  const existing = await listChildren(VLOG_DRIVE_ID, `mimeType = '${FOLDER_MIME}'`, VLOG_DRIVE_ID);
+  const match = existing.find((f) => sameName(f.name, safe));
+  return match ? match.id : createFolder(safe, VLOG_DRIVE_ID);
 }
