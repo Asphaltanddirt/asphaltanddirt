@@ -94,6 +94,9 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
   const vlogLink = str(f["Quick Hits - Anthony Vlog URL"]);
   if (vlogLink) options.vlogUrl = vlogLink;
 
+  const subject = str(f["Subject Line"]);
+  if (subject) options.subject = subject;
+
   const vlog2Link = str(f["Quick Hits - Anthony Vlog 2 URL"]);
   if (vlog2Link) options.vlog2Url = vlog2Link;
 

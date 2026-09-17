@@ -156,6 +156,7 @@ export const STUDIO_TABLES: Record<StudioTableKey, StudioTable> = {
     defaults: { Status: "Draft" },
     fields: [
       { key: "weekOf", field: "Week Of", label: "Week of", kind: "date", help: "The Monday of the week this issue covers." },
+      { key: "subject", field: "Subject Line", label: "Email subject", kind: "text", placeholder: "The Dirt Line: Would you daily an E36 M3?", help: "Optional. Blank: \"This Week: <feature post title>\". Under ~60 characters reads fully on a phone." },
       { key: "featureUrl", field: "Feature - Post URL", label: "Blog post link", kind: "url", section: "Feature story", placeholder: "https://www.asphaltanddirt.com/blog/…", help: "Blank: the newest blog post." },
       { key: "featureTeaser", field: "Feature - Teaser", label: "Teaser", kind: "text", help: "1–2 sentences. Blank: the post's own excerpt." },
       { key: "alsoUrl", field: "Also This Week - URL", label: "Link", kind: "url", section: "Also this week", help: "The other blog post. Blank: the second-newest post." },

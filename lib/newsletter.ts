@@ -192,7 +192,16 @@ function renderUpcomingEvent(override: EventSection, calendarLine: string | null
     ${kicker("Upcoming Event")}
     ${title ? `<p style="font-size:20px;font-weight:900;margin:0 0 10px;font-family:Arial,sans-serif;">${escapeHtml(title)}</p>` : ""}
     <p style="font-size:15px;line-height:1.6;color:#333;margin:0;">${escapeHtml(teaser)}</p>
-    ${ctaLink(override.url ? "Details In The Group" : "See Rides & Events", url)}
+    ${ctaLink(
+      !override.url
+        ? "See Rides & Events"
+        : /asphaltanddirt\.com/i.test(override.url)
+          ? "Details & RSVP"
+          : /facebook\.com/i.test(override.url)
+            ? "Details In The Group"
+            : "See The Event",
+      url,
+    )}
   `);
 }
 
@@ -298,6 +307,8 @@ export interface WeeklyDigestOptions {
   vlogUrl?: string;
   /** Anthony's vlog on the week's other story (Also This Week) — second line. */
   vlog2Url?: string;
+  /** Email subject for this issue. Blank -> "This Week: <feature title>". */
+  subject?: string;
   /** The video to feature in Quick Hits (any YouTube URL). Blank -> the
    *  latest podcast episode. */
   videoUrl?: string;
@@ -361,8 +372,10 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     videoHit = { label: `Watch: ${overrideVideo.title}`, ctaText: "Watch", url: overrideVideo.url };
   } else if (latestVideo) {
     const episode = getEpisodeByYoutubeId(latestVideo.videoId);
+    // Before the first full episode, the newest podcast video is the trailer.
+    const isTrailer = /trailer/i.test(episode?.slug || latestVideo.title);
     videoHit = {
-      label: `Latest episode: ${latestVideo.title}`,
+      label: isTrailer ? "Watch the Asphalt & Dirt podcast trailer" : `Latest episode: ${latestVideo.title}`,
       ctaText: "Watch",
       url: episode ? `${SITE_URL}/podcast/${episode.slug}` : `${SITE_URL}/podcast`,
     };
@@ -408,7 +421,7 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     .join("\n");
 
   return {
-    subject: featureStory ? `This Week: ${featureStory.title}` : "This Week In Asphalt & Dirt",
+    subject: options.subject?.trim() || (featureStory ? `This Week: ${featureStory.title}` : "This Week In Asphalt & Dirt"),
     previewText: featureStory?.excerpt || "Builds, trails, gear, and community — this week's roundup.",
     innerHtml,
   };
