@@ -5,6 +5,8 @@ import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
 import type { AgreementPrefill } from "@/lib/ambassadorAgreementLink";
+import { socialUrl } from "@/lib/socialLinks";
+import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
 
 type Status = "idle" | "submitting" | "accepted" | "already-accepted" | "error";
 
@@ -15,6 +17,9 @@ export default function AgreementForm({ prefill = null }: { prefill?: AgreementP
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [name, setName] = useState("");
+  const [socials, setSocials] = useState<SocialRow[]>(() =>
+    prefill?.socials.length ? prefill.socials.map((l) => ({ platform: l.platform, value: l.url })) : [{ platform: "Instagram", value: "" }],
+  );
 
   const busy = status === "submitting";
 
@@ -33,15 +38,20 @@ export default function AgreementForm({ prefill = null }: { prefill?: AgreementP
       email: field("email"),
       legalName: field("legalName"),
       phone: field("phone"),
-      instagram: field("instagram"),
-      otherSocials: field("otherSocials"),
+      socials: socials
+        .map((r) => ({ platform: r.platform, url: socialUrl(r.platform, r.value) }))
+        .filter((r) => r.url),
       vehicle: field("vehicle"),
       shippingAddress: field("shippingAddress"),
       shirtSize: field("shirtSize"),
       accepted,
     };
 
-    const missing = !payload.email || !payload.legalName || !payload.phone || !payload.instagram || !payload.vehicle || !payload.shippingAddress || !payload.shirtSize;
+    if (!payload.socials.length) {
+      setErrorMsg("Please add at least one social link.");
+      return;
+    }
+    const missing = !payload.email || !payload.legalName || !payload.phone || !payload.vehicle || !payload.shippingAddress || !payload.shirtSize;
     if (missing) {
       setErrorMsg("Please fill in every field so we can finish setting you up.");
       return;
@@ -124,12 +134,15 @@ export default function AgreementForm({ prefill = null }: { prefill?: AgreementP
           </div>
         </div>
         <div className="form-field">
-          <label htmlFor="instagram">Instagram Handle</label>
-          <input type="text" id="instagram" name="instagram" required disabled={busy} placeholder="@yourhandle" autoComplete="off" defaultValue={prefill?.instagram} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="otherSocials">Other Social Links <span className="optional">(Optional — one per line)</span></label>
-          <textarea id="otherSocials" name="otherSocials" disabled={busy} placeholder={"TikTok: https://tiktok.com/@you\nYouTube: https://youtube.com/@you"} defaultValue={prefill?.otherSocials} />
+          <SocialLinksEditor
+            idPrefix="agreement-social"
+            rows={socials}
+            onChange={setSocials}
+            disabled={busy}
+            legendClassName="form-label"
+            legend="Your Social Links"
+            hint="Every account you post on: Instagram, TikTok, YouTube, Facebook, X, a website. At least one."
+          />
         </div>
         <div className="form-field">
           <label htmlFor="vehicle">Your Primary Vehicle / Build</label>

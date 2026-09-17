@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { listRecords } from "@/lib/airtable";
+import { parseSocialLines, type SocialLink } from "@/lib/socialLinks";
 
 /**
  * A personal link to the Brand Ambassador Agreement, sent in Welcome Email 1.
@@ -43,25 +44,14 @@ export function verifyAgreementLink(id: unknown, token: unknown): id is string {
 export interface AgreementPrefill {
   email: string;
   phone: string;
-  instagram: string;
-  otherSocials: string;
+  /** Every social they've given us, on any platform. */
+  socials: SocialLink[];
   vehicle: string;
   shippingAddress: string;
   shirtSize: string;
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-
-/** "Instagram: jrodrigues1278" / an instagram.com URL -> "@jrodrigues1278". */
-function instagramFrom(value: string): string {
-  const v = value.trim();
-  if (!v) return "";
-  const url = v.match(/instagram\.com\/([A-Za-z0-9._]+)/i);
-  if (url) return `@${url[1]}`;
-  const labelled = v.match(/^instagram:\s*@?([A-Za-z0-9._]+)/i);
-  if (labelled) return `@${labelled[1]}`;
-  return "";
-}
 
 /** What we already know for this ambassador, preferring their Ambassador record
  *  and falling back to their application. */
@@ -72,21 +62,22 @@ export async function getAgreementPrefill(recordId: string): Promise<AgreementPr
   const appId = ((a["Related Application"] as string[]) || [])[0];
   const app = appId ? (await listRecords(APPLICATIONS_TABLE, `RECORD_ID() = '${appId}'`))[0]?.fields || {} : {};
 
-  const primary = str(app["Primary Social Handle"]);
-  const socialLines = [str(a["Social Links"]), str(app["Social Links"])].join("\n").split("\n").map((l) => l.trim()).filter(Boolean);
-  const instagram =
-    instagramFrom(str(a["Instagram URL"])) ||
-    instagramFrom(primary) ||
-    socialLines.map(instagramFrom).find(Boolean) ||
-    "";
-  // Every other link, without the Instagram one and without repeats.
-  const others = [...new Set([primary, ...socialLines].filter((l) => l && !/^instagram:/i.test(l) && !/instagram\.com/i.test(l)))];
+  // Their main handle first, then everything else, without repeats.
+  const socials = parseSocialLines(
+    [
+      str(app["Primary Social Handle"]),
+      str(a["Instagram URL"]),
+      str(a["TikTok URL"]),
+      str(a["YouTube URL"]),
+      str(a["Social Links"]),
+      str(app["Social Links"]),
+    ].join("\n"),
+  );
 
   return {
     email: str(a.Email) || str(app.Email),
     phone: str(a.Phone) || str(app.Phone),
-    instagram,
-    otherSocials: others.join("\n"),
+    socials,
     vehicle: str(a["Vehicle / Build"]) || str(app["Primary Vehicle / Build"]),
     shippingAddress: str(a["Shipping Address"]),
     shirtSize: str(a["Shirt Size"]),

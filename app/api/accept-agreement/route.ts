@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
 import { sendAmbassadorWelcome } from "@/lib/ambassadorWelcomeSend";
+import {
+  SOCIAL_PLATFORMS,
+  dedupeSocials,
+  firstSocial,
+  formatSocialLines,
+  parseSocialLines,
+  socialUrl,
+  type SocialLink,
+  type SocialPlatformName,
+} from "@/lib/socialLinks";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AGREEMENT_ACCEPTANCE_TO_EMAIL || "team@asphaltanddirt.com";
@@ -12,30 +22,6 @@ const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors
 const MAX_NAME_LENGTH = 120;
 const MAX_TEXT = 500;
 const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-
-/** "@handle" or "instagram.com/handle" -> a full profile URL for the
- *  Instagram URL field (a real url-type field in Airtable). */
-/** "TikTok: @handle" / "YouTube: https://youtube.com/@x" lines from the
- *  other-socials box -> profile URLs, so the Garage profile and /team page get
- *  them without the ambassador typing them twice. */
-function profileUrlFrom(lines: string, platform: "tiktok" | "youtube"): string {
-  for (const raw of lines.split("\n")) {
-    const line = raw.trim();
-    const url = line.match(/https?:\/\/\S+/)?.[0];
-    if (url && (platform === "tiktok" ? /tiktok\.com/i : /youtube\.com|youtu\.be/i).test(url)) return url;
-    const labelled = line.match(platform === "tiktok" ? /^tik\s*tok:\s*@?([A-Za-z0-9._]+)/i : /^you\s*tube:\s*@?([A-Za-z0-9._-]+)/i);
-    if (labelled) return platform === "tiktok" ? `https://www.tiktok.com/@${labelled[1]}` : `https://www.youtube.com/@${labelled[1]}`;
-  }
-  return "";
-}
-
-function instagramUrl(raw: string): string {
-  const v = raw.trim();
-  if (!v) return "";
-  if (/^https?:\/\//i.test(v)) return v;
-  const handle = v.replace(/^@/, "").replace(/^(www\.)?instagram\.com\//i, "").replace(/\/+$/, "");
-  return handle ? `https://instagram.com/${handle}` : "";
-}
 
 function escapeHtml(value: string) {
   return value
@@ -67,6 +53,9 @@ export async function POST(req: NextRequest) {
     email?: string;
     legalName?: string;
     phone?: string;
+    socials?: { platform?: string; url?: string }[];
+    // Older form (a page open from before the deploy): one Instagram box + a
+    // free-text box of other links.
     instagram?: string;
     otherSocials?: string;
     vehicle?: string;
@@ -89,13 +78,30 @@ export async function POST(req: NextRequest) {
   const email = (body.email || "").trim();
   const legalName = (body.legalName || "").trim().slice(0, MAX_NAME_LENGTH);
   const phone = (body.phone || "").trim().slice(0, 40);
-  const instagram = (body.instagram || "").trim().slice(0, MAX_TEXT);
-  const otherSocials = (body.otherSocials || "").trim().slice(0, MAX_TEXT);
+  const socials: SocialLink[] = dedupeSocials(
+    Array.isArray(body.socials)
+      ? body.socials
+          .slice(0, 20)
+          .map((s) => {
+            const platform = (SOCIAL_PLATFORMS as readonly string[]).includes(s?.platform || "")
+              ? (s.platform as SocialPlatformName)
+              : "Other";
+            return { platform, url: socialUrl(platform, String(s?.url || "").slice(0, MAX_TEXT)) };
+          })
+          .filter((s) => s.url)
+      : [
+          ...(body.instagram ? [{ platform: "Instagram" as const, url: socialUrl("Instagram", body.instagram.slice(0, MAX_TEXT)) }] : []),
+          ...parseSocialLines((body.otherSocials || "").slice(0, MAX_TEXT)),
+        ],
+  );
   const vehicle = (body.vehicle || "").trim().slice(0, MAX_TEXT);
   const shippingAddress = (body.shippingAddress || "").trim().slice(0, MAX_TEXT);
   const shirtSize = (body.shirtSize || "").trim();
 
-  if (!email || !legalName || !phone || !instagram || !vehicle || !shippingAddress || !shirtSize) {
+  if (!socials.length) {
+    return NextResponse.json({ error: "Please add at least one social link." }, { status: 400 });
+  }
+  if (!email || !legalName || !phone || !vehicle || !shippingAddress || !shirtSize) {
     return NextResponse.json({ error: "Please fill in every field so we can finish setting you up." }, { status: 400 });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -154,10 +160,13 @@ export async function POST(req: NextRequest) {
     `Browser: ${userAgent}`,
   ].join("\n");
 
-  const igUrl = instagramUrl(instagram);
-  const socialLinks = [igUrl ? `Instagram: ${igUrl}` : `Instagram: ${instagram}`, otherSocials]
-    .filter(Boolean)
-    .join("\n");
+  // Social Links keeps every link, any platform. The three per-platform URL
+  // fields (read by the Garage profile and /team) follow what they confirmed.
+  const socialLinks = formatSocialLines(socials);
+  const platformUrl = (platform: SocialPlatformName, field: string) => {
+    const url = firstSocial(socials, platform);
+    return url && /^https?:\/\//i.test(url) ? { [field]: url } : {};
+  };
 
   let updated;
   try {
@@ -170,13 +179,9 @@ export async function POST(req: NextRequest) {
       "Vehicle / Build": vehicle,
       "Shipping Address": shippingAddress,
       "Shirt Size": shirtSize,
-      "Instagram URL": igUrl || undefined,
-      ...(ambassador.fields["TikTok URL"] || !profileUrlFrom(otherSocials, "tiktok")
-        ? {}
-        : { "TikTok URL": profileUrlFrom(otherSocials, "tiktok") }),
-      ...(ambassador.fields["YouTube URL"] || !profileUrlFrom(otherSocials, "youtube")
-        ? {}
-        : { "YouTube URL": profileUrlFrom(otherSocials, "youtube") }),
+      ...platformUrl("Instagram", "Instagram URL"),
+      ...platformUrl("TikTok", "TikTok URL"),
+      ...platformUrl("YouTube", "YouTube URL"),
       "Social Links": socialLinks,
       // Signing is when they become a working ambassador: fill Start Date and
       // their tier's commission rate if nobody has set them yet (they used to
@@ -226,8 +231,7 @@ export async function POST(req: NextRequest) {
           ${row("Email on file", (ambassador.fields.Email as string) || email)}
           ${row("Phone", phone)}
           ${row("Tier", `${tier} — ${rate} commission`)}
-          ${row("Instagram", igUrl || instagram)}
-          ${otherSocials ? row("Other socials", otherSocials) : ""}
+          ${row("Socials", socialLinks)}
           ${row("Vehicle / build", vehicle)}
           ${row("Shirt size", shirtSize)}
           ${row("Ship to", shippingAddress)}

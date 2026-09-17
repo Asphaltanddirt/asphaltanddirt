@@ -1,4 +1,5 @@
 import { listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { ambassadorSocials, firstSocial, formatSocialLines, type SocialLink } from "@/lib/socialLinks";
 
 /**
  * The Crew screen's data: an ambassador's own record from the Road & Trail
@@ -29,9 +30,8 @@ export interface CrewProfile {
   tagline: string;
   bio: string;
   vehicle: string;
-  instagramUrl: string;
-  tiktokUrl: string;
-  youtubeUrl: string;
+  /** Every social link, any platform. */
+  socials: SocialLink[];
   featured: boolean;
   photoUrl: string;
 }
@@ -61,9 +61,7 @@ function toProfile(r: { id: string; fields: AirtableFields }): CrewProfile {
     tagline: (r.fields["Public Tagline"] as string) || "",
     bio: (r.fields["Public Bio"] as string) || "",
     vehicle: (r.fields["Vehicle / Build"] as string) || vehicleLookup?.[0] || "",
-    instagramUrl: (r.fields["Instagram URL"] as string) || "",
-    tiktokUrl: (r.fields["TikTok URL"] as string) || "",
-    youtubeUrl: (r.fields["YouTube URL"] as string) || "",
+    socials: ambassadorSocials(r.fields),
     featured: Boolean(r.fields["Featured on Team Page"]),
     photoUrl: photos?.[0]?.url || "",
   };
@@ -98,10 +96,10 @@ export interface CrewProfileEdit {
   tagline: string;
   bio: string;
   vehicle: string;
-  instagramUrl: string;
-  tiktokUrl: string;
-  youtubeUrl: string;
+  socials: SocialLink[];
 }
+
+const httpOnly = (url: string) => (/^https?:\/\//i.test(url) ? url : null);
 
 /** What an ambassador may change about themselves. Tier, code, commission and
  *  whether they're featured are deliberately not in this list. */
@@ -114,9 +112,10 @@ export async function saveCrewProfile(id: string, edit: CrewProfileEdit): Promis
       "Public Tagline": edit.tagline.slice(0, 120),
       "Public Bio": edit.bio.slice(0, 2000),
       "Vehicle / Build": edit.vehicle.slice(0, 120),
-      "Instagram URL": edit.instagramUrl || null,
-      "TikTok URL": edit.tiktokUrl || null,
-      "YouTube URL": edit.youtubeUrl || null,
+      "Social Links": formatSocialLines(edit.socials) || null,
+      "Instagram URL": httpOnly(firstSocial(edit.socials, "Instagram")),
+      "TikTok URL": httpOnly(firstSocial(edit.socials, "TikTok")),
+      "YouTube URL": httpOnly(firstSocial(edit.socials, "YouTube")),
     },
     { baseId: BASE_ID },
   );

@@ -116,9 +116,7 @@ export default async function GarageCrewPage() {
                   tagline: profile.tagline,
                   bio: profile.bio,
                   vehicle: profile.vehicle,
-                  instagramUrl: profile.instagramUrl,
-                  tiktokUrl: profile.tiktokUrl,
-                  youtubeUrl: profile.youtubeUrl,
+                  socials: profile.socials,
                 }}
               />
             </section>

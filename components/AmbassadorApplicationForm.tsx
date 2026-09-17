@@ -16,7 +16,7 @@ interface SocialLink {
   url: string;
 }
 
-const PLATFORM_OPTIONS = ["Instagram", "TikTok", "Facebook", "X", "Website", "Other"];
+const PLATFORM_OPTIONS = ["Instagram", "TikTok", "YouTube", "Facebook", "X", "Website", "Other"];
 const PRIMARY_SOCIAL_PLATFORMS = ["Instagram", "TikTok", "YouTube", "Facebook", "X", "Website", "Other"];
 
 const CONTENT_TYPES = [

@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import type { CrewProfileEdit } from "@/lib/garageCrew";
+import { socialUrl } from "@/lib/socialLinks";
+import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
 
 /** The crew member edits their own public profile — the bio and socials that
  *  show on /team. Saved straight to their ambassador record. */
 export default function GarageProfileForm({ initial }: { initial: CrewProfileEdit }) {
   const [form, setForm] = useState(initial);
+  const [socials, setSocials] = useState<SocialRow[]>(() => initial.socials.map((l) => ({ platform: l.platform, value: l.url })));
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
 
-  const set = (key: keyof CrewProfileEdit) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const set = (key: "tagline" | "bio" | "vehicle") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
     setState("idle");
   };
@@ -23,7 +26,10 @@ export default function GarageProfileForm({ initial }: { initial: CrewProfileEdi
       const res = await fetch("/api/garage/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          socials: socials.map((r) => ({ platform: r.platform, url: socialUrl(r.platform, r.value) })).filter((r) => r.url),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Couldn't save that. Try again.");
@@ -45,14 +51,17 @@ export default function GarageProfileForm({ initial }: { initial: CrewProfileEdi
       <label htmlFor="p-vehicle">Your rig</label>
       <input id="p-vehicle" value={form.vehicle} onChange={set("vehicle")} maxLength={120} placeholder="2021 Wrangler Rubicon on 37s" />
 
-      <label htmlFor="p-ig">Instagram link</label>
-      <input id="p-ig" type="url" inputMode="url" value={form.instagramUrl} onChange={set("instagramUrl")} placeholder="https://instagram.com/…" />
-
-      <label htmlFor="p-tt">TikTok link</label>
-      <input id="p-tt" type="url" inputMode="url" value={form.tiktokUrl} onChange={set("tiktokUrl")} placeholder="https://tiktok.com/@…" />
-
-      <label htmlFor="p-yt">YouTube link</label>
-      <input id="p-yt" type="url" inputMode="url" value={form.youtubeUrl} onChange={set("youtubeUrl")} placeholder="https://youtube.com/@…" />
+      <SocialLinksEditor
+        idPrefix="p-social"
+        rows={socials}
+        onChange={(rows) => {
+          setSocials(rows);
+          setState("idle");
+        }}
+        disabled={state === "saving"}
+        legend="Your social links"
+        hint="Every account you post on. Each one shows as a button on your team page."
+      />
 
       {error && <p className="garage-error" role="alert">{error}</p>}
       <button className="btn btn-primary garage-block-btn" type="submit" disabled={state === "saving"}>

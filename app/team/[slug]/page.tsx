@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HOSTS, TRAIL_AMBASSADORS, findTeamMemberBySlug } from "@/lib/team";
 import { findFeaturedAmbassadorBySlug } from "@/lib/ambassadors";
 import { socialLinks } from "@/lib/social";
+import { SOCIAL_ICON_PATHS, normalizePlatform, type SocialPlatform } from "@/lib/socialIcons";
 import { excerpt } from "@/lib/text";
 import { SITE_URL } from "@/lib/site";
 
@@ -16,7 +16,7 @@ import { SITE_URL } from "@/lib/site";
 type SocialKey = "instagram" | "facebook" | "x" | "tiktok" | "youtube";
 
 interface Social {
-  key: SocialKey;
+  key: SocialPlatform;
   url: string;
   label: string;
 }
@@ -43,14 +43,6 @@ const BRAND_SOCIALS: Social[] = [
   { key: "facebook", url: socialLinks.facebook, label: "Facebook" },
   { key: "x", url: socialLinks.x, label: "X" },
 ];
-
-const SOCIAL_ICONS: Record<SocialKey, ReactNode> = {
-  instagram: <><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="1" /></>,
-  facebook: <path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" />,
-  x: <path d="M4 4l16 16M20 4 4 20" />,
-  tiktok: <><path d="M14.5 3v11.3a3.7 3.7 0 1 1-3.7-3.7c.35 0 .7.04 1 .13" /><path d="M14.5 3a5 5 0 0 0 5 5" /></>,
-  youtube: <><rect x="2.5" y="6" width="19" height="12" rx="4" /><path d="M10.3 9.3v5.4l5-2.7z" fill="currentColor" stroke="none" /></>,
-};
 
 const DRIVES_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -91,12 +83,10 @@ async function getProfile(slug: string): Promise<Profile | undefined> {
   const ambassador = await findFeaturedAmbassadorBySlug(slug);
   if (!ambassador) return undefined;
 
-  const candidateSocials: (Social | undefined)[] = [
-    ambassador.instagramUrl ? { key: "instagram", url: ambassador.instagramUrl, label: "Instagram" } : undefined,
-    ambassador.tiktokUrl ? { key: "tiktok", url: ambassador.tiktokUrl, label: "TikTok" } : undefined,
-    ambassador.youtubeUrl ? { key: "youtube", url: ambassador.youtubeUrl, label: "YouTube" } : undefined,
-  ];
-  const socials = candidateSocials.filter((s): s is Social => s !== undefined);
+  // Every link on their record that's a real web address, any platform.
+  const socials: Social[] = ambassador.socials
+    .filter((l) => /^https?:\/\//i.test(l.url))
+    .map((l) => ({ key: normalizePlatform(l.platform), url: l.url, label: l.platform === "Other" ? "Link" : l.platform }));
 
   return {
     slug: ambassador.slug,
@@ -164,9 +154,9 @@ export default async function TeamMemberPage({
           {profile.socials.length > 0 && (
             <div className="social-row">
               {profile.socials.map((s) => (
-                <a key={s.key} href={s.url} target="_blank" rel="noopener" aria-label={s.label}>
+                <a key={s.url} href={s.url} target="_blank" rel="noopener" aria-label={s.label}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    {SOCIAL_ICONS[s.key]}
+                    {SOCIAL_ICON_PATHS[s.key]}
                   </svg>
                 </a>
               ))}

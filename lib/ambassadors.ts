@@ -1,4 +1,5 @@
 import { listRecords, isAirtableConfigured } from "@/lib/airtable";
+import { ambassadorSocials, type SocialLink } from "@/lib/socialLinks";
 
 export interface FeaturedAmbassador {
   id: string;
@@ -10,9 +11,8 @@ export interface FeaturedAmbassador {
   photo: string;
   vehicle?: string;
   buildSlug?: string;
-  instagramUrl?: string;
-  tiktokUrl?: string;
-  youtubeUrl?: string;
+  /** Every social link on their record, any platform. */
+  socials: SocialLink[];
 }
 
 const TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
@@ -48,9 +48,7 @@ export async function getFeaturedAmbassadors(): Promise<FeaturedAmbassador[]> {
           photo: photos?.[0]?.url || "",
           vehicle,
           buildSlug: (r.fields["Linked Build Slug"] as string) || undefined,
-          instagramUrl: (r.fields["Instagram URL"] as string) || undefined,
-          tiktokUrl: (r.fields["TikTok URL"] as string) || undefined,
-          youtubeUrl: (r.fields["YouTube URL"] as string) || undefined,
+          socials: ambassadorSocials(r.fields),
         };
       })
       .filter((a) => a.name && a.photo && a.bio && a.slug) // needs the essentials to render a real card
