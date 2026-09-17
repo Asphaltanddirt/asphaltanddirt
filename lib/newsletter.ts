@@ -309,6 +309,9 @@ export interface WeeklyDigestOptions {
   vlog2Url?: string;
   /** Email subject for this issue. Blank -> "This Week: <feature title>". */
   subject?: string;
+  /** Extra Quick Hits lines (e.g. crew applications, submit your build),
+   *  shown after the vlogs. Each needs text + url. */
+  customHits?: { text: string; url: string; button?: string }[];
   /** The video to feature in Quick Hits (any YouTube URL). Blank -> the
    *  latest podcast episode. */
   videoUrl?: string;
@@ -395,6 +398,9 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
       ctaText: "Watch",
       url: vlog2Url,
     },
+    ...(options.customHits || [])
+      .filter((h) => h.text && h.url)
+      .map((h) => ({ label: h.text, ctaText: h.button?.trim() || "Check It Out", url: h.url })),
     videoHit,
     newestMerch && {
       label: `New in merch: ${newestMerch.name}`,

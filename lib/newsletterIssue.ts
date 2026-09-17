@@ -97,6 +97,15 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
   const subject = str(f["Subject Line"]);
   if (subject) options.subject = subject;
 
+  const customHits = ["", " 2"]
+    .map((n) => ({
+      text: str(f[`Quick Hits - Custom${n} Text`]),
+      url: str(f[`Quick Hits - Custom${n} URL`]),
+      button: str(f[`Quick Hits - Custom${n} Button`]) || undefined,
+    }))
+    .filter((h) => h.text && h.url);
+  if (customHits.length) options.customHits = customHits;
+
   const vlog2Link = str(f["Quick Hits - Anthony Vlog 2 URL"]);
   if (vlog2Link) options.vlog2Url = vlog2Link;
 
