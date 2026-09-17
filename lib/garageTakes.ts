@@ -24,6 +24,8 @@ export interface GarageTake {
   blogSlug?: string;
   /** Explicit headline line breaks; falls back to the punctuation split. */
   titleLines?: string[];
+  /** Phrases in the summary that must not be split across lines. */
+  keepTogether?: string[];
   transcript: string;
 }
 
@@ -37,6 +39,7 @@ export const garageTakes: GarageTake[] = [
     summary:
       "Anthony would happily park an E36 M3 in the garage. Asking it to handle Monday morning is where his answer changes \u2014 and where a 370Z enters the conversation.",
     blogSlug: "e36-m3-ownership-would-you-daily-one",
+    keepTogether: ["is where"],
     transcript: `Alright, so for this week, we got a topic of, would you daily drive an E36 M3? E36 M3, awesome car, raw driving feel. That inline 6, true M3. great car, overall.
 
 would I daily drive one specifically? No. Would I like to have one in the garage? Yes, but at the same time, in today's day and age, there's plenty of other vehicles that you can pick up for, you know, a fraction of the price when we're talking about a clean E36 M3.
@@ -67,6 +70,7 @@ it's the older M3, uh, great fun car. Would not mind owning one. Uh, the 370Z th
       "Roof whistle starts the conversation, then Anthony gets into Bronco versus Wrangler: cabin space, daily driving, trail width, removable roofs and the aftermarket.",
     blogSlug: "bronco-hardtop-wind-noise-diagnose-before-you-buy",
     titleLines: ["Bronco Hardtop Wind Noise:", "Anthony's Take on the", "Bronco vs. Jeep Debate"],
+    keepTogether: ["cabin space"],
     transcript: `Well, well, well, guys, what do we have? An interesting topic. Everyone's talking about the, uh, new Ford Broncos. Everyone's finally realizing that, you know, they are actually whistling in certain areas, whether it be the seals around the roof or the C-pillars.
 
 Uh, you know, all cars have their issues, right? Um, my personal take on the Bronco, they look good with the bigger wheels and everything like that. Um, you know, but they are still IFS, a glorified Jeep. Uh, my personal opinion, right?
@@ -106,6 +110,16 @@ Catch you on the next one.`,
 /** Takes whose Friday has arrived, newest first. */
 /** Break a take title onto two lines at its question mark or colon, so the
  *  headline doesn't wrap mid-thought. Returns one line if there's no break. */
+/** The summary with its keepTogether phrases bound by non-breaking spaces, so
+ *  a line breaks before the phrase instead of inside it. The stored summary
+ *  stays plain for metadata and feeds. */
+export function takeSummaryForDisplay(take: GarageTake): string {
+  return (take.keepTogether ?? []).reduce(
+    (text, phrase) => text.split(phrase).join(phrase.replace(/ /g, "\u00A0")),
+    take.summary,
+  );
+}
+
 export function takeTitleLines(take: GarageTake): string[] {
   if (take.titleLines?.length) return take.titleLines;
   const m = take.title.match(/^(.*?[?:])\s+(.+)$/);

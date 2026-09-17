@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import { renderTranscriptBlocks } from "@/lib/transcriptRenderer";
 import { GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
-import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeTitleLines } from "@/lib/garageTakes";
+import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeSummaryForDisplay, takeTitleLines } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 1800;
@@ -74,7 +74,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
         </div>
 
         <div className="take-summary mt-3">
-          <p className="mb-0">{take.summary}</p>
+          <p className="mb-0">{takeSummaryForDisplay(take)}</p>
         </div>
 
         {post && (
