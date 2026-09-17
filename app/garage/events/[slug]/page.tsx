@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
-import { canRunEvents, getSession, listGarageUsers } from "@/lib/garageAuth";
+import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
@@ -90,6 +90,11 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           <a href={event.driveFolderUrl} target="_blank" rel="noopener" className="btn btn-outline garage-block-btn">
             Open Drive folder ↗
           </a>
+        )}
+        {canSeeOwnerOnly(session) && (
+          <Link href={`/garage/events/edit/${event.id}`} className="btn btn-outline garage-block-btn">
+            Edit event
+          </Link>
         )}
 
         {/* One "who's coming" picture: the public RSVPs plus the crew's own

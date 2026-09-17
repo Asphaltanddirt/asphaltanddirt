@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventCard from "@/components/GarageEventCard";
-import { getSession } from "@/lib/garageAuth";
+import Link from "next/link";
+import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getCrewEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
 
@@ -46,6 +47,12 @@ export default async function GarageEventsPage() {
     <div className="garage">
       <GarageBack title="Events" />
       <div className="garage-body">
+        {canSeeOwnerOnly(session) && (
+          <p className="garage-links garage-links-wrap">
+            <Link href="/garage/events/new" className="btn btn-primary btn-sm">Add event</Link>
+            <Link href="/garage/events/manage" className="btn btn-outline btn-sm">All events, drafts too</Link>
+          </p>
+        )}
         {shown.length === 0 && <p className="garage-empty">No events on the calendar yet.</p>}
 
         {upcoming.length > 0 && <h2 className="garage-section">Coming up</h2>}

@@ -2158,6 +2158,35 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-app-head{ display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
 .garage-app-hero{ width:120px; height:120px; border-radius:var(--radius-md); object-fit:cover; }
 .garage-decision-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+/* Event add/edit form */
+.garage-event-form{ gap:0; }
+.garage-event-form .garage-panel{ display:flex; flex-direction:column; gap:6px; }
+.garage-choice-group{ border:0; margin:10px 0 0; padding:0; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.garage-choice-group legend{ padding:0; margin-bottom:6px; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+.garage-form label.garage-choice{
+  display:flex; gap:12px; align-items:flex-start; margin:0; padding:10px 12px; border:1px solid var(--border-soft); border-radius:var(--radius-sm);
+  text-transform:none; letter-spacing:0; font-size:15px; font-weight:400; color:var(--text); cursor:pointer;
+}
+.garage-form label.garage-choice:has(input:checked){ border-color:var(--accent); }
+.garage-form .garage-choice input{ width:20px; height:20px; margin:2px 0 0; flex:none; accent-color:var(--accent); }
+.garage-choice span{ display:flex; flex-direction:column; gap:2px; }
+.garage-choice small{ font-size:13px; color:var(--text-dim); }
+.garage-choice-inline{ margin-top:8px !important; }
+.garage-panel-private{ border-color:color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.garage-warn{ color:var(--accent) !important; }
+.garage-event-form-photo{ width:100%; max-height:260px; object-fit:cover; border-radius:var(--radius-sm); }
+.garage-form label.garage-file-btn{ align-self:flex-start; margin-top:8px; color:inherit; font-size:13px; letter-spacing:.04em; }
+.garage-file-btn:focus-within{ outline:2px solid var(--accent); outline-offset:2px; }
+.garage-event-form-save{ padding:12px 0; display:flex; flex-direction:column; gap:6px; }
+/* With unsaved changes the Save bar pins to the bottom of the screen (sticky
+   doesn't work here: body scrolls with overflow-x hidden). */
+.garage-event-form.is-dirty{ padding-bottom:120px; }
+.garage-event-form.is-dirty .garage-event-form-save{
+  position:fixed; left:0; right:0; bottom:0; z-index:50; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:var(--bg); border-top:1px solid var(--border);
+}
+.garage-event-form.is-dirty .garage-event-form-save > *{ width:100%; max-width:640px; margin-inline:auto; }
+.garage-manage-status{ margin-left:auto; }
 /* Application scoring (application page) */
 .garage-score-total{ padding:12px 14px; border-radius:var(--radius-md); background:var(--bg); border:1px solid var(--border-soft); margin-bottom:14px; }
 .garage-score-total p{ margin:0; font-size:14px; color:var(--text-muted); }
