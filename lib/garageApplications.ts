@@ -102,7 +102,12 @@ export async function getApplication(id: string): Promise<Application | null> {
 
 export async function setDecision(id: string, decision: Decision | null): Promise<void> {
   if (!isAirtableConfigured(BASE_ID)) throw new Error("Road & Trail Crew base is not configured.");
-  await updateRecord(TABLE, id, { "Review Decision": decision }, { baseId: BASE_ID });
+  // Keep the application's Status in step with the decision so Airtable views
+  // and interfaces agree with the Garage (found in Jose's test run, 9/17):
+  // Accept = Active, Decline = Inactive, anything still undecided = Needs Review.
+  const status =
+    decision === "Accept — Road & Trail Member" ? "Active" : decision === "Decline" ? "Inactive" : "Needs Review";
+  await updateRecord(TABLE, id, { "Review Decision": decision, Status: status }, { baseId: BASE_ID });
 }
 
 /** Waiting on a decision: no Review Decision yet, or put on hold. */
