@@ -83,7 +83,9 @@ export async function getRecentOrders(days = 45): Promise<FourthwallOrder[]> {
 /** The Fourthwall promotion for a discount code (case-insensitive), or null if
  *  no such code exists. Used to fill an ambassador's Fourthwall Promotion ID,
  *  which is what commission reports match orders on. */
-export async function findPromotionByCode(code: string): Promise<{ id: string; code: string; status: string } | null> {
+export async function findPromotionByCode(
+  code: string,
+): Promise<{ id: string; code: string; status: string; percentage: number | null } | null> {
   const want = code.trim().toUpperCase();
   if (!want) return null;
   for (let page = 0; page < 20; page++) {
@@ -93,12 +95,47 @@ export async function findPromotionByCode(code: string): Promise<{ id: string; c
     const res = await fetch(url.toString(), { headers: { Authorization: authHeader() }, cache: "no-store" });
     if (!res.ok) throw new Error(`Fourthwall promotions request failed: ${res.status}`);
     const data = (await res.json()) as {
-      results?: { id: string; code?: string; status?: string }[];
+      results?: { id: string; code?: string; status?: string; discount?: { type?: string; percentage?: number } }[];
       totalPages?: number;
     };
     const match = (data.results || []).find((p) => (p.code || "").trim().toUpperCase() === want);
-    if (match) return { id: match.id, code: match.code || code, status: match.status || "" };
+    if (match) {
+      return {
+        id: match.id,
+        code: match.code || code,
+        status: match.status || "",
+        percentage: typeof match.discount?.percentage === "number" ? match.discount.percentage : null,
+      };
+    }
     if (!data.totalPages || page + 1 >= data.totalPages) break;
   }
   return null;
+}
+
+export class PromotionCodeTakenError extends Error {
+  constructor(code: string) {
+    super(`Promo code ${code} already exists in Fourthwall.`);
+    this.name = "PromotionCodeTakenError";
+  }
+}
+
+/** Creates a single-code percentage discount on the whole order, shipping not
+ *  discounted, unlimited uses: the same settings as the ambassador codes made
+ *  by hand in Fourthwall. Throws PromotionCodeTakenError if the code exists. */
+export async function createPercentPromotion(code: string, percentage: number): Promise<{ id: string; code: string }> {
+  const res = await fetch(`${API_URL}/promotions`, {
+    method: "POST",
+    headers: { Authorization: authHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "SHOP_SINGLE",
+      code,
+      discount: { type: "PERCENTAGE", percentage, shipping: "Excluded" },
+      limits: { oneUsePerCustomer: false },
+    }),
+    cache: "no-store",
+  });
+  if (res.status === 409) throw new PromotionCodeTakenError(code);
+  if (!res.ok) throw new Error(`Fourthwall create promotion failed: ${res.status} ${await res.text()}`);
+  const data = (await res.json()) as { id: string; code?: string };
+  return { id: data.id, code: data.code || code };
 }

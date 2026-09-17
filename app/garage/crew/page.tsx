@@ -30,7 +30,7 @@ export default async function GarageCrewPage() {
           <>
             <h1 className="garage-event-title">Crew</h1>
             <p className="garage-lead">
-              This is where Road &amp; Trail Crew members find their code, tracking link and earnings, and edit the
+              This is where Road &amp; Trail Crew members find their code, link and earnings, and edit the
               bio that shows on the team page. Your account isn&apos;t linked to a crew record, so there&apos;s nothing
               here for you.
             </p>
@@ -56,7 +56,10 @@ export default async function GarageCrewPage() {
               )}
               {profile.trackingLink && (
                 <p>
-                  <a href={profile.trackingLink} target="_blank" rel="noopener">Your tracking link ↗</a>
+                  Your link: <a href={profile.trackingLink} target="_blank" rel="noopener">{profile.trackingLink.replace(/^https:\/\/www\./, "")}</a>
+                  {" · "}
+                  {profile.linkVisits === 1 ? "1 visit" : `${profile.linkVisits} visits`}. It applies your code at checkout, so
+                  sales through it count too.
                 </p>
               )}
               {!profile.agreementSigned && (

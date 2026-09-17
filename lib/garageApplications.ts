@@ -30,6 +30,8 @@ export interface Application {
   applied: string;
   decision: Decision | "";
   status: string;
+  /** Their Ambassador record, once Accept has created it. */
+  ambassadorId: string;
   score: number | null;
   photo: string;
   buildPhotos: string[];
@@ -81,6 +83,7 @@ function toApplication(r: { id: string; createdTime?: string; fields: AirtableFi
     applied: (r.createdTime || "").slice(0, 10),
     decision: (text(f["Review Decision"]) as Decision) || "",
     status: text(f.Status),
+    ambassadorId: ((f["Ambassador Record"] as string[] | undefined) || [])[0] || "",
     score: Number.isFinite(score) && f["Weighted Score"] !== undefined ? score : null,
     photo: attachments(f["Ambassador Photo"])[0] || "",
     buildPhotos: attachments(f["Build Photo(s)"]),

@@ -1,4 +1,5 @@
 import { listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { referralLinkFor } from "@/lib/ambassadorReferral";
 import { ambassadorSocials, firstSocial, formatSocialLines, type SocialLink } from "@/lib/socialLinks";
 
 /**
@@ -22,6 +23,7 @@ export interface CrewProfile {
   status: string;
   promoCode: string;
   trackingLink: string;
+  linkVisits: number;
   commissionRate: number | null;
   foundingCrew: boolean;
   agreementSigned: boolean;
@@ -53,7 +55,8 @@ function toProfile(r: { id: string; fields: AirtableFields }): CrewProfile {
     tier: (r.fields.Tier as string) || "",
     status: (r.fields.Status as string) || "",
     promoCode: (r.fields["Promo Code"] as string) || "",
-    trackingLink: (r.fields["Tracking Link"] as string) || "",
+    trackingLink: (r.fields["Tracking Link"] as string) || (r.fields["Promo Code"] ? referralLinkFor(r.fields["Promo Code"] as string) : ""),
+    linkVisits: Number(r.fields["Link Visits"]) || 0,
     commissionRate: typeof r.fields["Commission Rate"] === "number" ? (r.fields["Commission Rate"] as number) : null,
     foundingCrew: Boolean(r.fields["Founding Crew (2026)"]),
     agreementSigned: Boolean(r.fields["Agreement Signed"]),

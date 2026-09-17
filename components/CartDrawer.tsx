@@ -10,7 +10,7 @@ import { useCart } from "./CartContext";
  * whatever opened it.
  */
 export default function CartDrawer() {
-  const { cart, loading, isOpen, close, setQuantity, checkoutUrl } = useCart();
+  const { cart, loading, isOpen, close, setQuantity, checkoutUrl, referralCode } = useCart();
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   // The context hands out a fresh close() each render; keep the latest in a
@@ -153,7 +153,10 @@ export default function CartDrawer() {
             >
               Checkout
             </a>
-            <p className="cart-drawer-note">Shipping and taxes calculated at checkout.</p>
+            <p className="cart-drawer-note">
+              {referralCode && <>Crew code {referralCode} is applied at checkout. </>}
+              Shipping and taxes calculated at checkout.
+            </p>
           </div>
         )}
       </aside>

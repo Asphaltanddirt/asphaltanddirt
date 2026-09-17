@@ -134,7 +134,7 @@ export function buildWelcomePart1(input: { name: string; tier?: string; agreemen
         <td style="padding:24px 32px 0;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;">
             <tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;">
-              <strong style="color:#1a1712;">What happens next:</strong> once we've got your signed agreement back, we'll follow up with your personal discount code and tracking link so you can start sharing and earning.
+              <strong style="color:#1a1712;">What happens next:</strong> once we've got your signed agreement back, we'll follow up with your personal discount code and link so you can start sharing and earning.
             </td></tr>
           </table>
         </td>
@@ -177,10 +177,13 @@ export function buildWelcomePart2(input: {
   name: string;
   code: string;
   trackingLink: string;
+  /** The customer discount on their code; 10 when not set. */
+  discountPercent?: number | null;
 }): WelcomeEmail {
   const first = esc(firstNameOf(input.name));
   const code = esc(input.code);
   const link = esc(input.trackingLink);
+  const discount = input.discountPercent ? `${input.discountPercent}%` : CUSTOMER_DISCOUNT;
 
   const bodyRows = `
       <tr>
@@ -192,7 +195,7 @@ export function buildWelcomePart2(input: {
       <tr>
         <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
           <p style="margin:0 0 16px;">Hey ${first},</p>
-          <p style="margin:0 0 16px;">Got your signed agreement — you're fully onboarded. Here's your personal code and tracking link.</p>
+          <p style="margin:0 0 16px;">Got your signed agreement — you're fully onboarded. Here's your personal code and link.</p>
         </td>
       </tr>
       <tr>
@@ -201,7 +204,7 @@ export function buildWelcomePart2(input: {
             <tr><td style="padding:20px 24px;">
               <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#bbb1aa;">Your Customer Code</p>
               <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:900;color:#f86000;">${code}</p>
-              <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#bbb1aa;">Your Tracking Link</p>
+              <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#bbb1aa;">Your Link</p>
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;"><a href="${link}" style="color:#f4f4f2;text-decoration:underline;">${link}</a></p>
             </td></tr>
           </table>
@@ -209,7 +212,7 @@ export function buildWelcomePart2(input: {
       </tr>
       <tr>
         <td style="padding:20px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
-          <p style="margin:0 0 16px;">Share your code: customers get 10% off, and every sale that uses it counts toward your commission. Share your link too, so we can see the visits you send our way. Commission is paid on eligible net merch sales made with your code.</p>
+          <p style="margin:0 0 16px;">Share your code or your link. Customers get ${esc(discount)} off either way: your link applies your code at checkout for them. Every eligible sale made with your code, typed or through your link, counts toward your commission. Commission is paid on eligible net merch sales.</p>
           <p style="margin:0;">Your welcome merch package (patch, stickers, shirt) ships separately — watch your mailbox.</p>
         </td>
       </tr>
@@ -233,8 +236,8 @@ export function buildWelcomePart2(input: {
       </tr>`;
 
   return {
-    subject: "You're all set — your Asphalt & Dirt code and tracking link",
-    html: shell("You're all set — here's your Asphalt & Dirt code and tracking link.", bodyRows),
+    subject: "You're all set — your Asphalt & Dirt code and link",
+    html: shell("You're all set — here's your Asphalt & Dirt code and link.", bodyRows),
   };
 }
 

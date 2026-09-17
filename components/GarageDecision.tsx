@@ -70,13 +70,13 @@ export default function GarageDecision({ id, current }: { id: string; current: s
       </div>
       {armed && (
         <p className="garage-form-note">
-          Accepting creates their Ambassador record in Airtable. It doesn&apos;t email them yet: tick Send Welcome 1 on
-          that record when you&apos;re ready.
+          Accepting creates their Ambassador record. It doesn&apos;t email them yet: send welcome email 1 from
+          Onboarding below when you&apos;re ready.
         </p>
       )}
       {accepted && (
         <p className="garage-form-note">
-          Accepted. Their Ambassador record was created in Airtable. To undo, change it there.
+          Accepted. Onboarding steps are below. To undo the decision, change it in Airtable.
         </p>
       )}
       {error && <p className="garage-error" role="alert">{error}</p>}

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageDecision from "@/components/GarageDecision";
+import GarageOnboarding from "@/components/GarageOnboarding";
+import { getAmbassadorRecord, toOnboarding } from "@/lib/ambassadorOnboarding";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getApplication } from "@/lib/garageApplications";
 
@@ -21,6 +23,9 @@ export default async function GarageApplicationPage({ params }: { params: Promis
   const { id } = await params;
   const app = await getApplication(id).catch(() => null);
   if (!app) notFound();
+
+  const accepted = app.decision === "Accept — Road & Trail Member";
+  const ambassador = accepted && app.ambassadorId ? await getAmbassadorRecord(app.ambassadorId).catch(() => null) : null;
 
   const phoneDigits = app.phone.replace(/[^\d+]/g, "");
 
@@ -51,6 +56,19 @@ export default async function GarageApplicationPage({ params }: { params: Promis
           <h2>Decision</h2>
           <GarageDecision id={app.id} current={app.decision} />
         </section>
+
+        {accepted && (
+          <section className="garage-panel">
+            <h2>Onboarding</h2>
+            {ambassador ? (
+              <GarageOnboarding initial={toOnboarding(ambassador)} />
+            ) : (
+              <p className="garage-form-note">
+                Airtable is still creating their Ambassador record. Pull down to refresh in a minute.
+              </p>
+            )}
+          </section>
+        )}
 
         <section className="garage-panel">
           <h2>Their application</h2>

@@ -3,6 +3,7 @@ import { buildWelcomePart1, buildWelcomePart2 } from "@/lib/ambassadorWelcome";
 import { agreementLinkFor } from "@/lib/ambassadorAgreementLink";
 import { findPromotionByCode } from "@/lib/fourthwall-platform";
 import { sendEmail } from "@/lib/resendEmail";
+import { referralLinkFor } from "@/lib/ambassadorReferral";
 
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
 const TEST_EMAIL =
@@ -76,8 +77,9 @@ export async function findAmbassador(opts: {
 /**
  * Sends one of the two Road & Trail Crew welcome emails for an ambassador
  * and stamps the record. Idempotent (skips when "Welcome N Sent" is set,
- * unless `test`). Part 2 needs Agreement Signed + Promo Code + Tracking
- * Link — otherwise it's skipped with a reason, never sent early.
+ * unless `test`). Part 2 needs Agreement Signed + Promo Code (the link is
+ * built from the code if blank); otherwise it's skipped with a reason, never
+ * sent early.
  */
 export async function sendAmbassadorWelcome(
   ambassador: AirtableRecord,
@@ -105,8 +107,9 @@ export async function sendAmbassadorWelcome(
   } else {
     if (f["Agreement Signed"] !== true) return { status: "skipped", part, reason: "agreement not signed" };
     const code = ((f["Promo Code"] as string) || "").trim();
-    const trackingLink = ((f["Tracking Link"] as string) || "").trim();
-    if (!code || !trackingLink) return { status: "skipped", part, reason: "promo code or tracking link not set" };
+    if (!code) return { status: "skipped", part, reason: "no promo code yet" };
+    // Their own /r/ link; older records may still hold a Fourthwall link.
+    const trackingLink = ((f["Tracking Link"] as string) || "").trim() || referralLinkFor(code);
     // Commission reports match orders on the Fourthwall Promotion ID, so fill
     // it from the code instead of making anyone look it up. This also stops a
     // mistyped code from being emailed to an ambassador.
@@ -123,7 +126,12 @@ export async function sendAmbassadorWelcome(
       }
       await updateRecord(AMBASSADORS_TABLE, ambassador.id, { "Fourthwall Promotion ID": promotion.id });
     }
-    email = buildWelcomePart2({ name, code, trackingLink });
+    email = buildWelcomePart2({
+      name,
+      code,
+      trackingLink,
+      discountPercent: typeof f["Discount Percent"] === "number" ? (f["Discount Percent"] as number) : null,
+    });
   }
 
   await sendEmail({

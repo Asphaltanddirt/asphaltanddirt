@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { Cart } from "@/lib/fourthwall";
+import { readReferralCode } from "@/lib/ambassadorReferral";
 
 // Same public shop domain as SHOP_DOMAIN in lib/fourthwall.ts — duplicated
 // here rather than imported so this client bundle never pulls in the
@@ -20,6 +21,8 @@ type CartContextValue = {
   addItem: (variantId: string, quantity?: number) => Promise<void>;
   setQuantity: (variantId: string, quantity: number) => Promise<void>;
   checkoutUrl: string | null;
+  /** The ambassador code from an /r/CODE link, applied at checkout. */
+  referralCode: string;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -107,8 +110,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [cartId]
   );
 
+  // Only read once a cart exists, which is always after hydration (the cart
+  // loads in the browser), so the server and client markup never disagree.
+  const referralCode = cartId ? readReferralCode() : "";
   const checkoutUrl = cartId
-    ? `https://${SHOP_DOMAIN}/cart/checkout?cartId=${cartId}&currency=USD`
+    ? `https://${SHOP_DOMAIN}/cart/checkout?cartId=${cartId}&currency=USD${
+        referralCode
+          ? `&coupon=${referralCode}&utm_source=ambassador&utm_medium=referral&utm_campaign=${referralCode.toLowerCase()}`
+          : ""
+      }`
     : null;
 
   return (
@@ -122,6 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addItem,
         setQuantity,
         checkoutUrl,
+        referralCode,
       }}
     >
       {children}

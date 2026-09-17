@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
-import { sendAmbassadorWelcome } from "@/lib/ambassadorWelcomeSend";
 import {
   SOCIAL_PLATFORMS,
   dedupeSocials,
@@ -196,30 +195,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Something went wrong saving your acceptance. Please try again." }, { status: 502 });
   }
 
-  // If the promo code + tracking link were already staged on the record,
-  // the agreement was the last thing missing — send Welcome Email 2 (the
-  // code reveal) now. Otherwise it waits for the team to set the code and
-  // tick "Send Welcome 2". Best-effort: a failure here never fails the
-  // acceptance.
-  const codeReady = Boolean(
-    (updated.fields["Promo Code"] as string) && (updated.fields["Tracking Link"] as string),
-  );
-  if (codeReady && updated.fields["Welcome 2 Sent"] !== true) {
-    try {
-      await sendAmbassadorWelcome(updated, 2);
-    } catch (err) {
-      console.error("auto Welcome 2 send failed", err);
-    }
-  }
-
   // Notify the team so they know to send Welcome Email Part 2 (the code + link).
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
     const ambName = (ambassador.fields.Name as string) || legalName;
     const tier = (ambassador.fields.Tier as string) || "Road & Trail Member";
     const rate = TIER_RATE[tier] || "10%";
-    const hasCode = Boolean((ambassador.fields["Promo Code"] as string) || "");
-    const welcome2Sent = codeReady && updated.fields["Welcome 2 Sent"] !== true;
+    const hasCode = Boolean((updated.fields["Promo Code"] as string) || "");
+    const appId = ((ambassador.fields["Related Application"] as string[] | undefined) || [])[0];
+    const garageUrl = appId ? `https://www.asphaltanddirt.com/garage/applications/${appId}` : "https://www.asphaltanddirt.com/garage/applications";
     const row = (label: string, value: string) =>
       `<tr><td style="font-weight:bold;border-bottom:1px solid #eee;vertical-align:top;width:150px;">${escapeHtml(label)}</td><td style="border-bottom:1px solid #eee;white-space:pre-wrap;">${escapeHtml(value)}</td></tr>`;
     const html = `
@@ -239,17 +223,14 @@ export async function POST(req: NextRequest) {
           ${row("Agreement version", AGREEMENT_VERSION)}
         </table>
 
-        <h3 style="margin:24px 0 6px;">Onboarding checklist</h3>
+        <h3 style="margin:24px 0 6px;">Next steps, in the Garage</h3>
+        <p style="font-size:14px;margin:0 0 8px;"><a href="${garageUrl}">Open their onboarding in the Garage</a></p>
         <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
-          <li>${hasCode ? "Promo code already on the record — double-check it's live in Fourthwall." : "Create their discount code + tracked link in Fourthwall (10% customer discount)."}</li>
-          <li>On their Ambassador record, set: <b>Promo Code</b> and <b>Tracking Link</b>. (Fourthwall Promotion ID fills itself in from the code when Welcome 2 sends; Commission Rate ${escapeHtml(rate)} and Start Date were filled in automatically if blank.)</li>
-          <li>Pack &amp; ship the welcome kit (patch, stickers, shirt — size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b>.</li>
-          <li>${
-            welcome2Sent
-              ? "<b>Welcome Email 2 (code reveal) was just sent automatically</b> — the code + tracking link were already on the record."
-              : "Once the Promo Code + Tracking Link are set, tick <b>Send Welcome 2</b> on their record — that sends the code-reveal email."
-          }</li>
+          <li>${hasCode ? "Their code is already made." : "Create their code (type the code and % off; the Garage makes it in Fourthwall and makes their link)."}</li>
+          <li>Send welcome email 2 (their code + link).</li>
+          <li>Pack &amp; ship the welcome kit (patch, stickers, shirt, size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b> in Airtable.</li>
         </ol>
+        <p style="font-size:13px;color:#555;">Commission rate ${escapeHtml(rate)} and Start Date were filled in automatically if blank.</p>
       </div>
     `;
     try {
