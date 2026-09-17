@@ -15,6 +15,20 @@ const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 /** "@handle" or "instagram.com/handle" -> a full profile URL for the
  *  Instagram URL field (a real url-type field in Airtable). */
+/** "TikTok: @handle" / "YouTube: https://youtube.com/@x" lines from the
+ *  other-socials box -> profile URLs, so the Garage profile and /team page get
+ *  them without the ambassador typing them twice. */
+function profileUrlFrom(lines: string, platform: "tiktok" | "youtube"): string {
+  for (const raw of lines.split("\n")) {
+    const line = raw.trim();
+    const url = line.match(/https?:\/\/\S+/)?.[0];
+    if (url && (platform === "tiktok" ? /tiktok\.com/i : /youtube\.com|youtu\.be/i).test(url)) return url;
+    const labelled = line.match(platform === "tiktok" ? /^tik\s*tok:\s*@?([A-Za-z0-9._]+)/i : /^you\s*tube:\s*@?([A-Za-z0-9._-]+)/i);
+    if (labelled) return platform === "tiktok" ? `https://www.tiktok.com/@${labelled[1]}` : `https://www.youtube.com/@${labelled[1]}`;
+  }
+  return "";
+}
+
 function instagramUrl(raw: string): string {
   const v = raw.trim();
   if (!v) return "";
@@ -157,6 +171,12 @@ export async function POST(req: NextRequest) {
       "Shipping Address": shippingAddress,
       "Shirt Size": shirtSize,
       "Instagram URL": igUrl || undefined,
+      ...(ambassador.fields["TikTok URL"] || !profileUrlFrom(otherSocials, "tiktok")
+        ? {}
+        : { "TikTok URL": profileUrlFrom(otherSocials, "tiktok") }),
+      ...(ambassador.fields["YouTube URL"] || !profileUrlFrom(otherSocials, "youtube")
+        ? {}
+        : { "YouTube URL": profileUrlFrom(otherSocials, "youtube") }),
       "Social Links": socialLinks,
       // Signing is when they become a working ambassador: fill Start Date and
       // their tier's commission rate if nobody has set them yet (they used to
