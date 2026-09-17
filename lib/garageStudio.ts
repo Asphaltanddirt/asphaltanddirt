@@ -1,10 +1,14 @@
 import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
 import { STUDIO_TABLES, type StudioField, type StudioTableKey } from "@/lib/studioConfig";
 
-/** Reads and writes the Podcast Production base for the Garage Studio
- *  screens, using the field lists in lib/studioConfig.ts. Owners only. */
+/** Reads and writes the tables described in lib/studioConfig.ts (Podcast
+ *  Production for Studio, Newsletters for the Newsletter screen). Owners only. */
 
-const BASE_ID = process.env.AIRTABLE_PODCAST_PRODUCTION_BASE_ID;
+const BASES = {
+  podcast: process.env.AIRTABLE_PODCAST_PRODUCTION_BASE_ID,
+  newsletter: process.env.AIRTABLE_NEWSLETTER_BASE_ID,
+};
+const baseFor = (key: StudioTableKey) => BASES[STUDIO_TABLES[key].base || "podcast"];
 
 export type StudioValue = string | boolean | string[];
 export interface StudioRecord {
@@ -18,8 +22,8 @@ export interface LinkOption {
   name: string;
 }
 
-function assertConfigured() {
-  if (!isAirtableConfigured(BASE_ID)) throw new Error("Podcast Production base is not configured.");
+function assertConfigured(key: StudioTableKey) {
+  if (!isAirtableConfigured(baseFor(key))) throw new Error(`The base for ${STUDIO_TABLES[key].table} is not configured.`);
 }
 
 function readValue(field: StudioField, raw: unknown): StudioValue {
@@ -41,15 +45,15 @@ function toStudioRecord(key: StudioTableKey, r: AirtableRecord): StudioRecord {
 }
 
 export async function listStudioRecords(key: StudioTableKey): Promise<StudioRecord[]> {
-  assertConfigured();
-  const records = await listRecords(STUDIO_TABLES[key].table, undefined, { baseId: BASE_ID });
+  assertConfigured(key);
+  const records = await listRecords(STUDIO_TABLES[key].table, undefined, { baseId: baseFor(key) });
   return records.map((r) => toStudioRecord(key, r));
 }
 
 export async function getStudioRecord(key: StudioTableKey, id: string): Promise<StudioRecord | null> {
-  assertConfigured();
+  assertConfigured(key);
   if (!/^rec[A-Za-z0-9]{14}$/.test(id)) return null;
-  const [record] = await listRecords(STUDIO_TABLES[key].table, `RECORD_ID() = '${id}'`, { baseId: BASE_ID });
+  const [record] = await listRecords(STUDIO_TABLES[key].table, `RECORD_ID() = '${id}'`, { baseId: baseFor(key) });
   return record ? toStudioRecord(key, record) : null;
 }
 
@@ -115,10 +119,11 @@ export async function toAirtableFields(key: StudioTableKey, values: Record<strin
 }
 
 export async function saveStudioRecord(key: StudioTableKey, id: string | null, fields: Record<string, unknown>): Promise<StudioRecord> {
-  assertConfigured();
+  assertConfigured(key);
   const t = STUDIO_TABLES[key];
+  const baseId = baseFor(key);
   const record = id
-    ? await updateRecord(t.table, id, fields, { baseId: BASE_ID })
-    : await createRecord(t.table, { ...t.defaults, ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null)) }, { baseId: BASE_ID });
+    ? await updateRecord(t.table, id, fields, { baseId })
+    : await createRecord(t.table, { ...t.defaults, ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null)) }, { baseId });
   return toStudioRecord(key, record);
 }

@@ -22,10 +22,16 @@ export interface StudioField {
   required?: boolean;
   /** Shown on the list card under the title. */
   onCard?: boolean;
+  /** Starts a new titled group of fields in the form. */
+  section?: string;
 }
 
 export interface StudioTable {
   key: StudioTableKey;
+  /** Which Airtable base (default: Podcast Production). */
+  base?: "podcast" | "newsletter";
+  /** Where this table's screens live (default /garage/studio/<key>). */
+  path?: string;
   table: string;
   label: string;
   singular: string;
@@ -38,7 +44,7 @@ export interface StudioTable {
   fields: StudioField[];
 }
 
-export type StudioTableKey = "ideas" | "episodes" | "guests" | "sponsors";
+export type StudioTableKey = "ideas" | "episodes" | "guests" | "sponsors" | "issues";
 
 export const STUDIO_TABLES: Record<StudioTableKey, StudioTable> = {
   ideas: {
@@ -137,10 +143,49 @@ export const STUDIO_TABLES: Record<StudioTableKey, StudioTable> = {
       { key: "episodes", field: "Episodes", label: "Episodes", kind: "links", linkTo: "episodes" },
     ],
   },
+  issues: {
+    key: "issues",
+    base: "newsletter",
+    path: "/garage/newsletter",
+    table: "Newsletters",
+    label: "Newsletter issues",
+    singular: "issue",
+    titleField: "Week Of",
+    groupField: "Status",
+    groups: ["Draft", "Sent"],
+    defaults: { Status: "Draft" },
+    fields: [
+      { key: "weekOf", field: "Week Of", label: "Week of", kind: "date", help: "The Monday of the week this issue covers." },
+      { key: "featureUrl", field: "Feature - Post URL", label: "Blog post link", kind: "url", section: "Feature story", placeholder: "https://www.asphaltanddirt.com/blog/…", help: "Blank: the newest blog post." },
+      { key: "featureTeaser", field: "Feature - Teaser", label: "Teaser", kind: "text", help: "1–2 sentences. Blank: the post's own excerpt." },
+      { key: "alsoUrl", field: "Also This Week - URL", label: "Link", kind: "url", section: "Also this week", help: "The other blog post. Blank: the second-newest post." },
+      { key: "alsoTitle", field: "Also This Week - Title", label: "Headline", kind: "text", help: "Blank: that post's title." },
+      { key: "alsoBody", field: "Also This Week - Body", label: "Teaser", kind: "textarea", help: "Blank: that post's excerpt." },
+      { key: "ttTitle", field: "Trail Talk - Title", label: "Title", kind: "text", section: "Trail Talk", help: "Filled for you when Trail Talk is marked posted on the posting board. Blank title or body: the section is left out." },
+      { key: "ttBody", field: "Trail Talk - Body", label: "Question", kind: "textarea" },
+      { key: "ttLink", field: "Trail Talk - Link", label: "Facebook post link", kind: "url", help: "Blank: the group home." },
+      { key: "evTitle", field: "Event - Title", label: "Event", kind: "text", section: "Upcoming event", help: "Blank: the next event on the site, or the section is left out." },
+      { key: "evTeaser", field: "Event - Teaser", label: "Teaser", kind: "text" },
+      { key: "evUrl", field: "Event - Button URL", label: "Button link", kind: "url", help: "Blank: /community." },
+      { key: "rigName", field: "Rig - Name", label: "Rig / owner", kind: "text", section: "Rig of the week", help: "Blank name or blurb: the section is left out. Add the photo in Airtable for now." },
+      { key: "rigBlurb", field: "Rig - Blurb", label: "Blurb", kind: "textarea" },
+      { key: "rigLink", field: "Rig - Build Link", label: "Build page link", kind: "url" },
+      { key: "vlog", field: "Quick Hits - Anthony Vlog URL", label: "Anthony's vlog (YouTube, Unlisted Thursday)", kind: "url", section: "Quick hits" },
+      { key: "video", field: "Quick Hits - Video URL", label: "Featured video", kind: "url", help: "Blank: the latest podcast episode." },
+      { key: "merch", field: "Quick Hits - Merch URL", label: "Merch to push", kind: "url", help: "A /merch/… link. Blank: the newest product." },
+      { key: "garage", field: "Garage - Build slug", label: "From the Garage build", kind: "text", section: "From the Garage", placeholder: "shockwave", help: "Blank: rotates week to week." },
+      { key: "notes", field: "Notes", label: "Notes", kind: "textarea", section: "Notes" },
+    ],
+  },
 };
 
 export const STUDIO_ORDER: StudioTableKey[] = ["ideas", "episodes", "guests", "sponsors"];
 
+/** Tables reached through /garage/studio/<key> (the newsletter has its own screen). */
 export function isStudioTable(key: string): key is StudioTableKey {
-  return key in STUDIO_TABLES;
+  return key in STUDIO_TABLES && !STUDIO_TABLES[key as StudioTableKey].path;
+}
+
+export function studioPath(key: StudioTableKey): string {
+  return STUDIO_TABLES[key].path || `/garage/studio/${key}`;
 }

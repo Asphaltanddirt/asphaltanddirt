@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildWeeklyDigest, wrapNewsletterEmail } from "@/lib/newsletter";
+import { buildWeeklyDigest } from "@/lib/newsletter";
 import { sendNewsletter } from "@/lib/newsletterSend";
-import { getDraftIssue, archiveIssue } from "@/lib/newsletterIssue";
+import { NoDraftIssueError, sendDraftDigest } from "@/lib/weeklyDigestSend";
 import type { WeeklyDigestOptions } from "@/lib/newsletter";
 
 /**
@@ -32,55 +32,30 @@ export async function POST(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("mode") === "live" ? "live" : "test";
   const fromAirtable = req.nextUrl.searchParams.get("from") === "airtable";
 
-  let options: WeeklyDigestOptions = {};
-  let issueRecordId: string | null = null;
-
+  // Newest Draft row: the shared path the Garage Newsletter screen uses too.
   if (fromAirtable) {
     try {
-      const draft = await getDraftIssue();
-      if (!draft) {
-        return NextResponse.json(
-          { error: "No Draft row in the Newsletters table. Create one (Status = Draft) first." },
-          { status: 404 },
-        );
-      }
-      options = draft.options;
-      issueRecordId = draft.recordId;
+      return NextResponse.json(await sendDraftDigest(mode));
     } catch (err) {
-      console.error("send-weekly-digest: draft lookup failed", err);
-      return NextResponse.json({ error: "Couldn't read the Newsletters table." }, { status: 502 });
+      if (err instanceof NoDraftIssueError) return NextResponse.json({ error: err.message }, { status: 404 });
+      console.error("send-weekly-digest error", err);
+      return NextResponse.json({ error: err instanceof Error ? err.message : "Send failed." }, { status: 502 });
     }
-  } else {
-    try {
-      const body = await req.text();
-      if (body) options = JSON.parse(body);
-    } catch {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-    }
+  }
+
+  let options: WeeklyDigestOptions = {};
+  try {
+    const body = await req.text();
+    if (body) options = JSON.parse(body);
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
   try {
     const content = await buildWeeklyDigest(options);
     const result = await sendNewsletter(content, mode);
 
-    // Archive back to the Newsletters row only on a real send that landed.
-    if (issueRecordId && mode === "live" && result.sent > 0) {
-      const archiveHtml = wrapNewsletterEmail(content, {
-        unsubscribeUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://asphaltanddirt.com"}/api/newsletter/unsubscribe`,
-        mailingAddress: process.env.NEWSLETTER_MAILING_ADDRESS || "",
-      });
-      try {
-        await archiveIssue(issueRecordId, {
-          subject: content.subject,
-          html: archiveHtml,
-          recipients: result.sent,
-        });
-      } catch (err) {
-        console.error("send-weekly-digest: archive write failed (email already sent)", err);
-      }
-    }
-
-    return NextResponse.json({ subject: content.subject, issueRecordId, ...result });
+    return NextResponse.json({ subject: content.subject, ...result });
   } catch (err) {
     console.error("send-weekly-digest error", err);
     return NextResponse.json(

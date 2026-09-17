@@ -2164,6 +2164,12 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-decision-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
 /* Studio (Podcast Production) */
 .garage-studio-field{ display:flex; flex-direction:column; gap:6px; }
+.garage-studio-section{ margin:22px 0 2px; padding-top:14px; border-top:1px solid var(--border-soft); }
+.garage-issue-sections{ list-style:none; margin:10px 0 6px; padding:0; display:flex; flex-direction:column; }
+.garage-issue-sections li{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:14px; }
+.garage-issue-sections li span:last-child{ font-weight:700; color:var(--text-dim); }
+.garage-issue-sections li.is-set span:last-child{ color:var(--accent); }
+.garage-studio-section:first-child{ margin-top:0; padding-top:0; border-top:0; }
 .garage-status-buttons{ display:flex; flex-wrap:wrap; gap:6px; }
 .garage-status-option{ position:relative; }
 .garage-status-option input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }

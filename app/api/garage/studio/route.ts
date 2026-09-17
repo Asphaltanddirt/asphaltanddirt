@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getStudioRecord, saveStudioRecord, toAirtableFields } from "@/lib/garageStudio";
-import { isStudioTable } from "@/lib/studioConfig";
+import { STUDIO_TABLES, type StudioTableKey } from "@/lib/studioConfig";
 
 /** Owners add ({ table, values }) or edit ({ table, id, values }) a Podcast
  *  Production record from the Garage Studio. */
@@ -16,17 +16,20 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
-  if (!body.table || !isStudioTable(body.table) || !body.values || typeof body.values !== "object") {
+  // Any configured table, including newsletter issues (their screen lives
+  // under /garage/newsletter but saves through here).
+  if (!body.table || !(body.table in STUDIO_TABLES) || !body.values || typeof body.values !== "object") {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  const table = body.table as StudioTableKey;
   try {
-    if (body.id && !(await getStudioRecord(body.table, body.id))) {
+    if (body.id && !(await getStudioRecord(table, body.id))) {
       return NextResponse.json({ error: "That record is gone. Reload the list." }, { status: 404 });
     }
-    const fields = await toAirtableFields(body.table, body.values);
+    const fields = await toAirtableFields(table, body.values);
     if (typeof fields === "string") return NextResponse.json({ error: fields }, { status: 400 });
-    const record = await saveStudioRecord(body.table, body.id || null, fields);
+    const record = await saveStudioRecord(table, body.id || null, fields);
     return NextResponse.json({ status: "ok", record });
   } catch (err) {
     console.error("garage studio save failed", err);

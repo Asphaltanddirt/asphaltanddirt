@@ -11,7 +11,7 @@ const TEST_EMAIL =
 // Resend's free tier caps the whole account at 100 emails/day. Stay under
 // it with headroom; past this, move to Resend Pro (no daily cap) before a
 // live send.
-const DAILY_CAP = 90;
+const DAILY_CAP = 90; // also DAILY_SEND_CAP in lib/garageNewsletter.ts
 // Resend's batch endpoint accepts up to 100 messages per call.
 const BATCH_SIZE = 100;
 
