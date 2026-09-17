@@ -81,8 +81,8 @@ export default async function ControlRoomPage() {
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
   const waiting = [
     { label: "Crew applications", count: queues.applications, href: "/garage/applications", external: false },
-    { label: "Builds to approve", count: queues.builds, href: "https://airtable.com", external: true },
-    { label: "Reviews to approve", count: queues.reviews, href: "https://airtable.com", external: true },
+    { label: "Builds to approve", count: queues.builds, href: "/garage/review/builds", external: false },
+    { label: "Reviews to approve", count: queues.reviews, href: "/garage/review/reviews", external: false },
     { label: "Flagged photos", count: queues.flagged, href: "/garage/media", external: false },
   ];
   const total = waiting.reduce((sum, row) => sum + (row.count || 0), 0);

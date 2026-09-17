@@ -114,11 +114,15 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
  *  the rest, so a page doing `[...teamBuilds, ...communityBuilds]` gets
  *  hosts → ambassadors → everyone else. Order within each group follows
  *  Airtable's own record order. */
-export async function getApprovedCommunityBuilds(): Promise<Build[]> {
+export async function getApprovedCommunityBuilds(options: { fresh?: boolean } = {}): Promise<Build[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
 
   try {
-    const records = await listRecords(TABLE, "{Approved}=1", { revalidate: 900, baseId: BASE_ID });
+    // `fresh` skips the 15-minute cache (the Garage, right after approving).
+    const records = await listRecords(TABLE, "{Approved}=1", {
+      ...(options.fresh ? {} : { revalidate: 900 }),
+      baseId: BASE_ID,
+    });
     const usedSlugs = new Set(teamBuilds.map((b) => b.slug));
     const mapped = records
       .map((r) => mapRecordToBuild(r, usedSlugs))

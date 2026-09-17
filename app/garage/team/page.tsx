@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 /** Counts for the review queue — what's sitting there waiting on Jose or
- *  Anthony. Each one links straight to the Airtable view that holds it. */
+ *  Anthony. Each one links to its Garage screen. */
 async function queueCounts() {
   const crewBase = process.env.AIRTABLE_BASE_ID;
   const buildsBase = process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID;
@@ -30,8 +30,8 @@ async function queueCounts() {
   };
   const [applications, builds, reviews] = await Promise.all([
     count(crewBase, "Applications", `OR({Review Decision} = BLANK(), {Review Decision} = 'Hold / Second Review', {Review Decision} = 'Exceptional Candidate / Crew Review')`),
-    count(buildsBase, process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions", `{Approved} = FALSE()`),
-    count(reviewsBase, "Testimonials", `{Approved} = FALSE()`),
+    count(buildsBase, process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions", `AND(NOT({Approved}), NOT({Declined}))`),
+    count(reviewsBase, "Testimonials", `AND(NOT({Approved}), NOT({Declined}))`),
   ]);
   return { applications, builds, reviews };
 }
@@ -74,10 +74,17 @@ export default async function GarageTeamPage() {
               {queue.applications ?? "–"} crew application{queue.applications === 1 ? "" : "s"} to review
             </Link>{" "}
             ·{" "}
-            {queue.builds ?? "–"} build{queue.builds === 1 ? "" : "s"} ·{" "}
-            {queue.reviews ?? "–"} review{queue.reviews === 1 ? "" : "s"}
+            <Link href="/garage/review/builds">
+              {queue.builds ?? "–"} build{queue.builds === 1 ? "" : "s"}
+            </Link>{" "}
+            ·{" "}
+            <Link href="/garage/review/reviews">
+              {queue.reviews ?? "–"} review{queue.reviews === 1 ? "" : "s"}
+            </Link>
           </p>
-          <p className="garage-form-note">Applications are reviewed in the Garage. Builds and reviews are still approved in Airtable.</p>
+          <p className="garage-form-note">
+            All reviewed here in the Garage. <Link href="/garage/review/featured">Featured on the site</Link>
+          </p>
         </section>
 
         <h2 className="garage-section">This week</h2>

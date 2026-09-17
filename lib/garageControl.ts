@@ -129,8 +129,8 @@ async function queues() {
   };
   const [applications, builds, reviews, marks] = await Promise.all([
     count(process.env.AIRTABLE_BASE_ID, "Applications", `OR({Review Decision} = BLANK(), {Review Decision} = 'Hold / Second Review', {Review Decision} = 'Exceptional Candidate / Crew Review')`),
-    count(process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID, process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions", `{Approved} = FALSE()`),
-    count(process.env.AIRTABLE_TESTIMONIALS_BASE_ID, "Testimonials", `{Approved} = FALSE()`),
+    count(process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID, process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions", `AND(NOT({Approved}), NOT({Declined}))`),
+    count(process.env.AIRTABLE_TESTIMONIALS_BASE_ID, "Testimonials", `AND(NOT({Approved}), NOT({Declined}))`),
     getPhotoMarks().catch(() => []),
   ]);
   return { applications, builds, reviews, flagged: marks.filter((m) => m.flagReason).length };
