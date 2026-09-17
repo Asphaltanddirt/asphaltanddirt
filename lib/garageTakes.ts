@@ -101,6 +101,13 @@ Catch you on the next one.`,
 ];
 
 /** Takes whose Friday has arrived, newest first. */
+/** Break a take title onto two lines at its question mark or colon, so the
+ *  headline doesn't wrap mid-thought. Returns one line if there's no break. */
+export function takeTitleLines(title: string): string[] {
+  const m = title.match(/^(.*?[?:])\s+(.+)$/);
+  return m ? [m[1], m[2]] : [title];
+}
+
 export function publishedGarageTakes(today = new Date().toISOString().slice(0, 10)): GarageTake[] {
   return garageTakes
     .filter((t) => t.liveFrom <= today)

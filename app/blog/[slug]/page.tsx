@@ -104,11 +104,10 @@ export default async function BlogPostPage({
         </div>
 
         {take && (
-          <div className="exp-box mt-4">
+          <div className="exp-box pair-box mt-4">
             <strong>Anthony&apos;s take on this one:</strong>{" "}
-            <Link href={`/garage-takes/${take.slug}`}>{take.title}</Link>
-            <br />
-            {take.summary}
+            <Link href={`/garage-takes/${take.slug}`}>Watch it &rarr;</Link>
+            <p>{take.summary}</p>
           </div>
         )}
 

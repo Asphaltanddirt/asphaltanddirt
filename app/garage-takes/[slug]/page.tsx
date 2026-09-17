@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import { renderTranscriptBlocks } from "@/lib/transcriptRenderer";
 import { GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
-import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost } from "@/lib/garageTakes";
+import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeTitleLines } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 1800;
@@ -62,21 +62,24 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
           All Garage Takes
         </Link>
 
-        <h1 className="mt-3">{take.title}</h1>
+        <h1 className="mt-3">
+          {takeTitleLines(take.title).map((line, i) => (
+            <span className="title-line" key={i}>{line}</span>
+          ))}
+        </h1>
         <p className="meta">{day(take.publishedAt)}</p>
 
         <div className="mt-3">
           <YouTubeEmbed videoId={take.videoId} title={take.title} thumbnail={`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`} eventContext="garage_take" />
         </div>
 
-        <p className="lead mt-3">{take.summary}</p>
+        <p className="lead lead-wide mt-3">{take.summary}</p>
 
         {post && (
-          <div className="exp-box mt-3">
+          <div className="exp-box pair-box mt-3">
             <strong>The story behind it:</strong>{" "}
-            <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-            <br />
-            {post.excerpt}
+            <Link href={`/blog/${post.slug}`}>{post.title} &rarr;</Link>
+            <p>{post.excerpt}</p>
           </div>
         )}
 

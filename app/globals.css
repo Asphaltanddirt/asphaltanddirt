@@ -546,6 +546,14 @@ h1 .line{ display:block; }
 /* YouTube thumbnails are 16:9 and carry their own lettering — show the whole
    frame rather than cropping the headline off the sides. */
 .card-media-video{ aspect-ratio:16/9; }
+/* "The story behind it" / "Anthony's take on this one" cross-links */
+.pair-box a{ color:var(--accent); text-decoration:underline; text-underline-offset:3px; font-weight:700; }
+.pair-box a:hover{ color:var(--text); }
+.pair-box p{ margin:6px 0 0; color:var(--text-muted); font-size:14.5px; }
+/* Headline broken at its own punctuation instead of wherever the column ends */
+h1 .title-line{ display:block; }
+/* A lead under a full-width video needs a wider measure than the 46ch default */
+.lead-wide{ max-width:70ch; font-size:18px; }
 .card-body{ padding:var(--sp-3); display:flex; flex-direction:column; gap:10px; flex:1; }
 .card h3{ font-size:19px; }
 .card p{ font-size:14px; margin:0; }
