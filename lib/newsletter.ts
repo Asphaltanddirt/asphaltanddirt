@@ -389,12 +389,12 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
 
   const quickHitItems = [
     vlogUrl && {
-      label: "Anthony breaks down this week's story",
+      label: "Garage Takes: Anthony breaks down this week's story",
       ctaText: "Watch",
       url: vlogUrl,
     },
     vlog2Url && {
-      label: "Anthony's take on the other story this week",
+      label: "Garage Takes: his take on the other story this week",
       ctaText: "Watch",
       url: vlog2Url,
     },
