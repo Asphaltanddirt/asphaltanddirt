@@ -1,6 +1,7 @@
 import { listRecords, updateRecord, type AirtableRecord } from "@/lib/airtable";
 import { buildWelcomePart1, buildWelcomePart2 } from "@/lib/ambassadorWelcome";
 import { agreementLinkFor } from "@/lib/ambassadorAgreementLink";
+import { findPromotionByCode } from "@/lib/fourthwall-platform";
 import { sendEmail } from "@/lib/resendEmail";
 
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
@@ -106,6 +107,22 @@ export async function sendAmbassadorWelcome(
     const code = ((f["Promo Code"] as string) || "").trim();
     const trackingLink = ((f["Tracking Link"] as string) || "").trim();
     if (!code || !trackingLink) return { status: "skipped", part, reason: "promo code or tracking link not set" };
+    // Commission reports match orders on the Fourthwall Promotion ID, so fill
+    // it from the code instead of making anyone look it up. This also stops a
+    // mistyped code from being emailed to an ambassador.
+    if (!test && !((f["Fourthwall Promotion ID"] as string) || "").trim()) {
+      let promotion: Awaited<ReturnType<typeof findPromotionByCode>> = null;
+      try {
+        promotion = await findPromotionByCode(code);
+      } catch (err) {
+        console.error("Fourthwall promotion lookup failed", err);
+        return { status: "skipped", part, reason: "couldn't reach Fourthwall to check the promo code; try again" };
+      }
+      if (!promotion) {
+        return { status: "skipped", part, reason: `promo code ${code} doesn't exist in Fourthwall (check the spelling)` };
+      }
+      await updateRecord(AMBASSADORS_TABLE, ambassador.id, { "Fourthwall Promotion ID": promotion.id });
+    }
     email = buildWelcomePart2({ name, code, trackingLink });
   }
 

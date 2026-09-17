@@ -79,3 +79,26 @@ export async function getRecentOrders(days = 45): Promise<FourthwallOrder[]> {
   const after = new Date(now.getTime() - days * 86_400_000);
   return getOrdersInRange(after, now);
 }
+
+/** The Fourthwall promotion for a discount code (case-insensitive), or null if
+ *  no such code exists. Used to fill an ambassador's Fourthwall Promotion ID,
+ *  which is what commission reports match orders on. */
+export async function findPromotionByCode(code: string): Promise<{ id: string; code: string; status: string } | null> {
+  const want = code.trim().toUpperCase();
+  if (!want) return null;
+  for (let page = 0; page < 20; page++) {
+    const url = new URL(`${API_URL}/promotions`);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("size", "100");
+    const res = await fetch(url.toString(), { headers: { Authorization: authHeader() }, cache: "no-store" });
+    if (!res.ok) throw new Error(`Fourthwall promotions request failed: ${res.status}`);
+    const data = (await res.json()) as {
+      results?: { id: string; code?: string; status?: string }[];
+      totalPages?: number;
+    };
+    const match = (data.results || []).find((p) => (p.code || "").trim().toUpperCase() === want);
+    if (match) return { id: match.id, code: match.code || code, status: match.status || "" };
+    if (!data.totalPages || page + 1 >= data.totalPages) break;
+  }
+  return null;
+}
