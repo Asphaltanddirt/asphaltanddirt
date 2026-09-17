@@ -17,6 +17,8 @@ export function youtubeIdFromUrl(value: string): string {
 
 export const PODCAST_EPISODES_PLAYLIST_ID = "PLfeeUT85XiEE";
 export const TRAIL_EVENT_VIDEOS_PLAYLIST_ID = "PLKEZJPl1lIfxCiLkpYnw226zEulWj8Su5";
+/** Anthony's weekly garage takes (one per blog post). Created 2026-09-17. */
+export const GARAGE_TAKES_PLAYLIST_ID = "PLFEwlSkUi94E";
 
 export type YouTubeVideo = {
   videoId: string;
@@ -139,5 +141,30 @@ export async function fetchVideoById(idOrUrl: string): Promise<YouTubeVideo | un
   } catch (err) {
     console.error("YouTube videos fetch error", err);
     return undefined;
+  }
+}
+
+/** Playlist videos that are actually Public. Vlogs go up Unlisted on Thursday
+ *  for the newsletter and flip to Public on Friday, so the site must not show
+ *  them a day early. Falls back to showing nothing if the check fails. */
+export async function fetchPublicFromPlaylist(playlistId: string, count: number): Promise<YouTubeVideo[]> {
+  const key = process.env.YOUTUBE_API_KEY;
+  const videos = await fetchLatestFromPlaylist(playlistId, Math.max(count * 3, count));
+  if (!key || videos.length === 0) return [];
+  try {
+    const ids = videos.slice(0, 50).map((v) => v.videoId).join(",");
+    const res = await fetch(`${VIDEOS_URL}?part=status&id=${ids}&key=${key}`, { next: { revalidate: 600 } });
+    if (!res.ok) {
+      console.error("YouTube status fetch failed", res.status);
+      return [];
+    }
+    const data: { items?: { id?: string; status?: { privacyStatus?: string } }[] } = await res.json();
+    const publicIds = new Set(
+      (data.items ?? []).filter((i) => i.status?.privacyStatus === "public").map((i) => i.id),
+    );
+    return videos.filter((v) => publicIds.has(v.videoId)).slice(0, count);
+  } catch (err) {
+    console.error("YouTube status fetch error", err);
+    return [];
   }
 }

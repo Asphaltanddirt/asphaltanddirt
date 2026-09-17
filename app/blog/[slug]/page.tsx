@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { takeForPost } from "@/lib/garageTakes";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BlogCover from "@/components/BlogCover";
@@ -81,6 +82,7 @@ export default async function BlogPostPage({
     year: "numeric",
     timeZone: "UTC",
   });
+  const take = takeForPost(post.slug);
 
   return (
     <section>
@@ -100,6 +102,15 @@ export default async function BlogPostPage({
         <div className="build-thumb mt-4" style={{ aspectRatio: "16/10", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <BlogCover src={post.image.src} alt={post.image.alt} />
         </div>
+
+        {take && (
+          <div className="exp-box mt-4">
+            <strong>Anthony&apos;s take on this one:</strong>{" "}
+            <Link href={`/garage-takes/${take.slug}`}>{take.title}</Link>
+            <br />
+            {take.summary}
+          </div>
+        )}
 
         <div className="mt-4">
           {post.body?.map((block, i) =>

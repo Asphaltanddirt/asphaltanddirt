@@ -543,6 +543,9 @@ h1 .line{ display:block; }
 .card-media img{ width:100%; height:100%; object-fit:cover; }
 .card-media video{ width:100%; height:100%; object-fit:cover; display:block; background:#000; }
 .card-media-vertical{ aspect-ratio:9/16; }
+/* YouTube thumbnails are 16:9 and carry their own lettering — show the whole
+   frame rather than cropping the headline off the sides. */
+.card-media-video{ aspect-ratio:16/9; }
 .card-body{ padding:var(--sp-3); display:flex; flex-direction:column; gap:10px; flex:1; }
 .card h3{ font-size:19px; }
 .card p{ font-size:14px; margin:0; }

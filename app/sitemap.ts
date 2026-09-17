@@ -5,6 +5,7 @@ import { HOSTS, TRAIL_AMBASSADORS } from "@/lib/team";
 import { getPublishedPosts } from "@/lib/blog";
 import { getFeaturedProducts } from "@/lib/fourthwall";
 import { getPublishedEvents } from "@/lib/events";
+import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -59,6 +60,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: SITE_URL, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/garage-takes`, changeFrequency: "weekly" },
+    ...publishedGarageTakes().map((t) => ({ url: `${SITE_URL}/garage-takes/${t.slug}`, changeFrequency: "monthly" as const })),
     { url: `${SITE_URL}/team`, changeFrequency: "monthly" },
     { url: `${SITE_URL}/builds`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
