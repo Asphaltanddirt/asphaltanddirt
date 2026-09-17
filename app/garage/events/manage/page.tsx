@@ -28,7 +28,7 @@ export default async function GarageManageEventsPage() {
 
   return (
     <div className="garage">
-      <GarageBack title="All events" />
+      <GarageBack title="All events" back={{ href: "/garage/events", label: "Events" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">All events</h1>
         <p className="garage-links">

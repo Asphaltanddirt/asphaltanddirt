@@ -87,7 +87,7 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
 
   return (
     <div className="garage">
-      <GarageBack title="Photos" />
+      <GarageBack title="Photos" back={{ href: "/garage/media", label: "Media" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">{event.title}</h1>
         <p className="garage-event-area">

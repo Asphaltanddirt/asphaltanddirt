@@ -64,7 +64,7 @@ export default async function GarageReviewReviewsPage() {
 
   return (
     <div className="garage">
-      <GarageBack title="Reviews" />
+      <GarageBack title="Reviews" back={{ href: "/garage/review", label: "Review" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">Reviews</h1>
         {!reviews ? (

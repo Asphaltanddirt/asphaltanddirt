@@ -30,7 +30,7 @@ export default async function GarageStudioTablePage({ params }: { params: Promis
 
   return (
     <div className="garage">
-      <GarageBack title={t.label} />
+      <GarageBack title={t.label} back={{ href: "/garage/studio", label: "Studio" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">{t.label}</h1>
         <p className="garage-links">

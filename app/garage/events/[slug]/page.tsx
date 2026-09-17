@@ -57,7 +57,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
 
   return (
     <div className="garage">
-      <GarageBack title="Event" />
+      <GarageBack title="Event" back={{ href: "/garage/events", label: "Events" }} />
       <div className="garage-body">
         {event.photoUrl && (
           <div className="garage-event-flyer">

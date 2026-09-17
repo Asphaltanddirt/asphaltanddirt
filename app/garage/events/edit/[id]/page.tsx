@@ -32,7 +32,7 @@ export default async function GarageEditEventPage({
 
   return (
     <div className="garage">
-      <GarageBack title="Edit event" />
+      <GarageBack title="Edit event" back={{ href: "/garage/events/manage", label: "All events" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">{event.title || "Untitled event"}</h1>
         {created && (

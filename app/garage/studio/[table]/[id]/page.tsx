@@ -32,7 +32,7 @@ export default async function GarageStudioRecordPage({
 
   return (
     <div className="garage">
-      <GarageBack title={t.label} />
+      <GarageBack title={t.label} back={{ href: `/garage/studio/${table}`, label: t.label }} />
       <div className="garage-body">
         <h1 className="garage-event-title">{record.title || "(untitled)"}</h1>
         {created && <p className="garage-form-note" role="status">Added.</p>}

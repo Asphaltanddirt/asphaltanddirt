@@ -21,7 +21,7 @@ export default async function GarageNewEventPage() {
 
   return (
     <div className="garage">
-      <GarageBack title="Add event" />
+      <GarageBack title="Add event" back={{ href: "/garage/events", label: "Events" }} />
       <div className="garage-body">
         <h1 className="garage-event-title">Add an event</h1>
         <p className="garage-form-note">Starts as a Draft unless you pick another status. You can add the photo after saving.</p>

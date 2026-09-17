@@ -1879,6 +1879,10 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .garage-tile-sub{ font-size:13px; color:var(--ad-gray); }
 .garage-back{ display:inline-flex; align-items:center; gap:6px; color:var(--white); }
 .garage-back svg{ width:20px; height:20px; }
+.garage-back-up{ font-weight:700; font-size:15px; min-height:44px; min-width:0; }
+.garage-back-up span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.garage-home-link{ font-family:var(--font-display); font-weight:700; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); min-height:44px; display:inline-flex; align-items:center; flex:none; }
+.garage-home-link:hover{ color:var(--accent); }
 .garage-screen-title{ font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
 .garage-section{ font-size:16px; letter-spacing:.06em; color:var(--text-muted); margin:var(--sp-3) 0 var(--sp-2); }
 .garage-tile.is-soon{ opacity:.55; }

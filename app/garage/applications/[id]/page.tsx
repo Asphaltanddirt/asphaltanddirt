@@ -32,7 +32,7 @@ export default async function GarageApplicationPage({ params }: { params: Promis
 
   return (
     <div className="garage">
-      <GarageBack title="Application" />
+      <GarageBack title="Application" back={{ href: "/garage/applications", label: "Applications" }} />
       <div className="garage-body">
         <div className="garage-app-head">
           {app.photo && (

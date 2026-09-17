@@ -25,7 +25,7 @@ export default async function GarageStudioNewPage({ params }: { params: Promise<
 
   return (
     <div className="garage">
-      <GarageBack title={`Add ${t.singular}`} />
+      <GarageBack title={`Add ${t.singular}`} back={{ href: `/garage/studio/${table}`, label: t.label }} />
       <div className="garage-body">
         <h1 className="garage-event-title">Add {t.singular}</h1>
         <GarageStudioForm tableKey={table} record={null} linkOptions={linkOptions} />
