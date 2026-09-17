@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PRIVACY_POLICY_LABEL, PRIVACY_POLICY_PATH, type WaiverDocument } from "@/lib/waivers";
+import { FullTerms, LegalShortVersion } from "./FormHelpers";
 
 interface ChildEntry {
   name: string;
@@ -52,6 +53,36 @@ function SectionBody({ body }: { body: string }) {
       })}
     </>
   );
+}
+
+/** Plain-language summary shown above the collapsed agreement. A reading aid
+ *  only: what people sign is the full text (stored in Agreement Snapshot).
+ *  Keep these in step with lib/waivers.ts whenever a version changes. */
+function shortVersion(waiver: WaiverDocument): React.ReactNode[] | null {
+  if (waiver.version === "ONE-DAY-1.1" || waiver.version === "MULTI-DAY-1.1") {
+    return [
+      "You take part at your own risk. Off-roading can damage vehicles and cause serious injury or death.",
+      <>
+        <strong>You give up the right to sue A&amp;D over ordinary negligence</strong>, as far as the law allows
+        (section 5). It doesn&apos;t cover gross negligence, recklessness or intentional misconduct, and it doesn&apos;t
+        waive your children&apos;s own claims.
+      </>,
+      "A&D doesn't charge for this ride and doesn't own the land. You follow the law, venue rules and staff instructions, including license, registration and insurance requirements.",
+      "Recovery can damage a stuck vehicle. You arrange and pay for any towing, repair or recovery you agree to.",
+      "On the trail, the staff radio channel is how the group talks. Tailgate isn't an emergency system: in an emergency, call 911.",
+      "Bringing kids? You must attend and supervise them, and tell staff which vehicle each child is in.",
+      "Photo and video permission is optional. Anything you post needs permission from the people in it.",
+    ];
+  }
+  if (waiver.version === "POP-UP-1.0") {
+    return [
+      "This covers event communications and optional photo and video permission for this meetup. It isn't a trail ride agreement.",
+      "You pay for your own food, admission and parking, follow venue rules, and supervise any kids you bring.",
+      "GMRS radio is the main way we talk and Tailgate is a backup. Neither is an emergency service: call 911.",
+      "Photo and video permission only applies to the people you say yes for.",
+    ];
+  }
+  return null;
 }
 
 export default function WaiverForm({
@@ -232,7 +263,7 @@ export default function WaiverForm({
   return (
     <form className="build-form" onSubmit={handleSubmit}>
       <div className="form-section">
-        <div className="form-section-title">{waiver.title}</div>
+        <h2 className="form-section-title">{waiver.title}</h2>
         <p className="form-section-hint">{waiver.subtitle}</p>
         {waiver.header && waiver.header.length > 0 && (
           <div className="waiver-header">
@@ -241,20 +272,25 @@ export default function WaiverForm({
             ))}
           </div>
         )}
+        {/* The release notice stays in plain view (it has to be conspicuous);
+            the long agreement text is one tap away under the summary. */}
         {waiver.notice && <p className="waiver-notice">{waiver.notice}</p>}
-        <div className="waiver-text">
-          {waiver.sections.map((section, i) => (
-            <div key={section.heading} style={{ marginBottom: 18 }}>
-              <h3 className="waiver-heading">{i + 1}. {section.heading}</h3>
-              <SectionBody body={section.body} />
-            </div>
-          ))}
-        </div>
-        <p className="form-section-hint" style={{ marginTop: 8 }}>Document: {waiver.version}</p>
+        {shortVersion(waiver) && <LegalShortVersion points={shortVersion(waiver)!} />}
+        <FullTerms label={`Read the full agreement (${waiver.sections.length} sections)`}>
+          <div className="waiver-text">
+            {waiver.sections.map((section, i) => (
+              <div key={section.heading} style={{ marginBottom: 18 }}>
+                <h3 className="waiver-heading">{i + 1}. {section.heading}</h3>
+                <SectionBody body={section.body} />
+              </div>
+            ))}
+          </div>
+          <p className="form-section-hint" style={{ marginTop: 8 }}>Document: {waiver.version}</p>
+        </FullTerms>
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Your Details</div>
+        <h2 className="form-section-title">Your Details</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="w-legal">Full Legal Name</label>
@@ -347,7 +383,7 @@ export default function WaiverForm({
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Children <span className="optional">(Optional)</span></div>
+        <h2 className="form-section-title">Children <span className="optional">(Optional)</span></h2>
         <p className="form-section-hint">
           Only if you&apos;re bringing children you&apos;re the parent or legal guardian of. Up to 4 — more require a signed
           paper attachment.
@@ -414,7 +450,7 @@ export default function WaiverForm({
 
       {waiver.collectsEmergencyContact && v11 && (
         <div className="form-section">
-          <div className="form-section-title">Emergency Contact</div>
+          <h2 className="form-section-title">Emergency Contact</h2>
           <p className="form-section-hint">
             An emergency contact is optional. Providing one may help us reach someone if you cannot communicate. Please
             tell that person you have given us their details for event safety. Declining does not prevent emergency
@@ -454,9 +490,9 @@ export default function WaiverForm({
 
       {waiver.collectsEmergencyContact && !v11 && (
         <div className="form-section">
-          <div className="form-section-title">
+          <h2 className="form-section-title">
             Emergency Contact {noEmergencyContact && <span className="optional">(Skipped)</span>}
-          </div>
+          </h2>
           <p className="form-section-hint">
             Someone we can reach if something happens to you out there. Strongly recommended — but if you don&apos;t
             have someone to list, or would rather not share it, tick the box below and carry on.
@@ -495,7 +531,7 @@ export default function WaiverForm({
       )}
 
       <div className="form-section">
-        <div className="form-section-title">Acceptance</div>
+        <h2 className="form-section-title">Acceptance</h2>
         <label className="waiver-check">
           <input type="checkbox" checked={acceptedAdultTerms} onChange={(e) => setAcceptedAdultTerms(e.target.checked)} disabled={busy} />
           {waiver.version === "POP-UP-1.0"
@@ -530,7 +566,7 @@ export default function WaiverForm({
         </label>
 
         <div className="waiver-privacy">
-          <div className="form-section-title" style={{ fontSize: 13 }}>Privacy Notice Acknowledgment</div>
+          <h2 className="form-section-title" style={{ fontSize: 13 }}>Privacy Notice Acknowledgment</h2>
           <p className="form-section-hint" style={{ marginBottom: 8 }}>
             <a href={PRIVACY_POLICY_PATH} target="_blank" rel="noopener" style={{ color: "var(--accent)", fontWeight: 700 }}>
               Read the Privacy Policy &rarr;

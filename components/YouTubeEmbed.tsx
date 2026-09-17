@@ -1,40 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
-
-// One site-wide captions preference — turn captions on for one video and
-// every video on the site starts with them on, until switched off again.
-const CAPTIONS_KEY = "ad_captions";
-const CAPTIONS_EVENT = "ad-captions-change";
-
-function readCaptionsPref(): boolean {
-  try {
-    return window.localStorage.getItem(CAPTIONS_KEY) === "on";
-  } catch {
-    return false;
-  }
-}
-
-function writeCaptionsPref(on: boolean) {
-  try {
-    window.localStorage.setItem(CAPTIONS_KEY, on ? "on" : "off");
-  } catch {
-    // Storage blocked (private mode etc.) — the toggle still works for this page.
-  }
-  window.dispatchEvent(new Event(CAPTIONS_EVENT));
-}
-
-// Every player on the page shares the preference, and another tab changing
-// it (storage event) updates this one too.
-function subscribeCaptions(onChange: () => void) {
-  window.addEventListener(CAPTIONS_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(CAPTIONS_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
+// One site-wide captions preference — turn captions on for one video (or in
+// Comfort settings) and every video on the site starts with them on, until
+// switched off again.
+import { useCaptionsPref, writeCaptionsPref } from "@/lib/comfort";
 
 export default function YouTubeEmbed({
   videoId,
@@ -55,7 +26,7 @@ export default function YouTubeEmbed({
   vertical?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
-  const captions = useSyncExternalStore(subscribeCaptions, readCaptionsPref, () => false);
+  const captions = useCaptionsPref();
   // Where to resume when the player reloads to apply a captions change.
   const [startAt, setStartAt] = useState(0);
   const currentTime = useRef(0);

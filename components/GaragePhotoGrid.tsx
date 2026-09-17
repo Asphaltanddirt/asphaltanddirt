@@ -10,6 +10,11 @@ export interface GaragePhoto {
   hidden: boolean;
   stars: number;
   starredByMe: boolean;
+  /** Gallery and upload photos can carry a description (their alt text on the
+   *  site). Tailgate chat previews don't. */
+  attachmentId?: string;
+  description?: string;
+  descriptionStatus?: "Draft" | "Approved" | null;
 }
 
 const REASONS = ["Kids / privacy", "Inappropriate", "Poor quality", "Other"] as const;
@@ -20,10 +25,12 @@ export default function GaragePhotoGrid({
   photos,
   eventSlug,
   canRestore,
+  canApproveDescriptions = false,
 }: {
   photos: GaragePhoto[];
   eventSlug: string;
   canRestore: boolean;
+  canApproveDescriptions?: boolean;
 }) {
   const [state, setState] = useState(photos);
   const [flagging, setFlagging] = useState<string | null>(null);
@@ -32,7 +39,7 @@ export default function GaragePhotoGrid({
   const patch = (key: string, changes: Partial<GaragePhoto>) =>
     setState((prev) => prev.map((p) => (p.key === key ? { ...p, ...changes } : p)));
 
-  async function send(photo: GaragePhoto, action: string, extra: Record<string, string> = {}) {
+  async function send(photo: GaragePhoto, action: string, extra: Record<string, string | boolean> = {}) {
     setError("");
     const res = await fetch("/api/garage/photo", {
       method: "POST",
@@ -77,11 +84,33 @@ export default function GaragePhotoGrid({
     }
   }
 
+  async function describe(photo: GaragePhoto, description: string, approve: boolean) {
+    const before = { description: photo.description, descriptionStatus: photo.descriptionStatus };
+    const text = description.trim();
+    patch(photo.key, { description: text, descriptionStatus: text ? (approve ? "Approved" : "Draft") : null });
+    try {
+      await send(photo, "describe", { attachmentId: photo.attachmentId || "", description: text, approve });
+      return true;
+    } catch (err) {
+      patch(photo.key, before);
+      setError(err instanceof Error ? err.message : "Couldn't save that.");
+      return false;
+    }
+  }
+
+  const undescribed = state.filter((p) => p.attachmentId && p.descriptionStatus !== "Approved").length;
+
   if (state.length === 0) return <p className="garage-empty">No photos for this event yet.</p>;
 
   return (
     <>
       {error && <p className="garage-error" role="alert">{error}</p>}
+      {undescribed > 0 && (
+        <p className="garage-describe-hint">
+          {undescribed} photo{undescribed === 1 ? " needs" : "s need"} a description. Photos stay on the site either way;
+          the description is what people using screen readers hear.
+        </p>
+      )}
       <div className="garage-photos">
         {state.map((photo) => (
           <figure key={photo.key} className={photo.hidden ? "garage-photo is-hidden" : "garage-photo"}>
@@ -124,6 +153,10 @@ export default function GaragePhotoGrid({
               )}
             </div>
 
+            {photo.attachmentId && (
+              <DescriptionEditor photo={photo} canApprove={canApproveDescriptions} onSave={(text, approve) => describe(photo, text, approve)} />
+            )}
+
             {flagging === photo.key && (
               <div className="garage-flag-menu" role="group" aria-label="Why flag this photo?">
                 {REASONS.map((reason) => (
@@ -140,5 +173,55 @@ export default function GaragePhotoGrid({
         ))}
       </div>
     </>
+  );
+}
+
+/** "What does this photo show?" — becomes the photo's alt text on the site once
+ *  approved. A draft (e.g. one Claude wrote) shows here for review. */
+function DescriptionEditor({
+  photo,
+  canApprove,
+  onSave,
+}: {
+  photo: GaragePhoto;
+  canApprove: boolean;
+  onSave: (text: string, approve: boolean) => Promise<boolean>;
+}) {
+  const [text, setText] = useState(photo.description || "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState("");
+  const status = photo.descriptionStatus;
+  const label = status === "Approved" ? "Description on the site" : status === "Draft" ? "Draft description, review it" : "Add a description";
+  const id = `desc-${photo.key.replace(/[^a-z0-9]/gi, "-")}`;
+
+  async function save(approve: boolean) {
+    setSaving(true);
+    setSaved("");
+    const ok = await onSave(text, approve);
+    setSaving(false);
+    if (ok) setSaved(approve ? "Approved. It's on the site." : "Saved as a draft.");
+  }
+
+  return (
+    <details className={`garage-describe${status === "Approved" ? " is-approved" : status === "Draft" ? " is-draft" : ""}`}>
+      <summary>{label}</summary>
+      <label htmlFor={id} className="garage-describe-label">
+        What does the photo show? Vehicle, what&apos;s happening, where. Don&apos;t guess who people are.
+      </label>
+      <textarea id={id} value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={500} disabled={saving} />
+      <div className="garage-describe-actions">
+        {canApprove && (
+          <button type="button" className="garage-photo-btn is-primary" onClick={() => save(true)} disabled={saving || !text.trim()}>
+            {status === "Approved" ? "Save" : "Approve"}
+          </button>
+        )}
+        {status !== "Approved" && (
+          <button type="button" className="garage-photo-btn" onClick={() => save(false)} disabled={saving}>
+            Save draft
+          </button>
+        )}
+      </div>
+      <p className="garage-describe-saved" role="status">{saved}</p>
+    </details>
   );
 }

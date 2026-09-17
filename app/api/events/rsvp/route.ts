@@ -73,7 +73,13 @@ export async function POST(req: NextRequest) {
   // Best-effort: the RSVP is already saved even if the email or the Event
   // Updates opt-in fails, so neither failure should fail the request.
   try {
-    const confirmation = buildRsvpConfirmation({ rsvpName: name, alreadyInFbGroup, event });
+    const confirmation = buildRsvpConfirmation({
+      rsvpName: name,
+      alreadyInFbGroup,
+      event,
+      joinedEventUpdates: joinEventUpdatesList,
+      joinedNewsletter: joinNewsletter,
+    });
     await sendEmail({ to: email, subject: confirmation.subject, html: confirmation.html });
   } catch (err) {
     console.error("RSVP confirmation email failed", err);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/ambassadors" },
   title: "Road & Trail Crew",
   description: "The Asphalt & Dirt brand ambassador program — real people, real builds, street to trail.",
 };

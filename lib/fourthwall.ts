@@ -2,6 +2,8 @@
 // reference implementation (github.com/FourthwallHQ/vercel-commerce) and a
 // live request to our shop's API.
 
+import { sizeChartFor, type SizeChart } from "@/lib/sizeCharts";
+
 const API_URL = "https://storefront-api.fourthwall.com/v1";
 
 // Not secret — this is the public domain shoppers land on for checkout, safe
@@ -395,6 +397,8 @@ export type ProductSizeGuide = {
   imageUrl: string | null;
   /** HTML — how to measure, plus fit notes ("runs small", etc.). */
   descriptionHtml: string | null;
+  /** Measurements per size for this blank (lib/sizeCharts.ts), when we have them. */
+  chart: SizeChart | null;
 };
 
 export type ProductDetailSection = {
@@ -468,7 +472,7 @@ function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
   const guideImage = product.sizeGuide?.previewUrl || product.sizeGuide?.fileUrl || null;
   const guideDesc = product.sizeGuide?.description?.trim() || null;
   const sizeGuide: ProductSizeGuide | null =
-    guideImage || guideDesc ? { imageUrl: guideImage, descriptionHtml: guideDesc } : null;
+    guideImage || guideDesc ? { imageUrl: guideImage, descriptionHtml: guideDesc, chart: sizeChartFor(guideImage) } : null;
 
   const sections: ProductDetailSection[] = (product.additionalInformation || [])
     .map((s) => ({ title: (s.title || "").trim(), bodyHtml: (s.bodyHtml || "").trim() }))

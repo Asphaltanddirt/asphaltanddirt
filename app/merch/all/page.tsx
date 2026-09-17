@@ -4,6 +4,7 @@ import { getFeaturedProducts, MERCH_COLLECTIONS } from "@/lib/fourthwall";
 import AllProductsClient from "@/components/AllProductsClient";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/merch/all" },
   title: "Shop All Merch",
   description: "Every Asphalt & Dirt product in one place.",
 };

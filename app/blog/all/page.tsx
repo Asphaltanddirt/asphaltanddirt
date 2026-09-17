@@ -4,6 +4,7 @@ import BlogArchive from "@/components/BlogArchive";
 import { CATEGORY_SLUGS, getAllPostsSorted } from "@/lib/blog";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/blog/all" },
   title: "All Stories",
   description: "Every story from the Asphalt & Dirt blog — builds, adventures, gear, and the people who keep the culture moving.",
 };

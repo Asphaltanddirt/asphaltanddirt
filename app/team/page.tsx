@@ -5,6 +5,7 @@ import { getFeaturedAmbassadors } from "@/lib/ambassadors";
 import { HOSTS, TRAIL_AMBASSADORS, type TeamMember } from "@/lib/team";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/team" },
   title: "Team",
   description: "We're racers, builders, explorers, and storytellers. Meet the Asphalt & Dirt crew.",
 };

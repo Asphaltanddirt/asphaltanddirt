@@ -5,6 +5,7 @@ import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/builds/all" },
   title: "All Builds",
   description: "Every build in the Asphalt & Dirt garage — filter by category or search by name.",
 };

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
 import { ORGANIZER_V11, PRIVACY_POLICY_LABEL, PRIVACY_POLICY_PATH } from "@/lib/waivers";
+import { FormBeforeYouStart, FullTerms, LegalShortVersion } from "./FormHelpers";
 
 /**
  * Photo + video submissions for a past event. Files go straight from the
@@ -288,21 +289,31 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
         style={{ position: "absolute", left: "-9999px", width: 1, height: 1 }}
       />
 
+      <FormBeforeYouStart
+        time="Takes about 3 minutes, plus the time your files take to send."
+        needs={[
+          "Your full legal name and email",
+          `The photos or videos (up to ${MAX_FILES}). Keep this page open while they send.`,
+          "An OK from anyone recognizable in them (for a child, their parent or guardian)",
+        ]}
+      />
+
       <div className="form-section">
+        <h3 className="form-section-title">Step 1: Your Details</h3>
         <div className="form-row">
           <div className="form-field">
-            <label htmlFor="media-name">Full Legal Name</label>
+            <label htmlFor="media-name">Full Legal Name <span className="optional">(Required)</span></label>
             <input type="text" id="media-name" name="name" autoComplete="name" required disabled={busy} />
           </div>
           <div className="form-field">
-            <label htmlFor="media-email">Email <span className="optional">(Never published)</span></label>
+            <label htmlFor="media-email">Email <span className="optional">(Required, never published)</span></label>
             <input type="email" id="media-email" name="email" autoComplete="email" required disabled={busy} />
           </div>
         </div>
       </div>
 
       <div className="form-section">
-        <div className="form-section-title" id="media-title">Photos &amp; Videos</div>
+        <h3 className="form-section-title" id="media-title">Step 2: Photos &amp; Videos</h3>
         <p className="form-section-hint" id="media-hint">
           Up to {MAX_FILES} files — photos up to 50 MB, videos up to 4 GB. Full quality, straight from your phone.
         </p>
@@ -371,7 +382,17 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
       </div>
 
       <div className="form-section upload-terms">
-        <div className="form-section-title">Upload Terms</div>
+        <h3 className="form-section-title">Step 3: The Terms</h3>
+        <LegalShortVersion
+          points={[
+            "You must be 18 or older.",
+            "You keep ownership of your files. You let A&D store, edit and share them for event recaps, our website gallery, social media and promotion.",
+            "We look at everything first, and not everything gets posted.",
+            "Only send photos and videos where everyone recognizable has said OK. For a child, that means their parent or guardian.",
+            "Change your mind later? Email team@asphaltanddirt.com and we'll stop new uses and remove what we control.",
+          ]}
+        />
+        <FullTerms label="Read the full upload terms">
         <p>
           You must be 18 or older to upload. Submitted files are stored with our service providers and reviewed before
           any publication. Submission does not guarantee publication. Photos may be published in the event gallery;
@@ -391,6 +412,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
           print materials and third-party copies may remain; applicable legal rights are preserved. My file license is
           separate from any permission to use my own or another person&apos;s likeness.
         </p>
+        </FullTerms>
         <div className="form-field">
           <label htmlFor="media-permissions">
             Permission references or details <span className="optional">(Private, for staff review)</span>
@@ -406,6 +428,8 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
         </div>
       </div>
 
+      <h3 className="form-section-title">Step 4: Confirm &amp; Sign</h3>
+      <p className="consent-lead">Confirm you&apos;re 18+ and have permission for everyone in these files</p>
       <label className="form-field-consent" htmlFor="media-consent">
         <input type="checkbox" id="media-consent" name="consent" disabled={busy} />
         <span>
@@ -419,12 +443,13 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
       </label>
 
       <div className="form-field">
-        <label htmlFor="media-signature">Signature <span className="optional">(type your full legal name)</span></label>
+        <label htmlFor="media-signature">Signature <span className="optional">(Required: type your full legal name)</span></label>
         <input type="text" id="media-signature" name="signature" autoComplete="name" required disabled={busy} maxLength={120} />
       </div>
       <label className="form-field-consent" htmlFor="media-esign">
         <input type="checkbox" id="media-esign" name="esign" disabled={busy} />
         <span>
+          <span className="req-tag">Required</span>
           Electronic signature: I intend my typed full legal name and submission of this form to record my acceptance of
           these upload terms.
         </span>
@@ -432,6 +457,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
       <label className="form-field-consent" htmlFor="media-privacy">
         <input type="checkbox" id="media-privacy" name="privacy" disabled={busy} />
         <span>
+          <span className="req-tag">Required</span>
           Privacy acknowledgment: The{" "}
           <a href={PRIVACY_POLICY_PATH} target="_blank" rel="noopener">Event Privacy Policy</a> ({PRIVACY_POLICY_LABEL}) has
           been made available to me. This does not grant media permission or optional marketing consent.

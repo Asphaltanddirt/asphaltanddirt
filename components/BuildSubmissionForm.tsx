@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
+import { useFormDraft } from "@/lib/useFormDraft";
+import { DraftRestoredNotice, FormBeforeYouStart } from "./FormHelpers";
 
 const MAX_PHOTOS = 5;
 const MAX_ORIGINAL_FILE_SIZE = 15 * 1024 * 1024; // reject absurdly large originals before we even try to compress
@@ -18,6 +20,13 @@ export default function BuildSubmissionForm() {
   const [compressing, setCompressing] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  // Typed answers survive a refresh or coming back later (photos can't be saved).
+  const { restored, clearDraft } = useFormDraft({
+    storageKey: "ad_draft_build_submission",
+    formRef,
+    skip: ["company", "photos"],
+  });
 
   const busy = status === "submitting" || compressing;
 
@@ -81,6 +90,7 @@ export default function BuildSubmissionForm() {
       if (!res.ok) throw new Error(result.error || "Something went wrong. Please try again.");
 
       track("build_submission", { result: "success" });
+      clearDraft();
       setStatus("success");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -107,7 +117,24 @@ export default function BuildSubmissionForm() {
   }
 
   return (
-    <form className="build-form" onSubmit={handleSubmit}>
+    <form className="build-form" onSubmit={handleSubmit} ref={formRef}>
+      <FormBeforeYouStart
+        time="Takes about 5 to 10 minutes."
+        needs={[
+          "At least 1 photo of your rig (up to 5)",
+          "The year, make and model, and a name for your rig (e.g. Shockwave)",
+          "A few lines on the story behind it. Specs like power, tires and lift are optional.",
+        ]}
+        note="Your answers are saved on this device as you type, so you can come back and finish later."
+      />
+      {restored && (
+        <DraftRestoredNotice
+          onStartOver={() => {
+            clearDraft();
+            formRef.current?.reset();
+          }}
+        />
+      )}
       {/* Honeypot field — hidden from real visitors, bots often fill every input. */}
       <input
         type="text"
@@ -119,7 +146,7 @@ export default function BuildSubmissionForm() {
       />
 
       <div className="form-section">
-        <div className="form-section-title">Your Info</div>
+        <h2 className="form-section-title">Your Info</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
@@ -144,7 +171,7 @@ export default function BuildSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">The Rig</div>
+        <h2 className="form-section-title">The Rig</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="rigName">Rig Name</label>
@@ -179,7 +206,7 @@ export default function BuildSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Key Stats <span className="optional">(Optional, but we love numbers)</span></div>
+        <h2 className="form-section-title">Key Stats <span className="optional">(Optional, but we love numbers)</span></h2>
         <div className="form-row cols-3">
           <div className="form-field">
             <label htmlFor="statPower">Horsepower / Engine</label>
@@ -197,7 +224,7 @@ export default function BuildSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">The Build</div>
+        <h2 className="form-section-title">The Build</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="specEngine">Engine <span className="optional">(Optional)</span></label>
@@ -224,7 +251,7 @@ export default function BuildSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Your Story</div>
+        <h2 className="form-section-title">Your Story</h2>
         <div className="form-field">
           <label htmlFor="story">Tell Us About This Build</label>
           <textarea
@@ -239,7 +266,7 @@ export default function BuildSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Photos</div>
+        <h2 className="form-section-title">Photos</h2>
         <p className="form-section-hint">Up to {MAX_PHOTOS} photos — we&apos;ll optimize them for upload automatically.</p>
         <div className="photo-upload">
           <label className="photo-upload-label" htmlFor="photos">

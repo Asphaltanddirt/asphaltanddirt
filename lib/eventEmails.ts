@@ -59,8 +59,15 @@ export interface EventEmail {
  * and — only for people who said they're not already in the FB group —
  * a nudge to join it too.
  */
-export function buildRsvpConfirmation(input: { rsvpName: string; alreadyInFbGroup: string; event: EventDetail }): EventEmail {
-  const { rsvpName, alreadyInFbGroup, event } = input;
+export function buildRsvpConfirmation(input: {
+  rsvpName: string;
+  alreadyInFbGroup: string;
+  event: EventDetail;
+  /** The optional list boxes they left ticked on the RSVP form. */
+  joinedEventUpdates?: boolean;
+  joinedNewsletter?: boolean;
+}): EventEmail {
+  const { rsvpName, alreadyInFbGroup, event, joinedEventUpdates = false, joinedNewsletter = false } = input;
   const first = esc(firstNameOf(rsvpName));
   const eventUrl = `${SITE_URL}/events/${event.slug}`;
 
@@ -74,6 +81,19 @@ export function buildRsvpConfirmation(input: { rsvpName: string; alreadyInFbGrou
             <br><a href="${socialLinks.facebookGroup}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Join The Group &rarr;</a>
           </td></tr>
         </table>`;
+
+  // Say plainly which lists the RSVP also joined, so it's never a surprise
+  // when the first newsletter or event update arrives.
+  const joined = [
+    joinedEventUpdates ? "<strong>Event Updates</strong> (new meetups as they're posted)" : "",
+    joinedNewsletter ? "<strong>The Dirt Line</strong> (our weekly newsletter)" : "",
+  ].filter(Boolean);
+  const listsNote = joined.length
+    ? `
+        <p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#4a453f;">
+          You also asked to join ${joined.join(" and ")}. Don't want ${joined.length > 1 ? "them" : "it"}? Every one of those emails has an unsubscribe link at the bottom.
+        </p>`
+    : "";
 
   const bodyRows = `
     <tr>
@@ -98,6 +118,7 @@ export function buildRsvpConfirmation(input: { rsvpName: string; alreadyInFbGrou
         </table>
         ${requirementsBlock(event)}
         ${fbNudge}
+        ${listsNote}
         <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">View This Event On The Site &rarr;</a></p>
       </td>
     </tr>

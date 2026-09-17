@@ -118,8 +118,8 @@ export default function SubscribeForm({
 
       <div className="form-section">
         <div className="form-field">
-          <label>What Do You Want To Get? <span className="optional">(Pick at least one)</span></label>
-          <div className="form-checkbox-group form-checkbox-group-stacked">
+          <label id="subscribe-group-1">What Do You Want To Get? <span className="optional">(Pick at least one)</span></label>
+          <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-labelledby="subscribe-group-1">
             {TOPICS.map((topic) => (
               <label className={`form-checkbox${topics.includes(topic.value) ? " has-check" : ""}`} key={topic.value}>
                 <input

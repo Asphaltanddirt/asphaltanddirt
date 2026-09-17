@@ -58,8 +58,8 @@ export default function ManageForm({ token, initialTopics }: { token: string; in
     <div className="build-form">
       <div className="form-section">
         <div className="form-field">
-          <label>What You&apos;re Getting</label>
-          <div className="form-checkbox-group form-checkbox-group-stacked">
+          <label id="manage-group-1">What You&apos;re Getting</label>
+          <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-labelledby="manage-group-1">
             {TOPICS.map((topic) => (
               <label className={`form-checkbox${topics.includes(topic.value) ? " has-check" : ""}`} key={topic.value}>
                 <input

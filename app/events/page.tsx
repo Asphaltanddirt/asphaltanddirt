@@ -9,6 +9,7 @@ import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/y
 import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/events" },
   title: "Events",
   description: "Meetups and rides — RSVP here even if you're not on Facebook.",
 };

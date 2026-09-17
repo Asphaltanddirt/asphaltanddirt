@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
+import { useFormDraft } from "@/lib/useFormDraft";
+import { DraftRestoredNotice, FormBeforeYouStart } from "./FormHelpers";
 
 const MAX_SELF_PHOTOS = 3;
 const MAX_BUILD_PHOTOS = 5;
@@ -72,6 +74,37 @@ export default function AmbassadorApplicationForm() {
   const [mediaCommitment, setMediaCommitment] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Typed answers survive a refresh or coming back later. The standards and
+  // age boxes are left out on purpose: those get ticked fresh.
+  const { restored, clearDraft } = useFormDraft({
+    storageKey: "ad_draft_ambassador_application",
+    formRef,
+    extras: { socialLinks, contentTypes, cultureAreas, interestAreas, contentCommitment, mediaCommitment },
+    onRestoreExtras: (x) => {
+      if (Array.isArray(x.socialLinks) && x.socialLinks.length) setSocialLinks(x.socialLinks);
+      if (Array.isArray(x.contentTypes)) setContentTypes(x.contentTypes);
+      if (Array.isArray(x.cultureAreas)) setCultureAreas(x.cultureAreas);
+      if (Array.isArray(x.interestAreas)) setInterestAreas(x.interestAreas);
+      if (typeof x.contentCommitment === "string") setContentCommitment(x.contentCommitment);
+      if (typeof x.mediaCommitment === "string") setMediaCommitment(x.mediaCommitment);
+    },
+    skip: ["company", "ageConfirmed", "selfPhotos", "buildPhotos"],
+    controlled: ["contentCommitment", "mediaCommitment"],
+  });
+
+  function startOver() {
+    clearDraft();
+    formRef.current?.reset();
+    setSocialLinks([{ platform: "Instagram", url: "" }]);
+    setContentTypes([]);
+    setCultureAreas([]);
+    setInterestAreas([]);
+    setContentCommitment("");
+    setMediaCommitment("");
+    setStandardsAccepted(STANDARDS.map(() => false));
+  }
 
   const busy = status === "submitting" || compressing;
   const allStandardsAccepted = standardsAccepted.every(Boolean);
@@ -219,6 +252,7 @@ export default function AmbassadorApplicationForm() {
       if (!res.ok) throw new Error(result.error || "Something went wrong. Please try again.");
 
       track("ambassador_application", { result: "success" });
+      clearDraft();
       setStatus("success");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -245,7 +279,17 @@ export default function AmbassadorApplicationForm() {
   }
 
   return (
-    <form className="build-form" onSubmit={handleSubmit}>
+    <form className="build-form" onSubmit={handleSubmit} ref={formRef}>
+      <FormBeforeYouStart
+        time="Takes about 10 to 15 minutes. 9 short sections, and most questions are optional."
+        needs={[
+          "Your main social account handle (and any others you want to add)",
+          "Your vehicle or build, in a sentence or two",
+          "Optional: up to 3 photos of you and up to 5 of your build",
+        ]}
+        note="Your answers are saved on this device as you type, so you can come back and finish later."
+      />
+      {restored && <DraftRestoredNotice onStartOver={startOver} />}
       <input
         type="text"
         name="company"
@@ -257,7 +301,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 1 — About You */}
       <div className="form-section">
-        <div className="form-section-title">About You</div>
+        <h2 className="form-section-title">About You</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="name">Full Name</label>
@@ -345,7 +389,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 2 — Your Automotive Life */}
       <div className="form-section">
-        <div className="form-section-title">Your Automotive Life</div>
+        <h2 className="form-section-title">Your Automotive Life</h2>
         <div className="form-field">
           <label htmlFor="vehicle">Your Primary Vehicle / Rig</label>
           <input
@@ -367,8 +411,8 @@ export default function AmbassadorApplicationForm() {
           />
         </div>
         <div className="form-field">
-          <label>Which Parts Of Automotive Culture Are You Most Active In? <span className="optional">(Select all that apply)</span></label>
-          <div className="form-checkbox-group">
+          <label id="ambassadorapplication-group-1">Which Parts Of Automotive Culture Are You Most Active In? <span className="optional">(Select all that apply)</span></label>
+          <div className="form-checkbox-group" role="group" aria-labelledby="ambassadorapplication-group-1">
             {CULTURE_AREAS.map((area) => (
               <label className={`form-checkbox${cultureAreas.includes(area) ? " has-check" : ""}`} key={area}>
                 <input
@@ -390,10 +434,10 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 3 — Your Content */}
       <div className="form-section">
-        <div className="form-section-title">Your Content</div>
+        <h2 className="form-section-title">Your Content</h2>
         <div className="form-field">
-          <label>Which Types Of Content Can You Create? <span className="optional">(Select all that apply)</span></label>
-          <div className="form-checkbox-group">
+          <label id="ambassadorapplication-group-2">Which Types Of Content Can You Create? <span className="optional">(Select all that apply)</span></label>
+          <div className="form-checkbox-group" role="group" aria-labelledby="ambassadorapplication-group-2">
             {CONTENT_TYPES.map((type) => (
               <label className={`form-checkbox${contentTypes.includes(type.value) ? " has-check" : ""}`} key={type.value}>
                 <input
@@ -426,7 +470,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 4 — Your Community */}
       <div className="form-section">
-        <div className="form-section-title">Your Community</div>
+        <h2 className="form-section-title">Your Community</h2>
         <div className="form-field">
           <label htmlFor="audienceSize">Approximately How Large Is Your Primary Audience?</label>
           <p className="form-section-hint">Follower count does not determine acceptance.</p>
@@ -453,7 +497,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 5 — Why A&D */}
       <div className="form-section">
-        <div className="form-section-title">Why A&amp;D</div>
+        <h2 className="form-section-title">Why A&amp;D</h2>
         <div className="form-field">
           <label htmlFor="why">Why Do You Want To Join The A&amp;D Road &amp; Trail Crew?</label>
           <textarea id="why" name="why" required style={{ minHeight: 130 }} disabled={busy} />
@@ -477,7 +521,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 6 — Availability + Participation */}
       <div className="form-section">
-        <div className="form-section-title">Availability &amp; Participation</div>
+        <h2 className="form-section-title">Availability &amp; Participation</h2>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="contentCommitment">Can You Create At Least 2 Relevant A&amp;D Mentions Or Content Pieces Per Month?</label>
@@ -528,8 +572,8 @@ export default function AmbassadorApplicationForm() {
           </select>
         </div>
         <div className="form-field">
-          <label>Are You Interested In Any Of The Following? <span className="optional">(Optional — select all that apply)</span></label>
-          <div className="form-checkbox-group">
+          <label id="ambassadorapplication-group-3">Are You Interested In Any Of The Following? <span className="optional">(Optional — select all that apply)</span></label>
+          <div className="form-checkbox-group" role="group" aria-labelledby="ambassadorapplication-group-3">
             {INTEREST_AREAS.map((area) => (
               <label className={`form-checkbox${interestAreas.includes(area) ? " has-check" : ""}`} key={area}>
                 <input
@@ -547,7 +591,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 7 — Other Brand Relationships */}
       <div className="form-section">
-        <div className="form-section-title">Other Brand Relationships</div>
+        <h2 className="form-section-title">Other Brand Relationships</h2>
         <div className="form-field">
           <label htmlFor="otherBrands">Do You Currently Have Ambassador, Affiliate, Sponsorship, Or Paid Relationships With Other Automotive Brands? <span className="optional">(Optional)</span></label>
           <input type="text" id="otherBrands" name="otherBrands" placeholder="None, or list them" disabled={busy} />
@@ -556,7 +600,7 @@ export default function AmbassadorApplicationForm() {
 
       {/* Photos */}
       <div className="form-section">
-        <div className="form-section-title">Photos</div>
+        <h2 className="form-section-title">Photos</h2>
         <p className="form-section-hint">
           Photos help us review your build and put a face to your application ahead of the video interview.
         </p>
@@ -566,9 +610,9 @@ export default function AmbassadorApplicationForm() {
 
       {/* Section 8 — Standards */}
       <div className="form-section">
-        <div className="form-section-title">Road &amp; Trail Crew Standards</div>
+        <h2 className="form-section-title">Road &amp; Trail Crew Standards</h2>
         <p className="form-section-hint">Please confirm each statement.</p>
-        <div className="form-checkbox-group form-checkbox-group-stacked">
+        <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-label="Road & Trail Crew standards">
           {STANDARDS.map((statement, i) => (
             <label className={`form-checkbox${standardsAccepted[i] ? " has-check" : ""}`} key={i}>
               <input type="checkbox" checked={standardsAccepted[i]} onChange={() => toggleStandard(i)} disabled={busy} />
@@ -588,7 +632,18 @@ export default function AmbassadorApplicationForm() {
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}
 
-      <button className="btn btn-primary" type="submit" disabled={busy || !allStandardsAccepted} style={{ width: "fit-content" }}>
+      {!allStandardsAccepted && (
+        <p className="form-help" id="apply-submit-help">
+          The Submit button unlocks once every Road &amp; Trail Crew standard above is ticked.
+        </p>
+      )}
+      <button
+        className="btn btn-primary"
+        type="submit"
+        disabled={busy || !allStandardsAccepted}
+        aria-describedby={!allStandardsAccepted ? "apply-submit-help" : undefined}
+        style={{ width: "fit-content" }}
+      >
         {status === "submitting" ? "Submitting…" : "Submit Application"}
       </button>
     </form>

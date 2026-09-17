@@ -6,6 +6,7 @@ import YouTubeEmbed from "@/components/YouTubeEmbed";
 import { fetchLatestFromPlaylist } from "@/lib/youtube";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/podcast" },
   title: "Podcast",
   description: "Built street rides. Trail culture. Real events. Real talk. The Asphalt & Dirt podcast — launching soon.",
 };

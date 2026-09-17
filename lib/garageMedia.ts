@@ -13,6 +13,11 @@ import { listRecords, createRecord, updateRecord, isAirtableConfigured, type Air
  *
  * A photo with no mark is simply live. The Key says where the photo lives, so
  * marks survive Airtable's expiring attachment links.
+ *
+ *   describe — what the photo shows, used as its alt text on the site (WCAG
+ *           1.1.1). Draft until someone approves it; never blocks a photo from
+ *           showing. Matched by the attachment's own ID so it can't drift to
+ *           another photo if the gallery is reordered.
  */
 
 const BASE_ID = process.env.AIRTABLE_GARAGE_BASE_ID;
@@ -21,6 +26,7 @@ const MARKS_CACHE_SECONDS = 60;
 const MARKS_TAG = "garage-photo-marks";
 
 export type FlagReason = "Kids / privacy" | "Inappropriate" | "Poor quality" | "Other";
+export type DescriptionStatus = "Draft" | "Approved";
 
 export interface PhotoMark {
   id: string;
@@ -31,6 +37,9 @@ export interface PhotoMark {
   flagReason: FlagReason | null;
   flagNote: string;
   flaggedBy: string;
+  attachmentId: string;
+  description: string;
+  descriptionStatus: DescriptionStatus | null;
 }
 
 function toMark(r: { id: string; fields: AirtableFields }): PhotoMark {
@@ -46,6 +55,9 @@ function toMark(r: { id: string; fields: AirtableFields }): PhotoMark {
     flagReason: (r.fields["Flag Reason"] as FlagReason) || null,
     flagNote: (r.fields["Flag Note"] as string) || "",
     flaggedBy: (r.fields["Flagged By"] as string) || "",
+    attachmentId: (r.fields["Attachment ID"] as string) || "",
+    description: ((r.fields.Description as string) || "").trim(),
+    descriptionStatus: (r.fields["Description Status"] as DescriptionStatus) || null,
   };
 }
 
@@ -65,6 +77,16 @@ export async function getPhotoMarks(): Promise<PhotoMark[]> {
 export async function getHiddenPhotoKeys(): Promise<Set<string>> {
   const marks = await getPhotoMarks().catch(() => []);
   return new Set(marks.filter((m) => m.hidden).map((m) => m.key));
+}
+
+/** Approved descriptions by attachment ID, for the public galleries. */
+export async function getApprovedPhotoDescriptions(): Promise<Map<string, string>> {
+  const marks = await getPhotoMarks().catch(() => []);
+  return new Map(
+    marks
+      .filter((m) => m.attachmentId && m.description && m.descriptionStatus === "Approved")
+      .map((m) => [m.attachmentId, m.description]),
+  );
 }
 
 async function findMark(key: string): Promise<PhotoMark | null> {
@@ -120,6 +142,29 @@ export async function setFlag(
     flag
       ? { Status: "Hidden", "Flag Reason": flag.reason, "Flag Note": flag.note.slice(0, 200), "Flagged By": email }
       : { Status: "Live", "Flag Reason": null, "Flag Note": "", "Flagged By": null },
+    seed,
+  );
+}
+
+/** Save a photo's description. `approve` puts it on the site; otherwise it's a
+ *  draft that only the Garage shows. An empty description clears it. */
+export async function setDescription(
+  key: string,
+  seed: { eventSlug: string; photoUrl: string },
+  attachmentId: string,
+  description: string,
+  approve: boolean,
+): Promise<void> {
+  const existing = await findMark(key);
+  const text = description.trim().slice(0, 500);
+  await saveMark(
+    existing,
+    key,
+    {
+      "Attachment ID": attachmentId,
+      Description: text,
+      "Description Status": text ? (approve ? "Approved" : "Draft") : null,
+    },
     seed,
   );
 }

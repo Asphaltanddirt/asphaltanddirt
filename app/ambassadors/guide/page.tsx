@@ -16,6 +16,11 @@ const STEP_LINKS: Record<string, string> = {
   "Download the A&D media kit": "/ambassadors/media-kit",
 };
 
+/** Anchor for a top-level guide heading, used by the contents list. */
+function guideId(text: string) {
+  return `guide-${text.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
+
 /** `**bold**` markers from the source document become <strong>. */
 function inline(text: string): ReactNode {
   return text.split(/\*\*(.+?)\*\*/g).map((piece, i) =>
@@ -33,7 +38,7 @@ function Part({ part }: { part: GuidePart }) {
       </ul>
     );
   }
-  if (part.type === "h2") return <h2>{part.text}</h2>;
+  if (part.type === "h2") return <h2 id={guideId(part.text)} style={{ scrollMarginTop: 96 }}>{part.text}</h2>;
   if (part.type === "h3") return <h3>{part.text}</h3>;
   if (part.type === "h4") return <h4>{part.text}</h4>;
   return <p>{inline(part.text)}</p>;
@@ -75,6 +80,18 @@ export default function CrewGuidePage() {
         <h1 className="mt-2">Brand Ambassador Onboarding Guide</h1>
         <p className="lead mt-2">Real people. Real builds. Street to trail.</p>
         <CrewResourceLinks current="/ambassadors/guide" />
+
+        {/* A long document: a contents list so people can jump to the part they need. */}
+        <nav className="legal-contents mt-4" aria-label="Guide sections">
+          <p className="legal-contents-title">Contents</p>
+          <ol>
+            {CREW_GUIDE.filter((b): b is GuidePart & { type: "h2"; text: string } => b.type === "h2").map((b) => (
+              <li key={b.text}>
+                <a href={`#${guideId(b.text)}`}>{b.text}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
 
         <div className="crew-guide mt-4">
           {group(CREW_GUIDE).map((item, i) =>

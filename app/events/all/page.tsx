@@ -4,6 +4,7 @@ import EventsList from "@/components/EventsList";
 import { getAllPublishedEvents } from "@/lib/events";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/events/all" },
   title: "All Events",
   description: "Every Asphalt & Dirt meetup and ride — upcoming and past.",
 };

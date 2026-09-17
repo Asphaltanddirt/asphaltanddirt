@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { PRIVACY_POLICY_LABEL, PRIVACY_POLICY_VERSION } from "@/lib/waivers";
+import { LegalShortVersion } from "@/components/FormHelpers";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/event-privacy-policy" },
   title: "Event Registration, Communications & Media Privacy Policy",
   description:
     "How Asphalt & Dirt handles registration information, communications data, children's information, and event media.",
@@ -228,10 +230,35 @@ export default function EventPrivacyPolicyPage() {
         <h1 className="mt-2">Event Registration, Communications &amp; Media Privacy Policy</h1>
         <p className="lead mt-2">{EFFECTIVE}</p>
 
+        {/* Plain summary + contents first, so nobody has to read 15 sections to
+            find the one answer they came for. The policy text below is unchanged. */}
+        <div className="mt-4">
+          <LegalShortVersion
+            points={[
+              "This covers event sign-ups, Tailgate, and photos and videos from our events. It isn't a waiver.",
+              "Other attendees only see your screen name and vehicle name. Staff see your phone number, vehicle and check-in status, for coordination and safety.",
+              "Photo and video permission is optional. Photos need staff approval before they go in a public gallery.",
+              "We don't sell your information or use it for targeted ads.",
+              "Emergency contacts are deleted within 90 days. Signed agreements are kept 7 years and routine Tailgate messages 2 years.",
+              "Email team@asphaltanddirt.com to see, correct or delete your information.",
+            ]}
+          />
+        </div>
+        <nav className="legal-contents mt-3" aria-label="Policy sections">
+          <p className="legal-contents-title">Contents</p>
+          <ol>
+            {SECTIONS.map((section, i) => (
+              <li key={section.heading}>
+                <a href={`#policy-${i + 1}`}>{section.heading}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
         <div className="mt-6">
           {SECTIONS.map((section, i) => (
             <div key={section.heading} style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 20 }}>{i + 1}. {section.heading}</h2>
+              <h2 id={`policy-${i + 1}`} style={{ fontSize: 20, scrollMarginTop: 96 }}>{i + 1}. {section.heading}</h2>
               <div className="mt-2">
                 <Body body={section.body} />
               </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import BuildSubmissionForm from "@/components/BuildSubmissionForm";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/builds/submit" },
   title: "Submit Your Build",
   description: "Show us your rig — submit your build's photos, specs, and story for a chance to be featured.",
 };

@@ -10,6 +10,7 @@ import CommunityPhotoStack from "@/components/CommunityPhotoStack";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/community" },
   title: "Community",
   description: "Real people. Real rides. Real stories from the trail and the street.",
 };

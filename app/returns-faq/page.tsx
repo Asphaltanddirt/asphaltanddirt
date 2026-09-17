@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/returns-faq" },
   title: "Returns & FAQ",
   description: "Shipping, returns, and answers to common questions about Asphalt & Dirt merch orders.",
 };

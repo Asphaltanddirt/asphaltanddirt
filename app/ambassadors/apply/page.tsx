@@ -3,6 +3,7 @@ import Link from "next/link";
 import AmbassadorApplicationForm from "@/components/AmbassadorApplicationForm";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/ambassadors/apply" },
   title: "Apply: Road & Trail Crew",
   description: "Apply to join the Asphalt & Dirt Road & Trail Crew — our brand ambassador program for real builders, creators, and community leaders.",
 };

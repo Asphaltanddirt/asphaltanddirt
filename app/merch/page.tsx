@@ -7,6 +7,7 @@ import { getProductSlugsFor } from "@/lib/featuredProducts";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/merch" },
   title: "Merch",
   description: "Rep the lifestyle. Support the mission. Shop Asphalt & Dirt gear.",
 };

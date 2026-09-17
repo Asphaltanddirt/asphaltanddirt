@@ -3,6 +3,7 @@ import SubscribeForm from "@/components/SubscribeForm";
 import { ALL_TOPICS, type Topic } from "@/lib/newsletterSubscribers";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/subscribe" },
   title: "Subscribe",
   description: "Get The Dirt Line newsletter and/or event updates from Asphalt & Dirt — no Facebook required.",
 };

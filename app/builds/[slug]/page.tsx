@@ -141,7 +141,7 @@ export default async function BuildDetailPage({
       <section className={build.gallery ? undefined : "section-alt"}>
         <div className="container two-col">
           <div>
-            <div className="eyebrow">Build Specs</div>
+            <h2 className="eyebrow">Build Specs</h2>
             {useTwoColSpecs ? (
               <div className="grid grid-2 mt-3">
                 {specColumns.map((column, i) => (
@@ -173,7 +173,7 @@ export default async function BuildDetailPage({
             )}
           </div>
           <div>
-            <div className="eyebrow">About This Build</div>
+            <h2 className="eyebrow">About This Build</h2>
             <p className="mt-3">{build.aboutText}</p>
             {build.aboutStats.length > 0 && (
               <div className="about-stats">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SubscribeButton from "./SubscribeButton";
+import ComfortSettings from "./ComfortSettings";
 import { socialLinks } from "@/lib/social";
 
 export default function Footer({ bgImage, returnTo }: { bgImage?: string; returnTo?: string }) {
@@ -52,6 +53,7 @@ export default function Footer({ bgImage, returnTo }: { bgImage?: string; return
             <Link href="/terms-of-service">Terms of Use</Link>
             <a href="/reviews/submit">Leave A Review</a>
             <Link href="/contact">Contact</Link>
+            <ComfortSettings />
           </div>
         </div>
       </footer>

@@ -52,7 +52,13 @@ export default async function EventDetailPage({
   const canUpload = uploadsOpen(event.date);
   const requirements = requirementsFor(event);
   const submittedPhotos = past ? await getApprovedEventPhotoSubmissions(event.id) : [];
-  const galleryImages = [...event.galleryPhotos, ...submittedPhotos].map((photo) => ({ src: photo.url, alt: photo.alt }));
+  // Every photo gets a text alternative: its approved description, or until
+  // someone writes one, which photo it is and where it's from.
+  const allPhotos = [...event.galleryPhotos, ...submittedPhotos];
+  const galleryImages = allPhotos.map((photo, i) => ({
+    src: photo.url,
+    alt: photo.alt || `Photo ${i + 1} of ${allPhotos.length} from ${event.title}`,
+  }));
   const hasGallery = galleryImages.length > 0;
 
   // Event structured data: the public facts only (never the exact meetup spot).

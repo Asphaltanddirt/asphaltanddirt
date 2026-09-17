@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { setFlag, setStar, type FlagReason } from "@/lib/garageMedia";
+import { setDescription, setFlag, setStar, type FlagReason } from "@/lib/garageMedia";
 
 const REASONS: FlagReason[] = ["Kids / privacy", "Inappropriate", "Poor quality", "Other"];
 
@@ -10,6 +10,8 @@ const REASONS: FlagReason[] = ["Kids / privacy", "Inappropriate", "Poor quality"
  *  - star: any signed-in crew member, on or off, for themselves.
  *  - flag: any signed-in crew member — it hides the photo straight away.
  *  - unflag: Owners only, so a hidden photo can't be quietly put back.
+ *  - describe: any signed-in crew member saves a draft description; only
+ *    Owners can approve one onto the site.
  */
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -19,9 +21,12 @@ export async function POST(req: NextRequest) {
     key?: string;
     eventSlug?: string;
     photoUrl?: string;
-    action?: "star" | "unstar" | "flag" | "unflag";
+    action?: "star" | "unstar" | "flag" | "unflag" | "describe";
     reason?: string;
     note?: string;
+    attachmentId?: string;
+    description?: string;
+    approve?: boolean;
   };
   try {
     body = await req.json();
@@ -55,6 +60,18 @@ export async function POST(req: NextRequest) {
         await setFlag(key, seed, session.email, null);
         revalidateTag("garage-photo-marks", { expire: 0 });
         return NextResponse.json({ status: "ok", hidden: false });
+      }
+      case "describe": {
+        const attachmentId = (body.attachmentId || "").trim();
+        if (!attachmentId) return NextResponse.json({ error: "This photo can't take a description." }, { status: 400 });
+        const approve = Boolean(body.approve);
+        if (approve && !canSeeOwnerOnly(session)) {
+          return NextResponse.json({ error: "Only Jose or Anthony can approve a description." }, { status: 403 });
+        }
+        const description = (body.description || "").trim();
+        await setDescription(key, seed, attachmentId, description, approve);
+        revalidateTag("garage-photo-marks", { expire: 0 });
+        return NextResponse.json({ status: "ok", descriptionStatus: description ? (approve ? "Approved" : "Draft") : null });
       }
       default:
         return NextResponse.json({ error: "Invalid request." }, { status: 400 });

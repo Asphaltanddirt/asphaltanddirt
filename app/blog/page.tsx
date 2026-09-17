@@ -6,6 +6,7 @@ import BlogCover from "@/components/BlogCover";
 import { getAllPostsSorted, getEditorsPicks } from "@/lib/blog";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/blog" },
   title: "Blog",
   description: "Builds, adventures, gear, and the people who keep the culture moving.",
 };

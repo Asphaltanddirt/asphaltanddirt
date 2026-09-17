@@ -47,6 +47,9 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
         url: p.url,
         who: "On the site",
         source: "Gallery" as const,
+        attachmentId: p.attachmentId,
+        description: mark?.description || "",
+        descriptionStatus: mark?.descriptionStatus || null,
         hidden: Boolean(mark?.hidden),
         stars: mark?.starredBy.length || 0,
         starredByMe: Boolean(mark?.starredBy.includes(me)),
@@ -72,6 +75,9 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
         url: p.url,
         who: p.name,
         source: "Upload" as const,
+        attachmentId: p.attachmentId,
+        description: mark?.description || "",
+        descriptionStatus: mark?.descriptionStatus || null,
         hidden: Boolean(mark?.hidden),
         stars: mark?.starredBy.length || 0,
         starredByMe: Boolean(mark?.starredBy.includes(me)),
@@ -88,7 +94,12 @@ export default async function GarageEventMediaPage({ params }: { params: Promise
           {photos.length} photo{photos.length === 1 ? "" : "s"}
         </p>
         {pending.length > 0 && <GaragePhotoReview photos={pending} />}
-        <GaragePhotoGrid photos={photos} eventSlug={slug} canRestore={canSeeOwnerOnly(session)} />
+        <GaragePhotoGrid
+          photos={photos}
+          eventSlug={slug}
+          canRestore={canSeeOwnerOnly(session)}
+          canApproveDescriptions={canSeeOwnerOnly(session)}
+        />
       </div>
     </div>
   );

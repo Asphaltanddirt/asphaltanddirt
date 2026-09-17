@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AgreementForm from "@/components/AgreementForm";
 import CrewResourceLinks from "@/components/CrewResourceLinks";
+import { FullTerms, LegalShortVersion } from "@/components/FormHelpers";
 import { AGREEMENT_INTRO, AGREEMENT_SECTIONS, AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
 
 export const metadata: Metadata = {
@@ -28,10 +29,37 @@ export default function AmbassadorAgreementPage() {
         </p>
         <CrewResourceLinks current="/ambassadors/agreement" />
 
-        <div className="legal-doc mt-4">
+        <div className="mt-4">
+          <LegalShortVersion
+            points={[
+              "You're an independent ambassador, not an A&D employee or official spokesperson, and you cover your own taxes, insurance and expenses.",
+              "Your code gives customers 10% off. You earn 10%, 12% or 15% commission depending on your tier, on eligible sales after discounts (not tax, shipping, refunds or returns).",
+              "Your own purchases never earn commission. Self-referrals, fake orders or code abuse can get you removed.",
+              "Stay active. As a Road & Trail Member that means at least 2 A&D mentions or posts and 1 usable photo or video a month.",
+              "Always make the relationship clear, e.g. \"A&D Ambassador\" or \"Affiliate link, I may earn a commission.\"",
+              "No street takeovers, reckless public-road driving, trail damage, harassment or hate. Serious safety or conduct issues mean immediate removal.",
+              "You keep ownership of your content. Anything you send A&D can be used on A&D's channels.",
+              "You can work with other brands (unless it conflicts with an A&D campaign) and leave any time. Earnings aren't guaranteed.",
+            ]}
+          />
+        </div>
+
+        <div className="mt-3">
+        <FullTerms label={`Read the full agreement (${AGREEMENT_SECTIONS.length} sections)`}>
+        <nav className="legal-contents" aria-label="Agreement sections">
+          <p className="legal-contents-title">Contents</p>
+          <ol>
+            {AGREEMENT_SECTIONS.map((section) => (
+              <li key={section.n}>
+                <a href={`#agreement-${section.n}`}>{section.heading}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <div className="legal-doc mt-3">
           <p>{AGREEMENT_INTRO}</p>
           {AGREEMENT_SECTIONS.map((section) => (
-            <div key={section.n} className="legal-section">
+            <div key={section.n} className="legal-section" id={`agreement-${section.n}`}>
               <h2>
                 {section.n}. {section.heading}
               </h2>
@@ -52,6 +80,8 @@ export default function AmbassadorAgreementPage() {
             </div>
           ))}
           <p className="legal-version">Agreement version {AGREEMENT_VERSION}</p>
+        </div>
+        </FullTerms>
         </div>
 
         <AgreementForm />

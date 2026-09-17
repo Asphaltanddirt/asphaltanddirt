@@ -12,6 +12,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [addError, setAddError] = useState(false);
 
   const color = product.colors[colorIndex];
   const [sizeIndex, setSizeIndex] = useState(() =>
@@ -38,8 +39,14 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
   }
 
   async function handleAddToCart() {
-    if (!selectedSize?.inStock) return;
-    await addItem(selectedSize.variantId, quantity);
+    if (!selectedSize?.inStock || loading) return;
+    setAddError(false);
+    try {
+      await addItem(selectedSize.variantId, quantity);
+    } catch {
+      setAddError(true);
+      return;
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   }
@@ -109,6 +116,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                   <button
                     type="button"
                     className="pdp-sizeguide-toggle"
+                    aria-expanded={showSizeGuide}
                     onClick={() => setShowSizeGuide((v) => !v)}
                   >
                     {showSizeGuide ? "Hide size guide" : "Size guide"}
@@ -123,17 +131,53 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                     aria-pressed={i === sizeIndex}
                     className={`pdp-size-btn${i === sizeIndex ? " active" : ""}`}
                     disabled={!s.inStock}
+                    aria-label={s.inStock ? s.name : `${s.name}, sold out`}
                     onClick={() => setSizeIndex(i)}
                   >
                     {s.name}
                   </button>
                 ))}
               </div>
+              {/* Say why a size can't be picked instead of leaving a dead button. */}
+              {!allInStock ? (
+                <p className="pdp-size-note">This item is sold out right now. Check back soon.</p>
+              ) : color.sizes.some((s) => !s.inStock) ? (
+                <p className="pdp-size-note">Crossed-out sizes are sold out.</p>
+              ) : null}
               {showSizeGuideToggle && showSizeGuide && product.sizeGuide && (
                 <div className="pdp-sizeguide">
+                  {product.sizeGuide.chart && (
+                    <div className="pdp-sizechart-wrap">
+                      <table className="pdp-sizechart">
+                        <caption>Measurements in inches (1 in = 2.54 cm), garment laid flat</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Size</th>
+                            {product.sizeGuide.chart.columns.map((col) => (
+                              <th scope="col" key={col.label}>
+                                {col.label}
+                                <span className="pdp-sizechart-hint">{col.hint}</span>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {product.sizeGuide.chart.rows.map((row) => (
+                            <tr key={row.size}>
+                              <th scope="row">{row.size}</th>
+                              {row.values.map((v, i) => (
+                                <td key={i}>{v}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {product.sizeGuide.chart.note && <p className="pdp-sizeguide-fine">{product.sizeGuide.chart.note}</p>}
+                    </div>
+                  )}
                   {product.sizeGuide.imageUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.sizeGuide.imageUrl} alt={`${product.name} size guide`} />
+                    <img src={product.sizeGuide.imageUrl} alt="Diagram showing where to measure: A length, B width, C sleeve" />
                   )}
                   {product.sizeGuide.descriptionHtml && (
                     <div
@@ -165,7 +209,10 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
               <button
                 className="btn btn-primary pdp-add-btn"
                 onClick={handleAddToCart}
-                disabled={!allInStock || !selectedSize?.inStock || loading}
+                disabled={!allInStock || !selectedSize?.inStock}
+                // Not `disabled` while the request runs: a disabled button drops
+                // keyboard focus, and the cart then has nowhere to return it.
+                aria-disabled={loading || undefined}
               >
                 {!allInStock || !selectedSize?.inStock
                   ? "Sold Out"
@@ -174,6 +221,11 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                     : "Add to Cart"}
               </button>
             </div>
+            {addError && (
+              <p className="pdp-add-error" role="alert">
+                That didn&apos;t go through. Please try Add to Cart again.
+              </p>
+            )}
 
             {product.sections.length > 0 && (
               <div className="pdp-sections">

@@ -33,10 +33,13 @@ export default function BuildGallery({ images }: { images: { src: string; alt: s
             key={img.src}
             onClick={() => setIndex(i)}
             aria-label={`Show photo ${i + 1}`}
+            aria-pressed={i === index}
             style={{ padding: 0, background: "none", display: "block", width: "100%" }}
           >
+            {/* The button already says which photo; the description is on the
+                main image, so screen readers don't hear it twice. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.src} alt={img.alt} />
+            <img src={img.src} alt="" />
           </button>
         ))}
       </div>

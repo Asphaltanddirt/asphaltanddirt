@@ -7,6 +7,7 @@ import { getFeaturedBuilds } from "@/lib/featuredBuilds";
 import AmbassadorBuildBadge from "@/components/AmbassadorBuildBadge";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/builds" },
   title: "Builds",
   description: "Real rigs. Real stories. Explore the rigs, the gear, and the grind behind the build.",
 };

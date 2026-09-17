@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/terms-of-service" },
   title: "Terms of Service",
   description: "The terms that govern use of the Asphalt & Dirt website and shop.",
 };

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { readCalmMotion, useCalmMotion } from "@/lib/comfort";
 
 /**
  * The home hero's looping background video, with a Pause/Play control
- * (WCAG 2.2.2: moving content that loops needs a way to stop it). People who
- * ask their device for reduced motion get the still poster until they press
- * Play, and a pause is remembered on this device.
+ * (WCAG 2.2.2: moving content that loops needs a way to stop it). Calm motion
+ * (Comfort settings, or the device's reduce-motion setting) shows the still
+ * poster until they press Play, and a pause is remembered on this device.
  */
 const STORAGE_KEY = "ad_hero_video_paused";
 
@@ -14,24 +15,12 @@ export default function HeroVideo({ src, poster }: { src: string; poster: string
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
 
+  const calm = useCalmMotion();
+
+  // Keep the button honest about what the video is actually doing.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    let stored = false;
-    try {
-      stored = window.localStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      // Storage blocked; fall back to the motion preference alone.
-    }
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (stored || reduce) {
-      video.pause();
-    } else {
-      video.play().catch(() => {
-        // Autoplay refused (e.g. low-power mode): the poster shows instead.
-      });
-    }
-    // Keep the button honest about what the video is actually doing.
     const sync = () => setPaused(video.paused);
     video.addEventListener("play", sync);
     video.addEventListener("pause", sync);
@@ -41,6 +30,27 @@ export default function HeroVideo({ src, poster }: { src: string; poster: string
       video.removeEventListener("pause", sync);
     };
   }, []);
+
+  // Start (or stop) on load and whenever Calm motion is switched. Reads the
+  // setting directly so the first pass doesn't start playing before the
+  // stored choice has been picked up.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    let stored = false;
+    try {
+      stored = window.localStorage.getItem(STORAGE_KEY) === "1";
+    } catch {
+      // Storage blocked; fall back to the motion setting alone.
+    }
+    if (stored || readCalmMotion()) {
+      video.pause();
+    } else {
+      video.play().catch(() => {
+        // Autoplay refused (e.g. low-power mode): the poster shows instead.
+      });
+    }
+  }, [calm]);
 
   function toggle() {
     const video = videoRef.current;

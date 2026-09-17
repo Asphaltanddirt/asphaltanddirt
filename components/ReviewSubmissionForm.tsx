@@ -188,7 +188,7 @@ export default function ReviewSubmissionForm() {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Photo <span className="optional">(Optional)</span></div>
+        <h2 className="form-section-title">Photo <span className="optional">(Optional)</span></h2>
         <p className="form-section-hint">Up to {MAX_PHOTOS} photos — a shot of the mug, the build, the ride, whatever fits your review.</p>
         <div className="photo-upload">
           <label className="photo-upload-label" htmlFor="photos">

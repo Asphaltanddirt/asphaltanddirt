@@ -105,7 +105,7 @@ export default function AgreementForm() {
 
       {/* Confirm details */}
       <div className="form-section">
-        <div className="form-section-title">Confirm Your Details</div>
+        <h2 className="form-section-title">Confirm Your Details</h2>
         <p className="form-section-hint">
           Quick check that everything&apos;s current — this is what we&apos;ll use for your ambassador
           profile and to reach you.
@@ -137,7 +137,7 @@ export default function AgreementForm() {
 
       {/* Shipping */}
       <div className="form-section">
-        <div className="form-section-title">Where To Ship Your Welcome Kit</div>
+        <h2 className="form-section-title">Where To Ship Your Welcome Kit</h2>
         <p className="form-section-hint">Patch, stickers, and a shirt — on us.</p>
         <div className="form-field">
           <label htmlFor="shippingAddress">Shipping Address</label>
@@ -163,7 +163,7 @@ export default function AgreementForm() {
 
       {/* Accept */}
       <div className="form-section">
-        <div className="form-section-title">Accept The Agreement</div>
+        <h2 className="form-section-title">Accept The Agreement</h2>
         <div className="form-field">
           <label htmlFor="legalName">Full Legal Name</label>
           <input

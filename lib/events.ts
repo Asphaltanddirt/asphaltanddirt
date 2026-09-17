@@ -1,5 +1,5 @@
 import { listRecords, createRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
-import { getHiddenPhotoKeys } from "@/lib/garageMedia";
+import { getApprovedPhotoDescriptions, getHiddenPhotoKeys } from "@/lib/garageMedia";
 
 /**
  * Site-authored events — the A&D Events base (AIRTABLE_EVENTS_BASE_ID) is
@@ -101,6 +101,8 @@ export interface EventDetail extends EventSummary {
   recap: string;
   /** Curated gallery photos from the Events table's Gallery Photos field
    *  (team-selected — Comms system pulls, FB group finds, etc). */
+  /** `alt` is the approved description, or "" when there isn't one yet (the
+   *  page numbers those, since it knows the full gallery). */
   galleryPhotos: { url: string; alt: string }[];
   /** PUBLIC. The event's own requirements, one per line in Airtable. */
   requirements: string[];
@@ -193,17 +195,18 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
   );
   const record = records[0];
   if (!record) return null;
-  const [hidden, venues] = await Promise.all([
+  const [hidden, descriptions, venues] = await Promise.all([
     getHiddenPhotoKeys(),
+    getApprovedPhotoDescriptions(),
     getEventVenues((record.fields.Venue as string[]) || []).catch((err) => {
       console.error("event venues lookup failed", err);
       return [] as EventVenue[];
     }),
   ]);
-  const galleryPhotos = ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || [])
+  const galleryPhotos = ((record.fields["Gallery Photos"] as { id?: string; url: string }[] | undefined) || [])
     .map((photo, i) => ({
       url: photo.url,
-      alt: (record.fields.Title as string) || "Event photo",
+      alt: (photo.id && descriptions.get(photo.id)) || "",
       key: `gallery|${record.id}|${i}`,
     }))
     .filter((photo) => !hidden.has(photo.key))
@@ -233,6 +236,7 @@ export async function getEventBySlug(slug: string): Promise<EventDetail | null> 
 
 /** Approved user-submitted photos for one event, newest first — merged
  *  onto the end of the curated Gallery Photos on the Recap & Gallery page.
+ *  `alt` is the approved description or "" (the page numbers the rest).
  *  Filters client-side (like listRsvpsForEvent) since a linked-record
  *  field's raw value is an array of record IDs, not visible to a formula
  *  filter on the display text. */
@@ -240,22 +244,24 @@ export async function getApprovedEventPhotoSubmissions(
   eventRecordId: string,
 ): Promise<{ url: string; alt: string }[]> {
   assertConfigured();
-  const records = await listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, {
-    baseId: BASE_ID,
-    revalidate: 300,
-  });
+  const [records, descriptions] = await Promise.all([
+    listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, {
+      baseId: BASE_ID,
+      revalidate: 300,
+    }),
+    getApprovedPhotoDescriptions(),
+  ]);
   return records
     .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
     .flatMap((r) => {
-      const name = (r.fields.Name as string) || "A community member";
-      const photos = (r.fields.Photo as { url: string }[] | undefined) || [];
-      return photos.map((photo) => ({ url: photo.url, alt: `Submitted by ${name}` }));
+      const photos = (r.fields.Photo as { id?: string; url: string }[] | undefined) || [];
+      return photos.map((photo) => ({ url: photo.url, alt: (photo.id && descriptions.get(photo.id)) || "" }));
     });
 }
 
 /** The event's own Gallery Photos (the ones we put up ourselves), unfiltered,
  *  so the Garage can review and flag them too. */
-export async function getEventGalleryPhotos(slug: string): Promise<{ key: string; url: string }[]> {
+export async function getEventGalleryPhotos(slug: string): Promise<{ key: string; url: string; attachmentId: string }[]> {
   assertConfigured();
   const records = await listRecords(EVENTS_TABLE, `{Slug} = '${escapeFormulaString(slug)}'`, {
     baseId: BASE_ID,
@@ -263,9 +269,10 @@ export async function getEventGalleryPhotos(slug: string): Promise<{ key: string
   });
   const record = records[0];
   if (!record) return [];
-  return ((record.fields["Gallery Photos"] as { url: string }[] | undefined) || []).map((photo, i) => ({
+  return ((record.fields["Gallery Photos"] as { id?: string; url: string }[] | undefined) || []).map((photo, i) => ({
     key: `gallery|${record.id}|${i}`,
     url: photo.url,
+    attachmentId: photo.id || "",
   }));
 }
 
@@ -274,15 +281,15 @@ export async function getEventGalleryPhotos(slug: string): Promise<{ key: string
  *  someone flags. */
 export async function getEventSubmissionPhotos(
   eventRecordId: string,
-): Promise<{ key: string; url: string; name: string }[]> {
+): Promise<{ key: string; url: string; name: string; attachmentId: string }[]> {
   assertConfigured();
   const records = await listRecords(PHOTO_SUBMISSIONS_TABLE, undefined, { baseId: BASE_ID, revalidate: 60 });
-  const photos: { key: string; url: string; name: string }[] = [];
+  const photos: { key: string; url: string; name: string; attachmentId: string }[] = [];
   for (const record of records) {
     if (!((record.fields.Event as string[]) || []).includes(eventRecordId)) continue;
     const name = (record.fields.Name as string) || "A community member";
-    ((record.fields.Photo as { url: string }[] | undefined) || []).forEach((photo, i) => {
-      photos.push({ key: `submission|${record.id}|${i}`, url: photo.url, name });
+    ((record.fields.Photo as { id?: string; url: string }[] | undefined) || []).forEach((photo, i) => {
+      photos.push({ key: `submission|${record.id}|${i}`, url: photo.url, name, attachmentId: photo.id || "" });
     });
   }
   return photos;
@@ -312,7 +319,10 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     listRecords(PHOTO_SUBMISSIONS_TABLE, `{Approved} = TRUE()`, { baseId: BASE_ID, revalidate: 900 }),
   ]);
 
-  const hidden = await getHiddenPhotoKeys();
+  const [hidden, descriptions] = await Promise.all([getHiddenPhotoKeys(), getApprovedPhotoDescriptions()]);
+  // The approved description when there is one; otherwise say which ride it's from.
+  const altFor = (photo: { id?: string }, title: string) =>
+    (photo.id && descriptions.get(photo.id)) || (title ? `Photo from ${title}` : "Asphalt & Dirt event photo");
   const byRecordId = new Map(eventRecords.map((r) => [r.id, r]));
   const photos: CommunityPhoto[] = [];
 
@@ -320,10 +330,10 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     const title = (record.fields.Title as string) || "";
     const slug = (record.fields.Slug as string) || "";
     if (!slug) continue;
-    const gallery = (record.fields["Gallery Photos"] as { url: string }[] | undefined) || [];
+    const gallery = (record.fields["Gallery Photos"] as { id?: string; url: string }[] | undefined) || [];
     gallery.forEach((photo, i) => {
       if (hidden.has(`gallery|${record.id}|${i}`)) return;
-      photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
+      photos.push({ url: photo.url, alt: altFor(photo, title), eventTitle: title, eventSlug: slug });
     });
   }
 
@@ -334,11 +344,11 @@ export async function getCommunityPhotos(limit = 12): Promise<CommunityPhoto[]> 
     const title = (event.fields.Title as string) || "";
     const slug = (event.fields.Slug as string) || "";
     if (!slug) continue;
-    const submitted = (record.fields.Photo as { url: string }[] | undefined) || [];
+    const submitted = (record.fields.Photo as { id?: string; url: string }[] | undefined) || [];
     submitted.forEach((photo, i) => {
       // Flagged in A&D Garage = off the site, wherever it would have shown.
       if (hidden.has(`submission|${record.id}|${i}`)) return;
-      photos.push({ url: photo.url, alt: title || "Asphalt & Dirt event photo", eventTitle: title, eventSlug: slug });
+      photos.push({ url: photo.url, alt: altFor(photo, title), eventTitle: title, eventSlug: slug });
     });
   }
 

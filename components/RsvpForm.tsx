@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { track } from "@/lib/analytics";
 import { requirementsAcceptLabel } from "@/lib/vehicleRules";
+import { useOptionalUnchecked } from "@/lib/comfort";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -18,8 +19,14 @@ export default function RsvpForm({
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [firstNameSubmitted, setFirstNameSubmitted] = useState("");
-  const [joinEventUpdatesList, setJoinEventUpdatesList] = useState(true);
-  const [joinNewsletter, setJoinNewsletter] = useState(false);
+  // Both list boxes start ticked (Jose, 2026-09-17) and sit in plain view just
+  // above the button, unless Comfort settings asks for optional boxes to
+  // start empty. Once someone clicks a box, their click wins.
+  const optionalUnchecked = useOptionalUnchecked();
+  const [eventUpdatesChoice, setJoinEventUpdatesList] = useState<boolean | null>(null);
+  const [newsletterChoice, setJoinNewsletter] = useState<boolean | null>(null);
+  const joinEventUpdatesList = eventUpdatesChoice ?? !optionalUnchecked;
+  const joinNewsletter = newsletterChoice ?? !optionalUnchecked;
   const [rulesAccepted, setRulesAccepted] = useState(false);
 
   const busy = status === "submitting";
@@ -79,6 +86,8 @@ export default function RsvpForm({
     }
   }
 
+  const joinedLists = [joinEventUpdatesList ? "Event Updates" : "", joinNewsletter ? "The Dirt Line" : ""].filter(Boolean);
+
   if (status === "success") {
     return (
       <div className="form-success">
@@ -91,6 +100,11 @@ export default function RsvpForm({
         <p className="lead" style={{ maxWidth: 480 }}>
           Check your email for the meetup details — we just sent them to you.
         </p>
+        {joinedLists.length > 0 && (
+          <p style={{ maxWidth: 480 }}>
+            You&apos;re also on {joinedLists.join(" and ")}. Every email has an unsubscribe link if you change your mind.
+          </p>
+        )}
       </div>
     );
   }
@@ -142,10 +156,10 @@ export default function RsvpForm({
         </div>
         {hasRequirements && (
           <div className="form-field">
-            <label>
+            <label id="rsvp-group-1">
               Requirements <span className="optional">(Required)</span>
             </label>
-            <div className="form-checkbox-group form-checkbox-group-stacked">
+            <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-labelledby="rsvp-group-1">
               <label className={`form-checkbox${rulesAccepted ? " has-check" : ""}`}>
                 <input
                   type="checkbox"
@@ -161,8 +175,13 @@ export default function RsvpForm({
           </div>
         )}
         <div className="form-field">
-          <label>While You're Here <span className="optional">(Optional)</span></label>
-          <div className="form-checkbox-group form-checkbox-group-stacked">
+          <label id="rsvp-group-2">While You&apos;re Here <span className="optional">(Optional)</span></label>
+          <small id="rsvp-lists-help" className="form-help">
+            {joinEventUpdatesList || joinNewsletter
+              ? "Untick anything you don't want. You can unsubscribe from any email later."
+              : "Tick either one if you'd like email from us."}
+          </small>
+          <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-labelledby="rsvp-group-2" aria-describedby="rsvp-lists-help">
             <label className={`form-checkbox${joinEventUpdatesList ? " has-check" : ""}`}>
               <input
                 type="checkbox"
@@ -171,7 +190,7 @@ export default function RsvpForm({
                 onChange={(e) => setJoinEventUpdatesList(e.target.checked)}
                 disabled={busy}
               />
-              Also add me to the Event Updates list for future meetups
+              Add me to Event Updates: an email when a new meetup is posted
             </label>
             <label className={`form-checkbox${joinNewsletter ? " has-check" : ""}`}>
               <input
@@ -181,7 +200,7 @@ export default function RsvpForm({
                 onChange={(e) => setJoinNewsletter(e.target.checked)}
                 disabled={busy}
               />
-              Add me to The Dirt Line — the weekly newsletter
+              Add me to The Dirt Line: our weekly newsletter
             </label>
           </div>
         </div>

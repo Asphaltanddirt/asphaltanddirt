@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import HeroVideo from "@/components/HeroVideo";
@@ -9,6 +10,12 @@ import { getApprovedTestimonials } from "@/lib/testimonials";
 import TestimonialGrid from "@/components/TestimonialGrid";
 
 const latestEpisode = episodes[0];
+
+// Title and description come from the root layout; the home page only needs
+// to name itself as the one true address (not ?utm= or non-www variants).
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   // The "Home" section of the Featured Products Airtable table drives this

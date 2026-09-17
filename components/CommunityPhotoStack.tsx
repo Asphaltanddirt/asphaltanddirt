@@ -1,31 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import type { CommunityPhoto } from "@/lib/events";
+import { useCalmMotion } from "@/lib/comfort";
 
 const ADVANCE_MS = 5000;
 /** How many cards peek out behind the front one. */
 const VISIBLE_DEPTH = 3;
 
-function subscribeReducedMotion(onChange: () => void) {
-  const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-  query?.addEventListener("change", onChange);
-  return () => query?.removeEventListener("change", onChange);
-}
-
 export default function CommunityPhotoStack({ photos }: { photos: CommunityPhoto[] }) {
   const [index, setIndex] = useState(0);
   // Hovering or focusing the deck pauses it for a moment; the Pause button
-  // stops it until they press Play (WCAG 2.2.2). Reduced motion starts stopped.
+  // stops it until they press Play (WCAG 2.2.2). Calm motion (Comfort
+  // settings or the device's reduce-motion setting) starts it stopped.
   const [hoverPaused, setHoverPaused] = useState(false);
   const [userPaused, setUserPaused] = useState<boolean | null>(null);
-  const reducedMotion = useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
-    () => false,
-  );
-  const stopped = userPaused ?? reducedMotion;
+  const calm = useCalmMotion();
+  const stopped = userPaused ?? calm;
 
   useEffect(() => {
     if (photos.length < 2 || stopped || hoverPaused) return;
