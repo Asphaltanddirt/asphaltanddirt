@@ -158,6 +158,13 @@ export async function POST(req: NextRequest) {
       "Shirt Size": shirtSize,
       "Instagram URL": igUrl || undefined,
       "Social Links": socialLinks,
+      // Signing is when they become a working ambassador: fill Start Date and
+      // their tier's commission rate if nobody has set them yet (they used to
+      // be manual steps and were easy to miss). A rate set by hand is kept.
+      ...(ambassador.fields["Start Date"] ? {} : { "Start Date": todayISODate() }),
+      ...(typeof ambassador.fields["Commission Rate"] === "number"
+        ? {}
+        : { "Commission Rate": Number.parseFloat(TIER_RATE[(ambassador.fields.Tier as string) || ""] || "10%") / 100 }),
     });
   } catch (err) {
     console.error("Airtable agreement write error", err);
@@ -211,7 +218,7 @@ export async function POST(req: NextRequest) {
         <h3 style="margin:24px 0 6px;">Onboarding checklist</h3>
         <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
           <li>${hasCode ? "Promo code already on the record — double-check it's live in Fourthwall." : "Create their discount code + tracked link in Fourthwall (10% customer discount)."}</li>
-          <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Tracking Link</b>, <b>Fourthwall Promotion ID</b>, <b>Commission Rate</b> (${escapeHtml(rate)} for ${escapeHtml(tier)}), and <b>Start Date</b>.</li>
+          <li>On their Ambassador record, set: <b>Promo Code</b>, <b>Tracking Link</b>, and <b>Fourthwall Promotion ID</b>. (Commission Rate ${escapeHtml(rate)} and Start Date were filled in automatically if blank.)</li>
           <li>Pack &amp; ship the welcome kit (patch, stickers, shirt — size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b>.</li>
           <li>${
             welcome2Sent
