@@ -35,7 +35,7 @@ export const garageTakes: GarageTake[] = [
     title: "Would You Daily an E36 M3? Anthony's Honest Take",
     videoId: "zAFPyxzNkuM",
     publishedAt: "2026-09-17",
-    liveFrom: "2026-09-18",
+    liveFrom: "2026-09-17",
     summary:
       "Anthony would happily park an E36 M3 in the garage. Asking it to handle Monday morning is where his answer changes \u2014 and where a 370Z enters the conversation.",
     blogSlug: "e36-m3-ownership-would-you-daily-one",
@@ -65,7 +65,7 @@ it's the older M3, uh, great fun car. Would not mind owning one. Uh, the 370Z th
     title: "Bronco Hardtop Wind Noise: Anthony's Take on the Bronco vs. Jeep Debate",
     videoId: "Pxl5XvuNZgM",
     publishedAt: "2026-09-17",
-    liveFrom: "2026-09-18",
+    liveFrom: "2026-09-17",
     summary:
       "Roof whistle starts the conversation, then Anthony gets into Bronco versus Wrangler: cabin space, daily driving, trail width, removable roofs and the aftermarket.",
     blogSlug: "bronco-hardtop-wind-noise-diagnose-before-you-buy",

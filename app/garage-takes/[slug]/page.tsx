@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import { renderTranscriptBlocks } from "@/lib/transcriptRenderer";
-import { GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
+import { fetchPublicFromPlaylist, GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
 import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeSummaryForDisplay, takeTitleLines } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
@@ -40,6 +40,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
   if (!take) notFound();
   const post = takeCompanionPost(take);
   const others = publishedGarageTakes().filter((t) => t.slug !== take.slug).slice(0, 2);
+  const playlistIsPublic = (await fetchPublicFromPlaylist(GARAGE_TAKES_PLAYLIST_ID, 1)).length > 0;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -92,7 +93,9 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
 
         <p className="garage-links mt-4">
           <a href={`https://www.youtube.com/watch?v=${take.videoId}`} target="_blank" rel="noopener">Watch on YouTube ↗</a>
-          <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener">The whole playlist ↗</a>
+          {playlistIsPublic && (
+            <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener">The whole playlist ↗</a>
+          )}
         </p>
 
         {others.length > 0 && (

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
+import { fetchPublicFromPlaylist, GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
 import { publishedGarageTakes, takeCompanionPost } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
@@ -22,8 +22,11 @@ export const metadata: Metadata = {
 const day = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
-export default function GarageTakesPage() {
+export default async function GarageTakesPage() {
   const takes = publishedGarageTakes();
+  // The playlist only lists public videos, so the link stays hidden while every
+  // take is still unlisted — it comes back on its own once one goes public.
+  const playlistIsPublic = (await fetchPublicFromPlaylist(GARAGE_TAKES_PLAYLIST_ID, 1)).length > 0;
 
   return (
     <section className="section-pt-tight section-pb-tight">
@@ -47,10 +50,12 @@ export default function GarageTakesPage() {
             What he&apos;d daily, what he&apos;d build, and what he&apos;d leave alone. A new one every week, next to that
             week&apos;s story.
           </p>
-          <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
-            Full Playlist On YouTube
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </a>
+          {playlistIsPublic && (
+            <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener" className="view-all">
+              Full Playlist On YouTube
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </a>
+          )}
         </div>
 
         {takes.length ? (
