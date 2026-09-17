@@ -66,6 +66,8 @@ export const STUDIO_TABLES: Record<StudioTableKey, StudioTable> = {
       { key: "collab", field: "Collab", label: "Collab", kind: "checkbox", help: "With another creator or channel." },
       { key: "guests", field: "Guests", label: "Guests", kind: "links", linkTo: "guests" },
       { key: "episode", field: "Linked Episode", label: "Episode", kind: "links", linkTo: "episodes", help: "Link it once it's really being made." },
+      { key: "emailLink", field: "Email Link", label: "Email conversation link", kind: "url", section: "Email conversation", placeholder: "https://mail.google.com/mail/u/0/#inbox/…", help: "Open the thread in Gmail and copy the address bar. Only opens for someone signed into that inbox." },
+      { key: "emailThread", field: "Email Thread", label: "Key parts of the emails", kind: "textarea", help: "Paste what matters so the whole team can read it." },
     ],
   },
   episodes: {
@@ -119,6 +121,8 @@ export const STUDIO_TABLES: Record<StudioTableKey, StudioTable> = {
       { key: "channel", field: "YouTube Channel URL", label: "YouTube channel link", kind: "url" },
       { key: "notes", field: "Notes", label: "Notes", kind: "textarea" },
       { key: "episodes", field: "Episodes", label: "Episodes", kind: "links", linkTo: "episodes" },
+      { key: "emailLink", field: "Email Link", label: "Email conversation link", kind: "url", section: "Email conversation", placeholder: "https://mail.google.com/mail/u/0/#inbox/…", help: "Open the thread in Gmail and copy the address bar. Only opens for someone signed into that inbox." },
+      { key: "emailThread", field: "Email Thread", label: "Key parts of the emails", kind: "textarea", help: "Paste what matters so the whole team can read it." },
     ],
   },
   sponsors: {

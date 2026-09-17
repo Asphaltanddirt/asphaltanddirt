@@ -165,6 +165,11 @@ export default function GarageStudioForm({
                 )}
                 {help}
                 {f.kind === "email" && v && !dirty && <a href={`mailto:${v}`} className="garage-form-note">Email them</a>}
+                {f.kind === "url" && v && !dirty && (
+                  <a href={String(v)} target="_blank" rel="noopener" className="garage-form-note">
+                    Open ↗
+                  </a>
+                )}
                 {f.kind === "phone" && v && !dirty && <a href={`tel:${String(v).replace(/[^\d+]/g, "")}`} className="garage-form-note">Call</a>}
               </div>
             );
