@@ -2162,6 +2162,29 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-app-head{ display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
 .garage-app-hero{ width:120px; height:120px; border-radius:var(--radius-md); object-fit:cover; }
 .garage-decision-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+/* Finance */
+.garage-money-input{ display:flex; align-items:center; gap:6px; border:1px solid var(--border-field, var(--border)); border-radius:var(--radius-sm); background:var(--bg); padding:0 13px; }
+.garage-money-input span{ font-size:22px; font-weight:700; color:var(--text-muted); }
+.garage-form .garage-money-input input{ border:0; padding:12px 0; font-size:24px; font-weight:700; background:transparent; }
+.garage-form .garage-money-input input:focus{ outline:none; }
+.garage-money-input:focus-within{ outline:2px solid var(--accent); outline-offset:2px; }
+.garage-field-label{ font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-top:8px; }
+.garage-period-nav{ display:flex; gap:6px; overflow-x:auto; margin:0 0 12px; padding-bottom:4px; }
+.garage-period-nav a{ flex:none; padding:8px 12px; min-height:40px; display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:999px; font-size:13.5px; font-weight:700; color:var(--text-muted); text-decoration:none; }
+.garage-period-nav a[aria-current="page"]{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.garage-pl{ width:100%; border-collapse:collapse; font-size:14.5px; margin:8px 0; }
+.garage-pl th, .garage-pl td{ padding:7px 4px; border-bottom:1px solid var(--border-soft); text-align:right; font-variant-numeric:tabular-nums; }
+.garage-pl th[scope="row"], .garage-pl th[scope="rowgroup"]{ text-align:left; font-weight:500; color:var(--text); }
+.garage-pl thead th{ font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); }
+.garage-pl tr.is-heading th{ padding-top:14px; font-size:12px; font-weight:800 !important; text-transform:uppercase; letter-spacing:.06em; color:var(--accent) !important; border-bottom:0; }
+.garage-pl tr.is-total th, .garage-pl tr.is-total td{ font-weight:800; }
+.garage-pl-ly{ color:var(--text-dim); }
+.garage-amount{ font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.garage-amount.is-income{ color:var(--state-ok, #5f9e6e); }
+.garage-amount.is-settle-up{ color:var(--text-muted); }
+.garage-row-button{ width:100%; background:none; border:0; padding:8px 0; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+.garage-recurring-form{ margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft); }
+.garage-recurring-form h3{ margin:0 0 4px; font-size:15px; }
 /* Studio (Podcast Production) */
 .garage-studio-field{ display:flex; flex-direction:column; gap:6px; }
 .garage-studio-section{ margin:22px 0 2px; padding-top:14px; border-top:1px solid var(--border-soft); }

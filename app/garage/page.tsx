@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession, isGarageConfigured, canRunEvents, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { canSeeControlRoom } from "@/lib/garageControl";
+import { canSeeFinance } from "@/lib/garageFinance";
 import { getCrewEvents, getRsvpSummaries } from "@/lib/events";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import GarageTaskList from "@/components/GarageTaskList";
@@ -114,6 +115,9 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-media.jpg" },
           { href: "/garage/newsletter", label: "Newsletter", sub: "This week's Dirt Line: fill, test, send", img: "/img/garage/tile-media.jpg" },
         ]
+      : []),
+    ...(canSeeFinance(session)
+      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-control.jpg" }]
       : []),
     ...(canSeeControlRoom(session)
       ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.jpg" }]
