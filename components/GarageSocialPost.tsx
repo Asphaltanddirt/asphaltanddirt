@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
+import { fullCaption, linkPlan } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -27,6 +28,8 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const [draftIndex, setDraftIndex] = useState(0);
   const [editing, setEditing] = useState(false);
   const [caption, setCaption] = useState(item.caption);
+  const [hashtags, setHashtags] = useState(item.hashtags);
+  const [firstComment, setFirstComment] = useState(item.firstComment);
   const [drafts, setDrafts] = useState(item.drafts.join("\n---\n"));
   const [stats, setStats] = useState({
     views: item.stats.views ?? "",
@@ -112,6 +115,10 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     }
   }
 
+  const link = linkPlan(item);
+  const pasteCaption = fullCaption(item);
+  // X counts every character of the post, hashtags included.
+  const overLimit = item.platform === "X" && pasteCaption.length > 280;
   const overdue = item.status === "Planned" && item.due < today;
   const dueToday = item.status === "Planned" && item.due === today;
   const isTrailTalk = item.topic === "Trail Talk";
@@ -192,14 +199,32 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
             </div>
           ))}
         </div>
-      ) : item.caption && !editing ? (
+      ) : pasteCaption && !editing ? (
         <div className="garage-social-caption">
-          <p>{item.caption}</p>
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(item.caption, "caption")}>
-            {copied === "caption" ? "Copied" : "Copy caption"}
+          {item.caption && <p>{item.caption}</p>}
+          {item.hashtags && <p className="garage-social-tags">{item.hashtags}</p>}
+          {overLimit && (
+            <p className="garage-error">
+              {pasteCaption.length} characters, X allows 280. Edit before posting.
+            </p>
+          )}
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(pasteCaption, "caption")}>
+            {copied === "caption" ? "Copied" : item.hashtags ? "Copy caption + hashtags" : "Copy caption"}
           </button>
         </div>
       ) : null}
+
+      {!isTrailTalk && !editing && link.kind !== "none" && (
+        <div className="garage-social-caption garage-social-comment">
+          <span className="garage-social-label">
+            {link.kind === "comment" ? "First comment" : link.kind === "reply" ? "Reply to your post" : "Link in bio"}
+          </span>
+          <p>{link.text}</p>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(link.text, "link")}>
+            {copied === "link" ? "Copied" : link.kind === "bio" ? "Copy link for bio" : link.kind === "reply" ? "Copy reply" : "Copy comment"}
+          </button>
+        </div>
+      )}
 
       {editing ? (
         <div className="garage-social-edit">
@@ -209,13 +234,25 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
               <textarea rows={8} value={drafts} onChange={(e) => setDrafts(e.target.value)} />
             </label>
           ) : (
-            <label>
-              Caption
-              <textarea rows={6} value={caption} onChange={(e) => setCaption(e.target.value)} />
-            </label>
+            <>
+              <label>
+                Caption
+                <textarea rows={6} value={caption} onChange={(e) => setCaption(e.target.value)} />
+              </label>
+              <label>
+                Hashtags
+                <textarea rows={2} value={hashtags} onChange={(e) => setHashtags(e.target.value)} />
+              </label>
+              {(item.platform.startsWith("Facebook") || item.platform === "X") && (
+                <label>
+                  {item.platform === "X" ? "Reply" : "First comment"} (blank = the blog link)
+                  <textarea rows={2} value={firstComment} onChange={(e) => setFirstComment(e.target.value)} />
+                </label>
+              )}
+            </>
           )}
           <div className="garage-social-row">
-            <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(isTrailTalk ? { action: "text", drafts } : { action: "text", caption })}>
+            <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(isTrailTalk ? { action: "text", drafts } : { action: "text", caption, hashtags, firstComment })}>
               Save
             </button>
             <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => setEditing(false)}>

@@ -63,6 +63,8 @@ export interface SocialPost {
   blogTitle: string;
   blogUrl: string;
   caption: string;
+  hashtags: string;
+  firstComment: string;
   drafts: string[];
   assets: SocialAsset[];
   postUrl: string;
@@ -92,6 +94,8 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     blogTitle: str(f["Blog Title"]),
     blogUrl: str(f["Blog URL"]),
     caption: str(f.Caption),
+    hashtags: str(f.Hashtags).trim(),
+    firstComment: str(f["First Comment"]).trim(),
     drafts: str(f.Drafts)
       .split(/\n\s*---\s*\n/)
       .map((d) => d.trim())
@@ -298,9 +302,14 @@ export async function saveStats(id: string, stats: Partial<SocialPost["stats"]>)
   await updateRecord(POSTS, id, fields, { baseId: BASE_ID });
 }
 
-export async function saveText(id: string, input: { caption?: string; drafts?: string; blogUrl?: string; blogTitle?: string }) {
+export async function saveText(
+  id: string,
+  input: { caption?: string; hashtags?: string; firstComment?: string; drafts?: string; blogUrl?: string; blogTitle?: string },
+) {
   const fields: AirtableFields = {};
   if (input.caption !== undefined) fields.Caption = input.caption;
+  if (input.hashtags !== undefined) fields.Hashtags = input.hashtags;
+  if (input.firstComment !== undefined) fields["First Comment"] = input.firstComment;
   if (input.drafts !== undefined) fields.Drafts = input.drafts;
   if (input.blogUrl !== undefined) fields["Blog URL"] = input.blogUrl || null;
   if (input.blogTitle !== undefined) fields["Blog Title"] = input.blogTitle;

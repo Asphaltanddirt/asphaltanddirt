@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
       case "text":
         await saveText(post.id, {
           caption: typeof body.caption === "string" ? body.caption : undefined,
+          hashtags: typeof body.hashtags === "string" ? body.hashtags : undefined,
+          firstComment: typeof body.firstComment === "string" ? body.firstComment : undefined,
           drafts: typeof body.drafts === "string" ? body.drafts : undefined,
           blogUrl: typeof body.blogUrl === "string" ? body.blogUrl : undefined,
         });
