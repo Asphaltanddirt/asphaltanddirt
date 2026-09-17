@@ -296,6 +296,8 @@ export interface WeeklyDigestOptions {
   rigOfTheWeek?: RigOfTheWeekSection;
   /** Anthony's short vlog on this week's story — first Quick Hits line. */
   vlogUrl?: string;
+  /** Anthony's vlog on the week's other story (Also This Week) — second line. */
+  vlog2Url?: string;
   /** The video to feature in Quick Hits (any YouTube URL). Blank -> the
    *  latest podcast episode. */
   videoUrl?: string;
@@ -367,12 +369,18 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
   }
 
   const vlogUrl = options.vlogUrl?.trim();
+  const vlog2Url = options.vlog2Url?.trim();
 
   const quickHitItems = [
     vlogUrl && {
       label: "Anthony breaks down this week's story",
       ctaText: "Watch",
       url: vlogUrl,
+    },
+    vlog2Url && {
+      label: "Anthony's take on the other story this week",
+      ctaText: "Watch",
+      url: vlog2Url,
     },
     videoHit,
     newestMerch && {

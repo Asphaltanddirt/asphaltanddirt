@@ -58,7 +58,8 @@ function sectionsOf(f: Record<string, unknown>): IssueSummary["sections"] {
     { label: "Trail Talk", state: has("Trail Talk - Title") && has("Trail Talk - Body") ? "set" : "out" },
     { label: "Upcoming event", state: has("Event - Title") ? "set" : "auto" },
     { label: "Rig of the week", state: has("Rig - Name") && has("Rig - Blurb") ? "set" : "out" },
-    { label: "Anthony's vlog", state: has("Quick Hits - Anthony Vlog URL") ? "set" : "out" },
+    { label: "Anthony's vlog: feature", state: has("Quick Hits - Anthony Vlog URL") ? "set" : "out" },
+    { label: "Anthony's vlog: other story", state: has("Quick Hits - Anthony Vlog 2 URL") ? "set" : "out" },
     { label: "Featured video", state: has("Quick Hits - Video URL") ? "set" : "auto" },
     { label: "Merch", state: has("Quick Hits - Merch URL") ? "set" : "auto" },
   ];
