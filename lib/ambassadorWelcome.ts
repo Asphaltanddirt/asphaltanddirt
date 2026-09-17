@@ -74,7 +74,10 @@ export interface WelcomeEmail {
 // Part 1 — on approval, no code
 // ---------------------------------------------------------------------------
 
-export function buildWelcomePart1(input: { name: string; tier?: string }): WelcomeEmail {
+export function buildWelcomePart1(input: { name: string; tier?: string; agreementUrl?: string }): WelcomeEmail {
+  // Their personal agreement link (lib/ambassadorAgreementLink.ts) opens the
+  // form with what we already know filled in; the plain page is the fallback.
+  const agreementUrl = input.agreementUrl || `${SITE}/ambassadors/agreement`;
   const first = esc(firstNameOf(input.name));
   const tier = input.tier && TIER_INFO[input.tier] ? input.tier : "Road & Trail Member";
   const { rate, label } = TIER_INFO[tier];
@@ -121,7 +124,7 @@ export function buildWelcomePart1(input: { name: string; tier?: string }): Welco
           <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#1a1712;">Complete these steps to activate your ambassador code:</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.9;color:#4a453f;">
             <tr><td>1.&nbsp; <a href="${GUIDE_URL}" style="color:#f86000;text-decoration:underline;">Read the Road &amp; Trail Crew Guide</a></td></tr>
-            <tr><td>2.&nbsp; <a href="${SITE}/ambassadors/agreement" style="color:#f86000;text-decoration:underline;">Review and accept the Brand Ambassador Agreement</a></td></tr>
+            <tr><td>2.&nbsp; <a href="${esc(agreementUrl)}" style="color:#f86000;text-decoration:underline;">Review and accept the Brand Ambassador Agreement</a></td></tr>
             <tr><td>3.&nbsp; Confirm your profile, social handles, and vehicle/build info (same form)</td></tr>
             <tr><td>4.&nbsp; <a href="${MEDIA_KIT_URL}" style="color:#f86000;text-decoration:underline;">Download your Ambassador Media Kit</a></td></tr>
           </table>

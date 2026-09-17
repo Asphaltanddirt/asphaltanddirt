@@ -1,5 +1,6 @@
 import { listRecords, updateRecord, type AirtableRecord } from "@/lib/airtable";
 import { buildWelcomePart1, buildWelcomePart2 } from "@/lib/ambassadorWelcome";
+import { agreementLinkFor } from "@/lib/ambassadorAgreementLink";
 import { sendEmail } from "@/lib/resendEmail";
 
 const AMBASSADORS_TABLE = process.env.AIRTABLE_AMBASSADORS_TABLE || "Ambassadors";
@@ -99,7 +100,7 @@ export async function sendAmbassadorWelcome(
 
   let email: { subject: string; html: string };
   if (part === 1) {
-    email = buildWelcomePart1({ name, tier: f.Tier as string | undefined });
+    email = buildWelcomePart1({ name, tier: f.Tier as string | undefined, agreementUrl: agreementLinkFor(ambassador.id) });
   } else {
     if (f["Agreement Signed"] !== true) return { status: "skipped", part, reason: "agreement not signed" };
     const code = ((f["Promo Code"] as string) || "").trim();

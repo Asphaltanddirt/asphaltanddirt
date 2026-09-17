@@ -4,6 +4,7 @@ import AgreementForm from "@/components/AgreementForm";
 import CrewResourceLinks from "@/components/CrewResourceLinks";
 import { FullTerms, LegalShortVersion } from "@/components/FormHelpers";
 import { AGREEMENT_INTRO, AGREEMENT_SECTIONS, AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
+import { getAgreementPrefill, verifyAgreementLink, type AgreementPrefill } from "@/lib/ambassadorAgreementLink";
 
 export const metadata: Metadata = {
   title: "Brand Ambassador Agreement",
@@ -12,7 +13,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AmbassadorAgreementPage() {
+export default async function AmbassadorAgreementPage({ searchParams }: { searchParams: Promise<{ id?: string; t?: string }> }) {
+  // From the personal link in Welcome Email 1: fill in what we already know.
+  const { id, t } = await searchParams;
+  let prefill: AgreementPrefill | null = null;
+  if (verifyAgreementLink(id, t)) prefill = await getAgreementPrefill(id).catch(() => null);
+
   return (
     <section className="section-pt-tight section-pb-tight">
       <div className="container build-form-page">
@@ -84,7 +90,7 @@ export default function AmbassadorAgreementPage() {
         </FullTerms>
         </div>
 
-        <AgreementForm />
+        <AgreementForm prefill={prefill} />
       </div>
     </section>
   );

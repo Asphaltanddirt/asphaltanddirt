@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
+import type { AgreementPrefill } from "@/lib/ambassadorAgreementLink";
 
 type Status = "idle" | "submitting" | "accepted" | "already-accepted" | "error";
 
 const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
-export default function AgreementForm() {
+export default function AgreementForm({ prefill = null }: { prefill?: AgreementPrefill | null }) {
   const [accepted, setAccepted] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -107,31 +108,32 @@ export default function AgreementForm() {
       <div className="form-section">
         <h2 className="form-section-title">Confirm Your Details</h2>
         <p className="form-section-hint">
-          Quick check that everything&apos;s current — this is what we&apos;ll use for your ambassador
-          profile and to reach you.
+          {prefill
+            ? "We filled these in from your application. Change anything that's out of date."
+            : "Quick check that everything's current — this is what we'll use for your ambassador profile and to reach you."}
         </p>
         <div className="form-row">
           <div className="form-field">
             <label htmlFor="email">Your A&amp;D Ambassador Email</label>
-            <input type="email" id="email" name="email" required disabled={busy} autoComplete="email" />
+            <input type="email" id="email" name="email" required disabled={busy} autoComplete="email" defaultValue={prefill?.email} />
             <p className="form-section-hint" style={{ marginTop: 4 }}>Use the address on your acceptance email.</p>
           </div>
           <div className="form-field">
             <label htmlFor="phone">Phone Number</label>
-            <input type="tel" id="phone" name="phone" required disabled={busy} placeholder="(555) 123-4567" autoComplete="tel" />
+            <input type="tel" id="phone" name="phone" required disabled={busy} placeholder="(555) 123-4567" autoComplete="tel" defaultValue={prefill?.phone} />
           </div>
         </div>
         <div className="form-field">
           <label htmlFor="instagram">Instagram Handle</label>
-          <input type="text" id="instagram" name="instagram" required disabled={busy} placeholder="@yourhandle" autoComplete="off" />
+          <input type="text" id="instagram" name="instagram" required disabled={busy} placeholder="@yourhandle" autoComplete="off" defaultValue={prefill?.instagram} />
         </div>
         <div className="form-field">
           <label htmlFor="otherSocials">Other Social Links <span className="optional">(Optional — one per line)</span></label>
-          <textarea id="otherSocials" name="otherSocials" disabled={busy} placeholder={"TikTok: https://tiktok.com/@you\nYouTube: https://youtube.com/@you"} />
+          <textarea id="otherSocials" name="otherSocials" disabled={busy} placeholder={"TikTok: https://tiktok.com/@you\nYouTube: https://youtube.com/@you"} defaultValue={prefill?.otherSocials} />
         </div>
         <div className="form-field">
           <label htmlFor="vehicle">Your Primary Vehicle / Build</label>
-          <input type="text" id="vehicle" name="vehicle" required disabled={busy} placeholder="e.g. 2026 Jeep Wrangler Rubicon XR" />
+          <input type="text" id="vehicle" name="vehicle" required disabled={busy} placeholder="e.g. 2026 Jeep Wrangler Rubicon XR" defaultValue={prefill?.vehicle} />
         </div>
       </div>
 
@@ -148,11 +150,12 @@ export default function AgreementForm() {
             disabled={busy}
             placeholder={"Full name\nStreet address\nCity, State ZIP\nCountry"}
             style={{ minHeight: 110 }}
+            defaultValue={prefill?.shippingAddress}
           />
         </div>
         <div className="form-field" style={{ maxWidth: 200 }}>
           <label htmlFor="shirtSize">Shirt Size</label>
-          <select id="shirtSize" name="shirtSize" required disabled={busy} defaultValue="">
+          <select id="shirtSize" name="shirtSize" required disabled={busy} defaultValue={prefill?.shirtSize || ""}>
             <option value="" disabled>Select one</option>
             {SHIRT_SIZES.map((s) => (
               <option key={s} value={s}>{s}</option>
