@@ -99,6 +99,21 @@ export default function ComfortSettings() {
           if (e.key === "Escape") {
             e.preventDefault();
             dialogRef.current?.close();
+            return;
+          }
+          // Keep Tab cycling inside the panel instead of stepping out to the
+          // browser for one press (re-test 2026-09-17).
+          if (e.key !== "Tab" || !dialogRef.current) return;
+          const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("button:not([disabled])"));
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
           }
         }}
       >

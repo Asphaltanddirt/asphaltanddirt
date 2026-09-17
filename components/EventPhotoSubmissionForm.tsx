@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { compressImage } from "@/lib/imageCompress";
 import { ORGANIZER_V11, PRIVACY_POLICY_LABEL, PRIVACY_POLICY_PATH } from "@/lib/waivers";
-import { FormBeforeYouStart, FullTerms, LegalShortVersion } from "./FormHelpers";
+import { useFormDraft } from "@/lib/useFormDraft";
+import { DraftRestoredNotice, FormBeforeYouStart, FullTerms, LegalShortVersion } from "./FormHelpers";
 
 /**
  * Photo + video submissions for a past event. Files go straight from the
@@ -69,6 +70,14 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
   const [errorMsg, setErrorMsg] = useState("");
   const [result, setResult] = useState<{ photos: number; videos: number; failed: string[] } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Name, email and permission notes survive a refresh. The signature and the
+  // agreement boxes are never saved: those get done fresh each time.
+  const { restored, clearDraft } = useFormDraft({
+    storageKey: `ad_draft_event_upload_${eventSlug}`,
+    formRef,
+    skip: ["company", "consent", "esign", "privacy", "signature"],
+  });
   const busy = status === "uploading";
 
   // Leaving mid-upload loses whatever hasn't finished — ask first.
@@ -248,6 +257,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
 
     track("event_photo_submission", { result: failed.length ? "partial" : "success", photos, videos });
     setResult({ photos, videos, failed });
+    clearDraft();
     setStatus("success");
   }
 
@@ -278,7 +288,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
   }
 
   return (
-    <form className="build-form" onSubmit={handleSubmit} noValidate>
+    <form className="build-form" onSubmit={handleSubmit} noValidate ref={formRef}>
       {/* Honeypot field — hidden from real visitors, bots often fill every input. */}
       <input
         type="text"
@@ -297,6 +307,15 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
           "An OK from anyone recognizable in them (for a child, their parent or guardian)",
         ]}
       />
+      {restored && (
+        <DraftRestoredNotice
+          hasConfirmations
+          onStartOver={() => {
+            clearDraft();
+            formRef.current?.reset();
+          }}
+        />
+      )}
 
       <div className="form-section">
         <h3 className="form-section-title">Step 1: Your Details</h3>

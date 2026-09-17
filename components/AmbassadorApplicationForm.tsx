@@ -289,7 +289,7 @@ export default function AmbassadorApplicationForm() {
         ]}
         note="Your answers are saved on this device as you type, so you can come back and finish later."
       />
-      {restored && <DraftRestoredNotice onStartOver={startOver} />}
+      {restored && <DraftRestoredNotice onStartOver={startOver} hasConfirmations />}
       <input
         type="text"
         name="company"

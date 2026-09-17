@@ -27,12 +27,22 @@ export function FormBeforeYouStart({ time, needs, note }: { time?: string; needs
   );
 }
 
-export function DraftRestoredNotice({ onStartOver, hasPhotos = true }: { onStartOver: () => void; hasPhotos?: boolean }) {
+export function DraftRestoredNotice({
+  onStartOver,
+  hasPhotos = true,
+  hasConfirmations = false,
+}: {
+  onStartOver: () => void;
+  hasPhotos?: boolean;
+  /** The form has agreement/confirmation boxes, which are never saved. */
+  hasConfirmations?: boolean;
+}) {
   return (
     <div className="form-draft-notice" role="status">
       <p>
         Welcome back. We filled in what you typed last time (saved on this device only).
         {hasPhotos && " Photos can't be saved, so add those again."}
+        {hasConfirmations && " Tick the confirmation boxes again before you send."}
       </p>
       <button type="button" className="form-draft-reset" onClick={onStartOver}>
         Start over
