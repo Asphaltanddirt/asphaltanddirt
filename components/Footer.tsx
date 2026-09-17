@@ -42,7 +42,9 @@ export default function Footer({ bgImage, returnTo }: { bgImage?: string; return
       </section>
       <footer className="site-footer">
         <div className="container footer-row">
-          <span>© 2026 Asphalt &amp; Dirt. All Rights Reserved.</span>
+          {/* Legal name shown for the TikTok API developer application (Jose,
+           *  2026-09-16); fine to take out once that's approved. */}
+          <span>© 2026 Asphalt &amp; Dirt, a d/b/a of JLDA Holdings Corp. All Rights Reserved.</span>
           <span className="footer-tagline">Where horsepower meets mud.</span>
           <div className="footer-links">
             <Link href="/returns-faq">Returns &amp; FAQ</Link>
