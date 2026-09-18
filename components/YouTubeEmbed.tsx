@@ -13,6 +13,7 @@ export default function YouTubeEmbed({
   eventContext,
   thumbnail,
   vertical = false,
+  autoPlayFromQuery = false,
 }: {
   videoId: string;
   title: string;
@@ -24,6 +25,14 @@ export default function YouTubeEmbed({
   thumbnail?: string;
   /** Shorts/vertical video — renders the frame at 9:16 instead of 16:9. */
   vertical?: boolean;
+  /** Honour a `?play=1` in the URL by starting without the poster click —
+   *  set only on pages whose own video cards add that param, so it means the
+   *  viewer already asked for this video. Read here on the client rather than
+   *  from the page's searchParams, which would force the whole route to
+   *  render dynamically instead of being prerendered. Reduce Motion opts out.
+   *  iOS still blocks unmuted playback not started by a gesture on the player
+   *  itself, so this is a desktop improvement. */
+  autoPlayFromQuery?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
   const captions = useCaptionsPref();
@@ -32,6 +41,17 @@ export default function YouTubeEmbed({
   const currentTime = useRef(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const frameClassName = vertical ? "video-frame video-frame-vertical" : "video-frame";
+
+  // Arriving from a deliberate click on a video card: start without making
+  // them press play a second time. Reduce Motion opts out — someone who has
+  // asked the OS for less movement should not land on a playing video.
+  useEffect(() => {
+    if (!autoPlayFromQuery) return;
+    if (new URLSearchParams(window.location.search).get("play") !== "1") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    setPlaying(true);
+    track("youtube_embed_play", { videoId, context: `${eventContext}_auto` });
+  }, [autoPlayFromQuery, videoId, eventContext]);
 
   // While playing, the player reports its position (enablejsapi=1), so a
   // captions change mid-video reloads at the same spot instead of 0:00.

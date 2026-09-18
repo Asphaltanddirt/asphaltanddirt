@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import BlogCover from "@/components/BlogCover";
 import { getPostBySlug, getPublishedPosts } from "@/lib/blog";
 import { SITE_URL } from "@/lib/site";
+import { socialLinks } from "@/lib/social";
 
 export function generateStaticParams() {
   return getPublishedPosts().map((p) => ({ slug: p.slug }));
@@ -148,6 +149,20 @@ export default async function BlogPostPage({
             ),
           )}
         </div>
+
+        {/* The conversation happens in the Facebook Group, not in a comment
+         * box under the article — the group is where this audience actually
+         * talks (one "who's in?" post drew 194 comments). Sending readers
+         * there feeds the channel that works instead of splitting it, and
+         * costs us no moderation. */}
+        <aside className="discuss-box mt-5">
+          <h2 className="eyebrow mb-0">Keep the conversation going</h2>
+          <p>Got an opinion on this one? The crew argues it out in the Facebook group.</p>
+          <a className="btn btn-primary" href={socialLinks.facebookGroup} target="_blank" rel="noopener">
+            Discuss this in the group
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
+        </aside>
       </div>
     </section>
   );

@@ -71,7 +71,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
         <p className="meta">{day(take.publishedAt)}</p>
 
         <div className="mt-3">
-          <YouTubeEmbed videoId={take.videoId} title={take.title} thumbnail={`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`} eventContext="garage_take" />
+          <YouTubeEmbed videoId={take.videoId} title={take.title} thumbnail={`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`} eventContext="garage_take" autoPlayFromQuery />
         </div>
 
         <div className="take-summary mt-3">
@@ -103,7 +103,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
             <h2 className="eyebrow mt-6">More Garage Takes</h2>
             <div className="grid grid-2 mt-2">
               {others.map((t) => (
-                <Link className="card" href={`/garage-takes/${t.slug}`} key={t.slug}>
+                <Link className="card" href={`/garage-takes/${t.slug}?play=1`} key={t.slug}>
                   <div className="card-media card-media-video">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`https://i.ytimg.com/vi/${t.videoId}/maxresdefault.jpg`} alt={t.title} loading="lazy" />

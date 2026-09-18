@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import BlogCover from "@/components/BlogCover";
 import type { BlogCategory, BlogPost } from "@/lib/blog";
 
@@ -87,7 +88,7 @@ export default function BlogArchive({ posts, initialCategory }: { posts: BlogPos
         {visiblePosts.length ? (
           <div className="grid grid-3">
             {visiblePosts.map((post) => (
-              <div className="card" key={post.slug}>
+              <div className="card card-linked" key={post.slug}>
                 <div className="card-media">
                   <BlogCover src={post.image.src} alt={post.image.alt} />
                 </div>
@@ -96,13 +97,15 @@ export default function BlogArchive({ posts, initialCategory }: { posts: BlogPos
                     <span className="badge-outline">{post.category}</span>
                     <span className="date">{formatDate(post.date)}</span>
                   </div>
-                  <h3>{post.title}</h3>
+                  <h3>
+                      <Link href={`/blog/${post.slug}`} className="card-link">{post.title}</Link>
+                    </h3>
                   <p>{post.excerpt}</p>
                   {post.body && (
-                    <a href={`/blog/${post.slug}`} className="view-all" style={{ fontSize: 12 }}>
+                    <span className="view-all" aria-hidden="true" style={{ fontSize: 12 }}>
                       Read More
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                    </a>
+                    </span>
                   )}
                 </div>
               </div>
