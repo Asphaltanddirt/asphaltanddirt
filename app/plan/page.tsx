@@ -67,11 +67,12 @@ export default function PlanPage() {
         <h2 className="mt-6" style={{ fontSize: 24 }}>What we&apos;d change</h2>
         <p>Four things. These are the bits I actually need you to sign off on.</p>
 
-        <Ask n="1" title="Garage Takes come first, not last">
-          Right now your take lands after the blog post has already made the case, so it can only
-          agree with it. Flip it: <strong>your take goes first — your honest call, before we argue
-          about it.</strong> Then the podcast is where it gets tested. Sometimes you&apos;ll change
-          your mind on air, and that&apos;s the best clip of the week.
+        <Ask n="1" title="Your take opens the argument instead of closing it">
+          Nothing changes about how you film — you already work from the topic, not the article.
+          What changes is <strong>when it lands</strong>. Right now the take is the last word on a
+          topic. Instead it becomes the first: your gut call goes up, the blog makes the researched
+          case, and <strong>the live is where the two meet.</strong> Sometimes you&apos;ll change
+          your mind on air. That&apos;s the best clip of the week.
         </Ask>
 
         <Ask n="2" title="Jose plays devil&apos;s advocate">
