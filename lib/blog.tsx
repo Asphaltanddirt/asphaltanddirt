@@ -22,7 +22,12 @@ export interface BlogPost {
   metaDescription?: string;
   category: BlogCategory;
   date: string; // ISO 8601
-  image: { src: string; alt: string };
+  /** `credit` carries photo attribution when the source licence requires it
+   *  (CC BY / CC BY-SA). Rendered as a line under the hero rather than burned
+   *  into the image, so the artwork stays clean — CC accepts attribution "in
+   *  any reasonable manner based on the medium". Omit for CC0, public domain
+   *  and our own photography. */
+  image: { src: string; alt: string; credit?: string };
   /**
    * Full article body. Undefined until a real article is written for this
    * post — the listing only links to a post page once this exists, rather
