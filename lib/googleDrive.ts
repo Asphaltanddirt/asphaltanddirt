@@ -349,18 +349,21 @@ export async function fetchDriveMedia(fileId: string, range: string | null): Pro
 }
 
 // ---------------------------------------------------------------------------
-// Vlogs: the "Vlog" Shared Drive, one folder per vlog ("2026-09-17 - E36 M3
-// Ownership"). Anthony uploads straight from his phone through the Garage.
+// Vlogs: the "Vlogs" folder in the A&D Youtube Shared Drive, one folder per
+// vlog ("2026-09-17 - E36 M3 Ownership"). Anthony uploads straight from his
+// phone through the Garage. Until 2026-09-19 these went to a separate "Vlog"
+// drive, which duplicated this folder and has been retired.
 // ---------------------------------------------------------------------------
 
 /** Not secret: a Shared Drive ID only works for accounts that are members. */
-const VLOG_DRIVE_ID = process.env.GOOGLE_DRIVE_VLOG_DRIVE_ID || "0AAIW2pyBY3c5Uk9PVA";
+const VLOG_DRIVE_ID = process.env.GOOGLE_DRIVE_YOUTUBE_DRIVE_ID || "0ANTZLlDuCiNxUk9PVA";
+const VLOG_PARENT_ID = process.env.GOOGLE_DRIVE_VLOG_FOLDER_ID || "1jFxItVQKITNnYP3TZ8VSlVo2gZzu8Ju2";
 
 /** The folder for one vlog, made if it doesn't exist yet (same name = same folder,
  *  so a second try on the same day doesn't scatter the files). */
 export async function ensureVlogFolder(name: string): Promise<string> {
   const safe = safeFolderName(name) || "Vlog";
-  const existing = await listChildren(VLOG_DRIVE_ID, `mimeType = '${FOLDER_MIME}'`, VLOG_DRIVE_ID);
+  const existing = await listChildren(VLOG_PARENT_ID, `mimeType = '${FOLDER_MIME}'`, VLOG_DRIVE_ID);
   const match = existing.find((f) => sameName(f.name, safe));
-  return match ? match.id : createFolder(safe, VLOG_DRIVE_ID);
+  return match ? match.id : createFolder(safe, VLOG_PARENT_ID);
 }
