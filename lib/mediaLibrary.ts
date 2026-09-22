@@ -58,6 +58,14 @@ export interface MediaRow {
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
+/** Keywords read back as either a string or a list, depending on whether the
+ *  Airtable field is text or multi-select. Jose made it a multi-select
+ *  (2026-09-22), which is better than text — tapping a tag in Airtable shows
+ *  every clip carrying it, which is the dashboard he wanted — but it means a
+ *  plain `typeof === "string"` read comes back empty. Handle both. */
+const tags = (v: unknown): string =>
+  Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).join(", ") : str(v);
+
 export const driveFileUrl = (fileId: string) => `https://drive.google.com/file/d/${fileId}/view`;
 export const driveFolderUrl = (folderId: string) => `https://drive.google.com/drive/folders/${folderId}`;
 
@@ -108,8 +116,11 @@ export async function fileMediaRows(
           Label: batch.label,
           "Uploaded By": batch.uploadedBy,
           "Uploaded At": uploadedAt,
-          Keywords: keywords,
-          Thoughts: thoughts,
+          // Only send what was actually typed. An empty string sent to a
+          // multi-select creates a blank option that then sits in the field's
+          // list forever — the write test made exactly that mess.
+          ...(keywords ? { Keywords: keywords } : {}),
+          ...(thoughts ? { Thoughts: thoughts } : {}),
           ...(f.size ? { Size: f.size } : {}),
         },
         { baseId: BASE_ID, typecast: true },
@@ -140,8 +151,8 @@ export async function getMediaLibrary(): Promise<MediaRow[]> {
         label: str(f.Label),
         uploadedBy: str(f["Uploaded By"]),
         uploadedAt: str(f["Uploaded At"]),
-        keywords: str(f.Keywords),
-        aiKeywords: str(f["AI Keywords"]),
+        keywords: tags(f.Keywords),
+        aiKeywords: tags(f["AI Keywords"]),
         thoughts: str(f.Thoughts),
       };
     })
@@ -152,7 +163,7 @@ export async function getMediaLibrary(): Promise<MediaRow[]> {
 export async function checkMediaLibrary(): Promise<Record<string, unknown>> {
   try {
     const rows = await listRecords(TABLE, undefined, { baseId: BASE_ID });
-    const tagged = rows.filter((r) => str(r.fields.Keywords)).length;
+    const tagged = rows.filter((r) => tags(r.fields.Keywords)).length;
     return { table: `ok — ${rows.length} rows`, tagged };
   } catch (err) {
     return {
