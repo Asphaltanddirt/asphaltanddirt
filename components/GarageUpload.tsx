@@ -19,6 +19,8 @@ interface Item {
   sent: number;
   state: FileState;
   uploadUrl?: string;
+  /** Drive's own id for the finished file, used to file it in the Media Library. */
+  fileId?: string;
 }
 type Phase = "choose" | "files" | "uploading" | "paused" | "done";
 
@@ -31,15 +33,28 @@ function formatBytes(bytes: number) {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
+/** Resolves the HTTP status, plus Drive's file id on the final chunk — Google
+ *  returns the finished file's metadata in the body of the 200/201. That id is
+ *  what the Media Library rows are keyed on, because it survives a rename and
+ *  a move; a folder path doesn't. */
 function putChunk(url: string, blob: Blob, start: number, total: number, onProgress: (loaded: number) => void) {
-  return new Promise<number>((resolve) => {
+  return new Promise<{ code: number; fileId?: string }>((resolve) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
     xhr.setRequestHeader("Content-Range", `bytes ${start}-${start + blob.size - 1}/${total}`);
     xhr.upload.onprogress = (e) => onProgress(e.loaded);
-    xhr.onload = () => resolve(xhr.status);
-    xhr.onerror = () => resolve(0);
-    xhr.ontimeout = () => resolve(0);
+    xhr.onload = () => {
+      let fileId: string | undefined;
+      try {
+        const id = (JSON.parse(xhr.responseText) as { id?: string }).id;
+        if (typeof id === "string") fileId = id;
+      } catch {
+        // Not the final chunk, or no JSON body. The upload is what matters.
+      }
+      resolve({ code: xhr.status, fileId });
+    };
+    xhr.onerror = () => resolve({ code: 0 });
+    xhr.ontimeout = () => resolve({ code: 0 });
     xhr.send(blob);
   });
 }
@@ -63,7 +78,13 @@ export default function GarageUpload({
   const [phase, setPhase] = useState<Phase>(preset ? "files" : "choose");
   const [error, setError] = useState("");
   const [folderLink, setFolderLink] = useState("");
+  const [keywords, setKeywords] = useState("");
+  const [thoughts, setThoughts] = useState("");
   const folderIdRef = useRef("");
+  /** Finished files, with Drive's id, for the Media Library. A file recovered
+   *  through the status endpoint after a dropped connection has no id — it
+   *  still lands in Drive, it just doesn't get a row. */
+  const doneIds = useRef(new Map<string, { name: string; id: string; size: number }>());
   const wakeLock = useRef<{ release: () => Promise<void> } | null>(null);
   const busy = phase === "uploading";
 
@@ -110,9 +131,12 @@ export default function GarageUpload({
     patch(item.id, { state: "uploading" });
     while (offset < total) {
       const chunk = item.file.slice(offset, Math.min(offset + CHUNK_BYTES, total));
-      const code = await putChunk(uploadUrl, chunk, offset, total, (loaded) => patch(item.id, { sent: offset + loaded }));
+      const { code, fileId } = await putChunk(uploadUrl, chunk, offset, total, (loaded) =>
+        patch(item.id, { sent: offset + loaded }),
+      );
       if (code === 200 || code === 201) {
-        patch(item.id, { state: "done", sent: total });
+        patch(item.id, { state: "done", sent: total, fileId });
+        doneIds.current.set(item.id, { name: item.file.name, id: fileId || "", size: item.file.size });
         return true;
       }
       if (code === 308) {
@@ -169,7 +193,16 @@ export default function GarageUpload({
       await fetch("/api/garage/upload/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folderId: folderIdRef.current, kind: target?.type, label: target?.label, sent, failed }),
+        body: JSON.stringify({
+          folderId: folderIdRef.current,
+          kind: target?.type,
+          label: target?.label,
+          sent,
+          failed,
+          keywords,
+          thoughts,
+          files: [...doneIds.current.values()].filter((f) => f.id),
+        }),
       });
     } catch {
       // The files are already in Drive; the email is a nice-to-have.
@@ -345,6 +378,39 @@ export default function GarageUpload({
                   </li>
                 ))}
               </ul>
+              {/* Two boxes, asked at the one moment somebody is already looking
+                  at their own footage and knows exactly what's in it. Both
+                  optional — a blank pair files nothing and blocks nothing. */}
+              <div className="garage-upload-tags">
+                <label htmlFor="garage-upload-keywords" className="garage-upload-label">
+                  What&apos;s in these? <span>A few words, comma separated</span>
+                </label>
+                <input
+                  id="garage-upload-keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  maxLength={300}
+                  placeholder="jeep, wrangler, mud, recovery"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                />
+                <p className="garage-form-note">
+                  This is how you find this footage again in six months. Whatever words you&apos;d actually search for —
+                  the rig, the trail, what happened.
+                </p>
+
+                <label htmlFor="garage-upload-thoughts" className="garage-upload-label">
+                  Anything worth saying about the day? <span>Optional</span>
+                </label>
+                <textarea
+                  id="garage-upload-thoughts"
+                  value={thoughts}
+                  onChange={(e) => setThoughts(e.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  placeholder="Best moment, what broke, who showed up, anything that'd make a good Garage Take."
+                />
+              </div>
               <button type="button" className="btn btn-primary garage-block-btn garage-upload-go" onClick={start}>
                 Upload {items.length} file{items.length === 1 ? "" : "s"} ({formatBytes(totalBytes)})
               </button>
