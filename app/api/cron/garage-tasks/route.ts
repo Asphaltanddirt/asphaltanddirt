@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateWeek } from "@/lib/garageTasks";
 import { generateSocialWeek } from "@/lib/garageSocial";
 import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
+import { checkThreadsSetup, isThreadsConnected } from "@/lib/threadsPost";
 
 export const maxDuration = 60;
 
@@ -30,7 +31,10 @@ export async function GET(req: NextRequest) {
       syncSocialStatsFromX().catch((err) => ({ ok: false, error: String(err) })),
       syncSocialStatsFromThreads().catch((err) => ({ ok: false, error: String(err) })),
     ]);
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats });
+    // Touch the Threads token daily so it renews in its last 20 days even in a
+    // quiet week (it only refreshes when used).
+    const threads = (await isThreadsConnected().catch(() => false)) ? await checkThreadsSetup() : { ok: false, skipped: "not connected" };
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats, threads });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });
