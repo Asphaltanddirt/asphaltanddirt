@@ -69,7 +69,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     }
   }
 
-  /** Phone: the share sheet (Save to Photos). Desktop: downloads. */
+  /** Phone: the share sheet (Save to Photos). Computer: downloads. JPEG either way. */
   async function saveAssets() {
     setBusy(true);
     setError("");
@@ -79,10 +79,15 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
           const res = await fetch(`/api/garage/social/asset?id=${item.id}&i=${i}`);
           if (!res.ok) throw new Error();
           const blob = await res.blob();
-          return new File([blob], a.filename, { type: a.type || blob.type });
+          // The server hands images over as JPEG; name the file to match.
+          const name = blob.type === "image/jpeg" ? a.filename.replace(/\.[a-z0-9]+$/i, "") + ".jpg" : a.filename;
+          return new File([blob], name, { type: blob.type || a.type });
         }),
       );
-      if (navigator.canShare?.({ files })) {
+      // Phones: the share sheet (Save to Photos). Computers: plain downloads,
+      // so the files land in Downloads rather than the Photos app.
+      const isPhone = /iPhone|iPad|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+      if (isPhone && navigator.canShare?.({ files })) {
         await navigator.share({ files });
       } else {
         for (const file of files) {
