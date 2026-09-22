@@ -38,6 +38,14 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/reply-queue",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/reply-queue",
+      "schedule": "30 22 * * *"
+    },
+    {
       "path": "/api/cron/finance",
       "schedule": "45 10 * * *"
     }

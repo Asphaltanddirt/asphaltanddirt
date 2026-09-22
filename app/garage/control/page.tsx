@@ -8,6 +8,7 @@ import { canSeeControlRoom, getControlRoom } from "@/lib/garageControl";
 import { getWeekTasks, todayNY } from "@/lib/garageTasks";
 import { getAutoPostSwitch, platformReady } from "@/lib/autoPost";
 import { AUTO_PLATFORMS } from "@/lib/socialCopy";
+import { isReplySearchOn } from "@/lib/replyQueue";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -80,6 +81,7 @@ export default async function ControlRoomPage() {
     getWeekTasks().catch(() => []),
     getAutoPostSwitch().catch(() => null),
   ]);
+  const replySearch = await isReplySearchOn().catch(() => null);
   const autoReady = AUTO_PLATFORMS.map((p) => ({ platform: p, ready: platformReady(p) }));
 
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
@@ -267,6 +269,31 @@ export default async function ControlRoomPage() {
           <p className="garage-form-note">
             Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok and the Facebook Group stay by hand.
           </p>
+        </div>
+
+        <div className="garage-panel">
+          <h2>X reply search: {replySearch === null ? "—" : replySearch ? "on" : "off"}</h2>
+          <p>
+            Twice a day it finds posts worth replying to and puts them in <Link href="/garage/replies">Replies</Link>. It costs about
+            $3 a month; it&apos;s a test until the podcast launches.
+          </p>
+          {replySearch !== null &&
+            (replySearch ? (
+              <GarageSwitch
+                label="Switch reply search off"
+                armedLabel="Tap again to switch it off"
+                warning="Stops the searches (and their cost). The queue you already have stays."
+                body={{ action: "replysearch-off" }}
+                danger
+              />
+            ) : (
+              <GarageSwitch
+                label="Switch reply search on"
+                armedLabel="Tap again to switch it on"
+                warning="Runs twice a day, at about $0.05 a run."
+                body={{ action: "replysearch-on" }}
+              />
+            ))}
         </div>
 
         <h2 className="garage-section">This week</h2>

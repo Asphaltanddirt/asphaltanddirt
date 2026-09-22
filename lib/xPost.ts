@@ -57,7 +57,7 @@ export function oauthHeader(method: string, url: string, k = keys(), nonce = ran
   );
 }
 
-async function xFetch<T>(path: string, init: { method: string; body?: BodyInit; json?: unknown }): Promise<T> {
+export async function xFetch<T>(path: string, init: { method: string; body?: BodyInit; json?: unknown }): Promise<T> {
   const url = `${API}${path}`;
   const headers: Record<string, string> = { Authorization: oauthHeader(init.method, url) };
   let body = init.body;

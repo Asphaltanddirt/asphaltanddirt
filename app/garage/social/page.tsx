@@ -55,6 +55,7 @@ export default async function GarageSocialPage({ searchParams }: { searchParams:
             <Link href={`/garage/social?week=${shift(monday, -7)}`}>← Last week</Link>
             {monday !== weekOf(today) && <Link href="/garage/social">This week</Link>}
             <Link href={`/garage/social?week=${shift(monday, 7)}`}>Next week →</Link>
+            <Link href="/garage/replies">X replies</Link>
           </nav>
         </div>
 
