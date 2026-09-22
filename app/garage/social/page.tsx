@@ -7,6 +7,7 @@ import GarageSocialPost from "@/components/GarageSocialPost";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
+import { isAutoPlatform } from "@/lib/socialCopy";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,8 +35,17 @@ export default async function GarageSocialPage({ searchParams }: { searchParams:
   const monday = weekOf(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : today);
   const posts = await getWeekPosts(monday).catch((): SocialPost[] | null => null);
 
-  const byDay = new Map<string, SocialPost[]>();
-  for (const p of posts || []) byDay.set(p.due, [...(byDay.get(p.due) || []), p]);
+  // Two sections (Jose 9/22): what he posts by hand on top, then the
+  // auto-posts he only approves. Each stays grouped by day.
+  const groupByDay = (list: SocialPost[]) => {
+    const m = new Map<string, SocialPost[]>();
+    for (const p of list) m.set(p.due, [...(m.get(p.due) || []), p]);
+    return [...m.entries()];
+  };
+  const byHand = groupByDay((posts || []).filter((p) => !isAutoPlatform(p.platform)));
+  const auto = groupByDay((posts || []).filter((p) => isAutoPlatform(p.platform)));
+  const openHand = (posts || []).filter((p) => !isAutoPlatform(p.platform) && p.status === "Planned").length;
+  const toApprove = (posts || []).filter((p) => isAutoPlatform(p.platform) && p.status === "Planned" && !p.approved).length;
   const posted = posts?.filter((p) => p.status === "Posted").length ?? 0;
   const open = posts?.filter((p) => p.status === "Planned").length ?? 0;
 
@@ -68,19 +78,32 @@ export default async function GarageSocialPage({ searchParams }: { searchParams:
             <GarageSocialGenerate week={monday} />
           </section>
         ) : (
-          [...byDay.entries()].map(([day, items]) => (
-            <section key={day} className={day === today ? "garage-social-day is-today" : "garage-social-day"}>
-              <h2 className="garage-section">
-                {label(day, { weekday: "long", month: "short", day: "numeric" })}
-                {day === today && " · Today"}
-              </h2>
-              <div className="garage-social-grid">
-                {items.map((item) => (
-                  <GarageSocialPost key={item.id} item={item} today={today} />
+          (
+            [
+              ["By hand", `You post these yourself (TikTok Studio, the Facebook Group, YouTube). ${openHand} still to do.`, byHand],
+              ["Auto-posts", `These post themselves once approved (X, Threads, Facebook Page, Instagram). ${toApprove} waiting for Approve.`, auto],
+            ] as const
+          ).map(([title, note, days]) =>
+            days.length === 0 ? null : (
+              <div key={title}>
+                <h2 className="garage-event-title garage-social-part">{title}</h2>
+                <p className="garage-form-note">{note}</p>
+                {days.map(([day, items]) => (
+                  <section key={day} className={day === today ? "garage-social-day is-today" : "garage-social-day"}>
+                    <h2 className="garage-section">
+                      {label(day, { weekday: "long", month: "short", day: "numeric" })}
+                      {day === today && " · Today"}
+                    </h2>
+                    <div className="garage-social-grid">
+                      {items.map((item) => (
+                        <GarageSocialPost key={item.id} item={item} today={today} />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
-            </section>
-          ))
+            ),
+          )
         )}
       </div>
     </div>
