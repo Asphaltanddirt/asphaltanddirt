@@ -132,8 +132,11 @@ export async function publishToX(input: PublishInput): Promise<PublishResult> {
 export async function checkXSetup(): Promise<Record<string, unknown>> {
   if (!isXConfigured()) return { ok: false, problem: "One or more of the four X keys isn't set." };
   try {
-    const me = await xFetch<{ data?: { username?: string } }>("/2/users/me", { method: "GET" });
-    return { ok: true, account: `@${me.data?.username}`, note: "Signed in. Whether the keys can WRITE only shows on the first post; they must say Read and Write in the console." };
+    const me = await xFetch<{ data?: { username?: string; created_at?: string; public_metrics?: Record<string, number> } }>(
+      "/2/users/me?user.fields=created_at,public_metrics",
+      { method: "GET" },
+    );
+    return { ok: true, account: `@${me.data?.username}`, created: me.data?.created_at, metrics: me.data?.public_metrics, note: "Signed in. Whether the keys can WRITE only shows on the first post; they must say Read and Write in the console." };
   } catch (err) {
     return { ok: false, problem: err instanceof Error ? err.message : String(err) };
   }
