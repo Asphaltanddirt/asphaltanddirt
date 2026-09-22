@@ -6,8 +6,10 @@ import { signedMediaUrl } from "@/lib/socialMedia";
  *
  * Uses the same System User token as lib/metaInsights.ts (META_GRAPH_TOKEN,
  * META_PAGE_ID, META_IG_USER_ID), which for posting also needs
- * instagram_content_publish, pages_manage_posts, pages_manage_engagement
- * (the first comment) and pages_show_list. Page calls use the Page's own token,
+ * instagram_content_publish, pages_manage_posts and pages_show_list. It
+ * can't get pages_manage_engagement (Meta only offers it to this app via the
+ * Tech Provider route), so the Page's blog link rides at the end of the
+ * caption (lib/socialCopy.ts) and firstComment() only runs if one is set. Page calls use the Page's own token,
  * fetched with the System User token.
  *
  * Meta fetches media by URL, so each asset is handed over as a short-lived
@@ -92,16 +94,10 @@ async function facebookPermalink(id: string, token: string, fallback: string): P
   }
 }
 
-/**
- * The System User can't hold pages_manage_engagement (Meta only offers it to
- * this app through the Tech Provider route, which we declined). If Jose makes
- * a long-lived Page token with it in the Graph API Explorer, it goes in
- * META_PAGE_TOKEN and is used for the first comment only.
- */
 async function firstComment(objectId: string, text: string, token: string): Promise<string | undefined> {
   if (!text) return undefined;
   try {
-    await graph("POST", `${objectId}/comments`, { message: text }, process.env.META_PAGE_TOKEN || token);
+    await graph("POST", `${objectId}/comments`, { message: text }, token);
     return undefined;
   } catch (err) {
     return `The first comment didn't go through (${err instanceof Error ? err.message : err}). Add it by hand.`;
@@ -275,20 +271,6 @@ export async function checkMetaSetup(): Promise<Record<string, unknown>> {
       out.page = `Problem: ${err instanceof Error ? err.message : err}`;
     }
   } else out.page = "META_PAGE_ID isn't set.";
-  // The first comment's own token (see firstComment).
-  if (process.env.META_PAGE_TOKEN) {
-    try {
-      const perms = await graph<{ data?: { permission: string; status: string }[] }>("GET", "me/permissions", {}, process.env.META_PAGE_TOKEN);
-      const granted = (perms.data || []).filter((p) => p.status === "granted").map((p) => p.permission);
-      // Expiry is a nicety; debug_token can refuse a Page token as the caller.
-      const debug = await graph<{ data?: { expires_at?: number; type?: string } }>("GET", "debug_token", { input_token: process.env.META_PAGE_TOKEN }).catch(() => ({ data: undefined }));
-      out.firstCommentToken = granted.includes("pages_manage_engagement")
-        ? `OK (${debug.data?.type || "token"}, ${debug.data?.expires_at ? `expires ${new Date(debug.data.expires_at * 1000).toISOString().slice(0, 10)}` : "never expires"})`
-        : "Set, but it doesn't have pages_manage_engagement.";
-    } catch (err) {
-      out.firstCommentToken = `Problem: ${err instanceof Error ? err.message : err}`;
-    }
-  } else out.firstCommentToken = "Not set: Facebook first comments are added by hand.";
   if (IG_USER_ID()) {
     try {
       const ig = await graph<{ username?: string }>("GET", IG_USER_ID(), { fields: "username" });

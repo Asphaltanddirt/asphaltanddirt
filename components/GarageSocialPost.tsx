@@ -225,6 +225,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
       ) : pasteCaption && !editing ? (
         <div className="garage-social-caption">
           {item.caption && <p>{item.caption}</p>}
+          {link.kind === "caption" && <p>{link.text}</p>}
           {item.hashtags && <p className="garage-social-tags">{item.hashtags}</p>}
           {overLimit && (
             <p className="garage-error">
@@ -237,7 +238,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         </div>
       ) : null}
 
-      {!isTrailTalk && !editing && link.kind !== "none" && (
+      {!isTrailTalk && !editing && link.kind !== "none" && link.kind !== "caption" && (
         <div className="garage-social-caption garage-social-comment">
           <span className="garage-social-label">
             {link.kind === "comment" ? "First comment" : link.kind === "reply" ? "Reply to your post" : "Link in bio"}
@@ -268,7 +269,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
               </label>
               {(item.platform.startsWith("Facebook") || item.platform === "X") && (
                 <label>
-                  {item.platform === "X" ? "Reply" : "First comment"} (blank = the blog link)
+                  {item.platform === "X" ? "Reply" : item.platform === "Facebook Page" ? "Link line at the end of the caption" : "First comment"} (blank = the blog link)
                   <textarea rows={2} value={firstComment} onChange={(e) => setFirstComment(e.target.value)} />
                 </label>
               )}
