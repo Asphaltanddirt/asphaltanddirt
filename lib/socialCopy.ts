@@ -8,13 +8,16 @@ import type { SocialPost } from "@/lib/garageSocial";
  *  Facebook Page: end of the caption (Jose 2026-09-22 — the app can't get the
  *  permission to post a first comment). Facebook Group: first comment.
  *  X: reply. Instagram: link in bio. Others: none. */
-export function linkPlan(post: Pick<SocialPost, "platform" | "blogUrl" | "firstComment" | "linkPlacement">): {
+export function linkPlan(post: Pick<SocialPost, "platform" | "blogUrl" | "firstComment" | "linkPlacement" | "asset">): {
   kind: "caption" | "comment" | "reply" | "bio" | "none";
   text: string;
 } {
   const text = post.firstComment || (post.blogUrl ? `Full breakdown on the blog: ${post.blogUrl}` : "");
   if (post.platform === "Facebook Page") return { kind: text ? "caption" : "none", text };
   if (post.platform.startsWith("Facebook")) return { kind: text ? "comment" : "none", text };
+  // X: only the blog-image posts carry the link (a $0.20 post). The Trail Talk
+  // and Sunday questions and the clips stand alone, with no link.
+  if (post.platform === "X" && post.asset !== "X image") return { kind: "none", text: "" };
   // X link test: some weeks the link rides in the post itself.
   if (post.platform === "X") return { kind: text ? (post.linkPlacement === "In post" ? "caption" : "reply") : "none", text };
   if (post.platform === "Instagram") return { kind: post.blogUrl ? "bio" : "none", text: post.blogUrl };
@@ -23,7 +26,7 @@ export function linkPlan(post: Pick<SocialPost, "platform" | "blogUrl" | "firstC
 
 /** Caption as it's pasted: the caption, the blog link when it belongs in the
  *  caption (Facebook Page), then hashtags on their own line. */
-export function fullCaption(post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "blogUrl" | "firstComment" | "linkPlacement">): string {
+export function fullCaption(post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "blogUrl" | "firstComment" | "linkPlacement" | "asset">): string {
   const link = linkPlan(post);
   return [post.caption.trim(), link.kind === "caption" ? link.text : "", post.hashtags].filter(Boolean).join("\n\n");
 }

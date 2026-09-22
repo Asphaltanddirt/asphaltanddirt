@@ -94,16 +94,78 @@ async function uploadImage(url: string, filename: string, type: string): Promise
   return data.data.id;
 }
 
+type MediaState = "pending" | "in_progress" | "succeeded" | "failed";
+
+/**
+ * Video goes up in chunks (docs.x.com chunked upload, checked 2026-09-22):
+ * initialize → append 4 MB segments → finalize, then X processes it. The post
+ * can only be created once processing has succeeded.
+ */
+async function uploadVideo(url: string, filename: string, type: string): Promise<{ id: string; state: MediaState }> {
+  const file = await fetch(url, { cache: "no-store" });
+  if (!file.ok) throw new Error(`Couldn't load ${filename} to upload it.`);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const init = await xFetch<{ data?: { id?: string } }>("/2/media/upload/initialize", {
+    method: "POST",
+    json: { media_type: type || "video/mp4", total_bytes: bytes.byteLength, media_category: "tweet_video" },
+  });
+  const id = init.data?.id;
+  if (!id) throw new Error("X didn't start the video upload.");
+  const CHUNK = 4 * 1024 * 1024;
+  for (let offset = 0, segment = 0; offset < bytes.byteLength; offset += CHUNK, segment++) {
+    const form = new FormData();
+    form.append("segment_index", String(segment));
+    form.append("media", new Blob([bytes.slice(offset, offset + CHUNK)], { type: "application/octet-stream" }), filename);
+    await xFetch(`/2/media/upload/${id}/append`, { method: "POST", body: form });
+  }
+  const fin = await xFetch<{ data?: { processing_info?: { state?: MediaState } } }>(`/2/media/upload/${id}/finalize`, { method: "POST" });
+  return { id, state: fin.data?.processing_info?.state || "succeeded" };
+}
+
+async function videoState(id: string): Promise<{ state: MediaState; error?: string }> {
+  const d = await xFetch<{ data?: { processing_info?: { state?: MediaState; error?: { message?: string } } } }>(
+    `/2/media/upload?command=STATUS&media_id=${id}`,
+    { method: "GET" },
+  );
+  const info = d.data?.processing_info;
+  return { state: info?.state || "succeeded", error: info?.error?.message };
+}
+
+/** Waits briefly in-run; longer processing carries over to the next run. */
+async function waitForVideo(id: string, seconds: number): Promise<MediaState> {
+  const until = Date.now() + seconds * 1000;
+  for (;;) {
+    const { state, error } = await videoState(id);
+    if (state === "failed") throw new Error(`X couldn't process the video${error ? `: ${error}` : ""}.`);
+    if (state === "succeeded" || Date.now() > until) return state;
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+}
+
 /**
  * State between steps is saved on the card, so a failure after the post went
- * up never posts it again: `{"tweet":"<id>"}` means only the reply is left.
+ * up never posts it again: `{"tweet":"<id>"}` means only the reply is left,
+ * `{"video":"<media id>"}` means the clip is uploaded and processing.
  */
 export async function publishToX(input: PublishInput): Promise<PublishResult> {
-  const saved = (input.state ? JSON.parse(input.state) : {}) as { tweet?: string };
+  const saved = (input.state ? JSON.parse(input.state) : {}) as { tweet?: string; video?: string };
   let tweetId = saved.tweet || "";
 
   if (!tweetId) {
     const mediaIds: string[] = [];
+    if (input.video !== null) {
+      let videoId = saved.video || "";
+      if (!videoId) {
+        const a = input.post.assets[input.video];
+        const up = await uploadVideo(a.url, a.filename, a.type);
+        videoId = up.id;
+      }
+      const state = await waitForVideo(videoId, 45);
+      if (state !== "succeeded") {
+        return { status: "processing", state: JSON.stringify({ video: videoId }), note: "Video uploaded; X is still processing it." };
+      }
+      mediaIds.push(videoId);
+    }
     for (const i of input.images) {
       const a = input.post.assets[i];
       mediaIds.push(await uploadImage(a.url, a.filename, a.type));

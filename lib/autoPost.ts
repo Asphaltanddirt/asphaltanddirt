@@ -141,7 +141,8 @@ export function planPublish(post: SocialPost): { ok: true; input: Omit<PublishIn
   if (post.platform === "X") {
     if (xLength(caption) > 280) return { ok: false, reason: `${xLength(caption)} characters; X allows 280.` };
     if (!wantsVideo && images.length > 4) return { ok: false, reason: "X takes up to 4 images." };
-    if (wantsVideo) return { ok: false, reason: "Video on X isn't set up yet. Post it by hand." };
+    if (wantsVideo && post.assets[videos[0]]?.type !== "video/mp4" && post.assets[videos[0]]?.type !== "video/quicktime")
+      return { ok: false, reason: "X takes MP4 or MOV video." };
   }
   if (post.platform === "Instagram") {
     if (caption.length > 2200) return { ok: false, reason: `${caption.length} characters; Instagram allows 2,200.` };

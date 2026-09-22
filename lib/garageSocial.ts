@@ -261,7 +261,7 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
     due.setUTCDate(due.getUTCDate() + Math.max(day, 0));
     const topic = str(f.Topic);
     const blog = topic === "Feature" ? blogs.feature : topic === "Alternate" ? blogs.alternate : null;
-    const linkPlacement = str(f.Platform) === "X" && blog ? linkPlacementFor(monday) : "";
+    const linkPlacement = str(f.Platform) === "X" && str(f.Asset) === "X image" && blog ? linkPlacementFor(monday) : "";
 
     await createRecord(
       POSTS,
