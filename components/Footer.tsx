@@ -48,12 +48,13 @@ export default function Footer({ bgImage, returnTo }: { bgImage?: string; return
           <span>© 2026 Asphalt &amp; Dirt, a d/b/a of JLDA Holdings Corp. All Rights Reserved.</span>
           <span className="footer-tagline">Where horsepower meets mud.</span>
           <div className="footer-links">
-            <Link href="/garage-takes">Garage Takes</Link>
             <Link href="/returns-faq">Returns &amp; FAQ</Link>
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Use</Link>
             <a href="/reviews/submit">Leave A Review</a>
             <Link href="/contact">Contact</Link>
+            {/* Staff way in (Jose 9/22). Garage Takes stays in the top nav. */}
+            <Link href="/garage">Enter The Garage</Link>
             <ComfortSettings />
           </div>
         </div>
