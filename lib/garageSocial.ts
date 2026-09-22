@@ -74,6 +74,12 @@ export interface SocialPost {
   stats: { views: number | null; forYou: number | null; shares: number | null; saves: number | null; follows: number | null };
   notes: string;
   sort: number;
+  /** Auto-posting: only approved posts go out on their own. */
+  approved: boolean;
+  approvedBy: string;
+  autoStatus: "" | "Processing" | "Posted" | "Failed" | "Dry run";
+  autoLog: string;
+  autoState: string;
 }
 
 const num = (v: unknown) => (typeof v === "number" ? v : null);
@@ -116,6 +122,11 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     },
     notes: str(f.Notes),
     sort: 0,
+    approved: f.Approved === true,
+    approvedBy: str(f["Approved By"]),
+    autoStatus: str(f["Auto Status"]) as SocialPost["autoStatus"],
+    autoLog: str(f["Auto Log"]),
+    autoState: str(f["Auto State"]),
   };
 }
 
@@ -278,6 +289,48 @@ export async function markPosted(post: SocialPost, input: { url: string; by: str
       );
     }
   }
+}
+
+/** Approve (or un-approve) a post for the auto-poster. Un-approving clears a
+ *  failed or dry-run note so the card starts clean. */
+export async function setApproved(id: string, approved: boolean, by: string) {
+  await updateRecord(
+    POSTS,
+    id,
+    approved
+      ? { Approved: true, "Approved By": by }
+      : { Approved: false, "Approved By": null, "Auto Status": null, "Auto Log": null },
+    { baseId: BASE_ID },
+  );
+}
+
+/** What the auto-poster writes back after each attempt. */
+export async function saveAutoResult(
+  id: string,
+  result: { status: SocialPost["autoStatus"]; log: string; state?: string | null },
+) {
+  await updateRecord(
+    POSTS,
+    id,
+    {
+      "Auto Status": result.status || null,
+      "Auto Log": result.log,
+      ...(result.state !== undefined ? { "Auto State": result.state } : {}),
+    },
+    { baseId: BASE_ID },
+  );
+}
+
+/** Approved posts still waiting to go out, plus any mid-way through posting.
+ *  Looks back two days so a post approved late in its window isn't lost. */
+export async function getAutoPostQueue(today = todayNY()): Promise<SocialPost[]> {
+  if (!isSocialConfigured()) return [];
+  const rows = await listRecords(
+    POSTS,
+    `AND({Status} = 'Planned', {Approved}, IS_BEFORE({Due}, DATEADD('${today}', 1, 'days')), IS_AFTER({Due}, DATEADD('${today}', -3, 'days')))`,
+    { baseId: BASE_ID },
+  );
+  return rows.map(toPost).sort((a, b) => a.due.localeCompare(b.due));
 }
 
 export async function setStatus(id: string, status: PostStatus) {

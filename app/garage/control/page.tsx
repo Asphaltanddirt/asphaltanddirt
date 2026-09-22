@@ -6,6 +6,8 @@ import GarageSwitch from "@/components/GarageSwitch";
 import { getSession, listGarageUsers } from "@/lib/garageAuth";
 import { canSeeControlRoom, getControlRoom } from "@/lib/garageControl";
 import { getWeekTasks, todayNY } from "@/lib/garageTasks";
+import { getAutoPostSwitch, platformReady } from "@/lib/autoPost";
+import { AUTO_PLATFORMS } from "@/lib/socialCopy";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -72,11 +74,13 @@ export default async function ControlRoomPage() {
   if (!canSeeControlRoom(session)) redirect("/garage");
 
   const today = todayNY();
-  const [room, people, tasks] = await Promise.all([
+  const [room, people, tasks, autoPost] = await Promise.all([
     getControlRoom(),
     listGarageUsers().catch(() => []),
     getWeekTasks().catch(() => []),
+    getAutoPostSwitch().catch(() => null),
   ]);
+  const autoReady = AUTO_PLATFORMS.map((p) => ({ platform: p, ready: platformReady(p) }));
 
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
   const waiting = [
@@ -223,6 +227,47 @@ export default async function ControlRoomPage() {
             <p className="garage-form-note">Everyone sees the event on their own Garage home screen.</p>
           </div>
         )}
+
+        <h2 className="garage-section">Auto-posting</h2>
+        <div className="garage-panel">
+          <h2>{autoPost?.on ? "On: approved posts go out on their own" : "Off: approved posts are only dry-run"}</h2>
+          <p>
+            {autoReady.map((r, i) => (
+              <span key={r.platform}>
+                {i > 0 && " · "}
+                {r.platform} {r.ready ? "ready" : "needs its keys"}
+              </span>
+            ))}
+          </p>
+          {autoPost?.changedBy && (
+            <p className="garage-form-note">
+              Last changed by {autoPost.changedBy.split(" ")[0]}
+              {autoPost.changedAt &&
+                ` · ${new Date(autoPost.changedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}`}
+            </p>
+          )}
+          {!autoPost ? (
+            <p className="garage-error">Couldn&apos;t read the switch.</p>
+          ) : autoPost.on ? (
+            <GarageSwitch
+              label="Switch auto-posting off"
+              armedLabel="Tap again to switch it off"
+              warning="Approved posts stop going out and are only dry-run until you switch it back on. Anything already posted stays up."
+              body={{ action: "autopost-off" }}
+              danger
+            />
+          ) : (
+            <GarageSwitch
+              label="Switch auto-posting on"
+              armedLabel="Tap again to switch it on"
+              warning="Every approved post on the board goes out on its own at the start of its window, to the real accounts. Unapproved posts are never touched."
+              body={{ action: "autopost-on" }}
+            />
+          )}
+          <p className="garage-form-note">
+            Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok and the Facebook Group stay by hand.
+          </p>
+        </div>
 
         <h2 className="garage-section">This week</h2>
         {people.map((person) => {

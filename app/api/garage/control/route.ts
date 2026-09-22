@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/garageAuth";
 import { canSeeControlRoom } from "@/lib/garageControl";
 import { getCommsSettings, setTailgateOpen } from "@/lib/eventComms";
+import { setAutoPostSwitch } from "@/lib/autoPost";
 
 /** The Control Room's switches. Owner-only, and each one maps to exactly one
  *  Airtable field — nothing here does anything you couldn't undo by tapping
@@ -16,6 +17,16 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
+  if (body.action === "autopost-on" || body.action === "autopost-off") {
+    try {
+      await setAutoPostSwitch(body.action === "autopost-on", session.name || session.email);
+      return NextResponse.json({ status: "ok" });
+    } catch (err) {
+      console.error("auto-post switch failed", err);
+      return NextResponse.json({ error: "That didn't go through. Try again." }, { status: 502 });
+    }
   }
 
   const slug = (body.slug || "").trim();

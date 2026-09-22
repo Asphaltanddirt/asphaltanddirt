@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setStatus } from "@/lib/garageSocial";
+import { autoPostNow, planPublish } from "@/lib/autoPost";
+import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setStatus } from "@/lib/garageSocial";
 
 /** Posting board actions. Owners only. */
+export const maxDuration = 300;
+
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -32,6 +35,24 @@ export async function POST(req: NextRequest) {
         if (url && !/^https?:\/\//i.test(url)) return NextResponse.json({ error: "That link doesn't look right." }, { status: 400 });
         await markPosted(post, { url, by: session.name || session.email, draftIndex: Number(body.draftIndex) || 0 });
         break;
+      }
+      case "approve": {
+        // Refuse up front if it could never go out, so Approve means "ready".
+        const plan = planPublish(post);
+        if (!plan.ok) return NextResponse.json({ error: plan.reason }, { status: 400 });
+        await setApproved(post.id, true, session.name || session.email);
+        break;
+      }
+      case "unapprove":
+        await setApproved(post.id, false, session.name || session.email);
+        break;
+      case "post-now": {
+        if (post.status !== "Planned") return NextResponse.json({ error: "This one is already done." }, { status: 400 });
+        const plan = planPublish(post);
+        if (!plan.ok) return NextResponse.json({ error: plan.reason }, { status: 400 });
+        if (!post.approved) await setApproved(post.id, true, session.name || session.email);
+        const outcome = await autoPostNow(post.id);
+        return NextResponse.json({ status: "ok", result: outcome?.result, message: outcome?.message });
       }
       case "skip":
         await setStatus(post.id, "Skipped");

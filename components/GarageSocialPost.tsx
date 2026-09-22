@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, linkPlan } from "@/lib/socialCopy";
+import { fullCaption, isAutoPlatform, linkPlan } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -16,6 +16,7 @@ async function post(body: Record<string, unknown>) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "That didn't save. Try again.");
+  return data as { result?: string; message?: string };
 }
 
 /** One post on the board: what to post, where, when, and the buttons to do it. */
@@ -27,6 +28,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const [url, setUrl] = useState(item.postUrl);
   const [draftIndex, setDraftIndex] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [armed, setArmed] = useState(false);
   const [caption, setCaption] = useState(item.caption);
   const [hashtags, setHashtags] = useState(item.hashtags);
   const [firstComment, setFirstComment] = useState(item.firstComment);
@@ -115,7 +117,28 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     }
   }
 
+  /** Post now: two taps, like the Control Room switches. */
+  async function postNow() {
+    if (!armed) {
+      setArmed(true);
+      return;
+    }
+    setArmed(false);
+    setBusy(true);
+    setError("");
+    try {
+      const data = await post({ id: item.id, action: "post-now" });
+      if (data.result === "failed" && data.message) setError(data.message);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That didn't go through. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const link = linkPlan(item);
+  const auto = isAutoPlatform(item.platform);
   const pasteCaption = fullCaption(item);
   // X counts every character of the post, hashtags included.
   const overLimit = item.platform === "X" && pasteCaption.length > 280;
@@ -269,6 +292,38 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
       )}
 
       {item.notes && <p className="garage-form-note">{item.notes}</p>}
+
+      {auto && item.status === "Planned" && !editing && (
+        <div className={`garage-social-auto is-${(item.autoStatus || (item.approved ? "approved" : "off")).toLowerCase().replace(" ", "-")}`}>
+          <span className="garage-social-label">Auto-post</span>
+          <p>
+            {item.autoLog ||
+              (item.approved
+                ? `Approved${item.approvedBy ? ` by ${item.approvedBy.split(" ")[0]}` : ""}. Goes out on its own at the start of ${item.window}.`
+                : "Approve it and it posts itself at the start of its window.")}
+          </p>
+          <div className="garage-social-row">
+            {item.approved ? (
+              <button type="button" className="btn btn-outline btn-sm" disabled={busy || item.autoStatus === "Processing"} onClick={() => run({ action: "unapprove" })}>
+                Unapprove
+              </button>
+            ) : (
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run({ action: "approve" })}>
+                Approve
+              </button>
+            )}
+            <button
+              type="button"
+              className={armed ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
+              disabled={busy || item.autoStatus === "Processing"}
+              onClick={postNow}
+              onBlur={() => setArmed(false)}
+            >
+              {armed ? "Tap again to post now" : "Post now"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {item.status === "Planned" ? (
         <div className="garage-social-post">

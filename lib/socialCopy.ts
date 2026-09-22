@@ -21,3 +21,12 @@ export function linkPlan(post: Pick<SocialPost, "platform" | "blogUrl" | "firstC
 export function fullCaption(post: Pick<SocialPost, "caption" | "hashtags">): string {
   return [post.caption.trim(), post.hashtags].filter(Boolean).join("\n\n");
 }
+
+/** Platforms the auto-poster handles. TikTok is scheduled by hand, Meta has no
+ *  API for posting to Groups, and YouTube is the podcast's own pipeline. */
+export const AUTO_PLATFORMS = ["X", "Facebook Page", "Instagram"] as const;
+export type AutoPlatform = (typeof AUTO_PLATFORMS)[number];
+
+export function isAutoPlatform(platform: string): platform is AutoPlatform {
+  return (AUTO_PLATFORMS as readonly string[]).includes(platform);
+}
