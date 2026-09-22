@@ -103,7 +103,7 @@ export default async function BlogPostPage({
         <div className="build-thumb mt-4" style={{ aspectRatio: "16/10", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <BlogCover src={post.image.src} alt={post.image.alt} />
         </div>
-        {post.image.credit && <p className="media-credit">{post.image.credit}</p>}
+        {post.image.credit && <p className="media-credit">{renderInline(post.image.credit)}</p>}
 
         {take && (
           <div className="exp-box pair-box mt-4">

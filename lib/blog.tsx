@@ -48,6 +48,88 @@ export interface BlogPost {
 // is ready to publish.
 export const posts: BlogPost[] = [
   {
+    slug: "c6-z06-valve-issues-fix-an-ls7-that-runs-fine",
+    title: "C6 Z06 Valve Issues: Should You Fix an LS7 That Still Runs Fine?",
+    seoTitle: "C6 Z06 Valve Issues: Fix an LS7 That Runs Fine?",
+    excerpt:
+      "Some owners pull healthy-running LS7s apart for peace of mind. Others keep driving. Here’s what the evidence actually supports—and what to ask before approving head work.",
+    metaDescription:
+      "C6 Z06 valve issues divide owners. Compare GM guidance, specialist findings and the questions to ask before paying for LS7 head work.",
+    category: "Builds",
+    date: "2026-09-22",
+    image: {
+      src: "/img/blog/c6-z06-valve-issues.jpg",
+      alt: "Runs Fine. Heads Off? — a black 2008 Chevrolet Corvette C6 Z06 track car in side profile at Mid-Ohio, in monochrome",
+      credit:
+        "Photo: [Robert Yorde / Wikimedia Commons](https://commons.wikimedia.org/wiki/File:-127,_2008_Chevrolet_Corvette_Z06,_TT-S1,_Advanced_(53919871473).jpg) / [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/). Cropped, monochrome treatment and typography added.",
+    },
+    body: [
+      { type: "paragraph", text: "Your Z06 starts cleanly, pulls hard and gives you no obvious reason to worry. Then you spend an evening reading about C6 Z06 valve issues, and suddenly every sound from the garage feels expensive." },
+      { type: "paragraph", text: "Our answer: get an LS7 specialist’s assessment before committing to preventive head work. A rebuild isn’t automatically justified by the engine’s reputation, but normal running cannot certify its guide clearances either." },
+      { type: "paragraph", text: "The useful conversation starts with evidence, intended use and what the proposed work actually includes." },
+
+      { type: "heading", text: "C6 Z06 Valve Issues: What Owners Are Reporting" },
+      { type: "paragraph", text: "In a [September 17, 2026 CorvetteForum discussion](https://www.corvetteforum.com/forums/c6-corvette-zr1-and-z06/5012034-c6-z06-valve-issue-they-are-not-all-bad.html), an owner describes having Katech rebuild the heads on his roughly 14,000-mile car. He was pleased with the work and thought the removed parts looked good." },
+      { type: "paragraph", text: "There’s a catch: he also says he didn’t ask Katech to record the original clearances before replacing the components. His satisfaction is real. A documented clean bill of health from the shop for the old heads is missing." },
+      { type: "paragraph", text: "The [replies contain sharply different experiences](https://www.corvetteforum.com/forums/c6-corvette-zr1-and-z06/5012034-c6-z06-valve-issue-they-are-not-all-bad-2.html). One owner reports excessive intake-guide clearance at 18,000 miles on a stock, never-tracked car. Another says his original heads checked within GM’s specifications at 88,000 miles." },
+      { type: "paragraph", text: "Those are owner reports, without measurement sheets independently verified here. They show why people disagree; they cannot establish a failure rate or a mileage deadline for everyone else." },
+
+      { type: "heading", text: "GM and Katech Offer Different Reasons for Their Advice" },
+      { type: "paragraph", text: "[GM’s June 2015 service bulletin, **13-06-01-001A**](https://static.nhtsa.gov/odi/tsbs/2015/MC-10113675-9999.pdf), addresses exactly this concern. It says that without unusual noises or malfunctions, there is no indication to disassemble the engine solely to determine guide wear. GM also reported few paid warranty claims involving LS7 valve and head replacement." },
+      { type: "paragraph", text: "That is historical manufacturer guidance. It doesn’t provide a present-day failure probability for your car." },
+      { type: "paragraph", text: "[Katech’s July 2017 technical article](https://katechengines.com/pdf/183889) describes encountering severe guide wear in engines without symptoms and recommends inspection. It also discusses machining alignment and valve-stem surface finish as contributors to wear." },
+      { type: "paragraph", text: "Katech has direct experience with these engines and sells services addressing the problem. Both facts belong in the discussion." },
+      { type: "paragraph", text: "The sources don’t give us a representative survey of today’s surviving engines. Turning either position into a guarantee would go beyond the evidence." },
+
+      { type: "heading", text: "A Proper Inspection Needs Measurements" },
+      { type: "paragraph", text: "A valve guide supports the valve stem as it moves. The clearance between them matters, as does alignment with the valve seat. That is why LS7 valve guide wear deserves more than a glance at a photograph." },
+      { type: "paragraph", text: "GM’s [published inspection procedure](https://static.nhtsa.gov/odi/tsbs/2015/MC-10113675-9999.pdf) specifies measuring the stem diameter and the guide’s internal diameter, calculating the clearance, and comparing it with the applicable service specifications." },
+      { type: "paragraph", text: "Ask the shop to document those results." },
+      { type: "paragraph", text: "A preliminary assessment can investigate symptoms and review the car’s history. It cannot produce internal measurements without the necessary disassembly. If your goal is to know the actual clearances, make sure you understand what access that requires before booking “an inspection.”" },
+
+      { type: "heading", text: "Choose the Next Step Before Shopping for a Package" },
+      { type: "paragraph", text: "Our suggested approach depends on what you want to learn and what the shop finds." },
+      {
+        type: "table",
+        caption: "How the main approaches differ",
+        headers: ["Approach", "What you gain", "What remains unresolved"],
+        rows: [
+          ["Keep the heads assembled after assessment", "Avoid immediate teardown expense", "Internal guide clearances remain unmeasured"],
+          ["Remove and inspect the heads", "Document the existing condition", "Repair scope depends on findings"],
+          ["Rebuild or replace the heads", "Address identified problems or an agreed preventive scope", "Long-term durability still needs evidence"],
+        ],
+      },
+      { type: "paragraph", text: "For a car with new noise or running problems, start with diagnosis. For a car that seems healthy, discuss whether the additional information from disassembly is worth its cost to you." },
+      { type: "paragraph", text: "Track use, planned modifications and your tolerance for uncertainty belong in that conversation. None supplies a failure percentage by itself." },
+      { type: "paragraph", text: "Preventive work can be a considered ownership choice. So can deciding against immediate teardown after discussing the limitations of that decision." },
+
+      { type: "heading", text: "Make an LS7 Head Repair Quote Earn Its Money" },
+      { type: "paragraph", text: "Ask for a written scope separating inspection, necessary repairs and optional performance changes. Request the measurements, the specification used to judge them, and an explanation of why each proposed component needs replacement." },
+      { type: "paragraph", text: "“While we’re in there” is how a sensible job acquires a camshaft and a second personality." },
+      { type: "paragraph", text: "If you want more power, say so. Keep that objective visible so you can judge the performance spending separately from the reliability work." },
+      { type: "paragraph", text: "For example, Katech’s [technical explanation](https://katechengines.com/pdf/183889) describes bronze guides, a valve job and its intake-valve solution. Its exhaust-valve recommendations distinguish street use from demanding road-race applications. That illustrates why the intended use and the complete combination matter." },
+      { type: "paragraph", text: "Ask a prospective builder to explain its own approach. A familiar company name and the word “fixed” aren’t enough detail for a purchase decision." },
+      { type: "paragraph", text: "Get the total installed estimate, including the work required to remove and reinstall the heads. Clarify what happens if inspection finds additional damage, and ask what documentation you receive when the car leaves." },
+      { type: "paragraph", text: "For pricing, get a current quote for your car and the agreed scope. These sources don’t provide a comparable installed cost." },
+
+      { type: "heading", text: "Quick Answers" },
+      { type: "subheading", text: "Does every C6 Z06 need its heads rebuilt?" },
+      { type: "paragraph", text: "The sources reviewed don’t establish that every engine needs rebuilding. Owners report different outcomes, so we recommend a specialist assessment and a clear discussion of inspection options." },
+      { type: "subheading", text: "Can an LS7 have guide wear and still run normally?" },
+      { type: "paragraph", text: "Yes. Katech reports encountering substantial wear without symptoms. Normal running therefore cannot certify the internal clearances." },
+      { type: "subheading", text: "How is LS7 valve guide wear checked?" },
+      { type: "paragraph", text: "GM’s procedure calculates clearance from measured valve-stem and guide diameters, then compares the result with service specifications. A visual check cannot supply those measurements." },
+      { type: "subheading", text: "What should I ask before buying a Z06 with “fixed heads”?" },
+      { type: "paragraph", text: "Request the invoice, parts list, builder’s details and available inspection records. Establish what was actually done and whether it suits your intended use." },
+
+      { type: "heading", text: "Our Take" },
+      { type: "paragraph", text: "C6 Z06 ownership shouldn’t mean diagnosing your engine through a comment section. It also shouldn’t require pretending uncertainty disappears because the car feels strong." },
+      { type: "paragraph", text: "We’d spend first on a useful conversation with a qualified LS7 specialist, then choose an inspection or repair scope we understand. If preventive work helps you enjoy the car, that has value—but ask the shop to explain what it addresses and what it cannot promise." },
+      { type: "paragraph", text: "You’re paying for workmanship, parts and information. Make sure the invoice buys all the things you expect." },
+      { type: "paragraph", text: "**If your Z06 ran well and had no head-work records, would you pay for a documented inspection now, or keep driving after a specialist assessment—and what evidence would change your mind?**" },
+    ],
+  },
+  {
     slug: "bronco-hardtop-wind-noise-diagnose-before-you-buy",
     title: "Bronco Hardtop Wind Noise: Find the Source Before Buying a Fix",
     seoTitle: "Bronco Hardtop Wind Noise: Diagnose Before You Buy",
