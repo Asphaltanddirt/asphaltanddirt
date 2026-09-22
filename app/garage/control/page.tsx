@@ -9,6 +9,7 @@ import { getWeekTasks, todayNY } from "@/lib/garageTasks";
 import { getAutoPostSwitch, platformReady } from "@/lib/autoPost";
 import { AUTO_PLATFORMS } from "@/lib/socialCopy";
 import { isReplySearchOn } from "@/lib/replyQueue";
+import { isHarvestOn } from "@/lib/commentHarvest";
 import { isThreadsConnected } from "@/lib/threadsPost";
 
 export const dynamic = "force-dynamic";
@@ -84,6 +85,7 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
     getAutoPostSwitch().catch(() => null),
   ]);
   const replySearch = await isReplySearchOn().catch(() => null);
+  const harvest = await isHarvestOn().catch(() => null);
   const threadsConnected = await isThreadsConnected().catch(() => false);
   const autoReady = AUTO_PLATFORMS.map((p) => ({ platform: p, ready: platformReady(p) }));
 
@@ -277,6 +279,32 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
           <p className="garage-form-note">
             Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok (TikTok Studio) and the Facebook Group stay by hand.
           </p>
+        </div>
+
+        <div className="garage-panel">
+          <h2>Comment harvest: {harvest === null ? "—" : harvest ? "on" : "off"}</h2>
+          <p>
+            Monday mornings it pulls the week&apos;s new YouTube comments into{" "}
+            <Link href="/garage/comments">Comments</Link>, sorted into questions, debates, praise and noise. It&apos;s free,
+            it posts nothing, and the questions are what the Q&amp;A episode is waiting on.
+          </p>
+          {harvest !== null &&
+            (harvest ? (
+              <GarageSwitch
+                label="Switch the harvest off"
+                armedLabel="Tap again to switch it off"
+                warning="Stops the Monday pull. Everything already harvested stays."
+                body={{ action: "harvest-off" }}
+                danger
+              />
+            ) : (
+              <GarageSwitch
+                label="Switch the harvest on"
+                armedLabel="Tap again to switch it on"
+                warning="Pulls new comments every Monday. Nothing is published and nothing is replied to."
+                body={{ action: "harvest-on" }}
+              />
+            ))}
         </div>
 
         <div className="garage-panel">
