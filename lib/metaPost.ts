@@ -239,3 +239,47 @@ export async function publishToInstagram(input: PublishInput): Promise<PublishRe
   }
   return { status: "posted", url };
 }
+
+// ---------------------------------------------------------------- setup check
+
+/** Read-only: is the token alive, what can it do, and can it see our Page and
+ *  Instagram account? Used by /api/cron/auto-post?check=1. Posts nothing. */
+export async function checkMetaSetup(): Promise<Record<string, unknown>> {
+  if (!TOKEN()) return { ok: false, problem: "META_GRAPH_TOKEN isn't set." };
+  const out: Record<string, unknown> = {};
+  const need = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "instagram_basic", "instagram_content_publish"];
+  const nice = ["pages_manage_engagement", "instagram_manage_insights", "read_insights", "business_management"];
+  try {
+    const me = await graph<{ id?: string; name?: string }>("GET", "me", { fields: "id,name" });
+    out.tokenUser = me.name || me.id;
+    const perms = await graph<{ data?: { permission: string; status: string }[] }>("GET", "me/permissions", {});
+    const granted = (perms.data || []).filter((p) => p.status === "granted").map((p) => p.permission);
+    out.granted = granted;
+    out.missingRequired = need.filter((p) => !granted.includes(p));
+    out.missingOptional = nice.filter((p) => !granted.includes(p));
+  } catch (err) {
+    return { ok: false, problem: err instanceof Error ? err.message : String(err) };
+  }
+  if (PAGE_ID()) {
+    try {
+      const token = await pageToken();
+      const page = await graph<{ name?: string }>("GET", PAGE_ID(), { fields: "name" }, token);
+      out.page = `${page.name} (page token OK)`;
+    } catch (err) {
+      out.page = `Problem: ${err instanceof Error ? err.message : err}`;
+    }
+  } else out.page = "META_PAGE_ID isn't set.";
+  if (IG_USER_ID()) {
+    try {
+      const ig = await graph<{ username?: string }>("GET", IG_USER_ID(), { fields: "username" });
+      out.instagram = `@${ig.username}`;
+      const limit = await graph<{ data?: { quota_usage?: number; config?: { quota_total?: number } }[] }>("GET", `${IG_USER_ID()}/content_publishing_limit`, { fields: "quota_usage,config" });
+      const l = limit.data?.[0];
+      if (l) out.instagramQuota = `${l.quota_usage ?? "?"} of ${l.config?.quota_total ?? "?"} posts used in the last 24 h`;
+    } catch (err) {
+      out.instagram = `Problem: ${err instanceof Error ? err.message : err}`;
+    }
+  } else out.instagram = "META_IG_USER_ID isn't set.";
+  out.ok = (out.missingRequired as string[]).length === 0 && !String(out.page).startsWith("Problem") && !String(out.instagram).startsWith("Problem");
+  return out;
+}

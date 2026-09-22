@@ -127,3 +127,14 @@ export async function publishToX(input: PublishInput): Promise<PublishResult> {
   }
   return { status: "posted", url };
 }
+
+/** Read-only: do the four keys sign in, and as whom? Posts nothing. */
+export async function checkXSetup(): Promise<Record<string, unknown>> {
+  if (!isXConfigured()) return { ok: false, problem: "One or more of the four X keys isn't set." };
+  try {
+    const me = await xFetch<{ data?: { username?: string } }>("/2/users/me", { method: "GET" });
+    return { ok: true, account: `@${me.data?.username}`, note: "Signed in. Whether the keys can WRITE only shows on the first post; they must say Read and Write in the console." };
+  } catch (err) {
+    return { ok: false, problem: err instanceof Error ? err.message : String(err) };
+  }
+}
