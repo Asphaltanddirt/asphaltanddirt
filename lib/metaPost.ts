@@ -280,7 +280,8 @@ export async function checkMetaSetup(): Promise<Record<string, unknown>> {
     try {
       const perms = await graph<{ data?: { permission: string; status: string }[] }>("GET", "me/permissions", {}, process.env.META_PAGE_TOKEN);
       const granted = (perms.data || []).filter((p) => p.status === "granted").map((p) => p.permission);
-      const debug = await graph<{ data?: { expires_at?: number; type?: string } }>("GET", "debug_token", { input_token: process.env.META_PAGE_TOKEN }, process.env.META_PAGE_TOKEN);
+      // Expiry is a nicety; debug_token can refuse a Page token as the caller.
+      const debug = await graph<{ data?: { expires_at?: number; type?: string } }>("GET", "debug_token", { input_token: process.env.META_PAGE_TOKEN }).catch(() => ({ data: undefined }));
       out.firstCommentToken = granted.includes("pages_manage_engagement")
         ? `OK (${debug.data?.type || "token"}, ${debug.data?.expires_at ? `expires ${new Date(debug.data.expires_at * 1000).toISOString().slice(0, 10)}` : "never expires"})`
         : "Set, but it doesn't have pages_manage_engagement.";
