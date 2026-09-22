@@ -48,6 +48,81 @@ export interface BlogPost {
 // is ready to publish.
 export const posts: BlogPost[] = [
   {
+    slug: "bfgoodrich-ko3-reviews-upgrade-or-switch",
+    title: "BFGoodrich KO3 Reviews: Upgrade or Switch Brands?",
+    excerpt:
+      "Your KO2s need replacing, and the KO3 reviews are all over the place. Here’s how to separate useful ownership reports from old grievances and claims that need a diagnosis.",
+    metaDescription:
+      "BFGoodrich KO3 reviews mix owner experience, KO2 complaints and shop claims. What Jeep buyers should check before replacing their tires.",
+    category: "Gear",
+    date: "2026-09-22",
+    image: {
+      src: "/img/blog/bfgoodrich-ko3-reviews.jpg",
+      alt: "Trust the KO3? — our mud-covered 2026 Jeep Wrangler Rubicon on its factory BFGoodrich KO2s on a Pine Barrens trail",
+      credit: "Photo: Asphalt & Dirt. Our 2026 Rubicon on its factory BFGoodrich KO2s.",
+    },
+    body: [
+      { type: "paragraph", text: "Your KO2s are wearing out. The KO3 seems like the obvious replacement—until the reviews turn a tire purchase into a brand referendum." },
+      { type: "paragraph", text: "BFGoodrich KO3 reviews deserve a closer read. **Our take: keep the KO3 on your shortlist if the KO2 suited your Jeep, but buy with a clear inspection and return process.** The reports reviewed here justify asking about vibration; they do not establish how often it happens or prove another brand will solve your particular problem." },
+      { type: "paragraph", text: "The useful question is whether somebody's experience matches the tire, vehicle and driving you are actually buying for." },
+
+      { type: "heading", text: "BFGoodrich KO3 Reviews: Check Which Tire They Owned" },
+      { type: "paragraph", text: "The [JL Wrangler forum discussion](https://www.jlwranglerforums.com/forum/threads/ko3-tires.172851/) starts with a shopper relaying a tire store's claim: customers had returned KO3s because of vibration, and the store recommended alternatives. That is worth investigating. But the post provides no inspection records, installation totals or confirmed causes." },
+      { type: "paragraph", text: "Other replies describe trouble-free KO3 ownership. Farther into the thread, a critic explicitly says they have owned earlier BFG all-terrains but no KO3s. Their experience can explain why they would change brands. It cannot establish how the current tire performs. Those distinctions are visible in the [later owner discussion](https://www.jlwranglerforums.com/forum/threads/ko3-tires.172851/page-4)." },
+      { type: "paragraph", text: "Nobody owes a manufacturer another chance. Readers do deserve to know which tire earned the complaint." },
+      { type: "paragraph", text: "Use the same filter on praise. Brand loyalty is a reason somebody bought the tire; it is not a test result." },
+      {
+        type: "table",
+        caption: "How to weigh the evidence in a tire discussion",
+        headers: ["Evidence type", "What it helps establish", "What remains unknown"],
+        rows: [
+          ["Current KO3 owner's report", "That owner's experience and setup", "How representative it is"],
+          ["Earlier BFG ownership", "Why someone trusts or dislikes BFG", "Current KO3 performance"],
+          ["Secondhand shop claim", "A concern to investigate", "Frequency and diagnosed cause"],
+          ["Documented comparative test", "Results under stated conditions", "Performance outside those conditions"],
+        ],
+      },
+
+      { type: "heading", text: "Current Owners Report Both Satisfaction and Problems" },
+      { type: "paragraph", text: "In that same [forum page](https://www.jlwranglerforums.com/forum/threads/ko3-tires.172851/page-4), a Wrangler owner reports more than 5,000 miles, regular beach use and no negatives. Another describes satisfaction on roads and trails but also a sidewall split. The thread does not independently establish the damage's cause or condition." },
+      { type: "paragraph", text: "Vibration complaints also appear in reviews on [BFGoodrich's own KO3 product page](https://www.bfgoodrichtires.com/auto/tires/bfgoodrich-all-terrain-t-a-ko3). A Bronco owner, posting in June 2024, describes continued vibration after repeated balancing. A GMC owner reports a similar unresolved experience in January 2025." },
+      { type: "paragraph", text: "These are direct customer accounts, and they deserve attention. They still lack independent diagnoses. Their dates also matter: older complaints resurfacing in a new discussion do not, by themselves, establish a new production problem." },
+      { type: "paragraph", text: "**We could not establish a KO3 defect rate from these sources.** A complaint count needs context, including how many tires were sold and what inspections found. Equally, a happy owner cannot cancel out somebody else's shaking steering wheel." },
+
+      { type: "heading", text: "KO3 vs KO2: Separate Design Changes From Proof" },
+      { type: "paragraph", text: "BFGoodrich describes a revised tread pattern, compound and footprint for the KO3, along with full-depth locking sipes. Those are [manufacturer-described design changes](https://www.bfgoodrichtires.com/auto/tire-highlights/all-terrain-t-a-ko3). They give buyers something concrete to investigate, but the marketing explanation does not settle every comparison with the KO2 or competing tires." },
+      { type: "paragraph", text: "The [US product listing](https://www.bfgoodrichtires.com/auto/tires/bfgoodrich-all-terrain-t-a-ko3) identifies the KO3 as carrying the Three-Peak Mountain Snowflake designation and advertises a **50,000-mile mileage warranty** and **60-day satisfaction guarantee**, subject to terms. Read those terms before purchase; an advertised mileage warranty is not a promise that your Jeep will reach that mileage." },
+      { type: "paragraph", text: "If your old KO2s disappointed you, name the problem precisely. Wet-road confidence? Noise? Ride? Availability? That becomes the comparison you need to research. “Newer” is a thin answer to an expensive question." },
+
+      { type: "heading", text: "KO3 Vibration Needs a Diagnosis" },
+      { type: "paragraph", text: "If a shop warns you about KO3 vibration, ask what it actually found. Did the complaint follow a particular tire-and-wheel assembly? Was the wheel checked? Did a replacement tire resolve it? A shop with records can offer useful experience even without a formal study." },
+      { type: "paragraph", text: "Road-force measurement can help investigate. [Hunter explains that its equipment](https://www.hunter.com/wheel-balancers/road-force/) uses a loaded roller to identify issues including tire nonuniformity, wheel runout and improper bead seating. That helps explain why repeatedly adding balance weights may not answer the whole question." },
+      { type: "paragraph", text: "Ask for the measurements, the diagnosis and the result after correction. Don't assume a vibration complaint proves either a defective tire or a careless installer. The symptom alone does not choose the culprit." },
+      { type: "paragraph", text: "Before paying, agree on who handles inspection and an unresolved complaint. Get the retailer's return, exchange and diagnostic-charge policies in writing. If the answer is just “we'll figure it out,” keep asking." },
+
+      { type: "heading", text: "Choose Jeep All-Terrain Tires for Your Actual Use" },
+      { type: "paragraph", text: "A useful review tells you the vehicle, exact tire size, load range, mileage and conditions. Ask for that context before applying someone else's verdict to your Jeep." },
+      { type: "paragraph", text: "For your shortlist, compare the exact available fitments and installed prices. Put your priorities alongside them: highway comfort, wet-weather confidence, winter use, trail durability and the support available locally. Our [Tires 101 guide](https://www.asphaltanddirt.com/blog/tires-101-choosing-traction) covers matching the tire to the mission if you need the fundamentals first." },
+      { type: "paragraph", text: "There is nothing disloyal about changing brands when your priorities change. There is also no prize for rejecting a suitable tire because an internet argument got loud." },
+
+      { type: "heading", text: "Quick Answers" },
+      { type: "subheading", text: "Do BFGoodrich KO3 tires have vibration problems?" },
+      { type: "paragraph", text: "Some owners report vibration, including customers posting on BFGoodrich's product page. These reports establish complaints, but the sources reviewed here do not establish their frequency or a common cause." },
+      { type: "subheading", text: "Are KO3 tires better than KO2s?" },
+      { type: "paragraph", text: "BFGoodrich describes design changes, but the owner discussion does not establish a universal winner. Compare evidence for the performance issue that matters to you." },
+      { type: "subheading", text: "Should I switch brands when replacing KO2s?" },
+      { type: "paragraph", text: "Consider alternatives if your KO2 experience exposed a mismatch with your needs. If the KO2 suited you, the KO3 remains a reasonable candidate, with fitment and retailer support part of the decision." },
+      { type: "subheading", text: "What should I ask a shop about KO3 vibration?" },
+      { type: "paragraph", text: "Ask what measurements identified the problem, what was corrected and whether that resolved it. Clarify inspection, exchange and diagnostic-charge policies before buying." },
+
+      { type: "heading", text: "Our Take" },
+      { type: "paragraph", text: "The KO3 deserves scrutiny, and buyers deserve better than a vote between fans and furious former customers." },
+      { type: "paragraph", text: "For the record, this is our decision too: both of us run the factory KO2s. Jose's 2026 Rubicon is at about 14,000 miles, Anthony's 2025 Rubicon at about 26,000, and neither set has given us trouble. When they're done, we'll be weighing the same evidence laid out here, and we'll report back on what we chose." },
+      { type: "paragraph", text: "We would keep it in the running, then weigh relevant ownership reports, evidence for our driving priorities and the retailer's willingness to investigate a problem. A well-documented complaint could change that decision. A secondhand warning should start a conversation, not finish the research." },
+      { type: "paragraph", text: "**If you've replaced KO2s, did you choose KO3s or switch brands—and what vehicle, tire size and driving conditions made the decision?**" },
+    ],
+  },
+  {
     slug: "c6-z06-valve-issues-fix-an-ls7-that-runs-fine",
     title: "C6 Z06 Valve Issues: Should You Fix an LS7 That Still Runs Fine?",
     seoTitle: "C6 Z06 Valve Issues: Fix an LS7 That Runs Fine?",
