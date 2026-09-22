@@ -92,10 +92,16 @@ async function facebookPermalink(id: string, token: string, fallback: string): P
   }
 }
 
+/**
+ * The System User can't hold pages_manage_engagement (Meta only offers it to
+ * this app through the Tech Provider route, which we declined). If Jose makes
+ * a long-lived Page token with it in the Graph API Explorer, it goes in
+ * META_PAGE_TOKEN and is used for the first comment only.
+ */
 async function firstComment(objectId: string, text: string, token: string): Promise<string | undefined> {
   if (!text) return undefined;
   try {
-    await graph("POST", `${objectId}/comments`, { message: text }, token);
+    await graph("POST", `${objectId}/comments`, { message: text }, process.env.META_PAGE_TOKEN || token);
     return undefined;
   } catch (err) {
     return `The first comment didn't go through (${err instanceof Error ? err.message : err}). Add it by hand.`;
@@ -248,7 +254,7 @@ export async function checkMetaSetup(): Promise<Record<string, unknown>> {
   if (!TOKEN()) return { ok: false, problem: "META_GRAPH_TOKEN isn't set." };
   const out: Record<string, unknown> = {};
   const need = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "instagram_basic", "instagram_content_publish"];
-  const nice = ["pages_manage_engagement", "instagram_manage_insights", "read_insights", "business_management"];
+  const nice = ["instagram_manage_insights", "read_insights", "business_management"];
   try {
     const me = await graph<{ id?: string; name?: string }>("GET", "me", { fields: "id,name" });
     out.tokenUser = me.name || me.id;
@@ -269,6 +275,19 @@ export async function checkMetaSetup(): Promise<Record<string, unknown>> {
       out.page = `Problem: ${err instanceof Error ? err.message : err}`;
     }
   } else out.page = "META_PAGE_ID isn't set.";
+  // The first comment's own token (see firstComment).
+  if (process.env.META_PAGE_TOKEN) {
+    try {
+      const perms = await graph<{ data?: { permission: string; status: string }[] }>("GET", "me/permissions", {}, process.env.META_PAGE_TOKEN);
+      const granted = (perms.data || []).filter((p) => p.status === "granted").map((p) => p.permission);
+      const debug = await graph<{ data?: { expires_at?: number; type?: string } }>("GET", "debug_token", { input_token: process.env.META_PAGE_TOKEN }, process.env.META_PAGE_TOKEN);
+      out.firstCommentToken = granted.includes("pages_manage_engagement")
+        ? `OK (${debug.data?.type || "token"}, ${debug.data?.expires_at ? `expires ${new Date(debug.data.expires_at * 1000).toISOString().slice(0, 10)}` : "never expires"})`
+        : "Set, but it doesn't have pages_manage_engagement.";
+    } catch (err) {
+      out.firstCommentToken = `Problem: ${err instanceof Error ? err.message : err}`;
+    }
+  } else out.firstCommentToken = "Not set: Facebook first comments are added by hand.";
   if (IG_USER_ID()) {
     try {
       const ig = await graph<{ username?: string }>("GET", IG_USER_ID(), { fields: "username" });
