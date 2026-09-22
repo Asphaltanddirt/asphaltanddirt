@@ -269,10 +269,10 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
               body={{ action: "autopost-on" }}
             />
           )}
-          <p>
-            Threads: {threadsConnected ? "connected" : "not connected"} ·{" "}
-            <a href="/api/threads/connect">{threadsConnected ? "Reconnect Threads" : "Connect Threads"}</a>
-          </p>
+          <p>Threads: {threadsConnected ? "connected" : "not connected"}</p>
+          <a className="btn btn-outline btn-sm" href="/api/threads/connect">
+            {threadsConnected ? "Reconnect Threads" : "Connect Threads"}
+          </a>
           {threadsMsg && <p className="garage-form-note" role="status">Threads: {threadsMsg}</p>}
           <p className="garage-form-note">
             Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok (TikTok Studio) and the Facebook Group stay by hand.
