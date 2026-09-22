@@ -68,13 +68,18 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
 
   const today = todayNY();
   const thisWeek = weekOf(today);
-  const [events, allTasks, reminders] = await Promise.all([
+  // Everything that doesn't depend on anything else goes in ONE wave. Each
+  // Airtable round trip is ~250 ms, and this screen is opened dozens of times a
+  // day on a phone — the posting fetch used to wait for the first three to
+  // finish for no reason, which is a quarter of a second of nothing, every time.
+  // Only the head count below genuinely has to wait (it needs the event id).
+  const [events, allTasks, reminders, posting] = await Promise.all([
     getCrewEvents().catch(() => ({ upcoming: [], past: [] })),
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
+    // Owners post the socials: today's and overdue posts, straight to the board.
+    canSeeOwnerOnly(session) ? getPostsNeedingAttention(today).catch(() => []) : Promise.resolve([]),
   ]);
-  // Owners post the socials: today's and overdue posts, straight to the board.
-  const posting = canSeeOwnerOnly(session) ? await getPostsNeedingAttention(today).catch(() => []) : [];
   const postingOverdue = posting.filter((p) => p.due < today).length;
   // The head count everyone asks about first, on the card they already look at.
   const [rsvps, crewGoing] = events.upcoming[0]
@@ -99,30 +104,30 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // `href: null` = built next; the tile shows "Coming soon" instead of leading
   // to a dead page.
   const tiles: { href: string | null; label: string; sub: string; img: string }[] = [
-    { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.jpg" },
+    { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.webp" },
     ...(canRunEvents(session)
-      ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
+      ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.webp" }]
       : []),
-    { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-upload.jpg" },
-    { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
-    { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
+    { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-upload.webp" },
+    { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.webp" },
+    { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.webp" },
     ...(canSeeOwnerOnly(session)
       ? [
-          { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" },
-          { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.jpg" },
-          { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.jpg" },
-          { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-comments.jpg" },
-          { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-applications.jpg" },
-          { href: "/garage/review", label: "Review", sub: "Builds, reviews, what the site features", img: "/img/garage/tile-review.jpg" },
-          { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-studio.jpg" },
-          { href: "/garage/newsletter", label: "Newsletter", sub: "This week's Dirt Line: fill, test, send", img: "/img/garage/tile-newsletter.jpg" },
+          { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.webp" },
+          { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.webp" },
+          { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.webp" },
+          { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-comments.webp" },
+          { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-applications.webp" },
+          { href: "/garage/review", label: "Review", sub: "Builds, reviews, what the site features", img: "/img/garage/tile-review.webp" },
+          { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-studio.webp" },
+          { href: "/garage/newsletter", label: "Newsletter", sub: "This week's Dirt Line: fill, test, send", img: "/img/garage/tile-newsletter.webp" },
         ]
       : []),
     ...(canSeeFinance(session)
-      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.jpg" }]
+      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.webp" }]
       : []),
     ...(canSeeControlRoom(session)
-      ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.jpg" }]
+      ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.webp" }]
       : []),
   ];
 
