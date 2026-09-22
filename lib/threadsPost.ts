@@ -87,7 +87,7 @@ export function checkState(s: string): boolean {
 
 export function connectUrl(): string {
   const qs = new URLSearchParams({ client_id: appId(), redirect_uri: redirectUri(), scope: SCOPES.join(","), response_type: "code", state: state() });
-  return `https://threads.net/oauth/authorize?${qs}`;
+  return `https://www.threads.com/oauth/authorize?${qs}`;
 }
 
 async function json<T>(res: Response): Promise<T> {
