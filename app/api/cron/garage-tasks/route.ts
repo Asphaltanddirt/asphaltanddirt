@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateWeek } from "@/lib/garageTasks";
 import { generateSocialWeek } from "@/lib/garageSocial";
-import { syncSocialStatsFromMeta, syncSocialStatsFromX } from "@/lib/socialStatsSync";
+import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
 
 export const maxDuration = 60;
 
@@ -25,11 +25,12 @@ export async function GET(req: NextRequest) {
     });
     // Fill the board's 7-day numbers (Meta + X). Daily, so no post skips its
     // 7–10 day window. Failures never block the rest.
-    const [metaStats, xStats] = await Promise.all([
+    const [metaStats, xStats, threadsStats] = await Promise.all([
       syncSocialStatsFromMeta().catch((err) => ({ ok: false, error: String(err) })),
       syncSocialStatsFromX().catch((err) => ({ ok: false, error: String(err) })),
+      syncSocialStatsFromThreads().catch((err) => ({ ok: false, error: String(err) })),
     ]);
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });

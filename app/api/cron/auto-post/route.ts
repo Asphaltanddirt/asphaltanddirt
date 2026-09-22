@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autoPostNow, runAutoPoster } from "@/lib/autoPost";
 import { checkMetaSetup } from "@/lib/metaPost";
 import { checkXSetup } from "@/lib/xPost";
+import { checkThreadsSetup } from "@/lib/threadsPost";
 
 export const maxDuration = 300;
 
@@ -29,8 +30,8 @@ export async function GET(req: NextRequest) {
   }
 
   if (req.nextUrl.searchParams.get("check") === "1") {
-    const [meta, x] = await Promise.all([checkMetaSetup(), checkXSetup()]);
-    return NextResponse.json({ meta, x });
+    const [meta, x, threads] = await Promise.all([checkMetaSetup(), checkXSetup(), checkThreadsSetup()]);
+    return NextResponse.json({ meta, x, threads });
   }
 
   try {

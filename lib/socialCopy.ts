@@ -21,6 +21,9 @@ export function linkPlan(post: Pick<SocialPost, "platform" | "blogUrl" | "firstC
   // X link test: some weeks the link rides in the post itself.
   if (post.platform === "X") return { kind: text ? (post.linkPlacement === "In post" ? "caption" : "reply") : "none", text };
   if (post.platform === "Instagram") return { kind: post.blogUrl ? "bio" : "none", text: post.blogUrl };
+  // Threads (approved 9/22): no evidence links cost reach, so the blog link goes
+  // in the post itself — but only on the blog-image posts, like X.
+  if (post.platform === "Threads") return post.asset === "Text post" || post.asset === "Vertical clip" || !text ? { kind: "none", text: "" } : { kind: "caption", text };
   return { kind: "none", text: "" };
 }
 
@@ -31,9 +34,9 @@ export function fullCaption(post: Pick<SocialPost, "caption" | "hashtags" | "pla
   return [post.caption.trim(), link.kind === "caption" ? link.text : "", post.hashtags].filter(Boolean).join("\n\n");
 }
 
-/** Platforms the auto-poster handles. TikTok is scheduled by hand, Meta has no
- *  API for posting to Groups, and YouTube is the podcast's own pipeline. */
-export const AUTO_PLATFORMS = ["X", "Facebook Page", "Instagram"] as const;
+/** Platforms the auto-poster handles. TikTok is scheduled in TikTok Studio, Meta
+ *  has no API for posting to Groups, and YouTube is the podcast's own pipeline. */
+export const AUTO_PLATFORMS = ["X", "Facebook Page", "Instagram", "Threads"] as const;
 export type AutoPlatform = (typeof AUTO_PLATFORMS)[number];
 
 export function isAutoPlatform(platform: string): platform is AutoPlatform {

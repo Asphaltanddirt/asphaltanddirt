@@ -9,6 +9,7 @@ import { getWeekTasks, todayNY } from "@/lib/garageTasks";
 import { getAutoPostSwitch, platformReady } from "@/lib/autoPost";
 import { AUTO_PLATFORMS } from "@/lib/socialCopy";
 import { isReplySearchOn } from "@/lib/replyQueue";
+import { isThreadsConnected } from "@/lib/threadsPost";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -69,7 +70,8 @@ function Cell({
   );
 }
 
-export default async function ControlRoomPage() {
+export default async function ControlRoomPage({ searchParams }: { searchParams: Promise<{ threads?: string }> }) {
+  const { threads: threadsMsg } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/garage");
   if (!canSeeControlRoom(session)) redirect("/garage");
@@ -82,6 +84,7 @@ export default async function ControlRoomPage() {
     getAutoPostSwitch().catch(() => null),
   ]);
   const replySearch = await isReplySearchOn().catch(() => null);
+  const threadsConnected = await isThreadsConnected().catch(() => false);
   const autoReady = AUTO_PLATFORMS.map((p) => ({ platform: p, ready: platformReady(p) }));
 
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
@@ -266,8 +269,13 @@ export default async function ControlRoomPage() {
               body={{ action: "autopost-on" }}
             />
           )}
+          <p>
+            Threads: {threadsConnected ? "connected" : "not connected"} ·{" "}
+            <a href="/api/threads/connect">{threadsConnected ? "Reconnect Threads" : "Connect Threads"}</a>
+          </p>
+          {threadsMsg && <p className="garage-form-note" role="status">Threads: {threadsMsg}</p>}
           <p className="garage-form-note">
-            Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok and the Facebook Group stay by hand.
+            Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok (TikTok Studio) and the Facebook Group stay by hand.
           </p>
         </div>
 

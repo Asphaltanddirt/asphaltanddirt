@@ -3,6 +3,7 @@ import { getAutoPostQueue, getPost, markPosted, saveAutoResult, type SocialPost 
 import { todayNY } from "@/lib/garageTasks";
 import { isMetaPostingConfigured, publishToFacebook, publishToInstagram } from "@/lib/metaPost";
 import { isXConfigured, publishToX } from "@/lib/xPost";
+import { isThreadsAppConfigured, publishToThreads, THREADS_TEXT_LIMIT } from "@/lib/threadsPost";
 import { fullCaption, isAutoPlatform, linkPlan, xLength, type AutoPlatform } from "@/lib/socialCopy";
 
 /**
@@ -61,6 +62,7 @@ export async function setAutoPostSwitch(on: boolean, by: string) {
 /** Which platforms have their keys in place. */
 export function platformReady(platform: AutoPlatform): boolean {
   if (platform === "X") return isXConfigured();
+  if (platform === "Threads") return isThreadsAppConfigured();
   if (platform === "Facebook Page") return isMetaPostingConfigured("facebook");
   return isMetaPostingConfigured("instagram");
 }
@@ -129,7 +131,7 @@ export function planPublish(post: SocialPost): { ok: true; input: Omit<PublishIn
   const videos = post.assets.map((a, i) => (a.type.startsWith("video/") ? i : -1)).filter((i) => i >= 0);
   const wantsVideo = post.asset === "Vertical clip";
   // A text post (e.g. the X Trail Talk question) can go out with no media.
-  const textOnly = post.asset === "Text post" && post.platform === "X";
+  const textOnly = post.asset === "Text post" && (post.platform === "X" || post.platform === "Threads");
 
   if (wantsVideo && videos.length === 0) return { ok: false, reason: "This slot is a clip, but no video is attached." };
   if (!wantsVideo && !textOnly && images.length === 0) return { ok: false, reason: "No image attached." };
@@ -143,6 +145,10 @@ export function planPublish(post: SocialPost): { ok: true; input: Omit<PublishIn
     if (!wantsVideo && images.length > 4) return { ok: false, reason: "X takes up to 4 images." };
     if (wantsVideo && post.assets[videos[0]]?.type !== "video/mp4" && post.assets[videos[0]]?.type !== "video/quicktime")
       return { ok: false, reason: "X takes MP4 or MOV video." };
+  }
+  if (post.platform === "Threads") {
+    if (caption.length > THREADS_TEXT_LIMIT) return { ok: false, reason: `${caption.length} characters; Threads allows ${THREADS_TEXT_LIMIT}.` };
+    if (!wantsVideo && images.length > 20) return { ok: false, reason: "Threads carousels take up to 20 images." };
   }
   if (post.platform === "Instagram") {
     if (caption.length > 2200) return { ok: false, reason: `${caption.length} characters; Instagram allows 2,200.` };
@@ -182,6 +188,7 @@ const stamp = () =>
 async function publish(input: PublishInput): Promise<PublishResult> {
   if (input.post.platform === "X") return publishToX(input);
   if (input.post.platform === "Facebook Page") return publishToFacebook(input);
+  if (input.post.platform === "Threads") return publishToThreads(input);
   return publishToInstagram(input);
 }
 

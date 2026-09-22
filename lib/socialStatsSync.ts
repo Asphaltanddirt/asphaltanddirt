@@ -17,6 +17,7 @@
 import { listRecords, updateRecord, type AirtableFields } from "@/lib/airtable";
 import { facebookPosts, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
 import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
+import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 
 const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
 const POSTS = "Social Posts";
@@ -163,5 +164,36 @@ export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStat
     result.filled.push({ name: String(row.fields.Name || row.id), platform: "X", views: m.impressions });
   }
   result.unmatched += due.size;
+  return result;
+}
+
+/** Threads posts on the board, filled once in the same 7–10 day window. */
+export async function syncSocialStatsFromThreads(now = new Date()): Promise<SocialStatsSyncResult> {
+  const result: SocialStatsSyncResult = { ok: true, alreadyFilled: 0, unmatched: 0, filled: [] };
+  if (!(await isThreadsConnected())) return { ...result, ok: false, skipped: "Threads not connected" };
+  const rows = await listRecords(POSTS, `AND({Status} = 'Posted', {Platform} = 'Threads')`, { baseId: BASE_ID });
+  for (const r of rows) {
+    const postedAt = String(r.fields["Posted At"] || "");
+    const url = String(r.fields["Post URL"] || "");
+    if (!postedAt || !url) continue;
+    const age = (now.getTime() - new Date(postedAt).getTime()) / 86_400_000;
+    if (age < FILL_FROM_DAY || age > FILL_UNTIL_DAY) continue;
+    if (num(r.fields["Views 7d"]) !== undefined) {
+      result.alreadyFilled++;
+      continue;
+    }
+    const m = await threadsPostMetrics(url).catch(() => null);
+    if (!m) {
+      result.unmatched++;
+      continue;
+    }
+    const fields: AirtableFields = {};
+    if (m.views !== undefined) fields["Views 7d"] = m.views;
+    if (m.likes !== undefined) fields["Likes 7d"] = m.likes;
+    if (m.replies !== undefined) fields["Replies 7d"] = m.replies;
+    if (m.reposts !== undefined || m.quotes !== undefined) fields["Shares 7d"] = (m.reposts || 0) + (m.quotes || 0);
+    await updateRecord(POSTS, r.id, fields, { baseId: BASE_ID });
+    result.filled.push({ name: String(r.fields.Name || r.id), platform: "Threads", views: m.views });
+  }
   return result;
 }
