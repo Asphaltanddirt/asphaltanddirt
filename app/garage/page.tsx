@@ -103,23 +103,23 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     ...(canRunEvents(session)
       ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.jpg" }]
       : []),
-    { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-media.jpg" },
+    { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-upload.jpg" },
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.jpg" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.jpg" },
     ...(canSeeOwnerOnly(session)
       ? [
           { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.jpg" },
-          { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-media.jpg" },
-          { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-team.jpg" },
-          { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-team.jpg" },
-          { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-crew.jpg" },
-          { href: "/garage/review", label: "Review", sub: "Builds, reviews, what the site features", img: "/img/garage/tile-media.jpg" },
-          { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-media.jpg" },
-          { href: "/garage/newsletter", label: "Newsletter", sub: "This week's Dirt Line: fill, test, send", img: "/img/garage/tile-media.jpg" },
+          { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.jpg" },
+          { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.jpg" },
+          { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-comments.jpg" },
+          { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-applications.jpg" },
+          { href: "/garage/review", label: "Review", sub: "Builds, reviews, what the site features", img: "/img/garage/tile-review.jpg" },
+          { href: "/garage/studio", label: "Studio", sub: "Video ideas, episodes, guests, sponsors", img: "/img/garage/tile-studio.jpg" },
+          { href: "/garage/newsletter", label: "Newsletter", sub: "This week's Dirt Line: fill, test, send", img: "/img/garage/tile-newsletter.jpg" },
         ]
       : []),
     ...(canSeeFinance(session)
-      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-control.jpg" }]
+      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.jpg" }]
       : []),
     ...(canSeeControlRoom(session)
       ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.jpg" }]
