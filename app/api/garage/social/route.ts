@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
           shares: clean(body.stats?.shares),
           saves: clean(body.stats?.saves),
           follows: clean(body.stats?.follows),
+          likes: clean(body.stats?.likes),
+          replies: clean(body.stats?.replies),
+          linkClicks: clean(body.stats?.linkClicks),
+          profileClicks: clean(body.stats?.profileClicks),
         });
         break;
       }

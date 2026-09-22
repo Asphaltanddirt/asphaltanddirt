@@ -71,7 +71,19 @@ export interface SocialPost {
   postedAt: string;
   postedBy: string;
   testSlot: string;
-  stats: { views: number | null; forYou: number | null; shares: number | null; saves: number | null; follows: number | null };
+  stats: {
+    views: number | null;
+    forYou: number | null;
+    shares: number | null;
+    saves: number | null;
+    follows: number | null;
+    likes: number | null;
+    replies: number | null;
+    linkClicks: number | null;
+    profileClicks: number | null;
+  };
+  /** X link test: where the blog link goes. Blank = in a reply. */
+  linkPlacement: "" | "In post" | "In reply";
   notes: string;
   sort: number;
   /** Auto-posting: only approved posts go out on their own. */
@@ -119,7 +131,12 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
       shares: num(f["Shares 7d"]),
       saves: num(f["Saves 7d"]),
       follows: num(f["Follows 7d"]),
+      likes: num(f["Likes 7d"]),
+      replies: num(f["Replies 7d"]),
+      linkClicks: num(f["Link Clicks 7d"]),
+      profileClicks: num(f["Profile Clicks 7d"]),
     },
+    linkPlacement: str(f["Link Placement"]) as SocialPost["linkPlacement"],
     notes: str(f.Notes),
     sort: 0,
     approved: f.Approved === true,
@@ -188,6 +205,20 @@ async function weekBlogs(monday: string): Promise<{ feature: { title: string; ur
   }
 }
 
+/**
+ * X link test (approved 2026-09-22): four weeks from Mon 9/28, alternating
+ * where the blog link goes on X — in the post itself, or in a reply under
+ * it — so our own numbers settle whether links still cost reach. Outside the
+ * test, the link stays in a reply.
+ */
+const LINK_TEST_START = "2026-09-28";
+const LINK_TEST_WEEKS = 4;
+function linkPlacementFor(monday: string): "In post" | "In reply" | "" {
+  const weeks = Math.round((Date.parse(`${monday}T12:00:00Z`) - Date.parse(`${LINK_TEST_START}T12:00:00Z`)) / (7 * 86_400_000));
+  if (weeks < 0 || weeks >= LINK_TEST_WEEKS) return "";
+  return weeks % 2 === 0 ? "In post" : "In reply";
+}
+
 function testSlotsFor(monday: string): ("1 PM" | "7 PM")[] | null {
   const weeks = Math.round((Date.parse(`${monday}T12:00:00Z`) - Date.parse(`${TEST_START}T12:00:00Z`)) / (7 * 86_400_000));
   return weeks >= 0 && weeks < TEST_WEEKS.length ? TEST_WEEKS[weeks] : null;
@@ -230,6 +261,7 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
     due.setUTCDate(due.getUTCDate() + Math.max(day, 0));
     const topic = str(f.Topic);
     const blog = topic === "Feature" ? blogs.feature : topic === "Alternate" ? blogs.alternate : null;
+    const linkPlacement = str(f.Platform) === "X" && blog ? linkPlacementFor(monday) : "";
 
     await createRecord(
       POSTS,
@@ -244,6 +276,7 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
         Asset: str(f.Asset),
         Status: "Planned",
         ...(testSlot ? { "Test Slot": testSlot } : {}),
+        ...(linkPlacement ? { "Link Placement": linkPlacement } : {}),
         ...(blog?.title ? { "Blog Title": blog.title } : {}),
         ...(blog?.url ? { "Blog URL": blog.url } : {}),
         ...(f.Notes ? { Notes: str(f.Notes) } : {}),
@@ -271,8 +304,9 @@ export async function markPosted(post: SocialPost, input: { url: string; by: str
     { baseId: BASE_ID },
   );
 
-  // Trail Talk feeds Thursday's newsletter.
-  if (post.topic === "Trail Talk" && isAirtableConfigured(NEWSLETTER_BASE_ID)) {
+  // The Facebook Group's Trail Talk feeds Thursday's newsletter. (The X
+  // version of the same question is its own post and doesn't.)
+  if (post.topic === "Trail Talk" && post.platform === "Facebook Group" && isAirtableConfigured(NEWSLETTER_BASE_ID)) {
     const draft = post.drafts[input.draftIndex ?? 0] || post.caption;
     const { title, body } = splitDraft(draft || "");
     const rows = await listRecords(NEWSLETTERS, `IS_SAME({Week Of}, '${post.weekOf}', 'day')`, { baseId: NEWSLETTER_BASE_ID });
@@ -349,9 +383,14 @@ export async function saveStats(id: string, stats: Partial<SocialPost["stats"]>)
     shares: "Shares 7d",
     saves: "Saves 7d",
     follows: "Follows 7d",
+    likes: "Likes 7d",
+    replies: "Replies 7d",
+    linkClicks: "Link Clicks 7d",
+    profileClicks: "Profile Clicks 7d",
   };
   const fields: AirtableFields = {};
-  for (const [k, v] of Object.entries(stats)) fields[map[k as keyof SocialPost["stats"]]] = v ?? null;
+  // Only the numbers this card shows are sent; the rest are left alone.
+  for (const [k, v] of Object.entries(stats)) if (v !== undefined) fields[map[k as keyof SocialPost["stats"]]] = v ?? null;
   await updateRecord(POSTS, id, fields, { baseId: BASE_ID });
 }
 

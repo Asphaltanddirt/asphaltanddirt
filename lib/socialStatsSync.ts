@@ -8,13 +8,15 @@
  * up. A post already carrying numbers is left alone, so anything typed in by
  * hand stays put.
  *
- * Dormant until META_GRAPH_TOKEN and an account id are set. Instagram and
- * Facebook only; TikTok joins when its API review clears, and X when there's a
- * card on the metered API.
+ * Instagram and Facebook via Meta's insights; X via our own-post metrics
+ * (added 2026-09-22 for the X link test). TikTok joins when its API review
+ * clears. Runs daily from the garage-tasks cron, so every post passes through
+ * its 7–10 day window on some run.
  */
 
 import { listRecords, updateRecord, type AirtableFields } from "@/lib/airtable";
 import { facebookPosts, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
+import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
 
 const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
 const POSTS = "Social Posts";
@@ -114,5 +116,52 @@ export async function syncSocialStatsFromMeta(now = new Date()): Promise<SocialS
     });
   }
 
+  return result;
+}
+
+/** X posts on the board, filled once in the same 7–10 day window. */
+export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStatsSyncResult> {
+  const empty = { alreadyFilled: 0, unmatched: 0, filled: [] };
+  if (!isXConfigured()) return { ok: false, skipped: "X keys not configured", ...empty };
+
+  const rows = await listRecords(POSTS, `AND({Status} = 'Posted', {Platform} = 'X')`, { baseId: BASE_ID });
+  const result: SocialStatsSyncResult = { ok: true, ...empty, filled: [] };
+  const due = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    const postedAt = String(r.fields["Posted At"] || "");
+    const id = String(r.fields["Post URL"] || "").match(/status\/(\d+)/)?.[1];
+    if (!postedAt || !id) continue;
+    const age = (now.getTime() - new Date(postedAt).getTime()) / 86_400_000;
+    if (age < FILL_FROM_DAY || age > FILL_UNTIL_DAY) continue;
+    if (num(r.fields["Views 7d"]) !== undefined) {
+      result.alreadyFilled++;
+      continue;
+    }
+    due.set(id, r);
+  }
+  if (!due.size) return result;
+
+  let metrics;
+  try {
+    metrics = await fetchOwnPostMetrics([...due.keys()]);
+  } catch (e) {
+    return { ok: false, error: String(e), ...empty };
+  }
+  for (const m of metrics) {
+    const row = due.get(m.id);
+    if (!row) continue;
+    due.delete(m.id);
+    const fields: AirtableFields = {};
+    if (m.impressions !== undefined) fields["Views 7d"] = m.impressions;
+    if (m.likes !== undefined) fields["Likes 7d"] = m.likes;
+    if (m.replies !== undefined) fields["Replies 7d"] = m.replies;
+    if (m.reposts !== undefined || m.quotes !== undefined) fields["Shares 7d"] = (m.reposts || 0) + (m.quotes || 0);
+    if (m.bookmarks !== undefined) fields["Saves 7d"] = m.bookmarks;
+    if (m.linkClicks !== undefined) fields["Link Clicks 7d"] = m.linkClicks;
+    if (m.profileClicks !== undefined) fields["Profile Clicks 7d"] = m.profileClicks;
+    await updateRecord(POSTS, row.id, fields, { baseId: BASE_ID });
+    result.filled.push({ name: String(row.fields.Name || row.id), platform: "X", views: m.impressions });
+  }
+  result.unmatched += due.size;
   return result;
 }

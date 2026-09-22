@@ -3,7 +3,7 @@ import { getAutoPostQueue, getPost, markPosted, saveAutoResult, type SocialPost 
 import { todayNY } from "@/lib/garageTasks";
 import { isMetaPostingConfigured, publishToFacebook, publishToInstagram } from "@/lib/metaPost";
 import { isXConfigured, publishToX } from "@/lib/xPost";
-import { fullCaption, isAutoPlatform, linkPlan, type AutoPlatform } from "@/lib/socialCopy";
+import { fullCaption, isAutoPlatform, linkPlan, xLength, type AutoPlatform } from "@/lib/socialCopy";
 
 /**
  * The posting board's auto-poster (decided with Jose 2026-09-22).
@@ -128,16 +128,18 @@ export function planPublish(post: SocialPost): { ok: true; input: Omit<PublishIn
   const images = post.assets.map((a, i) => (a.type.startsWith("image/") ? i : -1)).filter((i) => i >= 0);
   const videos = post.assets.map((a, i) => (a.type.startsWith("video/") ? i : -1)).filter((i) => i >= 0);
   const wantsVideo = post.asset === "Vertical clip";
+  // A text post (e.g. the X Trail Talk question) can go out with no media.
+  const textOnly = post.asset === "Text post" && post.platform === "X";
 
   if (wantsVideo && videos.length === 0) return { ok: false, reason: "This slot is a clip, but no video is attached." };
-  if (!wantsVideo && images.length === 0) return { ok: false, reason: "No image attached." };
+  if (!wantsVideo && !textOnly && images.length === 0) return { ok: false, reason: "No image attached." };
   if (videos.length > 1) return { ok: false, reason: "Attach one video only." };
 
   const link = linkPlan(post);
   const followUp = link.kind === "comment" || link.kind === "reply" ? link.text : "";
 
   if (post.platform === "X") {
-    if (caption.length > 280) return { ok: false, reason: `${caption.length} characters; X allows 280.` };
+    if (xLength(caption) > 280) return { ok: false, reason: `${xLength(caption)} characters; X allows 280.` };
     if (!wantsVideo && images.length > 4) return { ok: false, reason: "X takes up to 4 images." };
     if (wantsVideo) return { ok: false, reason: "Video on X isn't set up yet. Post it by hand." };
   }

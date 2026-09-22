@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, isAutoPlatform, linkPlan } from "@/lib/socialCopy";
+import { fullCaption, isAutoPlatform, linkPlan, xLength } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -39,6 +39,10 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     shares: item.stats.shares ?? "",
     saves: item.stats.saves ?? "",
     follows: item.stats.follows ?? "",
+    likes: item.stats.likes ?? "",
+    replies: item.stats.replies ?? "",
+    linkClicks: item.stats.linkClicks ?? "",
+    profileClicks: item.stats.profileClicks ?? "",
   });
 
   async function run(body: Record<string, unknown>) {
@@ -141,11 +145,31 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const auto = isAutoPlatform(item.platform);
   const pasteCaption = fullCaption(item);
   // X counts every character of the post, hashtags included.
-  const overLimit = item.platform === "X" && pasteCaption.length > 280;
+  const overLimit = item.platform === "X" && xLength(pasteCaption) > 280;
   const overdue = item.status === "Planned" && item.due < today;
   const dueToday = item.status === "Planned" && item.due === today;
-  const isTrailTalk = item.topic === "Trail Talk";
-  const showStats = item.status === "Posted" && item.platform === "TikTok";
+  // The Facebook Group's Trail Talk is picked from options and feeds the
+  // newsletter; the X version is an ordinary captioned post.
+  const isTrailTalk = item.topic === "Trail Talk" && item.platform === "Facebook Group";
+  const showStats = item.status === "Posted" && (item.platform === "TikTok" || item.platform === "X");
+  const statFields = (
+    item.platform === "X"
+      ? [
+          ["views", "Impressions"],
+          ["likes", "Likes"],
+          ["replies", "Replies"],
+          ["shares", "Reposts + quotes"],
+          ["linkClicks", "Link clicks"],
+          ["profileClicks", "Profile clicks"],
+        ]
+      : [
+          ["views", "Views"],
+          ["forYou", "For You %"],
+          ["shares", "Shares"],
+          ["saves", "Saves"],
+          ["follows", "Follows"],
+        ]
+  ) as [keyof typeof stats, string][];
   const className = [
     "garage-social-card",
     item.status === "Posted" ? "is-posted" : "",
@@ -162,6 +186,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         <span className="garage-social-platform">{item.platform}</span>
         <span className="garage-tag">{item.topic}</span>
         {item.testSlot && <span className="garage-tag garage-tag-new">Test · {item.testSlot}</span>}
+        {item.platform === "X" && item.linkPlacement && <span className="garage-tag garage-tag-new">Link test · {item.linkPlacement.toLowerCase()}</span>}
         <span className="garage-social-when">
           {overdue ? "Overdue · " : dueToday ? "Today · " : ""}
           {SHORT_DAY(item.due)} · {item.window}
@@ -229,7 +254,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
           {item.hashtags && <p className="garage-social-tags">{item.hashtags}</p>}
           {overLimit && (
             <p className="garage-error">
-              {pasteCaption.length} characters, X allows 280. Edit before posting.
+              {xLength(pasteCaption)} characters, X allows 280. Edit before posting.
             </p>
           )}
           <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(pasteCaption, "caption")}>
@@ -269,7 +294,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
               </label>
               {(item.platform.startsWith("Facebook") || item.platform === "X") && (
                 <label>
-                  {item.platform === "X" ? "Reply" : item.platform === "Facebook Page" ? "Link line at the end of the caption" : "First comment"} (blank = the blog link)
+                  {link.kind === "caption" ? "Link line at the end of the post" : item.platform === "X" ? "Reply" : "First comment"} (blank = the blog link)
                   <textarea rows={2} value={firstComment} onChange={(e) => setFirstComment(e.target.value)} />
                 </label>
               )}
@@ -369,15 +394,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         <details className="garage-social-stats" open={Boolean(item.testSlot) && item.stats.views === null}>
           <summary>7-day numbers{item.stats.views !== null ? ` · ${item.stats.views} views` : ""}</summary>
           <div className="garage-social-stat-grid">
-            {(
-              [
-                ["views", "Views"],
-                ["forYou", "For You %"],
-                ["shares", "Shares"],
-                ["saves", "Saves"],
-                ["follows", "Follows"],
-              ] as const
-            ).map(([key, label]) => (
+            {statFields.map(([key, label]) => (
               <label key={key}>
                 {label}
                 <input
