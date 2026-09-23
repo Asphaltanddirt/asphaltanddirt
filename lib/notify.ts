@@ -183,7 +183,14 @@ export function effectiveWindow(post: SocialPost): string {
  * posting is ever automated, these nudges stop on their own.
  */
 export function needsAHuman(post: SocialPost): boolean {
-  return !isAutoPlatform(post.platform) && post.status !== "Posted" && post.status !== "Skipped";
+  if (isAutoPlatform(post.platform)) return false;
+  if (post.status === "Posted" || post.status === "Skipped") return false;
+  // A slot with nothing on it isn't a task. The Wednesday trail clips generate
+  // a card every week but wait on footage that often never arrives (Anthony
+  // films weekends now), and nudging for work that can't be done is exactly
+  // the noise that gets notifications muted. Same test the auto-poster uses to
+  // refuse a post: is there actually anything to put out?
+  return Boolean(post.caption.trim() || post.drafts.length > 0 || post.assets.length > 0);
 }
 
 const timeLabel = (d: Date) =>
