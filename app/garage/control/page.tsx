@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageSwitch from "@/components/GarageSwitch";
+import GarageNotifications from "@/components/GarageNotifications";
 import { getSession, listGarageUsers } from "@/lib/garageAuth";
 import { canSeeControlRoom, getControlRoom } from "@/lib/garageControl";
 import { getWeekTasks, todayNY } from "@/lib/garageTasks";
@@ -11,6 +12,7 @@ import { AUTO_PLATFORMS } from "@/lib/socialCopy";
 import { isReplySearchOn } from "@/lib/replyQueue";
 import { isHarvestOn } from "@/lib/commentHarvest";
 import { isThreadsConnected } from "@/lib/threadsPost";
+import { getNotifySwitch } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -87,6 +89,7 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
   const replySearch = await isReplySearchOn().catch(() => null);
   const harvest = await isHarvestOn().catch(() => null);
   const threadsConnected = await isThreadsConnected().catch(() => false);
+  const notify = await getNotifySwitch().then((r) => r.on).catch(() => null);
   const autoReady = AUTO_PLATFORMS.map((p) => ({ platform: p, ready: platformReady(p) }));
 
   const { site, deploy, event, tailgate, queues, audience, store, systems } = room;
@@ -278,6 +281,36 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
           {threadsMsg && <p className="garage-form-note" role="status">Threads: {threadsMsg}</p>}
           <p className="garage-form-note">
             Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok (TikTok Studio) and the Facebook Group stay by hand.
+          </p>
+        </div>
+
+        <div className="garage-panel">
+          <h2>Notifications: {notify === null ? "\u2014" : notify ? "on" : "off"}</h2>
+          <p>
+            Ten minutes before each by-hand posting window your phone buzzes \u2014 the four TikTok slots and Wednesday&apos;s
+            Facebook Group Trail Talk. A last call near the close, but only if the card still isn&apos;t marked posted.
+            Anything the auto-poster fails to send tells you straight away; everything that goes out fine is one digest at 9 PM.
+          </p>
+          <GarageNotifications />
+          {notify !== null &&
+            (notify ? (
+              <GarageSwitch
+                label="Switch notifications off"
+                armedLabel="Tap again to switch them off"
+                warning="No more posting nudges, failure alerts or digests on any device. Everything still logs."
+                body={{ action: "notify-off" }}
+                danger
+              />
+            ) : (
+              <GarageSwitch
+                label="Switch notifications on"
+                armedLabel="Tap again to switch them on"
+                warning="Your phone gets a nudge before each by-hand posting window, and a banner the moment an auto-post fails."
+                body={{ action: "notify-on" }}
+              />
+            ))}
+          <p className="garage-form-note">
+            The switch is the master; the button above is this device. Both have to be on for a banner to land.
           </p>
         </div>
 

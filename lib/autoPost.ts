@@ -251,6 +251,12 @@ export async function autoPostOne(post: SocialPost, opts: { live: boolean; now?:
     await saveAutoResult(post.id, { status: "Failed", log: message });
     await updateRecord("Social Posts", post.id, { Approved: false }, { baseId: BASE_ID }).catch(() => {});
     console.error("auto-post failed", post.id, post.platform, reason);
+    // Tell a person now, not on the notifier's next ten-minute run — approval
+    // has just been cleared, so nothing retries until someone looks. Imported
+    // lazily because lib/notify.ts imports slotStart from here.
+    await import("@/lib/notify")
+      .then((n) => n.notifyFailure({ id: post.id, name: post.name, platform: post.platform }, reason))
+      .catch(() => {});
     return { ...base, result: "failed", message };
   }
 }

@@ -5,6 +5,7 @@ import { getCommsSettings, setTailgateOpen } from "@/lib/eventComms";
 import { setAutoPostSwitch } from "@/lib/autoPost";
 import { setReplySearch } from "@/lib/replyQueue";
 import { setHarvest } from "@/lib/commentHarvest";
+import { setNotifySwitch } from "@/lib/notify";
 
 /** The Control Room's switches. Owner-only, and each one maps to exactly one
  *  Airtable field — nothing here does anything you couldn't undo by tapping
@@ -37,6 +38,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "ok" });
     } catch (err) {
       console.error("comment harvest switch failed", err);
+      return NextResponse.json({ error: "That didn't go through. Try again." }, { status: 502 });
+    }
+  }
+
+  if (body.action === "notify-on" || body.action === "notify-off") {
+    try {
+      await setNotifySwitch(body.action === "notify-on", session.name || session.email);
+      return NextResponse.json({ status: "ok" });
+    } catch (err) {
+      console.error("notifications switch failed", err);
       return NextResponse.json({ error: "That didn't go through. Try again." }, { status: 502 });
     }
   }
