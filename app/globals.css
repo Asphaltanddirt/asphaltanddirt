@@ -1998,6 +1998,19 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 .garage-header{ padding-top:calc(12px + env(safe-area-inset-top)); }
 .garage-body{ padding-bottom:calc(var(--sp-8) + env(safe-area-inset-bottom)); }
 .garage-signin{ padding-top:calc(var(--sp-3) + env(safe-area-inset-top)); padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+/* Seen on Jose's iPhone 9/24: from the Home Screen, the clock and battery sat on
+   the wordmark and "Sign out" — iOS was reporting a zero top inset. Installed,
+   the status bar is always there, so never pad for less than it, and give it a
+   solid band so the page scrolls under the band rather than under the clock. */
+@media (display-mode: standalone){
+  :root{ --garage-top: max(env(safe-area-inset-top), 59px); }
+  .garage-header{ padding-top:calc(12px + var(--garage-top)); }
+  .garage-signin{ padding-top:calc(var(--sp-3) + var(--garage-top)); }
+  .garage-header::before, .garage-signin::before{
+    content:""; position:fixed; top:0; left:0; right:0; height:var(--garage-top);
+    background:#0b0b0b; z-index:100; pointer-events:none;
+  }
+}
 .garage-tasks{ list-style:none; margin:0 0 var(--sp-3); padding:0; display:flex; flex-direction:column; gap:8px; }
 .garage-task{
   display:flex; align-items:flex-start; gap:10px; padding:12px 14px;
