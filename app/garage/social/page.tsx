@@ -25,23 +25,37 @@ const shift = (monday: string, days: number) => {
 const label = (iso: string, opts: Intl.DateTimeFormatOptions) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
 
-export default async function GarageSocialPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
+export default async function GarageSocialPage({ searchParams }: { searchParams: Promise<{ week?: string; all?: string }> }) {
   const session = await getSession();
   if (!session) redirect("/garage");
   if (!canSeeOwnerOnly(session)) redirect("/garage");
 
   const today = todayNY();
-  const { week } = await searchParams;
+  const { week, all } = await searchParams;
   const monday = weekOf(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : today);
   const posts = await getWeekPosts(monday).catch((): SocialPost[] | null => null);
 
   // Two sections (Jose 9/22): what he posts by hand on top, then the
   // auto-posts he only approves. Each stays grouped by day.
+  // By Thursday the top of the board is Monday's finished work, and you scroll
+  // past three days of ticks to reach anything you can act on (Jose, 9/23).
+  // A past day whose items are all Posted or Skipped is done with; it folds
+  // away unless ?all=1. A past day still holding something Planned stays —
+  // overdue work must never be the thing that got hidden.
+  const showAll = all === "1";
+  const finished = (p: SocialPost) => p.status === "Posted" || p.status === "Skipped";
+  const spent = (items: SocialPost[], day: string) => day < today && items.every(finished);
+
   const groupByDay = (list: SocialPost[]) => {
     const m = new Map<string, SocialPost[]>();
     for (const p of list) m.set(p.due, [...(m.get(p.due) || []), p]);
-    return [...m.entries()];
+    return [...m.entries()].filter(([day, items]) => showAll || !spent(items, day));
   };
+  const hiddenDays = showAll
+    ? 0
+    : [...new Set((posts || []).map((p) => p.due))].filter((day) =>
+        spent((posts || []).filter((p) => p.due === day), day),
+      ).length;
   const byHand = groupByDay((posts || []).filter((p) => !isAutoPlatform(p.platform)));
   const auto = groupByDay((posts || []).filter((p) => isAutoPlatform(p.platform)));
   const openHand = (posts || []).filter((p) => !isAutoPlatform(p.platform) && p.status === "Planned").length;
@@ -60,6 +74,17 @@ export default async function GarageSocialPage({ searchParams }: { searchParams:
               Week of {label(monday, { month: "long", day: "numeric" })}
               {posts && posts.length > 0 && ` · ${posted} posted · ${open} to go`}
             </p>
+            {hiddenDays > 0 && (
+              <p className="garage-form-note">
+                {hiddenDays} finished {hiddenDays === 1 ? "day is" : "days are"} folded away ·{" "}
+                <Link href={`/garage/social?week=${monday}&all=1`}>Show the whole week</Link>
+              </p>
+            )}
+            {showAll && (
+              <p className="garage-form-note">
+                Showing every day · <Link href={`/garage/social?week=${monday}`}>Just what&apos;s left</Link>
+              </p>
+            )}
           </div>
           <nav className="garage-links garage-links-wrap" aria-label="Weeks">
             <Link href={`/garage/social?week=${shift(monday, -7)}`}>← Last week</Link>
