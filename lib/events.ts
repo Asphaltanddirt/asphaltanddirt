@@ -231,12 +231,18 @@ export async function getNextUpcomingEvent(): Promise<EventSummary | null> {
  *  sitemap and the newsletter, which all read getPublishedEvents instead. */
 export async function getEventBySlug(
   slug: string,
-  options: { includeCrewOnly?: boolean } = {},
+  options: { includeCrewOnly?: boolean; includeCancelled?: boolean } = {},
 ): Promise<EventDetail | null> {
   assertConfigured();
   // Crew Only events never resolve for public callers (event page, RSVP,
-  // uploads, Tailgate). Only the Garage asks for them.
-  const statuses = ["Published", "Unlisted", ...(options.includeCrewOnly ? ["Crew Only"] : [])];
+  // uploads, Tailgate). Only the Garage asks for them. Cancelled ones only
+  // resolve for Call it off, which is how a cancelled event comes back.
+  const statuses = [
+    "Published",
+    "Unlisted",
+    ...(options.includeCrewOnly ? ["Crew Only"] : []),
+    ...(options.includeCancelled ? ["Cancelled"] : []),
+  ];
   const records = await listRecords(
     EVENTS_TABLE,
     `AND(OR(${statuses.map((st) => `{Status} = '${st}'`).join(", ")}), {Slug} = '${escapeFormulaString(slug)}')`,

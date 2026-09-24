@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Add the photo first — Instagram can't post without it." }, { status: 400 });
   }
 
-  const event = await getEventBySlug(slug, { includeCrewOnly: true }).catch(() => null);
+  const event = await getEventBySlug(slug, { includeCrewOnly: true, includeCancelled: true }).catch(() => null);
   if (!event) return NextResponse.json({ error: "Couldn't find that event." }, { status: 404 });
 
   // The editor's copy of the event: its status says whether a postpone is
