@@ -61,7 +61,12 @@ export default function GarageWeekStrip({ week }: { week: PostingWeek }) {
                       ? `${day.auto.failed} didn't post`
                       : day.auto.done === day.auto.total
                         ? `${day.auto.total} posted automatically`
-                        : `${day.auto.total} automatic`}
+                        : day.auto.done > 0 || day.isPast
+                          ? // A day where some went and some didn't used to read
+                            // "4 automatic", identical to a day that hasn't
+                            // happened. Say what actually happened.
+                            `${day.auto.done} of ${day.auto.total} posted`
+                          : `${day.auto.total} automatic`}
                   </span>
                 )}
 

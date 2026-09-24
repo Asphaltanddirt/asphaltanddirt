@@ -1,6 +1,7 @@
 import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { getPostBySlug } from "@/lib/blog";
 import { todayNY, weekOf } from "@/lib/garageTasks";
+import { isAutoPlatform } from "@/lib/socialCopy";
 
 /**
  * The social posting board in A&D Garage (/garage/social).
@@ -182,7 +183,18 @@ export async function getPostsNeedingAttention(today = todayNY()): Promise<Socia
     `AND({Status} = 'Planned', IS_BEFORE({Due}, DATEADD('${today}', 1, 'days')), IS_AFTER({Due}, DATEADD('${today}', -8, 'days')))`,
     { baseId: BASE_ID },
   );
-  return rows.map(toPost).sort((a, b) => a.due.localeCompare(b.due));
+  return (
+    rows
+      .map(toPost)
+      // BY HAND ONLY. This is the "you have things to post" card on the home
+      // screen, so an auto platform has no business in it — it told Jose to
+      // post an Instagram Reel that Instagram's own auto-poster owns, and
+      // would have said so every day forever (2026-09-23). An auto post that
+      // is stuck surfaces as a failure notification and as a short count on
+      // the week strip, not as somebody's to-do.
+      .filter((p) => !isAutoPlatform(p.platform))
+      .sort((a, b) => a.due.localeCompare(b.due))
+  );
 }
 
 /** The Feature and Alternate blog posts for a week, from its Newsletters row. */
