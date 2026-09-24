@@ -245,6 +245,10 @@ export async function autoPostOne(post: SocialPost, opts: { live: boolean; now?:
     await markPosted(post, { url: result.url, by: "Auto-poster" });
     const message = `Posted ${stamp()}.${result.note ? ` ${result.note}` : ""}`;
     await saveAutoResult(post.id, { status: "Posted", log: message, state: "" });
+    // Posted, but a person still has a job on it (pinning the Feature on X).
+    await import("@/lib/notify")
+      .then((n) => (n.needsPinning(post) ? n.notifyPin({ id: post.id, name: post.name }) : undefined))
+      .catch(() => {});
     return { ...base, result: "posted", message };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);

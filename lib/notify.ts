@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -389,6 +389,35 @@ export async function notifyFailure(post: { id: string; name: string; platform: 
     });
   } catch (err) {
     console.error("failure notification failed", err);
+  }
+}
+
+// ---------------------------------------------------------------- follow-ups
+
+/**
+ * An auto-post that still leaves a job for a person. The week's Feature X post
+ * gets pinned by hand (the X API can't pin), and a success that only reaches
+ * the 9 PM digest is hours too late for that — so this one alerts the moment
+ * it posts. Never throws, like notifyFailure.
+ */
+export function needsPinning(post: { platform: string; topic: string; asset: string }): boolean {
+  return post.platform === "X" && post.topic === "Feature" && post.asset === "X image";
+}
+
+export async function notifyPin(post: { id: string; name: string }): Promise<void> {
+  try {
+    const sw = await getNotifySwitch();
+    if (!sw.on) return;
+    const key = ledgerKey("Pin", post.id, todayNY());
+    await deliver(key, "Pin", post.name, {
+      title: "Pin the X post",
+      body: "This week's Feature just went out on X. View post → ⋯ → Pin to your profile.",
+      url: `/garage/social?card=${post.id}`,
+      tag: key,
+      requireInteraction: true,
+    });
+  } catch (err) {
+    console.error("pin notification failed", err);
   }
 }
 
