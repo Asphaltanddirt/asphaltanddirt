@@ -1,7 +1,7 @@
 import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { sendEmail } from "@/lib/resendEmail";
 import { sendToUser, isPushConfigured, type PushPayload } from "@/lib/push";
-import { slotStart } from "@/lib/autoPost";
+import { slotStart, planPublish } from "@/lib/autoPost";
 import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -89,7 +89,7 @@ async function record(key: string, kind: NotifyKind, subject: string, channel: s
     Detail: detail.slice(0, 5000),
   };
   try {
-    await createRecord(LEDGER, fields, { baseId: GARAGE_BASE });
+    await createRecord(LEDGER, fields, { baseId: GARAGE_BASE, typecast: true });
   } catch (err) {
     console.error("notify ledger write failed", err);
   }
@@ -206,17 +206,42 @@ const timeLabel = (d: Date) =>
 
 // ---------------------------------------------------------------- the run
 
+/**
+ * Why an auto post is not going to go out, or null if it will.
+ *
+ * Covers the two ways a slot dies in silence. Neither reaches the failure
+ * alert, which only fires when a send is actually attempted and errors:
+ *
+ *  1. **Never approved.** The auto-poster skips it without looking, so there
+ *     is no attempt and nothing to fail.
+ *  2. **Approved but unpostable** — no image on an image slot, no video on a
+ *     clip slot, a caption over X's limit. planPublish refuses it before any
+ *     network call, writes "Failed" on the card, and that is the end of it.
+ *
+ * Wednesday's Instagram trail clip sat in case 1 all day: TikTok and YouTube
+ * went out, Instagram quietly did not, and nothing anywhere said so.
+ */
+export function willNotPost(post: SocialPost): string | null {
+  if (!isAutoPlatform(post.platform)) return null;
+  if (post.status === "Posted" || post.status === "Skipped") return null;
+  if (post.autoStatus === "Posted" || post.autoStatus === "Processing") return null;
+  if (!post.approved) return "not approved yet";
+  const plan = planPublish(post);
+  return plan.ok ? null : plan.reason;
+}
+
 export interface NotifyRun {
   ran: boolean;
   reason?: string;
   nudged: string[];
   lastCalls: string[];
+  notReady: string[];
   digest: string | null;
 }
 
 export async function runNotifications(options: { now?: Date; force?: boolean } = {}): Promise<NotifyRun> {
   const now = options.now || new Date();
-  const out: NotifyRun = { ran: false, nudged: [], lastCalls: [], digest: null };
+  const out: NotifyRun = { ran: false, nudged: [], lastCalls: [], notReady: [], digest: null };
 
   if (!options.force) {
     const sw = await getNotifySwitch();
@@ -229,12 +254,24 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
 
   const today = todayNY();
   const posts = (await getWeekPosts(weekOf(today))).filter((p) => p.due === today);
+  /** Blocked auto slots, grouped by the time their window opens. */
+  const notReady = new Map<string, { post: SocialPost; reason: string }[]>();
 
   for (const post of posts) {
     const window = effectiveWindow(post);
     if (!window) continue;
     const opens = slotStart(post.due, window);
     const closes = slotEnd(post.due, window, opens);
+
+    // Auto slots that can't go out are collected and sent as ONE banner per
+    // window below — Saturday alone has three, all waiting on the same clip,
+    // and three identical alerts in one minute is the noise this whole design
+    // exists to avoid.
+    const blocked = willNotPost(post);
+    if (blocked && Math.abs(now.getTime() - (opens.getTime() - NUDGE_LEAD_MS)) <= WINDOW_MS / 2) {
+      const at = timeLabel(opens);
+      notReady.set(at, [...(notReady.get(at) || []), { post, reason: blocked }]);
+    }
 
     if (needsAHuman(post)) {
       // Nudge: 10 minutes before the window opens.
@@ -263,6 +300,25 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
         if (sent) out.lastCalls.push(post.name);
       }
     }
+  }
+
+  // One banner per window for everything that won't post at it. Sent at the
+  // same ten-minutes-before mark as a by-hand nudge, because that is while
+  // there is still time to attach the file or tap Approve — saying so after
+  // the window closed is just a report of a dead slot.
+  for (const [at, items] of notReady) {
+    const key = ledgerKey("Not ready", `${today}-${at.replace(/\W+/g, "")}`, today);
+    const reasons = [...new Set(items.map((i) => i.reason))];
+    const sent = await deliver(key, "Not ready", `${items.length} not ready at ${at}`, {
+      title: items.length === 1 ? `Won't post · ${items[0].post.platform}` : `${items.length} won't post at ${at}`,
+      body:
+        items.length === 1
+          ? `${items[0].post.asset || items[0].post.topic} at ${at} — ${items[0].reason}.`
+          : `${items.map((i) => i.post.platform).join(" · ")} — ${reasons.join("; ")}.`,
+      url: "/garage/social",
+      tag: key,
+    });
+    if (sent) out.notReady.push(...items.map((i) => i.post.name));
   }
 
   // Digest: 9 PM ET, one line for everything that went out on its own.
