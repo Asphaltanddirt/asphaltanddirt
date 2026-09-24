@@ -25,7 +25,11 @@ import { KIND_LABEL, type UploadKind } from "@/lib/mediaKinds";
  * somebody's own words.
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+// Its own base since 2026-09-24 (A&D Media Library). It was a table in the
+// Analytics base, but it's an asset ledger, not performance data, and a single
+// Photos-library import can add thousands of rows. Airtable slows down as a
+// base grows, so jobs that grow get their own base (Jose's standing rule).
+const BASE_ID = process.env.AIRTABLE_MEDIA_BASE_ID || "appZCZVpHmZ2bjYIt";
 const TABLE = "Media Library";
 
 export interface MediaRowInput {
