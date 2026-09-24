@@ -22,6 +22,8 @@ const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
 const TARGETS = "Reply Targets";
 const QUEUE = "Reply Queue";
 const SETTINGS = "Garage Settings";
+/** How many already-handled replies stay on screen as context. */
+const HANDLED_SHOWN = 4;
 
 const DIRT = `(jeep OR wrangler OR bronco OR rubicon OR overland OR overlanding OR "off road" OR offroad OR 4x4 OR "trail ride") -is:retweet -is:reply lang:en`;
 const ASPHALT = `(corvette OR "LS swap" OR LS7 OR E36 OR miata OR "track day" OR "manual transmission" OR "car meet" OR "project car") -is:retweet -is:reply lang:en`;
@@ -183,7 +185,17 @@ export async function getReplyQueue(): Promise<QueueItem[]> {
     };
   });
   const score = (i: QueueItem) => i.likes + 3 * i.replies + 2 * i.reposts;
-  return items.sort((a, b) => (a.status === "New" ? 0 : 1) - (b.status === "New" ? 0 : 1) || score(b) - score(a));
+  const open = items.filter((i) => i.status === "New").sort((a, b) => score(b) - score(a));
+  // "The last few handled" — a few. Every handled item used to stay for the
+  // full three days, so by the end of a day there were more finished ones on
+  // screen than open ones and it read as though replies you had already dealt
+  // with kept coming back (Jose, 2026-09-23). They are kept only as recent
+  // context; the record of every one of them lives in Airtable.
+  const handled = items
+    .filter((i) => i.status !== "New")
+    .sort((a, b) => b.foundAt.localeCompare(a.foundAt))
+    .slice(0, HANDLED_SHOWN);
+  return [...open, ...handled];
 }
 
 export async function setReplyStatus(id: string, status: QueueItem["status"], by: string, replyUrl?: string) {

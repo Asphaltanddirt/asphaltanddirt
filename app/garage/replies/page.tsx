@@ -31,7 +31,7 @@ export default async function GarageRepliesPage() {
           <div>
             <h1 className="garage-event-title">X reply queue</h1>
             <p className="garage-event-area">
-              {items ? `${open.length} to look at · ${handled.length} handled in the last 3 days` : ""}
+              {items ? `${open.length} to look at${handled.length > 0 ? ` · ${handled.length} just handled` : ""}` : ""}
             </p>
           </div>
           <nav className="garage-links garage-links-wrap" aria-label="Related">
