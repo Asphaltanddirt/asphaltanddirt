@@ -131,7 +131,11 @@ export function planPublish(post: SocialPost): { ok: true; input: Omit<PublishIn
   const videos = post.assets.map((a, i) => (a.type.startsWith("video/") ? i : -1)).filter((i) => i >= 0);
   const wantsVideo = post.asset === "Vertical clip";
   // A text post (e.g. the X Trail Talk question) can go out with no media.
-  const textOnly = post.asset === "Text post" && (post.platform === "X" || post.platform === "Threads");
+  // Facebook joined this list for event cancellation notices — /feed takes a
+  // bare message. Instagram is absent because it genuinely cannot: every IG
+  // post needs media, which is a platform limit, not an omission here.
+  const textOnly =
+    post.asset === "Text post" && (post.platform === "X" || post.platform === "Threads" || post.platform === "Facebook Page");
 
   if (wantsVideo && videos.length === 0) return { ok: false, reason: "This slot is a clip, but no video is attached." };
   if (!wantsVideo && !textOnly && images.length === 0) return { ok: false, reason: "No image attached." };

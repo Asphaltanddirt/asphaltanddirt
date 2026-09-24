@@ -16,6 +16,9 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
   const [tested, setTested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [notice, setNotice] = useState("");
+  const [noticeNote, setNoticeNote] = useState("");
+  const [posting, setPosting] = useState(false);
 
   async function send(mode: "test" | "live") {
     setBusy(true);
@@ -40,6 +43,45 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
       setNote(err instanceof Error ? err.message : "That didn't send.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function previewNotice() {
+    setNoticeNote("");
+    const q = new URLSearchParams({ slug, kind, why: message, ...(kind === "postponed" && newDate ? { newDate } : {}) });
+    try {
+      const res = await fetch(`/api/garage/event/notice?${q}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't build it.");
+      setNotice(data.text);
+      if (data.alreadySent) setNoticeNote("A notice already went out for this event today.");
+    } catch (err) {
+      setNoticeNote(err instanceof Error ? err.message : "Couldn't build it.");
+    }
+  }
+
+  async function sendNotice() {
+    setPosting(true);
+    setNoticeNote("");
+    try {
+      const res = await fetch("/api/garage/event/notice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, kind, why: message, newDate: kind === "postponed" ? newDate : undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't post it.");
+      const ok = data.results.filter((r: { posted: boolean }) => r.posted);
+      const bad = data.results.filter((r: { posted: boolean }) => !r.posted);
+      setNoticeNote(
+        `${ok.map((r: { platform: string }) => r.platform).join(", ") || "Nothing"} posted.` +
+          (bad.length ? ` Failed: ${bad.map((r: { platform: string; error?: string }) => `${r.platform} (${r.error})`).join(", ")}` : ""),
+      );
+      setNotice(data.text);
+    } catch (err) {
+      setNoticeNote(err instanceof Error ? err.message : "Couldn't post it.");
+    } finally {
+      setPosting(false);
     }
   }
 
@@ -121,9 +163,43 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
           {note}
         </p>
       )}
+      <hr className="mt-4" />
+
+      <h2>Post the notice</h2>
       <p className="garage-form-note">
-        This is the email half. The people who never RSVP&apos;d found the event on social — post it there too.
+        The announcement. People who never RSVP&apos;d found the event on social, so this is the only thing that reaches
+        them. Goes out to <strong>X, Threads and the Facebook Page</strong> the moment you send it.
       </p>
+
+      <div className="card-actions mt-2">
+        <button className="btn btn-outline btn-sm" onClick={previewNotice} disabled={posting || !message.trim() || kind === "update"}>
+          Show me the post
+        </button>
+        <button className="btn btn-primary btn-sm" onClick={sendNotice} disabled={posting || !notice}>
+          {posting ? "Posting…" : "Post it now"}
+        </button>
+      </div>
+
+      {kind === "update" && <p className="garage-form-note">Pick Cancelled or Postponed above to post a notice.</p>}
+
+      {notice && (
+        <>
+          <label htmlFor="ev-notice">What goes out</label>
+          <textarea id="ev-notice" rows={6} readOnly value={notice} />
+          <p className="garage-form-note">
+            <strong>Instagram and the Facebook group are yours.</strong> Instagram needs an image on every post and the
+            group has no posting API. Copy this text, and use the{" "}
+            <em>Event Cancelled / Postponed — Social Graphic</em> prompt in the Prompts base to get Robin to make the
+            image.
+          </p>
+        </>
+      )}
+
+      {noticeNote && (
+        <p className="garage-form-note" role="status">
+          {noticeNote}
+        </p>
+      )}
     </div>
   );
 }

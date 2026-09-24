@@ -143,6 +143,16 @@ export async function publishToFacebook(input: PublishInput): Promise<PublishRes
     return { status: "posted", url, note: await firstComment(reel, input.followUp, token) };
   }
 
+  // Text only — no photo, no video. Used by event cancellation notices, where
+  // waiting to make a graphic is time people spend driving to a trailhead.
+  // Instagram cannot do this; Facebook can, via /feed with just a message.
+  if (input.images.length === 0) {
+    const posted = state.post || (await graph<{ id?: string }>("POST", `${page}/feed`, { message: input.caption }, token)).id || "";
+    if (!posted) throw new Error("Meta accepted the post but returned no id.");
+    const textUrl = await facebookPermalink(posted, token, `https://www.facebook.com/${posted}`);
+    return { status: "posted", url: textUrl, note: await firstComment(posted, input.followUp, token) };
+  }
+
   // Photos: one → /photos; several → unpublished photos attached to one feed post.
   let postId = state.post || "";
   if (!postId) {
