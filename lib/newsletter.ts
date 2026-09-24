@@ -447,7 +447,13 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
 /** Swaps an unsubscribe link's token onto the richer /manage page (drop one
  *  topic instead of everything) — same token, human-facing destination. */
 function manageUrl(unsubscribeUrl: string): string {
-  const token = new URL(unsubscribeUrl).searchParams.get("token") || "";
+  // Previews pass a placeholder ("#preview-unsubscribe"), not a URL.
+  let token = "";
+  try {
+    token = new URL(unsubscribeUrl).searchParams.get("token") || "";
+  } catch {
+    token = "";
+  }
   return `${SITE_URL}/manage?token=${encodeURIComponent(token)}`;
 }
 
