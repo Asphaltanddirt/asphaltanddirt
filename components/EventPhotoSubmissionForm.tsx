@@ -248,7 +248,7 @@ export default function EventPhotoSubmissionForm({ eventSlug, eventTitle }: { ev
       const res = await fetch("/api/event-media/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...auth, expected: items.length, eventTitle }),
+        body: JSON.stringify({ ...auth, expected: items.length, eventTitle, eventSlug }),
       });
       if (res.ok) ({ photos, videos } = await res.json());
     } catch {

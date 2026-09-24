@@ -3,6 +3,7 @@ import { findFileInFolder } from "@/lib/googleDrive";
 import { folderIdFromUrl, getSubmission, updateSubmission } from "@/lib/eventMedia";
 import { getMessageForUpload, updateMessage } from "@/lib/eventComms";
 import { verifyMediaPost } from "@/lib/tailgateMedia";
+import { fileEventFootage } from "@/lib/mediaLibrary";
 
 /**
  * Finishes one file of a post. Checks Drive for the file rather than trusting
@@ -50,6 +51,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         [isPhoto ? "Photo Links" : "Video Links"]: link,
         Approved: false,
       });
+    }
+    // Into the Media Library, tagged from the event. Best-effort: the post is
+    // already live in the feed, and a library hiccup must not undo that.
+    if (folderId) {
+      const who = message.authorName || "Someone";
+      const filed = await fileEventFootage([{ fileName: file.name, fileId: file.id, size: Number(file.size) || undefined }], {
+        slug,
+        folderId,
+        uploadedBy: `${who} (Tailgate${message.isStaff ? ", staff" : ""})`,
+      });
+      if (filed.skipped) console.warn("media library (tailgate):", filed.skipped);
     }
     return NextResponse.json({ status: "Ready" });
   } catch (err) {

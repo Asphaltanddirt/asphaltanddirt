@@ -8,6 +8,7 @@ import {
   updateSubmission,
   verifySubmission,
 } from "@/lib/eventMedia";
+import { fileEventFootage } from "@/lib/mediaLibrary";
 
 const TO_EMAIL = process.env.REVIEW_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
 const FROM_EMAIL = process.env.REVIEW_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt <notifications@asphaltanddirt.com>";
@@ -18,7 +19,7 @@ const FROM_EMAIL = process.env.REVIEW_SUBMISSIONS_FROM_EMAIL || "Asphalt & Dirt 
  * and emails the team once.
  */
 export async function POST(req: NextRequest) {
-  let body: { submissionId?: string; token?: string; expected?: number; eventTitle?: string };
+  let body: { submissionId?: string; token?: string; expected?: number; eventTitle?: string; eventSlug?: string };
   try {
     body = await req.json();
   } catch {
@@ -60,6 +61,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (!alreadyClosed) {
+      // Into the Media Library once, when the submission first closes, tagged
+      // from its event. The slug comes from the browser, so it only seeds tags
+      // if it names the event this submission was actually made for.
+      const eventIds = Array.isArray(record.fields.Event) ? (record.fields.Event as string[]) : [];
+      const filed = await fileEventFootage(
+        files.map((f) => ({ fileName: f.name, fileId: f.id, size: Number(f.size) || undefined, mimeType: f.mimeType })),
+        {
+          slug: String(body.eventSlug || "").slice(0, 200),
+          folderId,
+          uploadedBy: `${(record.fields.Name as string) || "Someone"} (attendee)`,
+          expectEventId: eventIds[0],
+        },
+      );
+      if (filed.skipped) console.warn("media library (event page):", filed.skipped);
+
       const name = (record.fields.Name as string) || "Someone";
       const email = (record.fields.Email as string) || "";
       const folderLink = record.fields["Drive Folder"] as string;

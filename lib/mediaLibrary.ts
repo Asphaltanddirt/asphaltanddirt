@@ -1,4 +1,5 @@
 import { createRecord, listRecords, isAirtableConfigured } from "@/lib/airtable";
+import { getEventBySlug } from "@/lib/events";
 
 /**
  * The media library (Jose, 2026-09-22): "we need a way to tag raw footage so we
@@ -146,6 +147,39 @@ export async function fileMediaRows(
     }
   }
   return { filed };
+}
+
+/**
+ * Files footage that arrived some other way than Garage → Upload: an attendee's
+ * event-page upload, or a photo/video posted in Tailgate. Both already belong to
+ * one event, so the two primary tags are seeded exactly as Garage Upload seeds
+ * them, and the footage counts toward the library from the moment it lands.
+ * Found missing 9/24, two days before the Mud Run — the first real upload day.
+ *
+ * `expectEventId` guards the one input a browser supplies (the slug): if it
+ * resolves to a different event than the submission was made for, nothing is
+ * seeded rather than tagging the file with the wrong event.
+ */
+export async function fileEventFootage(
+  files: MediaRowInput[],
+  opts: { slug: string; folderId: string; uploadedBy: string; expectEventId?: string },
+): Promise<{ filed: number; skipped?: string }> {
+  try {
+    const found = opts.slug ? await getEventBySlug(opts.slug, { includeCrewOnly: true }).catch(() => null) : null;
+    const event = found && (!opts.expectEventId || found.id === opts.expectEventId) ? found : null;
+    return await fileMediaRows(files, {
+      kind: "event",
+      label: event?.title || opts.slug,
+      folderId: opts.folderId,
+      keywords: "",
+      thoughts: "",
+      uploadedBy: opts.uploadedBy,
+      eventType: event?.eventType,
+      venueTypes: event?.venueTypes,
+    });
+  } catch (err) {
+    return { filed: 0, skipped: err instanceof Error ? err.message.slice(0, 120) : "failed" };
+  }
 }
 
 /** Everything filed, newest first. Airtable's own search box is the day-to-day
