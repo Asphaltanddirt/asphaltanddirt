@@ -134,11 +134,32 @@ export default function GarageNotifications() {
       </p>
     );
 
+  async function resendDigest() {
+    setMessage("");
+    try {
+      const res = await fetch("/api/garage/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "digest-now" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't send it.");
+      setMessage(data.sent ? "Sent — check your lock screen." : data.reason || "Nothing to send.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "That didn't work.");
+    }
+  }
+
   return (
     <>
       <button className="btn btn-outline btn-sm" onClick={state === "on" ? turnOff : turnOn} disabled={state === "working"}>
         {state === "working" ? "Working…" : state === "on" ? "Turn off on this device" : "Turn on for this device"}
       </button>
+      {state === "on" && (
+        <button className="btn btn-outline btn-sm" onClick={resendDigest}>
+          Send today&apos;s digest
+        </button>
+      )}
       {message && (
         <p className="garage-form-note" role="status">
           {message}

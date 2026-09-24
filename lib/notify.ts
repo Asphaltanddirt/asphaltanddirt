@@ -268,20 +268,48 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
   // Digest: 9 PM ET, one line for everything that went out on its own.
   const hourNY = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(now));
   if (hourNY === 21) {
-    const posted = posts.filter((p) => p.autoStatus === "Posted");
-    if (posted.length > 0) {
+    const digest = buildDigest(posts);
+    if (digest) {
       const key = ledgerKey("Digest", today, today);
-      const sent = await deliver(key, "Digest", `Daily digest ${today}`, {
-        title: `${posted.length} post${posted.length === 1 ? "" : "s"} went out today`,
-        body: posted.map((p) => p.platform).join(" · "),
-        url: "/garage/social",
-        tag: key,
-      });
-      if (sent) out.digest = `${posted.length} posts`;
+      const sent = await deliver(key, "Digest", `Daily digest ${today}`, { ...digest, tag: key });
+      if (sent) out.digest = digest.title;
     }
   }
 
   return out;
+}
+
+/** The day's digest, or null when nothing went out on its own. */
+function buildDigest(posts: SocialPost[]): PushPayload | null {
+  const posted = posts.filter((p) => p.autoStatus === "Posted");
+  if (posted.length === 0) return null;
+  return {
+    title: `${posted.length} post${posted.length === 1 ? "" : "s"} went out today`,
+    body: posted.map((p) => p.platform).join(" · "),
+    url: "/garage/social",
+    // The one notification that is a summary rather than a prompt, so it stays
+    // up until it's dealt with. Jose swiped the first one away before reading
+    // it (2026-09-23) and there was no way to get it back.
+    requireInteraction: true,
+  };
+}
+
+/**
+ * Rebuild and send today's digest on demand, from the Control Room.
+ *
+ * Deliberately sidesteps the day's dedupe key — that key exists to stop the
+ * ten-minute cron sending twice, not to stop a person asking to see it again.
+ * The re-send gets its own timestamped key so it is still logged, and so two
+ * taps a second apart can't both fire.
+ */
+export async function resendDigest(): Promise<{ sent: boolean; reason?: string }> {
+  const today = todayNY();
+  const posts = (await getWeekPosts(weekOf(today)).catch(() => [] as SocialPost[])).filter((p) => p.due === today);
+  const digest = buildDigest(posts);
+  if (!digest) return { sent: false, reason: "Nothing has gone out on its own today." };
+  const key = ledgerKey("Digest", `resend-${Date.now()}`, today);
+  const sent = await deliver(key, "Digest", `Daily digest ${today} (re-sent)`, { ...digest, tag: key });
+  return { sent, reason: sent ? undefined : "Couldn't send it." };
 }
 
 // ---------------------------------------------------------------- failures
