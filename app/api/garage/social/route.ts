@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { autoPostNow, planPublish } from "@/lib/autoPost";
 import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setStatus } from "@/lib/garageSocial";
+import { restampPromoFacts } from "@/lib/eventPromo";
 
 /** Posting board actions. Owners only. */
 export const maxDuration = 300;
@@ -41,6 +42,10 @@ export async function POST(req: NextRequest) {
         const plan = planPublish(post);
         if (!plan.ok) return NextResponse.json({ error: plan.reason }, { status: 400 });
         await setApproved(post.id, true, session.name || session.email);
+        // An event promo card is approved against the event as it is now, so
+        // the fresh-facts check measures changes from this moment. This is
+        // also what releases a card held as "Needs update".
+        await restampPromoFacts(post);
         break;
       }
       case "unapprove":
@@ -50,7 +55,10 @@ export async function POST(req: NextRequest) {
         if (post.status !== "Planned") return NextResponse.json({ error: "This one is already done." }, { status: 400 });
         const plan = planPublish(post);
         if (!plan.ok) return NextResponse.json({ error: plan.reason }, { status: 400 });
-        if (!post.approved) await setApproved(post.id, true, session.name || session.email);
+        if (!post.approved) {
+          await setApproved(post.id, true, session.name || session.email);
+          await restampPromoFacts(post);
+        }
         const outcome = await autoPostNow(post.id);
         return NextResponse.json({ status: "ok", result: outcome?.result, message: outcome?.message });
       }

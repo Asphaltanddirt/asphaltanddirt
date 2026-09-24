@@ -4,6 +4,8 @@ import { getSettingsDueForReminder, getSettingsToClose, markActivated, markClose
 import { buildWaiverInvite, buildCommsClosing } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
+import { releaseLink } from "@/lib/rsvpRelease";
+import { runAttendeeTrack } from "@/lib/attendeeTrack";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -13,16 +15,22 @@ const TEAM_EMAIL = process.env.EVENT_COMMS_TEAM_EMAIL || "team@asphaltanddirt.co
 /**
  * Hourly (not daily — each event's send time is computed from its own
  * Event End Time, see lib/eventComms.ts reminderSendTime, so a fixed daily
- * slot can't hit every event's target). Two independent sweeps:
+ * slot can't hit every event's target). Three independent sweeps:
  *
  *  1. Reminder: events whose computed send time has passed and haven't
  *     been activated yet — opens the 48h/24h windows (Activated At) and
  *     emails the *waiver* link (not the chat directly) to every RSVP, plus
  *     one team-inbox copy to paste into the FB group.
+ *     Each RSVP's copy carries their own "release your spot" link: for
+ *     Tailgate events this IS the day-before reminder (lib/attendeeTrack.ts
+ *     explains the split).
  *  2. Thank-you: 3 hours after staff taps Trail over (or at the end of the 48h
  *     window if nobody did) — emails every registered attendee (people who
  *     actually signed the waiver, not just RSVP'd) a thanks + the photo and
  *     video upload link, which never expires.
+ *  3. Attendee track: the D−3 plan email to every site RSVP, and the D−1
+ *     reminder with "release your spot" for events without Tailgate
+ *     (lib/attendeeTrack.ts). Once per RSVP, from 10 AM New York time.
  *
  * Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Also accepts
  * `ADMIN_API_SECRET` for manual runs. Schedule is in vercel.json.
@@ -57,7 +65,7 @@ async function run(req: NextRequest) {
     let failed = 0;
     for (const r of recipients) {
       try {
-        const built = buildWaiverInvite({ recipientName: r.name, event, waiverUrl });
+        const built = buildWaiverInvite({ recipientName: r.name, event, waiverUrl, releaseUrl: releaseLink(event.slug, r.id, event.date) });
         await sendEmail({ to: r.email, subject: built.subject, html: built.html });
         sent++;
       } catch (err) {
@@ -110,7 +118,14 @@ async function run(req: NextRequest) {
     closings.push({ slug: settings.eventSlug, title: event.title, attendees: attendees.length, sent, failed });
   }
 
-  return NextResponse.json({ status: "ok", ranAt: now.toISOString(), reminders, closings });
+  // --- Sweep 3: the attendee track (D−3 plan email, D−1 reminder for events
+  // without Tailgate). Its own failures must not hide the two sweeps above.
+  const attendeeTrack = await runAttendeeTrack(now).catch((err) => {
+    console.error("attendee track sweep failed", err);
+    return [];
+  });
+
+  return NextResponse.json({ status: "ok", ranAt: now.toISOString(), reminders, closings, attendeeTrack });
 }
 
 export async function GET(req: NextRequest) {

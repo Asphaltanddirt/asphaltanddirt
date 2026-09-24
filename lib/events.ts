@@ -424,30 +424,53 @@ export interface RsvpInput {
   joinNewsletter: boolean;
   /** The event's requirements they agreed to (lib/vehicleRules.ts), if any. */
   requirementsAccepted?: string;
+  /** Promo measurement (lib/eventPromo.ts): the `?src=` and `&v=` the RSVP
+   *  link carried, and the optional "How did you hear about this?" answer. */
+  source?: string;
+  variant?: string;
+  heardAbout?: string;
 }
 
 export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
   assertConfigured();
-  const created = await createRecord(
-    RSVPS_TABLE,
-    {
-      Name: input.name,
-      Email: input.email,
-      ...(input.phone ? { Phone: input.phone } : {}),
-      Event: [input.eventRecordId],
-      "Already In FB Group": input.alreadyInFbGroup,
-      "Join Event Updates List": input.joinEventUpdatesList,
-      "Join Newsletter": input.joinNewsletter,
-      ...(input.requirementsAccepted ? { "Requirements Accepted": input.requirementsAccepted } : {}),
-      "RSVP Date": new Date().toISOString().slice(0, 10),
-      Status: "Confirmed",
-    },
-    { baseId: BASE_ID, typecast: true },
-  );
-  return { id: created.id };
+  const fields: AirtableFields = {
+    Name: input.name,
+    Email: input.email,
+    ...(input.phone ? { Phone: input.phone } : {}),
+    Event: [input.eventRecordId],
+    "Already In FB Group": input.alreadyInFbGroup,
+    "Join Event Updates List": input.joinEventUpdatesList,
+    "Join Newsletter": input.joinNewsletter,
+    ...(input.requirementsAccepted ? { "Requirements Accepted": input.requirementsAccepted } : {}),
+    "RSVP Date": new Date().toISOString().slice(0, 10),
+    Status: "Confirmed",
+  };
+  const measurement: AirtableFields = {
+    ...(input.source ? { Source: input.source } : {}),
+    ...(input.variant ? { Variant: input.variant } : {}),
+    ...(input.heardAbout ? { "Heard About": input.heardAbout } : {}),
+  };
+  if (Object.keys(measurement).length === 0) {
+    const created = await createRecord(RSVPS_TABLE, fields, { baseId: BASE_ID, typecast: true });
+    return { id: created.id };
+  }
+  try {
+    const created = await createRecord(RSVPS_TABLE, { ...fields, ...measurement }, { baseId: BASE_ID, typecast: true });
+    return { id: created.id };
+  } catch (err) {
+    // The measurement fields are new and the site token can't create fields.
+    // If they aren't in Airtable yet, the RSVP itself must still save: losing
+    // a source tag costs a data point, losing the RSVP costs a rider.
+    if (!/UNKNOWN_FIELD_NAME/.test(err instanceof Error ? err.message : "")) throw err;
+    console.error("RSVP measurement fields missing; saved without them");
+    const created = await createRecord(RSVPS_TABLE, fields, { baseId: BASE_ID, typecast: true });
+    return { id: created.id };
+  }
 }
 
 export interface RsvpRecipient {
+  /** The RSVP row, so a per-person signed link (release your spot) can be made. */
+  id: string;
   name: string;
   email: string;
 }
@@ -462,8 +485,59 @@ export async function listRsvpsForEvent(eventRecordId: string): Promise<RsvpReci
   const records = await listRecords(RSVPS_TABLE, `{Status} = 'Confirmed'`, { baseId: BASE_ID });
   return records
     .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
-    .map((r) => ({ name: (r.fields.Name as string) || "", email: (r.fields.Email as string) || "" }))
+    .map((r) => ({ id: r.id, name: (r.fields.Name as string) || "", email: (r.fields.Email as string) || "" }))
     .filter((r) => r.email);
+}
+
+/**
+ * Published and Unlisted events on any of the given dates — the attendee
+ * track's D−3 and D−1 sweeps. Unlisted is included on purpose: it takes real
+ * RSVPs, so its riders need the plan email as much as anyone. Crew rides
+ * don't, since they have no RSVPs.
+ */
+export async function getLiveEventsOn(dates: string[]): Promise<EventDetail[]> {
+  assertConfigured();
+  if (dates.length === 0) return [];
+  const records = await listRecords(
+    EVENTS_TABLE,
+    `AND(OR({Status} = 'Published', {Status} = 'Unlisted'), OR(${dates.map((d) => `IS_SAME({Date}, '${d}', 'day')`).join(", ")}))`,
+    { baseId: BASE_ID },
+  );
+  const slugs = records.map((r) => (r.fields.Slug as string) || "").filter(Boolean);
+  const events = await Promise.all(slugs.map((slug) => getEventBySlug(slug).catch(() => null)));
+  return events.filter((e): e is EventDetail => Boolean(e));
+}
+
+export interface AttendeeTrackRsvp extends RsvpRecipient {
+  planSentAt: string;
+  reminderSentAt: string;
+}
+
+/** Confirmed RSVPs for one event with the attendee track's sent stamps. The
+ *  stamps read as "" when the fields don't exist yet; the sweep claims a row
+ *  by writing its stamp before sending, so a missing field means nothing is
+ *  sent rather than something sent every hour. */
+export async function listRsvpsForAttendeeTrack(eventRecordId: string): Promise<AttendeeTrackRsvp[]> {
+  assertConfigured();
+  const records = await listRecords(RSVPS_TABLE, `{Status} = 'Confirmed'`, { baseId: BASE_ID });
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  return records
+    .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
+    .map((r) => ({
+      id: r.id,
+      name: str(r.fields.Name),
+      email: str(r.fields.Email),
+      planSentAt: str(r.fields["Plan Email Sent"]),
+      reminderSentAt: str(r.fields["Reminder Sent"]),
+    }))
+    .filter((r) => r.email);
+}
+
+/** Stamp an attendee-track email as sent. Throws if the field is missing,
+ *  which the sweep treats as "don't send". */
+export async function stampRsvp(recordId: string, field: "Plan Email Sent" | "Reminder Sent"): Promise<void> {
+  assertConfigured();
+  await updateRecord(RSVPS_TABLE, recordId, { [field]: new Date().toISOString() }, { baseId: BASE_ID });
 }
 
 export interface RsvpSummary {

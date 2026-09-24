@@ -113,11 +113,13 @@ export async function updateRecord(
   table: string,
   recordId: string,
   fields: AirtableFields,
-  options?: { baseId?: string },
+  options?: { baseId?: string; typecast?: boolean },
 ): Promise<AirtableRecord> {
+  // Same `typecast` as createRecord: lets an update land a select choice the
+  // field doesn't list yet (e.g. a new Auto Status) instead of failing.
   return request(table, `/${recordId}`, {
     method: "PATCH",
-    body: JSON.stringify({ fields }),
+    body: JSON.stringify(options?.typecast ? { fields, typecast: true } : { fields }),
     baseId: options?.baseId,
   });
 }

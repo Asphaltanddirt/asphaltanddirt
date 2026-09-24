@@ -54,6 +54,10 @@
       "schedule": "0 13 * * 1"
     },
     {
+      "path": "/api/cron/event-promo",
+      "schedule": "10 11 * * *"
+    },
+    {
       "path": "/api/cron/notify",
       "schedule": "*/10 * * * *"
     }

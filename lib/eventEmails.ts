@@ -276,8 +276,16 @@ export function buildRsvpUpdate(input: {
  *  group). Links to the waiver/registration page, not the chat directly —
  *  the chat link itself is personal, emailed only after the waiver's
  *  signed (see buildPersonalCommsLink below). */
-export function buildWaiverInvite(input: { recipientName: string; event: EventDetail; waiverUrl: string }): EventEmail {
-  const { recipientName, event, waiverUrl } = input;
+export function buildWaiverInvite(input: {
+  recipientName: string;
+  event: EventDetail;
+  waiverUrl: string;
+  /** This person's signed "release your spot" link. The Tailgate invite IS
+   *  the day-before email for events with Tailgate, so the release link rides
+   *  in it rather than in a second email the same evening. Blank on the team copy. */
+  releaseUrl?: string;
+}): EventEmail {
+  const { recipientName, event, waiverUrl, releaseUrl } = input;
   const first = esc(firstNameOf(recipientName));
 
   const bodyRows = `
@@ -299,6 +307,7 @@ export function buildWaiverInvite(input: { recipientName: string; event: EventDe
         <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is just for you &mdash; please don&apos;t post it publicly or forward it to anyone not attending.</p>
       </td>
     </tr>
+    ${releaseRow(releaseUrl)}
   `;
 
   return { subject: `Tomorrow: ${event.title} — sign up for the group chat`, html: shell(`See you tomorrow at ${event.title}`, bodyRows) };
@@ -370,4 +379,110 @@ export function buildCommsClosing(input: { recipientName: string; event: EventDe
   `;
 
   return { subject: `Thanks for riding: send us your photos from ${event.title}`, html: shell(`Send your photos and video from ${event.title}`, bodyRows) };
+}
+
+/** "Can't make it?" with the person's own signed link (lib/rsvpRelease.ts).
+ *  Empty when there's no link to give. */
+function releaseRow(releaseUrl?: string): string {
+  if (!releaseUrl) return "";
+  return `
+    <tr>
+      <td align="center" style="padding:0 32px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;">
+        Can&apos;t make it after all? <a href="${releaseUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Release your spot &rarr;</a><br>
+        <span style="font-size:13px;color:#948c81;">One tap. It frees the spot for someone else and tells us not to wait for you.</span>
+      </td>
+    </tr>`;
+}
+
+/** The times from the event's public At A Glance lines (meet, roll-out, start). */
+function glanceTimes(event: EventDetail): string {
+  return event.atAGlance
+    .filter((f) => /time|meet|roll|start/i.test(f.label))
+    .map((f) => `${f.label}: ${f.value}`)
+    .join("\n");
+}
+
+/**
+ * The D−3 plan email (attendee track, event promo countdown 2026-09-24).
+ *
+ * Once someone has RSVP'd we stop selling to them. This one is logistics only:
+ * where and when, what to bring, a weather note, the waivers, and who they're
+ * bringing. Site RSVPs only; Facebook "Going" never reaches us.
+ *
+ * The weather line is a plan, not a forecast: we have no forecast feed, and a
+ * stale one in an email is worse than telling people how they'll hear.
+ */
+export function buildPlanEmail(input: { recipientName: string; event: EventDetail; hasTailgate: boolean }): EventEmail {
+  const { recipientName, event, hasTailgate } = input;
+  const first = esc(firstNameOf(recipientName));
+  const eventUrl = `${SITE_URL}/events/${event.slug}`;
+  const where = [event.meetupPoint, glanceTimes(event)].filter(Boolean).join("\n\n") ||
+    `${event.generalArea ? `${event.generalArea}. ` : ""}The exact spot is in your confirmation email.`;
+  const bring = event.atAGlance.filter((f) => /bring|gear|pack|need/i.test(f.label)).map((f) => f.value);
+
+  const box = (html: string) => `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;margin-top:16px;">
+          <tr><td style="padding:18px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;">${html}</td></tr>
+        </table>`;
+  const label = (text: string) =>
+    `<p style="margin:0 0 6px;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">${text}</p>`;
+
+  const bodyRows = `
+    <tr>
+      <td align="center" style="padding:40px 32px 8px;">
+        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">The Plan</p>
+        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title.trim())}</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+        <p style="margin:0 0 8px;">Hey ${first},</p>
+        <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&apos;s the plan.</p>
+        ${box(`${label("Where And When")}<div style="white-space:pre-wrap;">${esc(where)}</div>`)}
+        ${bring.length ? box(`${label("Bring")}<ul style="margin:0;padding-left:20px;">${bring.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}
+        ${requirementsBlock(event)}
+        ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&apos;ll get an email from us and we&apos;ll post it on our socials, so check before you leave.`)}
+        ${box(`${label("Waiver")}${
+          hasTailgate
+            ? "Your waiver link comes by email the evening before. It also gets you into the group chat for the day, so keep an eye out for it."
+            : "If the park or venue has its own waiver, it&apos;s linked in the requirements above. Sign it before you leave home; there&apos;s rarely signal at the trailhead."
+        }`)}
+        ${box(`${label("Who&apos;s Riding With You?")}Bringing a passenger or a second rig? Every adult needs their own RSVP, so send them the event page: <a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">${esc(eventUrl.replace(/^https?:\/\//, ""))}</a>. Or just reply and tell us who&apos;s coming with you.`)}
+      </td>
+    </tr>
+  `;
+
+  return { subject: `The plan for ${event.title.trim()}`, html: shell(`Where, when and what to bring for ${event.title.trim()}`, bodyRows) };
+}
+
+/**
+ * The D−1 reminder with "release your spot", for events WITHOUT Tailgate.
+ * Events with Tailgate already send a day-before email (buildWaiverInvite,
+ * from the comms-reminder cron), and the release link goes in that one, so
+ * nobody gets two emails about tomorrow.
+ */
+export function buildDayBeforeReminder(input: { recipientName: string; event: EventDetail; releaseUrl: string }): EventEmail {
+  const { recipientName, event, releaseUrl } = input;
+  const first = esc(firstNameOf(recipientName));
+  const where = [event.meetupPoint, glanceTimes(event)].filter(Boolean).join("\n\n");
+
+  const bodyRows = `
+    <tr>
+      <td align="center" style="padding:40px 32px 8px;">
+        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">See You Tomorrow</p>
+        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title.trim())}</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 32px 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+        <p style="margin:0 0 16px;">Hey ${first},</p>
+        <p style="margin:0 0 16px;"><strong>${esc(event.title.trim())}</strong> is tomorrow, ${esc(formatDate(event.date))}.</p>
+        ${where ? `<p style="margin:0 0 16px;white-space:pre-wrap;">${esc(where)}</p>` : ""}
+        ${requirementsBlock(event)}
+      </td>
+    </tr>
+    ${releaseRow(releaseUrl)}
+  `;
+
+  return { subject: `Tomorrow: ${event.title.trim()}`, html: shell(`See you tomorrow at ${event.title.trim()}`, bodyRows) };
 }

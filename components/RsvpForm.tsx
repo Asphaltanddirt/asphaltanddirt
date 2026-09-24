@@ -44,6 +44,12 @@ export default function RsvpForm({
     const email = ((data.get("email") as string) || "").trim();
     const phone = ((data.get("phone") as string) || "").trim();
     const alreadyInFbGroup = (data.get("alreadyInFbGroup") as string) || "Not Sure";
+    const heardAbout = (data.get("heardAbout") as string) || undefined;
+    // Which promo card sent them: `?src=tiktok&v=A` on the link they arrived
+    // on. Read at submit time, so the event page itself stays static.
+    const params = new URLSearchParams(window.location.search);
+    const source = params.get("src")?.toLowerCase().slice(0, 30) || undefined;
+    const variant = params.get("v")?.toUpperCase() || undefined;
 
     if (!name || !email || phone.replace(/\D/g, "").length < 10) {
       setErrorMsg("Please fill out your name, email and a phone number we can reach you at on the day.");
@@ -72,6 +78,9 @@ export default function RsvpForm({
           joinEventUpdatesList,
           joinNewsletter,
           requirementsAccepted: hasRequirements ? rulesAccepted : undefined,
+          source,
+          variant,
+          heardAbout,
         }),
       });
       const result = await res.json().catch(() => ({}));
@@ -153,6 +162,19 @@ export default function RsvpForm({
               <option value="Not Sure">Not Sure</option>
             </select>
           </div>
+        </div>
+        <div className="form-field">
+          <label htmlFor="rsvp-heard">
+            How Did You Hear About This? <span className="optional">(Optional)</span>
+          </label>
+          <select id="rsvp-heard" name="heardAbout" disabled={busy} defaultValue="">
+            <option value="">Pick one if you like</option>
+            {["TikTok", "Instagram", "Facebook", "X", "Threads", "YouTube", "Newsletter", "Friend", "Other"].map((o) => (
+              <option key={o} value={o}>
+                {o === "Friend" ? "A friend" : o}
+              </option>
+            ))}
+          </select>
         </div>
         {hasRequirements && (
           <div className="form-field">

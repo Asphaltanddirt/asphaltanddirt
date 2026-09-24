@@ -8,6 +8,7 @@ import {
   listVenues,
   updateEvent,
 } from "@/lib/garageEventEditor";
+import { generateEventPromos } from "@/lib/eventPromo";
 
 /** Owners add ({ ...fields }) or edit ({ id, ...fields }) an event from the
  *  Garage. The Drive folders are made right after saving when the event is
@@ -38,6 +39,14 @@ export async function POST(req: NextRequest) {
       event = await createEvent(edit);
     }
     after(() => ensureDriveFolderNow(event));
+    // Publishing is when the promo countdown starts: its first beat is due
+    // this evening (or tomorrow), so it can't wait for the daily pass. Drafts
+    // only, never approved. Safe on every save of a Published event: cards
+    // that already exist are left alone.
+    if (event.status === "Published" && event.slug) {
+      const slug = event.slug;
+      after(() => generateEventPromos(slug).then(() => undefined));
+    }
     return NextResponse.json({ status: "ok", event });
   } catch (err) {
     console.error("garage event save failed", err);

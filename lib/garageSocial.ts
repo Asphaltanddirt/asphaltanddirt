@@ -93,9 +93,20 @@ export interface SocialPost {
   /** Auto-posting: only approved posts go out on their own. */
   approved: boolean;
   approvedBy: string;
-  autoStatus: "" | "Processing" | "Posted" | "Failed" | "Dry run";
+  autoStatus: "" | "Processing" | "Posted" | "Failed" | "Dry run" | "Needs update";
   autoLog: string;
   autoState: string;
+  /** Event promo countdown (lib/eventPromo.ts). All blank on every other card,
+   *  and blank too until the fields exist in Airtable, so reads never break. */
+  promoBeat: string;
+  /** What the creative is (real_action_video / real_still / host_talking /
+   *  designed_card / recap_clip), for comparing RSVPs by creative later. */
+  creative: string;
+  /** "A" (real footage) or "B" (designed card) on the test beats; blank otherwise. */
+  variant: string;
+  /** The event's date/time/place as they were when this card was last drafted
+   *  or approved. The fresh-facts check compares against it. */
+  eventFacts: string;
 }
 
 const escapeFormula = (v: string) => v.replace(/'/g, "\\'");
@@ -150,6 +161,10 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     autoStatus: str(f["Auto Status"]) as SocialPost["autoStatus"],
     autoLog: str(f["Auto Log"]),
     autoState: str(f["Auto State"]),
+    promoBeat: str(f["Promo Beat"]),
+    creative: str(f.Creative),
+    variant: str(f.Variant),
+    eventFacts: str(f["Event Facts"]),
   };
 }
 

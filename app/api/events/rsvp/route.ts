@@ -7,6 +7,8 @@ import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
 import { requirementsFor, requirementsRecord } from "@/lib/vehicleRules";
 
 const FB_GROUP_VALUES = new Set(["Yes", "No", "Not Sure"]);
+/** The "How did you hear about this?" choices. Anything else is dropped. */
+const HEARD_ABOUT = new Set(["TikTok", "Instagram", "Facebook", "X", "Threads", "YouTube", "Newsletter", "Friend", "Other"]);
 
 export async function POST(req: NextRequest) {
   let body: {
@@ -18,6 +20,10 @@ export async function POST(req: NextRequest) {
     joinEventUpdatesList?: boolean;
     joinNewsletter?: boolean;
     requirementsAccepted?: boolean;
+    /** Promo measurement: `?src=` / `&v=` from the link they arrived on. */
+    source?: string;
+    variant?: string;
+    heardAbout?: string;
     company?: string; // honeypot
   };
   try {
@@ -39,6 +45,10 @@ export async function POST(req: NextRequest) {
     : "Not Sure";
   const joinEventUpdatesList = Boolean(body.joinEventUpdatesList);
   const joinNewsletter = Boolean(body.joinNewsletter);
+  // These come from a URL anyone can edit, so only a short plain code is kept.
+  const source = typeof body.source === "string" && /^[a-z0-9-]{1,30}$/.test(body.source) ? body.source : undefined;
+  const variant = body.variant === "A" || body.variant === "B" ? body.variant : undefined;
+  const heardAbout = typeof body.heardAbout === "string" && HEARD_ABOUT.has(body.heardAbout) ? body.heardAbout : undefined;
 
   if (!slug || !name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
@@ -68,6 +78,9 @@ export async function POST(req: NextRequest) {
     joinEventUpdatesList,
     joinNewsletter,
     requirementsAccepted: requirements ? requirementsRecord(requirements) : undefined,
+    source,
+    variant,
+    heardAbout,
   });
 
   // Best-effort: the RSVP is already saved even if the email or the Event

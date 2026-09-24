@@ -7,6 +7,7 @@ import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/li
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
+import { getPromoMeasurement, type PromoMeasurement } from "@/lib/eventPromo";
 
 /** Never served from a cache: the Garage is live data on a phone that stays
  *  open, and stale tasks or answers are worse than a moment's load. */
@@ -43,11 +44,12 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
 
   const past = isPastEvent(event.date);
   const staff = canRunEvents(session);
-  const [responses, settings, roster, users] = await Promise.all([
+  const [responses, settings, roster, users, promo] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
     staff ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
     event.crewOnly ? Promise.resolve([] as RsvpPerson[]) : getRsvpRoster(event.id).catch((): RsvpPerson[] | null => null),
     listGarageUsers().catch(() => []),
+    staff && !event.crewOnly ? getPromoMeasurement(event.id, slug).catch((): PromoMeasurement | null => null) : Promise.resolve(null),
   ]);
   const mine = responses.find((r) => r.email === session.email)?.response || null;
   const crew = crewPicture(users, responses, slug);
@@ -160,6 +162,60 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             </>
           )}
         </section>
+        )}
+
+        {/* Read-only promo measurement (event promo countdown, 2026-09-24).
+            Where site RSVPs came from, split by the footage test's variant.
+            The test alternates by EVENT, and organic delivery isn't
+            randomized (each platform picks who sees what, and events differ
+            in type, weather and lead time), so this is a comparison across
+            events, never proof. Counts only: no names here. */}
+        {promo && (
+          <section className="garage-panel">
+            <h2>Where RSVPs came from</h2>
+            <p className="garage-form-note">
+              This event&apos;s footage test: variant {promo.variant} (
+              {promo.variant === "A" ? "real footage" : "designed card"}) on the &quot;who&apos;s in?&quot; and one-week posts.
+            </p>
+            {promo.bySource.length === 0 ? (
+              <p className="garage-empty">No site RSVPs yet.</p>
+            ) : (
+              <table className="garage-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Source</th>
+                    <th scope="col">A (footage)</th>
+                    <th scope="col">B (card)</th>
+                    <th scope="col">No variant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {promo.bySource.map((row) => (
+                    <tr key={row.source}>
+                      <th scope="row">{row.source}</th>
+                      <td>{row.A}</td>
+                      <td>{row.B}</td>
+                      <td>{row.none}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <p>
+              Site RSVPs: {promo.siteConfirmed}
+              {promo.released > 0 && ` (${promo.released} released their spot)`} · Facebook &quot;Going&quot;:{" "}
+              {promo.fbGoing === null ? "not entered" : promo.fbGoing}
+            </p>
+            {promo.heardAbout.length > 0 && (
+              <p className="garage-form-note">
+                They said they heard from: {promo.heardAbout.map((h) => `${h.answer} ${h.count}`).join(" · ")}
+              </p>
+            )}
+            <p className="garage-form-note">
+              A comparison across events, not proof: organic reach isn&apos;t random. Facebook &quot;Going&quot; is typed into
+              the event&apos;s FB Going field by hand.
+            </p>
+          </section>
         )}
 
         <section className="garage-panel">

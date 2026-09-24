@@ -222,6 +222,39 @@ export async function autoPostOne(post: SocialPost, opts: { live: boolean; now?:
     }
   }
 
+  // The fresh-facts rule (event promo countdown, 2026-09-24). A card that
+  // promotes an event is re-checked against the event right here, after the
+  // slot has opened and before anything is sent, because a card drafted three
+  // weeks ago can be wrong by the time its evening comes round. Not on a
+  // resume: a post that is mid-way through processing has already gone out.
+  // Runs on dry runs too, so a dry run reports what would really happen.
+  if (post.event && !processing) {
+    const { checkPromoFreshness, skipPromoCard, holdPromoCard } = await import("@/lib/eventPromo");
+    const fresh = await checkPromoFreshness(post);
+    if (!fresh.ok && fresh.action === "skip") {
+      await skipPromoCard(post, fresh.reason);
+      await saveAutoResult(post.id, { status: "", log: `Skipped ${stamp()}: ${fresh.reason}.` });
+      return { ...base, result: "skipped", message: `Skipped: ${fresh.reason}.` };
+    }
+    if (!fresh.ok && fresh.action === "hold") {
+      // Held, not retried: approval is cleared, so nothing sends until a
+      // person has read the caption against the new facts and re-approved.
+      const message = `Needs update: ${fresh.reason}. Check the caption, then approve it again.`;
+      await holdPromoCard(post, message);
+      await import("@/lib/notify")
+        .then((n) => n.notifyFailure({ id: post.id, name: post.name, platform: post.platform }, message))
+        .catch(() => {});
+      return { ...base, result: "failed", message };
+    }
+    if (!fresh.ok) {
+      // Same "Not posted:" shape as a card that isn't ready, so the next run
+      // looks again inside the window and the 6-hour limit still ends it.
+      const message = `Not posted: ${fresh.reason}.`;
+      if (post.autoLog !== message) await saveAutoResult(post.id, { status: "Failed", log: message });
+      return { ...base, result: "failed", message };
+    }
+  }
+
   if (!opts.live) {
     const message = `Dry run ${stamp()}: would post to ${describe(plan.input)} The master switch is off, so nothing was sent.`;
     await saveAutoResult(post.id, { status: "Dry run", log: message });
