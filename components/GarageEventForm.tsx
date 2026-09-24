@@ -18,12 +18,24 @@ const VENUE_TYPES = [
   { value: "State Forest (NJ)", help: "Adds the NJ state forest vehicle and conduct rules." },
   { value: "Private Land", help: "Adds the landowner-permission rules." },
   { value: "Off-Road Park", help: "Adds the park's own rules, pass and waiver (pick the park below)." },
+  { value: "Race Track", help: "Track days and circuit events." },
+];
+
+// Which side this event is. Required — it seeds the primary tag on every file
+// uploaded to the event's folder, so footage arrives already sorted into the
+// bucket a posting slot draws from. Deciding it here, once, is what stops
+// anything reaching the library untagged.
+const EVENT_TYPES = [
+  { value: "Dirt", help: "Offroad — trail, mud, park, overland." },
+  { value: "Asphalt", help: "Onroad — street, track, car show, meets, cruise." },
+  { value: "Both", help: "Genuinely both, e.g. a street cruise out to a trailhead." },
 ];
 
 const EMPTY: EventEdit = {
   title: "",
   date: "",
   status: "Draft",
+  eventType: "" as EventEdit["eventType"],
   generalArea: "",
   publicBlurb: "",
   atAGlance: "",
@@ -205,6 +217,28 @@ export default function GarageEventForm({ initial, venues }: { initial: Editable
         <label htmlFor="ev-req">Requirements</label>
         <textarea id="ev-req" rows={4} {...text("requirements")} placeholder={"GMRS or FRS radio in every vehicle\nFull-size spare"} aria-describedby="ev-req-help" />
         <p id="ev-req-help" className="garage-form-note">One per line. People tick a box agreeing to these when they RSVP.</p>
+
+        <fieldset className="garage-choice-group">
+          <legend>Asphalt or dirt?</legend>
+          {EVENT_TYPES.map((t) => (
+            <label key={t.value} className="garage-choice">
+              <input
+                type="radio"
+                name="eventType"
+                checked={form.eventType === t.value}
+                onChange={() => setForm((f) => ({ ...f, eventType: t.value as EventEdit["eventType"] }))}
+              />
+              <span>
+                <strong>{t.value}</strong>
+                <small>{t.help}</small>
+              </span>
+            </label>
+          ))}
+          <p className="garage-form-note">
+            Tags every clip uploaded to this event. Go by where it is, not what is in it — a Jeep at a car show is
+            asphalt.
+          </p>
+        </fieldset>
 
         <fieldset className="garage-choice-group">
           <legend>Where it rides</legend>

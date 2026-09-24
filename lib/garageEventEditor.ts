@@ -22,12 +22,20 @@ export const EVENT_STATUSES = [
 ] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number]["value"];
 
-export const VENUE_TYPES = ["State Forest (NJ)", "Private Land", "Off-Road Park"] as const;
+export const VENUE_TYPES = ["State Forest (NJ)", "Private Land", "Off-Road Park", "Race Track"] as const;
+
+/** Which side of the brand an event is. Required on every event, because this
+ *  is where the decision gets made ONCE and then nothing can arrive untagged:
+ *  it seeds the primary tag on every file uploaded to the event's folder. Tag
+ *  where it IS, not what it is — a Jeep at a car show is Asphalt. */
+export const EVENT_TYPES = ["Dirt", "Asphalt", "Both"] as const;
+export type EventType = (typeof EVENT_TYPES)[number];
 
 export interface EventEdit {
   title: string;
   date: string;
   status: EventStatus;
+  eventType: EventType;
   generalArea: string;
   publicBlurb: string;
   atAGlance: string;
@@ -70,6 +78,7 @@ function toEditable(r: AirtableRecord): EditableEvent {
     publicBlurb: str(f["Public Blurb"]),
     atAGlance: str(f["At A Glance"]),
     requirements: str(f.Requirements),
+    eventType: (EVENT_TYPES as readonly string[]).includes(f["Event Type"] as string) ? (f["Event Type"] as EventType) : "Dirt",
     venueTypes: (f["Venue Type"] as string[] | undefined) || [],
     venueIds: (f.Venue as string[] | undefined) || [],
     facebookEventUrl: str(f["Facebook Event URL"]),
@@ -121,6 +130,12 @@ export function cleanEventEdit(body: Record<string, unknown>, venueIds: Set<stri
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return "Pick a real date.";
   const status = text("status", 20) as EventStatus;
   if (!EVENT_STATUSES.some((s) => s.value === status)) return "Pick a status.";
+  // Required, with no default. Skipping it here is the one way footage can
+  // reach the library untagged, and the whole point of seeding from the event
+  // is that a person decides once, up front, instead of on a Wednesday night
+  // with a slot to fill.
+  const eventType = text("eventType", 20) as EventType;
+  if (!(EVENT_TYPES as readonly string[]).includes(eventType)) return "Pick asphalt, dirt or both.";
   if (status !== "Draft" && status !== "Cancelled" && !date) return "Add a date before publishing.";
   const facebookEventUrl = text("facebookEventUrl", 500);
   if (facebookEventUrl && !/^https?:\/\//i.test(facebookEventUrl)) return "The Facebook link should start with https://";
@@ -129,6 +144,7 @@ export function cleanEventEdit(body: Record<string, unknown>, venueIds: Set<stri
     title,
     date,
     status,
+    eventType,
     generalArea: text("generalArea", 120),
     publicBlurb: text("publicBlurb"),
     atAGlance: text("atAGlance"),
@@ -149,6 +165,7 @@ function toFields(edit: EventEdit) {
     Title: edit.title,
     Date: orNull(edit.date),
     Status: edit.status,
+    "Event Type": edit.eventType,
     "General Area": orNull(edit.generalArea),
     "Public Blurb": orNull(edit.publicBlurb),
     "At A Glance": orNull(edit.atAGlance),
