@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
+import { syncCommsDate } from "@/lib/eventComms";
+import { holdEventPromos } from "@/lib/garageSocial";
 import { ensureEventFolders, folderUrl, isDriveConfigured } from "@/lib/googleDrive";
 
 /**
@@ -213,8 +215,23 @@ export async function createEvent(edit: EventEdit): Promise<EditableEvent> {
 
 export async function updateEvent(id: string, edit: EventEdit, previousSlug: string): Promise<EditableEvent> {
   assertConfigured();
+  const previous = await getEditableEvent(id).catch(() => null);
   const record = await updateRecord(EVENTS, id, toFields(edit), { baseId: BASE_ID });
   const event = toEditable(record);
+
+  // A postponement has to move the comms row too, or the waiver invite fires
+  // on the old date.
+  if (event.date) await syncCommsDate(event.slug, event.date);
+
+  // Cancelled, or moved to a different day: hold anything still queued to
+  // promote it. Both are cases where the posting board is now advertising
+  // something that isn't happening as advertised.
+  const nowCancelled = event.status === "Cancelled" && previous?.status !== "Cancelled";
+  const moved = Boolean(previous?.date && event.date && previous.date !== event.date);
+  if (nowCancelled || moved) {
+    await holdEventPromos(event.slug, nowCancelled ? "event cancelled" : `event moved from ${previous?.date}`);
+  }
+
   refreshPublicPages([previousSlug, event.slug]);
   return event;
 }

@@ -83,6 +83,9 @@ export interface SocialPost {
     linkClicks: number | null;
     profileClicks: number | null;
   };
+  /** The event this post promotes, as its slug. Blank for everything that
+   *  isn't event promo, which is most posts. */
+  event: string;
   /** X link test: where the blog link goes. Blank = in a reply. */
   linkPlacement: "" | "In post" | "In reply";
   notes: string;
@@ -95,6 +98,7 @@ export interface SocialPost {
   autoState: string;
 }
 
+const escapeFormula = (v: string) => v.replace(/'/g, "\\'");
 const num = (v: unknown) => (typeof v === "number" ? v : null);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -137,6 +141,7 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
       linkClicks: num(f["Link Clicks 7d"]),
       profileClicks: num(f["Profile Clicks 7d"]),
     },
+    event: str(f.Event).trim(),
     linkPlacement: str(f["Link Placement"]) as SocialPost["linkPlacement"],
     notes: str(f.Notes),
     sort: 0,
@@ -195,6 +200,37 @@ export async function getPostsNeedingAttention(today = todayNY()): Promise<Socia
       .filter((p) => !isAutoPlatform(p.platform))
       .sort((a, b) => a.due.localeCompare(b.due))
   );
+}
+
+/**
+ * Hold every unposted card promoting an event, because the event is off.
+ *
+ * Called when an event is cancelled or postponed. A cancellation notice and an
+ * "it's this Saturday!" post landing on the same channel the same morning is
+ * worse than either on its own.
+ *
+ * Only touches cards that have NOT gone out. An already-posted one is left
+ * exactly as it is — that bell cannot be unrung, and the cancellation notice
+ * reaches the same audience on the same channel anyway.
+ *
+ * Best-effort: this runs inside saving an event, and failing to tidy the
+ * posting board must never stop the event itself being saved.
+ */
+export async function holdEventPromos(slug: string, reason: string): Promise<{ held: number }> {
+  if (!slug || !isSocialConfigured()) return { held: 0 };
+  try {
+    const rows = await listRecords(POSTS, `AND({Event} = '${escapeFormula(slug)}', {Status} = 'Planned')`, { baseId: BASE_ID });
+    let held = 0;
+    for (const r of rows) {
+      const note = [str(r.fields.Notes), `Held ${new Date().toISOString().slice(0, 10)}: ${reason}`].filter(Boolean).join("\n");
+      await updateRecord(POSTS, r.id, { Status: "Skipped", Approved: false, Notes: note.slice(0, 2000) }, { baseId: BASE_ID });
+      held++;
+    }
+    return { held };
+  } catch (err) {
+    console.error("couldn't hold event promos for", slug, err);
+    return { held: 0 };
+  }
 }
 
 /** The Feature and Alternate blog posts for a week, from its Newsletters row. */

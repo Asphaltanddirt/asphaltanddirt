@@ -198,6 +198,37 @@ export async function getCommsSettings(slug: string): Promise<CommsSettings | nu
 /** The reminder email's target send time: event end time minus 22 hours —
  *  for a 9-5 event that's 7pm the night before. It also opens Tailgate, so
  *  the 48-hour window runs to 7pm the day after. */
+/**
+ * Keep the comms row's date in step with the event's.
+ *
+ * The event date lives in TWO places: the Events base, and this base's own
+ * `Event Date`, which is what `reminderSendTime` computes from. Nothing kept
+ * them together, so postponing an event in the Garage left the waiver invite
+ * firing on the old schedule — and unlike a cancellation, a postponed event
+ * still resolves fine, so no status check catches it. Found 2026-09-23 with a
+ * nor'easter forecast for the Mud Run.
+ *
+ * Best-effort and silent when there is no comms row: plenty of events never
+ * get one, and a failure here must not stop the event itself being saved.
+ * Only touches a row whose chat has not opened yet — once `Activated At` is
+ * stamped the 48-hour window is running and moving its date would shift a
+ * window people are already inside.
+ */
+export async function syncCommsDate(slug: string, date: string): Promise<"updated" | "unchanged" | "none" | "activated"> {
+  if (!slug || !date || !isAirtableConfigured(BASE_ID)) return "none";
+  try {
+    const settings = await getCommsSettings(slug);
+    if (!settings) return "none";
+    if (settings.activatedAt) return "activated";
+    if (settings.eventDate === date) return "unchanged";
+    await updateRecord(SETTINGS_TABLE, settings.id, { "Event Date": date }, { baseId: BASE_ID });
+    return "updated";
+  } catch (err) {
+    console.error("comms date sync failed for", slug, err);
+    return "none";
+  }
+}
+
 export function reminderSendTime(settings: Pick<CommsSettings, "eventDate" | "eventEndTime">): Date {
   const end = nyDateTime(settings.eventDate, settings.eventEndTime);
   return new Date(end.getTime() - 22 * 60 * 60 * 1000);
