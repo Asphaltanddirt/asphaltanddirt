@@ -121,8 +121,6 @@ export default function GarageEventChange({
   }
 
   if (done) {
-    const posted = done.results.filter((r) => r.posted).map((r) => r.platform);
-    const missed = done.results.filter((r) => !r.posted);
     // Jose, 2026-09-24: "i can share from page into group" — so the last step
     // is the Page post's own Share button, not a copy-paste.
     const pagePost = done.results.find((r) => r.platform === "Facebook Page" && r.posted)?.url;
@@ -137,13 +135,6 @@ export default function GarageEventChange({
 
         {done.kind !== "update" && (
           <>
-            {done.results.length > 0 && (
-              <p className="garage-form-note" role="status">
-                {posted.length ? `Posted: ${posted.join(", ")}.` : "Nothing posted."}
-                {missed.length > 0 && ` Finish by hand: ${missed.map((m) => `${m.platform} (${m.error})`).join("; ")}.`}
-              </p>
-            )}
-
             <h2 className="mt-4">Last step: the Facebook group</h2>
             <p className="garage-form-note">
               Meta has no Groups posting API, so share the Page post into the group — same image, same words.

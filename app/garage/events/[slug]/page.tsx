@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
+import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
@@ -99,9 +100,12 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           </Link>
         )}
         {canSeeOwnerOnly(session) && event.date && (
-          <Link href={`/garage/events/edit/${event.id}#change`} className="btn btn-outline garage-block-btn">
-            Call it off or send an update
-          </Link>
+          <GarageDoubleTapLink
+            href={`/garage/events/call-off/${event.id}`}
+            label="Call it off or send an update"
+            armedLabel="Tap again to open Call it off"
+            className="btn btn-outline garage-block-btn"
+          />
         )}
 
         {/* One "who's coming" picture: the public RSVPs plus the crew's own

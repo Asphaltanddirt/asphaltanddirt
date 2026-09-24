@@ -181,14 +181,21 @@ export async function POST(req: NextRequest) {
     });
     const ok = results.filter((r) => r.posted).map((r) => r.platform);
     const missed = results.filter((r) => !r.posted);
-    steps.social = `${ok.length ? `Posted: ${ok.join(", ")}.` : "Nothing posted."}${
-      missed.length ? ` Not posted: ${missed.map((m) => `${m.platform} (${m.error})`).join("; ")}.` : ""
-    }`;
+    // The master switch being off isn't a failure — say so once, plainly.
+    const dry = missed.filter((m) => /^Dry run/.test(m.error || ""));
+    const failed = missed.filter((m) => !/^Dry run/.test(m.error || ""));
+    steps.social = [
+      ok.length ? `Posted: ${ok.join(", ")}.` : "",
+      dry.length ? `Dry run — auto-posting is off, so ${dry.map((m) => m.platform).join(", ")} didn't send.` : "",
+      failed.length ? `Finish by hand: ${failed.map((m) => `${m.platform} (${m.error})`).join("; ")}.` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     // By now the phone is probably in a pocket; a half-posted cancellation is
     // worse than knowing you have to finish it by hand.
-    if (missed.length) {
+    if (failed.length) {
       await notifyFailure(
-        { id: notice.cardIds[0], name: "Cancellation notice", platform: missed.map((m) => m.platform).join(" · ") },
+        { id: notice.cardIds[0], name: "Cancellation notice", platform: failed.map((m) => m.platform).join(" · ") },
         "the notice didn't post everywhere — finish it by hand",
       ).catch(() => {});
     }

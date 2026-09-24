@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventForm from "@/components/GarageEventForm";
-import GarageEventChange from "@/components/GarageEventChange";
+import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getEditableEvent, listVenues } from "@/lib/garageEventEditor";
 
@@ -56,13 +56,11 @@ export default async function GarageEditEventPage({
         <GarageEventForm initial={event} venues={venues} />
 
         {(live || event.status === "Cancelled" || event.rsvpCount > 0) && (
-          <GarageEventChange
-            slug={event.slug}
-            title={event.title}
-            date={event.date || null}
-            rsvpCount={event.rsvpCount}
-            canCallOff={live}
-            cancelled={event.status === "Cancelled"}
+          <GarageDoubleTapLink
+            href={`/garage/events/call-off/${event.id}`}
+            label={event.status === "Cancelled" ? "Back on, or send an update" : "Call it off or send an update"}
+            armedLabel="Tap again to open it"
+            className="btn btn-outline garage-block-btn mt-4"
           />
         )}
       </div>
