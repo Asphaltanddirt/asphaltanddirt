@@ -197,8 +197,10 @@ export function buildRsvpUpdate(input: {
   kind?: EventUpdateKind;
   /** Postponements only: the new date, ISO. */
   newDate?: string;
+  /** Postponements only: this person's own re-confirm link. */
+  confirmUrl?: string;
 }): EventEmail {
-  const { recipientName, event, message, kind = "update", newDate } = input;
+  const { recipientName, event, message, kind = "update", newDate, confirmUrl } = input;
   const first = esc(firstNameOf(recipientName));
   const was = event.date ? formatDate(event.date) : "";
 
@@ -220,8 +222,23 @@ export function buildRsvpUpdate(input: {
     kind === "cancelled"
       ? "Your signed waiver stays on file. If we put this back on the calendar you won't have to fill any of it in again — we'll just email and ask whether the new date works for you."
       : kind === "postponed"
-        ? "Your signed waiver stays on file, so there's nothing to re-sign. We do need to know whether the new date works for you — just reply to this email either way."
+        ? confirmUrl
+          ? "Your signed waiver stays on file, so there's nothing to fill in again. We just need to know whether the new day works:"
+          : "Your signed waiver stays on file, so there's nothing to re-sign. We do need to know whether the new date works for you — just reply to this email either way."
         : "";
+
+  // One tap, straight from the email. Three answers, no form, no login — their
+  // waiver is already signed and asking for more would be asking them to
+  // register twice for one event.
+  const confirmButton =
+    kind === "postponed" && confirmUrl
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
+          <tr><td align="center" style="background-color:${ORANGE};">
+            <a href="${confirmUrl}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#ffffff;text-decoration:none;">Does the new date work?</a>
+          </td></tr>
+        </table>
+        <p style="margin:10px 0 0;font-size:13px;color:#7a736a;">Yes, no, or not sure — one tap, nothing to fill in.</p>`
+      : "";
 
   const para = (html: string, gap = "0 0 16px") =>
     html ? `<p style="margin:${gap};">${html}</p>` : "";
@@ -238,7 +255,8 @@ export function buildRsvpUpdate(input: {
         ${para(`Hey ${first},`)}
         ${para(opening)}
         ${para(`<span style="white-space:pre-wrap;">${esc(message)}</span>`, closing ? "0 0 16px" : "0")}
-        ${para(closing, "0")}
+        ${para(closing, confirmButton ? "0 0 4px" : "0")}
+        ${confirmButton}
       </td>
     </tr>
   `;

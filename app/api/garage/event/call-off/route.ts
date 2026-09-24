@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, canSeeOwnerOnly } from "@/lib/garageAuth";
-import { getEventBySlug, listRsvpsForEvent } from "@/lib/events";
+import { getEventBySlug } from "@/lib/events";
+import { listRecords } from "@/lib/airtable";
 import { getEditableEvent, listAllEvents, updateEvent } from "@/lib/garageEventEditor";
 import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
 import { postEventNotice } from "@/lib/eventNotice";
 import { sendEmail } from "@/lib/resendEmail";
+import { reconfirmLink } from "@/lib/rsvpReconfirm";
 
 export const maxDuration = 60;
 
@@ -74,9 +76,26 @@ export async function POST(req: NextRequest) {
   let emailed = 0;
   let emailFailed = 0;
   try {
-    for (const r of await listRsvpsForEvent(event.id)) {
+    // Record ids, not just addresses — a postponement needs each person's own
+    // signed re-confirm link, and that link is keyed on their RSVP row.
+    const rows = await listRecords("RSVPs", `{Status} = 'Confirmed'`, {
+      baseId: process.env.AIRTABLE_EVENTS_BASE_ID || "app5LS6dvcTKdxGqr",
+    });
+    const recipients = rows
+      .filter((r) => ((r.fields.Event as string[]) || []).includes(event.id))
+      .map((r) => ({ id: r.id, name: String(r.fields.Name || ""), email: String(r.fields.Email || "") }))
+      .filter((r) => r.email);
+
+    for (const r of recipients) {
       try {
-        const built = buildRsvpUpdate({ recipientName: r.name, event, message: why, kind, newDate });
+        const built = buildRsvpUpdate({
+          recipientName: r.name,
+          event,
+          message: why,
+          kind,
+          newDate,
+          confirmUrl: kind === "postponed" && newDate ? reconfirmLink(slug, r.id, newDate) : undefined,
+        });
         await sendEmail({ to: r.email, subject: built.subject, html: built.html });
         emailed++;
       } catch {
