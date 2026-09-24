@@ -1,5 +1,6 @@
 import { createRecord, listRecords, isAirtableConfigured } from "@/lib/airtable";
 import { getEventBySlug } from "@/lib/events";
+import { KIND_LABEL, type UploadKind } from "@/lib/mediaKinds";
 
 /**
  * The media library (Jose, 2026-09-22): "we need a way to tag raw footage so we
@@ -35,13 +36,14 @@ export interface MediaRowInput {
 }
 
 export interface MediaBatch {
-  kind: "event" | "vlog";
+  kind: UploadKind;
   label: string;
   folderId: string;
   keywords: string;
   thoughts: string;
   uploadedBy: string;
-  /** Asphalt / Dirt / Both, seeded from the event. The primary tag. */
+  /** Asphalt / Dirt / Both: seeded from the event, or tapped by hand for
+   *  Other footage (there is no event to seed it from). The primary tag. */
   eventType?: string;
   /** The event's Venue Type(s), seeded. The second primary tag. */
   venueTypes?: string[];
@@ -59,6 +61,11 @@ export interface MediaRow {
   keywords: string;
   aiKeywords: string;
   thoughts: string;
+  /** "" when the row has none (older rows, and Garage Takes). */
+  eventType: string;
+  venueTypes: string[];
+  /** Bytes, when the uploader's browser reported it. 0 = not known. */
+  size: number;
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -70,6 +77,9 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
  *  plain `typeof === "string"` read comes back empty. Handle both. */
 const tags = (v: unknown): string =>
   Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()).join(", ") : str(v);
+
+const list = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : str(v) ? [str(v)] : [];
 
 export const driveFileUrl = (fileId: string) => `https://drive.google.com/file/d/${fileId}/view`;
 export const driveFolderUrl = (folderId: string) => `https://drive.google.com/drive/folders/${folderId}`;
@@ -110,8 +120,11 @@ export async function fileMediaRows(
   const eventType = (batch.eventType || "").trim();
   const venueTypes = (batch.venueTypes || []).map((v) => v.trim()).filter(Boolean);
   // Nothing typed, nothing to say, and nothing seeded: don't fill the table
-  // with rows that say nothing at all.
-  if (!keywords && !thoughts && !eventType) return { filed: 0, skipped: "Nothing typed" };
+  // with rows that say nothing at all. That only applies to event footage,
+  // which can always be found again through its event's folder. A Garage Take
+  // or a random clip has no event to find it by, so its row IS how it gets
+  // found — those are always filed, even with every box left blank.
+  if (batch.kind === "event" && !keywords && !thoughts && !eventType) return { filed: 0, skipped: "Nothing typed" };
 
   const uploadedAt = new Date().toISOString();
   let filed = 0;
@@ -125,7 +138,9 @@ export async function fileMediaRows(
           "Drive File ID": f.fileId,
           "Drive Link": driveFileUrl(f.fileId),
           "Folder Link": driveFolderUrl(batch.folderId),
-          Kind: batch.kind === "vlog" ? "Vlog" : "Event",
+          // typecast (below) adds a choice the dropdown doesn't have yet, so
+          // "Garage Take" and "Other footage" appear on their first write.
+          Kind: KIND_LABEL[batch.kind],
           Label: batch.label,
           "Uploaded By": batch.uploadedBy,
           "Uploaded At": uploadedAt,
@@ -182,29 +197,69 @@ export async function fileEventFootage(
   }
 }
 
-/** Everything filed, newest first. Airtable's own search box is the day-to-day
- *  way in; this is here for a Garage screen when one is wanted. */
+function toMediaRow(r: { id: string; fields: Record<string, unknown> }): MediaRow {
+  const f = r.fields;
+  return {
+    id: r.id,
+    fileName: str(f["File Name"]),
+    fileId: str(f["Drive File ID"]),
+    driveLink: str(f["Drive Link"]),
+    kind: str(f.Kind),
+    label: str(f.Label),
+    uploadedBy: str(f["Uploaded By"]),
+    uploadedAt: str(f["Uploaded At"]),
+    keywords: tags(f.Keywords),
+    aiKeywords: tags(f["AI Keywords"]),
+    thoughts: str(f.Thoughts),
+    eventType: str(f["Event Type"]),
+    venueTypes: list(f["Venue Type"]),
+    size: typeof f.Size === "number" && f.Size > 0 ? f.Size : 0,
+  };
+}
+
+/** Everything filed, newest first: Garage → Library reads this. Only rows that
+ *  point at an actual Drive file — the library shows what's there, never what
+ *  was planned, and a row with no file id has nothing to show or download. */
 export async function getMediaLibrary(): Promise<MediaRow[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
   const rows = await listRecords(TABLE, undefined, { baseId: BASE_ID });
   return rows
-    .map((r) => {
-      const f = r.fields;
-      return {
-        id: r.id,
-        fileName: str(f["File Name"]),
-        fileId: str(f["Drive File ID"]),
-        driveLink: str(f["Drive Link"]),
-        kind: str(f.Kind),
-        label: str(f.Label),
-        uploadedBy: str(f["Uploaded By"]),
-        uploadedAt: str(f["Uploaded At"]),
-        keywords: tags(f.Keywords),
-        aiKeywords: tags(f["AI Keywords"]),
-        thoughts: str(f.Thoughts),
-      };
-    })
+    .map(toMediaRow)
+    .filter((r) => r.fileId)
     .sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
+}
+
+// A short-lived copy of the library's file ids, per warm function. The Library
+// grid asks for two dozen thumbnails at once and Airtable allows five requests
+// a second per base, so looking each one up would get most of them refused.
+let fileCache: { at: number; byFileId: Map<string, MediaRow> } | null = null;
+const FILE_CACHE_MS = 5 * 60 * 1000;
+/** A miss refreshes the copy (a file uploaded a minute ago), but no more often
+ *  than this, so a bad id can't be used to hammer Airtable. */
+const MISS_REFRESH_MS = 30 * 1000;
+
+async function loadFileCache() {
+  const rows = await getMediaLibrary();
+  fileCache = { at: Date.now(), byFileId: new Map(rows.map((r) => [r.fileId, r])) };
+  return fileCache;
+}
+
+/**
+ * The library row for a Drive file id, or null if it isn't in the library.
+ *
+ * This is the guard on the thumbnail and download routes. The Drive token can
+ * read everything team@ can, finance folders included, so those routes must
+ * only ever hand out files the library actually lists — never any id someone
+ * types into a URL.
+ */
+export async function findMediaByFileId(fileId: string): Promise<MediaRow | null> {
+  if (!fileId) return null;
+  let cache = fileCache;
+  if (!cache || Date.now() - cache.at > FILE_CACHE_MS) cache = await loadFileCache();
+  const hit = cache.byFileId.get(fileId);
+  if (hit) return hit;
+  if (Date.now() - cache.at > MISS_REFRESH_MS) cache = await loadFileCache();
+  return cache.byFileId.get(fileId) ?? null;
 }
 
 /** Read-only: is the table there, and how much is in it? */
@@ -216,7 +271,7 @@ export async function checkMediaLibrary(): Promise<Record<string, unknown>> {
   } catch (err) {
     return {
       table: `MISSING — create a "${TABLE}" table in the Analytics base`,
-      fields: "File Name · Drive File ID · Drive Link · Folder Link · Kind · Label · Uploaded By · Uploaded At · Keywords · Thoughts · Size (number) · AI Keywords",
+      fields: "File Name · Drive File ID · Drive Link · Folder Link · Kind · Label · Uploaded By · Uploaded At · Keywords · Thoughts · Size (number) · AI Keywords · Event Type · Venue Type",
       detail: err instanceof Error ? err.message.slice(0, 120) : "",
     };
   }

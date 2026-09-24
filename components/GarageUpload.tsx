@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { EVENT_TYPES, type EventType } from "@/lib/mediaKinds";
 
 /**
  * Garage → Upload: photos and videos to Google Drive, the same on a phone or a
@@ -11,7 +12,13 @@ import { useEffect, useRef, useState } from "react";
  * dropped connection picks up where it left off instead of starting over.
  */
 
-type Target = { type: "event"; slug: string; label: string } | { type: "vlog"; title: string; label: string };
+/** Three places footage can go. "other" is for clips that belong to no event
+ *  and no Garage Take — the car at the gas station, a random clip — so they
+ *  still reach Drive and the library instead of living on someone's phone. */
+type Target =
+  | { type: "event"; slug: string; label: string }
+  | { type: "vlog"; title: string; label: string }
+  | { type: "other"; label: string };
 type FileState = "waiting" | "uploading" | "done" | "failed";
 interface Item {
   id: string;
@@ -80,6 +87,10 @@ export default function GarageUpload({
   const [folderLink, setFolderLink] = useState("");
   const [keywords, setKeywords] = useState("");
   const [thoughts, setThoughts] = useState("");
+  /** Other footage only. Required, because there's no event to seed the
+   *  library's primary tag from, and an untagged clip is invisible to the
+   *  content plan that searches by it. */
+  const [eventType, setEventType] = useState<EventType | "">("");
   const folderIdRef = useRef("");
   /** Finished files, with Drive's id, for the Media Library. A file recovered
    *  through the status endpoint after a dropped connection has no id — it
@@ -199,6 +210,7 @@ export default function GarageUpload({
           label: target?.label,
           // Lets the server seed the media's primary tags from the event.
           slug: target?.type === "event" ? target.slug : undefined,
+          eventType: target?.type === "other" ? eventType : undefined,
           sent,
           failed,
           keywords,
@@ -214,6 +226,10 @@ export default function GarageUpload({
 
   async function start() {
     if (!target || items.length === 0) return;
+    if (target.type === "other" && !eventType) {
+      setError("Tap Asphalt, Dirt or Both first.");
+      return;
+    }
     setError("");
     setPhase("uploading");
     try {
@@ -221,7 +237,12 @@ export default function GarageUpload({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target: target.type === "vlog" ? { type: "vlog", title: target.title } : { type: "event", slug: target.slug },
+          target:
+            target.type === "vlog"
+              ? { type: "vlog", title: target.title }
+              : target.type === "other"
+                ? { type: "other" }
+                : { type: "event", slug: target.slug },
           files: items.map((i) => ({ name: i.file.name, size: i.file.size, mimeType: i.file.type })),
         }),
       });
@@ -242,6 +263,7 @@ export default function GarageUpload({
     setItems([]);
     setTarget(null);
     setOtherTitle("");
+    setEventType("");
     setPhase("choose");
     setError("");
     setFolderLink("");
@@ -259,7 +281,7 @@ export default function GarageUpload({
         <h2 className="garage-upload-step">What are you uploading?</h2>
         {vlogTitles.length > 0 && (
           <section className="garage-panel">
-            <h3>A vlog</h3>
+            <h3>A vlog (Garage Take)</h3>
             <div className="garage-upload-choices">
               {vlogTitles.map((title) => (
                 <button key={title} type="button" className="garage-upload-choice" onClick={() => pick({ type: "vlog", title, label: title })}>
@@ -297,6 +319,19 @@ export default function GarageUpload({
             </div>
           )}
         </section>
+        <section className="garage-panel">
+          <h3>Other footage</h3>
+          <p className="garage-form-note">
+            Not from an event? A car at the gas station, something you saw on the drive, a random clip. It still goes to
+            Drive and into the library.
+          </p>
+          <div className="garage-upload-choices">
+            <button type="button" className="garage-upload-choice" onClick={() => pick({ type: "other", label: "Other footage" })}>
+              <span>Anything else</span>
+              <strong>Other footage</strong>
+            </button>
+          </div>
+        </section>
       </div>
     );
   }
@@ -327,7 +362,7 @@ export default function GarageUpload({
   return (
     <div className="garage-upload">
       <p className="garage-upload-target">
-        {target?.type === "vlog" ? "Vlog for " : "Event: "}
+        {target?.type === "vlog" ? "Vlog for " : target?.type === "event" ? "Event: " : ""}
         <strong>{target?.label}</strong>
         {phase === "files" && (
           <button type="button" className="garage-upload-change" onClick={() => setPhase("choose")}>
@@ -380,9 +415,40 @@ export default function GarageUpload({
                   </li>
                 ))}
               </ul>
+              {/* Other footage has no event to take Asphalt / Dirt / Both from,
+                  so it's one required tap. Native radios keep it a single
+                  choice that a screen reader announces as a group. */}
+              {target?.type === "other" && (
+                <fieldset className="garage-upload-type">
+                  <legend className="garage-upload-label">
+                    Where was it? <span>Pick one</span>
+                  </legend>
+                  <div className="garage-chips">
+                    {EVENT_TYPES.map((t) => (
+                      <label key={t} className="garage-chip">
+                        <input
+                          type="radio"
+                          name="garage-upload-event-type"
+                          value={t}
+                          checked={eventType === t}
+                          onChange={() => {
+                            setEventType(t);
+                            setError("");
+                          }}
+                          required
+                        />
+                        <span>{t}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="garage-form-note">Where it IS, not what it is: a Jeep at a car show is Asphalt.</p>
+                </fieldset>
+              )}
               {/* Two boxes, asked at the one moment somebody is already looking
                   at their own footage and knows exactly what's in it. Both
-                  optional — a blank pair files nothing and blocks nothing. */}
+                  optional and never blocking. Event footage with both left
+                  blank (and no event tag) files no row; a Garage Take or Other
+                  footage always gets one, since there's no event to find it by. */}
               <div className="garage-upload-tags">
                 <label htmlFor="garage-upload-keywords" className="garage-upload-label">
                   What&apos;s in these? <span>A few words, comma separated</span>
@@ -413,7 +479,12 @@ export default function GarageUpload({
                   placeholder="Best moment, what broke, who showed up, anything that'd make a good Garage Take."
                 />
               </div>
-              <button type="button" className="btn btn-primary garage-block-btn garage-upload-go" onClick={start}>
+              <button
+                type="button"
+                className="btn btn-primary garage-block-btn garage-upload-go"
+                onClick={start}
+                disabled={target?.type === "other" && !eventType}
+              >
                 Upload {items.length} file{items.length === 1 ? "" : "s"} ({formatBytes(totalBytes)})
               </button>
             </>

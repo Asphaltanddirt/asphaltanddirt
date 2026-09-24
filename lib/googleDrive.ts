@@ -348,6 +348,61 @@ export async function fetchDriveMedia(fileId: string, range: string | null): Pro
   });
 }
 
+/**
+ * What the Library needs to know about a file before handing it over: its
+ * real name and size (the size decides download vs "Open in Drive"), and
+ * whether Drive has made a thumbnail. Null when the file is gone or trashed —
+ * the library shows what's there, so a missing file is treated as not found.
+ */
+export async function getDriveFileInfo(
+  fileId: string,
+): Promise<{ name: string; mimeType: string; size: number; thumbnailLink: string } | null> {
+  if (!/^[A-Za-z0-9_-]+$/.test(fileId)) return null;
+  try {
+    const f = await driveJson<DriveFile & { trashed?: boolean; thumbnailLink?: string }>(
+      `/files/${fileId}?supportsAllDrives=true&fields=id,name,mimeType,size,trashed,thumbnailLink`,
+    );
+    if (f.trashed) return null;
+    return { name: f.name, mimeType: f.mimeType, size: Number(f.size) || 0, thumbnailLink: f.thumbnailLink || "" };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A file's thumbnail, fetched with our token so the Shared Drive never has to
+ * be made public. Drive's thumbnail links are short-lived and, for Shared Drive
+ * files, need the same Authorization header as the file itself. `px` swaps the
+ * link's size suffix (=s220) for one sharp enough on a phone's screen.
+ * Null when Drive hasn't made one (a video still processing, an odd format).
+ */
+export async function fetchDriveThumbnail(fileId: string, px = 480): Promise<Response | null> {
+  const info = await getDriveFileInfo(fileId);
+  if (!info?.thumbnailLink) return null;
+  const url = info.thumbnailLink.replace(/=s\d+$/, `=s${px}`);
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${await accessToken()}` }, cache: "no-store" });
+  return res.ok && res.body ? res : null;
+}
+
+// ---------------------------------------------------------------------------
+// Other footage: clips that belong to no event and no Garage Take — a car at
+// the gas station, something seen on the drive home. They live in the events
+// Shared Drive under "Other Footage / <your name>", the same one-folder-per-
+// person shape as an event's Staff Uploads, so nobody's clips get mixed up and
+// Drive's own sharing already covers them.
+// ---------------------------------------------------------------------------
+
+const OTHER_FOOTAGE_FOLDER = "Other Footage";
+
+export async function ensureOtherFootageFolder(personName: string): Promise<string> {
+  const top = await listChildren(driveId(), `mimeType = '${FOLDER_MIME}'`);
+  const parent = top.find((f) => sameName(f.name, OTHER_FOOTAGE_FOLDER))?.id || (await createFolder(OTHER_FOOTAGE_FOLDER, driveId()));
+  const name = safeFolderName(personName) || "Crew";
+  const existing = await listChildren(parent, `mimeType = '${FOLDER_MIME}'`);
+  const match = existing.find((f) => sameName(f.name, name));
+  return match ? match.id : createFolder(name, parent);
+}
+
 // ---------------------------------------------------------------------------
 // Vlogs: the "Vlogs" folder in the A&D Youtube Shared Drive, one folder per
 // vlog ("2026-09-17 - E36 M3 Ownership"). Anthony uploads straight from his

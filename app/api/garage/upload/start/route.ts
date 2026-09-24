@@ -4,6 +4,7 @@ import { allowedOrigin } from "@/lib/eventMedia";
 import { getEventBySlug } from "@/lib/events";
 import {
   createUploadSession,
+  ensureOtherFootageFolder,
   ensureStaffFolder,
   ensureVlogFolder,
   folderUrl,
@@ -13,7 +14,7 @@ import {
 const MAX_FILES = 50;
 const MAX_BYTES = 20 * 1024 ** 3;
 
-export type UploadTarget = { type: "event"; slug: string } | { type: "vlog"; title: string };
+export type UploadTarget = { type: "event"; slug: string } | { type: "vlog"; title: string } | { type: "other" };
 
 function todayNY() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
@@ -31,6 +32,8 @@ function isMedia(name: string, mimeType: string) {
  * Starts a Garage upload to Google Drive, the same way on a phone or a computer:
  *   event → that event's "1. Staff Uploads / <your name>" (any signed-in crew)
  *   vlog  → the Vlog Shared Drive, "<today> - <title>" (Owners)
+ *   other → "Other Footage / <your name>" in the events drive (any signed-in
+ *           crew: a clip from the gas station is anybody's to share)
  * Returns one resumable upload URL per file. The browser sends the bytes
  * straight to Google in pieces, so big phone videos never pass through us.
  */
@@ -77,6 +80,8 @@ export async function POST(req: NextRequest) {
       const event = await getEventBySlug(target.slug, { includeCrewOnly: true });
       if (!event) return NextResponse.json({ error: "That event wasn't found." }, { status: 404 });
       folderId = await ensureStaffFolder(event, session.name || session.email.split("@")[0]);
+    } else if (target?.type === "other") {
+      folderId = await ensureOtherFootageFolder(session.name || session.email.split("@")[0]);
     } else {
       return NextResponse.json({ error: "Pick where this goes." }, { status: 400 });
     }
