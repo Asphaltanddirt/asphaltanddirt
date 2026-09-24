@@ -108,7 +108,103 @@ function Thumb({ fileId, fileName }: { fileId: string; fileName: string }) {
   );
 }
 
-export default function GarageLibrary({ items }: { items: LibraryItem[] }) {
+type OpenCard = { id: string; name: string; due: string; platform: string; clips: number };
+let cardsRequest: Promise<OpenCard[]> | null = null;
+/** One fetch of the open clip cards per page view, shared by every clip. */
+function loadOpenCards(): Promise<OpenCard[]> {
+  cardsRequest ??= fetch("/api/garage/library/attach")
+    .then((r) => r.json())
+    .then((d) => (Array.isArray(d.cards) ? d.cards : []))
+    .catch(() => {
+      cardsRequest = null;
+      return [];
+    });
+  return cardsRequest;
+}
+
+/**
+ * "Add to a posting card" (Jose, 2026-09-24): puts this clip on an open
+ * vertical-clip card so the auto-poster can post it. No dragging files into
+ * Airtable, and the Drive file is never shared (see lib/mediaLink.ts).
+ */
+function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }) {
+  const [open, setOpen] = useState(false);
+  const [cards, setCards] = useState<OpenCard[] | null>(null);
+  const [cardId, setCardId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+
+  async function start() {
+    setOpen(true);
+    setNote("");
+    const list = await loadOpenCards();
+    setCards(list);
+    if (list[0]) setCardId(list[0].id);
+  }
+
+  async function attach() {
+    setBusy(true);
+    setNote("");
+    try {
+      const res = await fetch("/api/garage/library/attach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId, cardId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't attach it.");
+      setNote(`Added to ${data.card}. It shows on the card in a few seconds; approve it on the board.`);
+      setOpen(false);
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "Couldn't attach it.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <>
+        <button type="button" className="btn btn-outline garage-library-action" onClick={start}>
+          Add to a posting card<span className="sr-only"> {fileName}</span>
+        </button>
+        {note && <p className="garage-form-note" role="status">{note}</p>}
+      </>
+    );
+  }
+  return (
+    <div className="garage-form garage-library-attach">
+      {cards === null ? (
+        <p className="garage-form-note">Loading the open clip cards…</p>
+      ) : cards.length === 0 ? (
+        <p className="garage-form-note">No open clip cards this week or next.</p>
+      ) : (
+        <>
+          <label htmlFor={`attach-${fileId}`}>Which card</label>
+          <select id={`attach-${fileId}`} value={cardId} onChange={(e) => setCardId(e.target.value)}>
+            {cards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.due.slice(5)} · {c.name}
+                {c.clips ? ` (has ${c.clips})` : ""}
+              </option>
+            ))}
+          </select>
+          <div className="card-actions">
+            <button type="button" className="btn btn-primary btn-sm" onClick={attach} disabled={busy || !cardId}>
+              {busy ? "Adding…" : "Add it"}
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+      {note && <p className="garage-error" role="status">{note}</p>}
+    </div>
+  );
+}
+
+export default function GarageLibrary({ items, canAttach = false }: { items: LibraryItem[]; canAttach?: boolean }) {
   const [query, setQuery] = useState("");
   const [eventType, setEventType] = useState("");
   const [venue, setVenue] = useState("");
@@ -321,6 +417,9 @@ export default function GarageLibrary({ items }: { items: LibraryItem[] }) {
                   >
                     Download<span className="sr-only"> {r.fileName}</span>
                   </a>
+                )}
+                {canAttach && !tooBig && /\.(mov|mp4|m4v)$/i.test(r.fileName) && (
+                  <AttachToCard fileId={r.fileId} fileName={r.fileName} />
                 )}
               </li>
             );
