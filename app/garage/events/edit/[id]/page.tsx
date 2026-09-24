@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventForm from "@/components/GarageEventForm";
 import GarageEventUpdate from "@/components/GarageEventUpdate";
+import GarageEventCallOff from "@/components/GarageEventCallOff";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getEditableEvent, listVenues } from "@/lib/garageEventEditor";
 
@@ -54,6 +55,8 @@ export default async function GarageEditEventPage({
           {event.rsvpCount > 0 && <span>{event.rsvpCount} RSVP{event.rsvpCount === 1 ? "" : "s"}</span>}
         </p>
         <GarageEventForm initial={event} venues={venues} />
+
+        {live && <GarageEventCallOff slug={event.slug} rsvpCount={event.rsvpCount} />}
 
         {event.rsvpCount > 0 && <GarageEventUpdate slug={event.slug} rsvpCount={event.rsvpCount} />}
       </div>
