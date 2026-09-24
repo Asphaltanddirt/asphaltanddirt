@@ -22,7 +22,7 @@ import { buildEventNotice, noticeImagePrompt, type NoticeKind } from "@/lib/even
  * can't post without one, and one channel falling behind is the failure here.
  */
 
-type Result = { platform: string; posted: boolean; error?: string };
+type Result = { platform: string; posted: boolean; url?: string; error?: string };
 type Done = { steps: Record<string, string>; emailed: number; text: string; results: Result[]; kind: NoticeKind };
 
 // Stay under Vercel's ~4.5 MB request cap however big the phone's file is.
@@ -119,6 +119,9 @@ export default function GarageEventChange({
   if (done) {
     const posted = done.results.filter((r) => r.posted).map((r) => r.platform);
     const missed = done.results.filter((r) => !r.posted);
+    // Jose, 2026-09-24: "i can share from page into group" — so the last step
+    // is the Page post's own Share button, not a copy-paste.
+    const pagePost = done.results.find((r) => r.platform === "Facebook Page" && r.posted)?.url;
     return (
       <div className="garage-panel garage-form" id="change">
         <h2>Done — {done.emailed} emailed</h2>
@@ -137,14 +140,25 @@ export default function GarageEventChange({
               </p>
             )}
 
-            <label htmlFor="ch-group">Last step: the Facebook group</label>
-            <p className="garage-form-note">The one place nobody can automate — Meta has no Groups posting API. Post this with the same image.</p>
-            <textarea id="ch-group" rows={5} readOnly value={done.text} />
-            <div className="card-actions">
-              <button className="btn btn-outline btn-sm" onClick={() => copy(done.text, "group")}>
-                {copied === "group" ? "Copied" : "Copy the text"}
-              </button>
-            </div>
+            <h2 className="mt-4">Last step: the Facebook group</h2>
+            <p className="garage-form-note">
+              Meta has no Groups posting API, so share the Page post into the group — same image, same words, one tap.
+            </p>
+            {pagePost ? (
+              <a className="btn btn-primary btn-sm" href={pagePost} target="_blank" rel="noopener">
+                Open the Page post to share ↗
+              </a>
+            ) : (
+              <>
+                <p className="garage-form-note">The Page post didn&apos;t go out, so post this in the group with the photo:</p>
+                <textarea id="ch-group" rows={5} readOnly value={done.text} />
+                <div className="card-actions">
+                  <button className="btn btn-outline btn-sm" onClick={() => copy(done.text, "group")}>
+                    {copied === "group" ? "Copied" : "Copy the text"}
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
 
