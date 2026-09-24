@@ -98,6 +98,11 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             Edit event
           </Link>
         )}
+        {canSeeOwnerOnly(session) && event.date && (
+          <Link href={`/garage/events/edit/${event.id}#change`} className="btn btn-outline garage-block-btn">
+            Call it off or send an update
+          </Link>
+        )}
 
         {/* One "who's coming" picture: the public RSVPs plus the crew's own
             answers. Names, phones and the repeat-face check are for Owner/Staff

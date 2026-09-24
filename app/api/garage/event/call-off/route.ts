@@ -4,59 +4,100 @@ import { getEventBySlug } from "@/lib/events";
 import { listRecords } from "@/lib/airtable";
 import { getEditableEvent, listAllEvents, updateEvent } from "@/lib/garageEventEditor";
 import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
-import { postEventNotice } from "@/lib/eventNotice";
+import { postEventNotice, sendEventNotice, type NoticeResult } from "@/lib/eventNotice";
+import { notifyFailure } from "@/lib/notify";
 import { sendEmail } from "@/lib/resendEmail";
 import { reconfirmLink } from "@/lib/rsvpReconfirm";
 
 export const maxDuration = 60;
 
+// Vercel caps a request body around 4.5 MB.
+const MAX_BYTES = 4 * 1024 * 1024;
+const IMAGE_CID = "event-notice";
+
 /**
- * Call off an event. One flip.
+ * Something changed about an event. ONE screen, ONE send (Jose, 2026-09-24:
+ * "all one screen, email gets image too now").
  *
- * Jose, 2026-09-23: "flip switch, email goes out, prompt is sent to me, I
- * build image, upload it and you take it where you can and I take it the rest
- * of the way. Should take 5 minutes."
+ * Replaces the separate "Call it off" and "Tell everyone who RSVP'd" panels,
+ * which did overlapping halves of the same job.
  *
- * So this does everything that does not need a person, in one request:
+ *  - kind "update": email the confirmed RSVPs. Nothing else changes.
+ *  - kind "cancelled" / "postponed", in one request:
+ *      1. Status → Cancelled (or the new date). updateEvent also holds any
+ *         queued promo cards and moves the comms row.
+ *      2. Emails every confirmed RSVP, text + the graphic inline.
+ *      3. Posts the notice to X, Threads, the Facebook Page and Instagram —
+ *         the same text and image everywhere. The photo is REQUIRED for these
+ *         two kinds (Instagram can't post without one).
+ *      4. Hands back the Facebook group text — no API for Groups.
  *
- *   1. Status → Cancelled (or the new date, for a postponement). That alone
- *      holds any queued promo cards and moves the comms row, via updateEvent.
- *   2. Emails every confirmed RSVP, with the reason. This does NOT wait.
- *   3. Prepares one notice card per channel — X, Threads, Facebook Page and
- *      Instagram — all carrying the same caption and all waiting on the image.
- *   4. Hands back the Robin brief, already filled in.
+ * `mode: "test"` sends one copy of the email to the sender and does nothing
+ * else — no status change, no cards.
  *
- * What is left for a person: make the image, upload it once (all four then go
- * out together), and post in the Facebook group. Nothing else.
- *
- * Owner only. Nothing here is undoable by tapping it again.
+ * Owner only. The live send has no undo.
  */
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   if (!canSeeOwnerOnly(session)) return NextResponse.json({ error: "Owners only." }, { status: 403 });
 
-  let body: { slug?: string; kind?: string; why?: string; newDate?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
+  const form = await req.formData().catch(() => null);
+  if (!form) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
-  const slug = (body.slug || "").trim();
-  const why = (body.why || "").trim();
-  const kind: EventUpdateKind = body.kind === "postponed" ? "postponed" : "cancelled";
-  const newDate = /^\d{4}-\d{2}-\d{2}$/.test(body.newDate || "") ? body.newDate : undefined;
+  const slug = String(form.get("slug") || "").trim();
+  const why = String(form.get("why") || "").trim();
+  const rawKind = String(form.get("kind") || "");
+  const kind: EventUpdateKind = rawKind === "postponed" || rawKind === "update" ? rawKind : "cancelled";
+  const rawDate = String(form.get("newDate") || "");
+  const newDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : undefined;
+  const test = form.get("mode") !== "live";
   if (!slug || !why) return NextResponse.json({ error: "Say why." }, { status: 400 });
   if (kind === "postponed" && !newDate) return NextResponse.json({ error: "Pick the new date." }, { status: 400 });
+
+  const file = form.get("file");
+  let image: { filename: string; contentType: string; base64: string } | null = null;
+  if (file instanceof File && file.size > 0) {
+    if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Images only." }, { status: 400 });
+    if (file.size > MAX_BYTES) return NextResponse.json({ error: "That image is over 4 MB." }, { status: 400 });
+    image = {
+      filename: file.name || "notice.jpg",
+      contentType: file.type,
+      base64: Buffer.from(await file.arrayBuffer()).toString("base64"),
+    };
+  }
+  const attachments = image
+    ? [{ filename: image.filename, content: image.base64, contentType: image.contentType, contentId: IMAGE_CID }]
+    : undefined;
+  const imageCid = image ? IMAGE_CID : undefined;
+
+  // Cancel and postpone need the photo — Instagram can't post without one, and
+  // Jose made it required rather than let one channel fall behind (2026-09-24).
+  // The test email can go without it.
+  if (!test && kind !== "update" && !image) {
+    return NextResponse.json({ error: "Add the photo first — Instagram can't post without it." }, { status: 400 });
+  }
 
   const event = await getEventBySlug(slug, { includeCrewOnly: true }).catch(() => null);
   if (!event) return NextResponse.json({ error: "Couldn't find that event." }, { status: 404 });
 
+  // The test: one email, to whoever pressed it. Nothing else moves.
+  if (test) {
+    try {
+      const built = buildRsvpUpdate({ recipientName: session.name || "You", event, message: why, kind, newDate, imageCid });
+      await sendEmail({ to: session.email, subject: `[Test] ${built.subject}`, html: built.html, attachments });
+      return NextResponse.json({ status: "ok", mode: "test", sentTo: session.email });
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : "The test didn't send." }, { status: 500 });
+    }
+  }
+
   const steps: Record<string, string> = {};
 
-  // 1. The switch. updateEvent already holds the promos and moves the comms
-  //    row, so this one call covers all three.
+  // 1. The switch — cancel and postpone only. updateEvent already holds the
+  //    promos and moves the comms row, so this one call covers all three.
+  if (kind !== "update") {
+
   try {
     const all = await listAllEvents();
     const row = all.find((e) => e.slug === slug);
@@ -70,6 +111,7 @@ export async function POST(req: NextRequest) {
     steps.event = kind === "cancelled" ? "Cancelled." : `Moved to ${newDate}.`;
   } catch (err) {
     steps.event = `Couldn't change the event: ${err instanceof Error ? err.message : "unknown"}`;
+  }
   }
 
   // 2. The email. Sent one at a time so one bad address can't stop the rest.
@@ -95,8 +137,9 @@ export async function POST(req: NextRequest) {
           kind,
           newDate,
           confirmUrl: kind === "postponed" && newDate ? reconfirmLink(slug, r.id, newDate) : undefined,
+          imageCid,
         });
-        await sendEmail({ to: r.email, subject: built.subject, html: built.html });
+        await sendEmail({ to: r.email, subject: built.subject, html: built.html, attachments });
         emailed++;
       } catch {
         emailFailed++;
@@ -107,29 +150,47 @@ export async function POST(req: NextRequest) {
     steps.email = `Couldn't email: ${err instanceof Error ? err.message : "unknown"}`;
   }
 
-  // 3 + 4. The notice cards and the graphic brief. NOTHING SOCIAL SENDS YET.
-  // Every channel carries the same image and they all wait for it — Jose's
-  // reason, which is better than the consistency argument: "plain text can be
-  // missed in scrolling, an image will not be so easy to miss." A cancellation
-  // that gets scrolled past has failed, however fast it went out.
-  //
-  // The email does not wait, so anyone who gave us an address hears now.
-  const notice = await postEventNotice({ event, kind, why, newDate, by: session.name || session.email }).catch((err) => {
+  if (kind === "update") return NextResponse.json({ status: "ok", mode: "live", steps, emailed, text: "", cardIds: [], results: [] });
+
+  // 3. The notice, posted now: the same text + image on every channel and in
+  //    the email ("the text and the photo are repetitive, in case the image is
+  //    skipped"). The photo is required up front, so nothing waits on it.
+  const notice = await postEventNotice({ event, kind, why, newDate, by: session.name || session.email, }).catch((err) => {
     console.error("notice cards failed", err);
     return null;
   });
-  steps.social = notice
-    ? `${notice.cardIds.length} notice${notice.cardIds.length === 1 ? "" : "s"} ready — waiting on the graphic.${
-        notice.errors.length ? ` ${notice.errors.join("; ")}` : ""
-      }`
-    : "Couldn't prepare the notice.";
+
+  let results: NoticeResult[] = [];
+  if (!notice) {
+    steps.social = "Couldn't prepare the notice.";
+  } else if (notice.cardIds.length && image) {
+    results = await sendEventNotice({ cardIds: notice.cardIds, image }).catch((err) => {
+      console.error("notice send failed", err);
+      return notice.cardIds.map(() => ({ platform: "notice", posted: false, error: "Couldn't send." }));
+    });
+    const ok = results.filter((r) => r.posted).map((r) => r.platform);
+    const missed = results.filter((r) => !r.posted);
+    steps.social = `${ok.length ? `Posted: ${ok.join(", ")}.` : "Nothing posted."}${
+      missed.length ? ` Not posted: ${missed.map((m) => `${m.platform} (${m.error})`).join("; ")}.` : ""
+    }`;
+    // By now the phone is probably in a pocket; a half-posted cancellation is
+    // worse than knowing you have to finish it by hand.
+    if (missed.length) {
+      await notifyFailure(
+        { id: notice.cardIds[0], name: "Cancellation notice", platform: missed.map((m) => m.platform).join(" · ") },
+        "the notice didn't post everywhere — finish it by hand",
+      ).catch(() => {});
+    }
+  } else {
+    steps.social = `Couldn't prepare the notice. ${notice.errors.join("; ")}`;
+  }
 
   return NextResponse.json({
     status: "ok",
+    mode: "live",
     steps,
-    text: notice?.text || "",
-    prompt: notice?.prompt || "",
-    cardIds: notice?.cardIds || [],
     emailed,
+    text: notice?.text || "",
+    results,
   });
 }

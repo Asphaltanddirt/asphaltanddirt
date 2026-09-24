@@ -11,9 +11,12 @@ export interface SendEmailInput {
   html: string;
   from?: string;
   replyTo?: string;
+  /** Files to attach. Give one a `contentId` and the html can show it inline
+   *  with <img src="cid:that-id"> (the call-off notice graphic does this). */
+  attachments?: { filename: string; content: string; contentType?: string; contentId?: string }[];
 }
 
-export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailInput): Promise<void> {
+export async function sendEmail({ to, subject, html, from, replyTo, attachments }: SendEmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("Resend is not configured (missing RESEND_API_KEY).");
 
@@ -26,6 +29,16 @@ export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailI
       subject,
       html,
       ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(attachments?.length
+        ? {
+            attachments: attachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              ...(a.contentType ? { content_type: a.contentType } : {}),
+              ...(a.contentId ? { content_id: a.contentId } : {}),
+            })),
+          }
+        : {}),
     }),
   });
 

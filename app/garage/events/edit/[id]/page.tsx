@@ -3,8 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventForm from "@/components/GarageEventForm";
-import GarageEventUpdate from "@/components/GarageEventUpdate";
-import GarageEventCallOff from "@/components/GarageEventCallOff";
+import GarageEventChange from "@/components/GarageEventChange";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getEditableEvent, listVenues } from "@/lib/garageEventEditor";
 
@@ -56,9 +55,15 @@ export default async function GarageEditEventPage({
         </p>
         <GarageEventForm initial={event} venues={venues} />
 
-        {live && <GarageEventCallOff slug={event.slug} rsvpCount={event.rsvpCount} />}
-
-        {event.rsvpCount > 0 && <GarageEventUpdate slug={event.slug} rsvpCount={event.rsvpCount} />}
+        {(live || event.rsvpCount > 0) && (
+          <GarageEventChange
+            slug={event.slug}
+            title={event.title}
+            date={event.date || null}
+            rsvpCount={event.rsvpCount}
+            canCallOff={live}
+          />
+        )}
       </div>
     </div>
   );

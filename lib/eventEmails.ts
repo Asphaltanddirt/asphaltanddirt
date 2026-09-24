@@ -199,8 +199,11 @@ export function buildRsvpUpdate(input: {
   newDate?: string;
   /** Postponements only: this person's own re-confirm link. */
   confirmUrl?: string;
+  /** The notice graphic, attached inline under this content id. The email
+   *  carries the same image as the socials (Jose, 2026-09-24). */
+  imageCid?: string;
 }): EventEmail {
-  const { recipientName, event, message, kind = "update", newDate, confirmUrl } = input;
+  const { recipientName, event, message, kind = "update", newDate, confirmUrl, imageCid } = input;
   const first = esc(firstNameOf(recipientName));
   const was = event.date ? formatDate(event.date) : "";
 
@@ -250,6 +253,11 @@ export function buildRsvpUpdate(input: {
         <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title.trim())}</h1>
       </td>
     </tr>
+    ${
+      imageCid
+        ? `<tr><td align="center" style="padding:20px 32px 0;"><img src="cid:${imageCid}" alt="${esc(`${eyebrow}: ${event.title.trim()}`)}" width="536" style="display:block;width:100%;max-width:536px;height:auto;border:0;"></td></tr>`
+        : ""
+    }
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         ${para(`Hey ${first},`)}
