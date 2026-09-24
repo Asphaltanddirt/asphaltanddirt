@@ -142,12 +142,20 @@ export default function GarageEventChange({
 
             <h2 className="mt-4">Last step: the Facebook group</h2>
             <p className="garage-form-note">
-              Meta has no Groups posting API, so share the Page post into the group — same image, same words, one tap.
+              Meta has no Groups posting API, so share the Page post into the group — same image, same words.
             </p>
             {pagePost ? (
-              <a className="btn btn-primary btn-sm" href={pagePost} target="_blank" rel="noopener">
-                Open the Page post to share ↗
-              </a>
+              <>
+                <a
+                  className="btn btn-primary btn-sm"
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pagePost)}`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Share with the FB group ↗
+                </a>
+                <p className="garage-form-note">Facebook opens its share screen: pick &ldquo;Share to a group&rdquo;, then ours.</p>
+              </>
             ) : (
               <>
                 <p className="garage-form-note">The Page post didn&apos;t go out, so post this in the group with the photo:</p>
