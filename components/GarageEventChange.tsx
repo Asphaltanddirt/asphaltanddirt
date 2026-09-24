@@ -44,15 +44,19 @@ export default function GarageEventChange({
   date,
   rsvpCount,
   canCallOff,
+  cancelled = false,
 }: {
   slug: string;
   title: string;
   date: string | null;
   rsvpCount: number;
-  /** False once the event is already cancelled — only updates are left. */
+  /** False for a draft or an already-cancelled event. */
   canCallOff: boolean;
+  /** Cancelled events can come back: "Back on" is a postpone with a new date,
+   *  and everyone who RSVP'd gets asked whether it works (waivers stay). */
+  cancelled?: boolean;
 }) {
-  const [kind, setKind] = useState<NoticeKind>(canCallOff ? "cancelled" : "update");
+  const [kind, setKind] = useState<NoticeKind>(canCallOff ? "cancelled" : cancelled ? "postponed" : "update");
   const [newDate, setNewDate] = useState("");
   const [why, setWhy] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -67,7 +71,7 @@ export default function GarageEventChange({
   const ready = why.trim().length > 0 && (kind !== "postponed" || !!newDate);
   const canSend = ready && (!callingOff || !!photo);
   const event = { title, date };
-  const input = { event, kind, why, newDate: kind === "postponed" ? newDate : undefined };
+  const input = { event, kind, why, newDate: kind === "postponed" ? newDate : undefined, rescheduled: cancelled && kind === "postponed" };
   const prompt = useMemo(() => (callingOff && ready ? noticeImagePrompt(input) : ""), [callingOff, ready, kind, why, newDate]); // eslint-disable-line react-hooks/exhaustive-deps
   const caption = useMemo(() => (callingOff && ready ? buildEventNotice(input) : ""), [callingOff, ready, kind, why, newDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -195,11 +199,13 @@ export default function GarageEventChange({
         {(
           [
             ["cancelled", "Cancelled", "It's off. Their waiver stays on file."],
-            ["postponed", "Postponed", "Moved to another day. Same waiver, new date."],
+            cancelled
+              ? (["postponed", "Back on", "Rescheduled. Pick the new date; everyone who RSVP'd is asked if it works. Waivers stay."] as const)
+              : (["postponed", "Postponed", "Moved to another day. Same waiver, new date."] as const),
             ["update", "Just an update", "Meetup moved, bring tire chains, running late. Email only."],
           ] as const
         )
-          .filter(([value]) => canCallOff || value === "update")
+          .filter(([value]) => canCallOff || value === "update" || (cancelled && value === "postponed"))
           .map(([value, label, help]) => (
             <label key={value} className="garage-choice">
               <input type="radio" name="changeKind" checked={kind === value} onChange={() => { setKind(value); reset(); }} />

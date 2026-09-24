@@ -26,13 +26,17 @@ export function buildEventNotice(input: {
   kind: NoticeKind;
   why: string;
   newDate?: string;
+  /** A cancelled event coming back ("Back on"). */
+  rescheduled?: boolean;
 }): string {
-  const { event, kind, why, newDate } = input;
+  const { event, kind, why, newDate, rescheduled } = input;
   const title = event.title.trim();
   const was = event.date ? formatDate(event.date) : "";
 
   const headline =
-    kind === "cancelled"
+    rescheduled && newDate
+      ? `${title} is back on — ${formatDate(newDate)}.`
+      : kind === "cancelled"
       ? `${title} is cancelled${was ? ` — ${was} is off` : ""}.`
       : newDate
         ? `${title} has moved to ${formatDate(newDate)}${was ? ` (was ${was})` : ""}.`
@@ -60,19 +64,21 @@ export function noticeImagePrompt(input: {
   kind: NoticeKind;
   why: string;
   newDate?: string;
+  rescheduled?: boolean;
 }): string {
-  const { event, kind, why, newDate } = input;
+  const { event, kind, why, newDate, rescheduled } = input;
+  const word = rescheduled ? "BACK ON" : kind === "cancelled" ? "CANCELLED" : "POSTPONED";
   return [
     "Make a social graphic announcing this. 1080x1350 for Instagram, and a 1080x1080 square.",
     "",
-    `Status: ${kind === "cancelled" ? "CANCELLED" : "POSTPONED"}`,
+    `Status: ${word}`,
     `Event name: ${event.title.trim()}`,
     `Original date: ${event.date ? formatDate(event.date) : "TBC"}`,
     `New date: ${kind === "postponed" ? (newDate ? formatDate(newDate) : "to be announced") : "n/a"}`,
     `Reason, one short line: ${why.trim()}`,
     "",
     "Dark near-black background (#1a1712). ONE word dominates the top half —",
-    `${kind === "cancelled" ? "CANCELLED" : "POSTPONED"} — heavy condensed uppercase, white, legible as a thumbnail.`,
+    `${word} — heavy condensed uppercase, white, legible as a thumbnail.`,
     "Under it: event name, original date struck through, new date if there is one.",
     "Reason on one line at the bottom. A single orange accent, #f86000, used once.",
     "Leave the bottom-right corner clear for the logo.",

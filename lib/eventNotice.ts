@@ -74,6 +74,7 @@ export async function postEventNotice(input: {
   kind: EventUpdateKind;
   why: string;
   newDate?: string;
+  rescheduled?: boolean;
   by: string;
 }): Promise<{ text: string; cardIds: string[]; prompt: string; errors: string[] }> {
   const text = buildEventNotice(input);
@@ -86,7 +87,7 @@ export async function postEventNotice(input: {
       const card = await createRecord(
         POSTS,
         {
-          Name: `${input.kind === "cancelled" ? "Cancelled" : "Postponed"} · ${input.event.title.trim()} · ${platform}`,
+          Name: `${input.rescheduled ? "Back on" : input.kind === "cancelled" ? "Cancelled" : "Postponed"} · ${input.event.title.trim()} · ${platform}`,
           "Week Of": weekOf(today),
           Due: today,
           Window: "Now",

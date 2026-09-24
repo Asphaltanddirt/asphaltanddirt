@@ -202,17 +202,22 @@ export function buildRsvpUpdate(input: {
   /** The notice graphic, attached inline under this content id. The email
    *  carries the same image as the socials (Jose, 2026-09-24). */
   imageCid?: string;
+  /** A cancelled event coming back ("Back on"). */
+  rescheduled?: boolean;
 }): EventEmail {
-  const { recipientName, event, message, kind = "update", newDate, confirmUrl, imageCid } = input;
+  const { recipientName, event, message, kind = "update", newDate, confirmUrl, imageCid, rescheduled } = input;
   const first = esc(firstNameOf(recipientName));
   const was = event.date ? formatDate(event.date) : "";
 
-  const eyebrow =
-    kind === "cancelled" ? "Event Cancelled" : kind === "postponed" ? "Event Postponed" : "Event Update";
+  const eyebrow = rescheduled
+    ? "Back On"
+    : kind === "cancelled" ? "Event Cancelled" : kind === "postponed" ? "Event Postponed" : "Event Update";
 
   // What happened, in one line, before the reason.
   const opening =
-    kind === "cancelled"
+    rescheduled && newDate
+      ? `It's back on — <strong>${esc(formatDate(newDate))}</strong>.`
+      : kind === "cancelled"
       ? `${was ? `<strong>${esc(was)}</strong> is off.` : "This one is off."}`
       : kind === "postponed"
         ? newDate
@@ -269,8 +274,9 @@ export function buildRsvpUpdate(input: {
     </tr>
   `;
 
-  const subject =
-    kind === "cancelled"
+  const subject = rescheduled
+    ? `Back on: ${event.title.trim()}`
+    : kind === "cancelled"
       ? `Cancelled: ${event.title.trim()}`
       : kind === "postponed"
         ? `Postponed: ${event.title.trim()}`

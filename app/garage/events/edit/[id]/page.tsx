@@ -55,13 +55,14 @@ export default async function GarageEditEventPage({
         </p>
         <GarageEventForm initial={event} venues={venues} />
 
-        {(live || event.rsvpCount > 0) && (
+        {(live || event.status === "Cancelled" || event.rsvpCount > 0) && (
           <GarageEventChange
             slug={event.slug}
             title={event.title}
             date={event.date || null}
             rsvpCount={event.rsvpCount}
             canCallOff={live}
+            cancelled={event.status === "Cancelled"}
           />
         )}
       </div>

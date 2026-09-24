@@ -81,10 +81,16 @@ export async function POST(req: NextRequest) {
   const event = await getEventBySlug(slug, { includeCrewOnly: true }).catch(() => null);
   if (!event) return NextResponse.json({ error: "Couldn't find that event." }, { status: 404 });
 
+  // The editor's copy of the event: its status says whether a postpone is
+  // really a cancelled event coming back ("Back on").
+  const row = (await listAllEvents().catch(() => [])).find((e) => e.slug === slug);
+  const editable = row ? await getEditableEvent(row.id).catch(() => null) : null;
+  const rescheduled = kind === "postponed" && editable?.status === "Cancelled";
+
   // The test: one email, to whoever pressed it. Nothing else moves.
   if (test) {
     try {
-      const built = buildRsvpUpdate({ recipientName: session.name || "You", event, message: why, kind, newDate, imageCid });
+      const built = buildRsvpUpdate({ recipientName: session.name || "You", event, message: why, kind, newDate, imageCid, rescheduled });
       await sendEmail({ to: session.email, subject: `[Test] ${built.subject}`, html: built.html, attachments });
       return NextResponse.json({ status: "ok", mode: "test", sentTo: session.email });
     } catch (err) {
@@ -99,16 +105,20 @@ export async function POST(req: NextRequest) {
   if (kind !== "update") {
 
   try {
-    const all = await listAllEvents();
-    const row = all.find((e) => e.slug === slug);
-    const editable = row ? await getEditableEvent(row.id) : null;
     if (!editable) throw new Error("Couldn't load the event to change it.");
     await updateEvent(
       editable.id,
-      { ...editable, status: kind === "cancelled" ? "Cancelled" : editable.status, date: newDate || editable.date },
+      {
+        ...editable,
+        // Postponing a CANCELLED event is how it comes back: a cancel is often
+        // called before there's a new date (Jose, 2026-09-24: "keep a path open
+        // ... later on, we could decide to open it up and reschedule").
+        status: kind === "cancelled" ? "Cancelled" : editable.status === "Cancelled" ? "Published" : editable.status,
+        date: newDate || editable.date,
+      },
       slug,
     );
-    steps.event = kind === "cancelled" ? "Cancelled." : `Moved to ${newDate}.`;
+    steps.event = kind === "cancelled" ? "Cancelled." : rescheduled ? `Back on, ${newDate}.` : `Moved to ${newDate}.`;
   } catch (err) {
     steps.event = `Couldn't change the event: ${err instanceof Error ? err.message : "unknown"}`;
   }
@@ -138,6 +148,7 @@ export async function POST(req: NextRequest) {
           newDate,
           confirmUrl: kind === "postponed" && newDate ? reconfirmLink(slug, r.id, newDate) : undefined,
           imageCid,
+          rescheduled,
         });
         await sendEmail({ to: r.email, subject: built.subject, html: built.html, attachments });
         emailed++;
@@ -155,7 +166,7 @@ export async function POST(req: NextRequest) {
   // 3. The notice, posted now: the same text + image on every channel and in
   //    the email ("the text and the photo are repetitive, in case the image is
   //    skipped"). The photo is required up front, so nothing waits on it.
-  const notice = await postEventNotice({ event, kind, why, newDate, by: session.name || session.email, }).catch((err) => {
+  const notice = await postEventNotice({ event, kind, why, newDate, rescheduled, by: session.name || session.email }).catch((err) => {
     console.error("notice cards failed", err);
     return null;
   });
