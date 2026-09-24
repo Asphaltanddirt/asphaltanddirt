@@ -174,28 +174,83 @@ function requirementsBlock(event: EventDetail): string {
         </table>`;
 }
 
-/** Admin-triggered update to everyone who RSVP'd to one event — a moved
- *  meetup spot, a cancellation, "bring tire chains," etc. */
-export function buildRsvpUpdate(input: { recipientName: string; event: EventDetail; message: string }): EventEmail {
-  const { recipientName, event, message } = input;
+export type EventUpdateKind = "cancelled" | "postponed" | "update";
+
+/**
+ * An update to everyone who RSVP'd — cancelled, postponed, or anything else.
+ *
+ * THE SYSTEM WRITES THE SCAFFOLDING; THE SENDER WRITES ONLY THE WHY.
+ * (Jose, 2026-09-23: "I want the system to write 90% of the email, we only add
+ * the why.") What happened and what happens next are the same every time and
+ * are exactly what gets forgotten at 6am in a storm — so they are not left to
+ * whoever is typing.
+ *
+ * The waiver line goes in the CANCELLED email too, not just the postponed one.
+ * Telling somebody their signature is still on file is also telling them you
+ * intend to come back, which is the thing a cancellation otherwise fails to
+ * say.
+ */
+export function buildRsvpUpdate(input: {
+  recipientName: string;
+  event: EventDetail;
+  message: string;
+  kind?: EventUpdateKind;
+  /** Postponements only: the new date, ISO. */
+  newDate?: string;
+}): EventEmail {
+  const { recipientName, event, message, kind = "update", newDate } = input;
   const first = esc(firstNameOf(recipientName));
+  const was = event.date ? formatDate(event.date) : "";
+
+  const eyebrow =
+    kind === "cancelled" ? "Event Cancelled" : kind === "postponed" ? "Event Postponed" : "Event Update";
+
+  // What happened, in one line, before the reason.
+  const opening =
+    kind === "cancelled"
+      ? `${was ? `<strong>${esc(was)}</strong> is off.` : "This one is off."}`
+      : kind === "postponed"
+        ? newDate
+          ? `${was ? `<strong>${esc(was)}</strong>` : "This one"} has moved to <strong>${esc(formatDate(newDate))}</strong>.`
+          : `${was ? `<strong>${esc(was)}</strong>` : "This one"} has been postponed. We'll confirm the new date shortly.`
+        : "";
+
+  // What happens next. The waiver line is the point of it.
+  const closing =
+    kind === "cancelled"
+      ? "Your signed waiver stays on file. If we put this back on the calendar you won't have to fill any of it in again — we'll just email and ask whether the new date works for you."
+      : kind === "postponed"
+        ? "Your signed waiver stays on file, so there's nothing to re-sign. We do need to know whether the new date works for you — just reply to this email either way."
+        : "";
+
+  const para = (html: string, gap = "0 0 16px") =>
+    html ? `<p style="margin:${gap};">${html}</p>` : "";
 
   const bodyRows = `
     <tr>
       <td align="center" style="padding:40px 32px 8px;">
-        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">Event Update</p>
-        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title)}</h1>
+        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">${eyebrow}</p>
+        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title.trim())}</h1>
       </td>
     </tr>
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
-        <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0;white-space:pre-wrap;">${esc(message)}</p>
+        ${para(`Hey ${first},`)}
+        ${para(opening)}
+        ${para(`<span style="white-space:pre-wrap;">${esc(message)}</span>`, closing ? "0 0 16px" : "0")}
+        ${para(closing, "0")}
       </td>
     </tr>
   `;
 
-  return { subject: `Update: ${event.title}`, html: shell(`An update about ${event.title}`, bodyRows) };
+  const subject =
+    kind === "cancelled"
+      ? `Cancelled: ${event.title.trim()}`
+      : kind === "postponed"
+        ? `Postponed: ${event.title.trim()}`
+        : `Update: ${event.title.trim()}`;
+
+  return { subject, html: shell(`${eyebrow} — ${event.title.trim()}`, bodyRows) };
 }
 
 /** Day-before reminder — sent by the comms-reminder cron to every RSVP

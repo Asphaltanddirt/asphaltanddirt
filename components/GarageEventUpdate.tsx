@@ -10,6 +10,8 @@ import { useState } from "react";
  * used in a hurry is the one time nobody re-reads it.
  */
 export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; rsvpCount: number | null }) {
+  const [kind, setKind] = useState<"cancelled" | "postponed" | "update">("update");
+  const [newDate, setNewDate] = useState("");
   const [message, setMessage] = useState("");
   const [tested, setTested] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -22,7 +24,7 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
       const res = await fetch("/api/garage/event/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, message, mode }),
+        body: JSON.stringify({ slug, message, mode, kind, newDate: kind === "postponed" ? newDate : undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "That didn't send.");
@@ -46,10 +48,53 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
       <h2>Tell everyone who RSVP&apos;d</h2>
       <p className="garage-form-note">
         {rsvpCount === null ? "Goes to every confirmed RSVP." : `Goes to all ${rsvpCount} confirmed RSVP${rsvpCount === 1 ? "" : "s"}.`}{" "}
-        Say what changed and why — people are deciding whether to drive somewhere.
+        Write only the reason. The email already says what happened and what it means for their waiver.
       </p>
 
-      <label htmlFor="ev-update">What changed</label>
+      <fieldset className="garage-choice-group">
+        <legend>What happened</legend>
+        {(
+          [
+            ["update", "An update", "Meetup moved, bring tire chains, running late."],
+            ["cancelled", "Cancelled", "It's off. The email says their waiver stays on file."],
+            ["postponed", "Postponed", "Moved to another day. Same waiver, new date."],
+          ] as const
+        ).map(([value, label, help]) => (
+          <label key={value} className="garage-choice">
+            <input
+              type="radio"
+              name="updateKind"
+              checked={kind === value}
+              onChange={() => {
+                setKind(value);
+                setTested(false);
+              }}
+            />
+            <span>
+              <strong>{label}</strong>
+              <small>{help}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+
+      {kind === "postponed" && (
+        <>
+          <label htmlFor="ev-newdate">New date</label>
+          <input
+            id="ev-newdate"
+            type="date"
+            value={newDate}
+            onChange={(e) => {
+              setNewDate(e.target.value);
+              setTested(false);
+            }}
+          />
+          <p className="garage-form-note">Leave it blank if the new date isn&apos;t settled — the email will say so.</p>
+        </>
+      )}
+
+      <label htmlFor="ev-update">Why</label>
       <textarea
         id="ev-update"
         rows={5}
@@ -58,7 +103,7 @@ export default function GarageEventUpdate({ slug, rsvpCount }: { slug: string; r
           setMessage(e.target.value);
           setTested(false);
         }}
-        placeholder={"We're calling Saturday off — the nor'easter is forecast to put the Pine Barrens roads under water and we're not risking it.\n\nWe'll be back with a new date this week."}
+        placeholder={"The nor'easter is forecast to put the Pine Barrens roads under water, and state forest rules keep us on mapped roads — there won't be any worth running."}
       />
 
       <div className="card-actions mt-2">

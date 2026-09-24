@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { getEventBySlug, listRsvpsForEvent } from "@/lib/events";
-import { buildRsvpUpdate } from "@/lib/eventEmails";
+import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 
 /**
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   if (!canSeeOwnerOnly(session)) return NextResponse.json({ error: "Owners only." }, { status: 403 });
 
-  let body: { slug?: string; message?: string; mode?: string };
+  let body: { slug?: string; message?: string; mode?: string; kind?: string; newDate?: string };
   try {
     body = await req.json();
   } catch {
@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
 
   const slug = (body.slug || "").trim();
   const message = (body.message || "").trim();
-  if (!slug || !message) return NextResponse.json({ error: "Say what changed." }, { status: 400 });
+  if (!slug || !message) return NextResponse.json({ error: "Say why." }, { status: 400 });
+
+  // The system writes what happened and what happens next; this only picks
+  // which scaffolding to use.
+  const kind: EventUpdateKind =
+    body.kind === "cancelled" || body.kind === "postponed" ? body.kind : "update";
+  const newDate = /^\d{4}-\d{2}-\d{2}$/.test(body.newDate || "") ? body.newDate : undefined;
 
   // Cancelled events stop resolving, and this is exactly when it's needed, so
   // ask for it by every status the editor can set.
@@ -46,7 +52,7 @@ export async function POST(req: NextRequest) {
   const failed: string[] = [];
   for (const r of recipients) {
     try {
-      const built = buildRsvpUpdate({ recipientName: r.name, event, message });
+      const built = buildRsvpUpdate({ recipientName: r.name, event, message, kind, newDate });
       await sendEmail({ to: r.email, subject: live ? built.subject : `[Test] ${built.subject}`, html: built.html });
       sent++;
     } catch (err) {
