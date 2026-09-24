@@ -186,13 +186,19 @@ export function needsAHuman(post: SocialPost): boolean {
   if (isAutoPlatform(post.platform)) return false;
   return post.status !== "Posted" && post.status !== "Skipped";
   // NOT gated on having a caption or an attachment. That guard was added and
-  // removed the same day (2026-09-23): it suppressed the Wednesday trail clips
-  // because their cards were empty, and Jose then posted both of them anyway —
-  // on TikTok and YouTube he posts natively from his phone, so the card is a
-  // reminder and a record, never the source of the file. An empty by-hand card
-  // is the NORMAL state of a real task on exactly the platforms that are
-  // by-hand. A slot that genuinely isn't wanted comes off the Posting Schedule;
-  // that decision belongs to a person, not to a heuristic about attachments.
+  // removed the same day (2026-09-23) after it suppressed the Wednesday trail
+  // clips for being empty and Jose posted both anyway, off archive footage.
+  //
+  // His reason is the rule: **a nudge offers the option, it does not assert
+  // that the work exists.** Whether a clip goes out depends on what he happens
+  // to have — archive footage, something Anthony sent, nothing at all — and
+  // none of that is knowable from the card. So no heuristic can predict it,
+  // and any attempt to is just a way of deciding for him.
+  //
+  // He also posts TikTok and YouTube natively from his phone, so an empty card
+  // is the normal state of a live slot there, not a sign of an abandoned one.
+  // A slot that genuinely isn't wanted comes off the Posting Schedule — a
+  // person's decision, made once, in the open.
 }
 
 const timeLabel = (d: Date) =>
