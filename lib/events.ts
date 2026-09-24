@@ -110,6 +110,11 @@ export interface EventDetail extends EventSummary {
   galleryPhotos: { url: string; alt: string }[];
   /** PUBLIC. The event's own requirements, one per line in Airtable. */
   requirements: string[];
+  /** Asphalt / Dirt / Both — which side of the brand this event is. Seeds the
+   *  primary tag on every file uploaded to the event's Drive folder, so
+   *  footage arrives already sorted into the bucket the posting board draws
+   *  from. Nothing to do with venueTypes, which drives waivers and rules. */
+  eventType: string;
   /** Venue Type choices plus the Type of each linked venue, keys into
    *  lib/vehicleRules.ts ("State Forest (NJ)"). */
   venueTypes: string[];
@@ -273,6 +278,7 @@ export async function getEventBySlug(
     galleryPhotos,
     requirements: lines(record.fields.Requirements),
     // Linking a park brings its type's rules along, so they can't be forgotten.
+    eventType: (record.fields["Event Type"] as string) || "",
     venueTypes: [...new Set([...((record.fields["Venue Type"] as string[]) || []), ...venues.map((v) => v.type).filter(Boolean)])],
     venues,
   };

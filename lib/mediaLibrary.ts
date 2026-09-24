@@ -40,6 +40,10 @@ export interface MediaBatch {
   keywords: string;
   thoughts: string;
   uploadedBy: string;
+  /** Asphalt / Dirt / Both, seeded from the event. The primary tag. */
+  eventType?: string;
+  /** The event's Venue Type(s), seeded. The second primary tag. */
+  venueTypes?: string[];
 }
 
 export interface MediaRow {
@@ -97,8 +101,16 @@ export async function fileMediaRows(
   if (!isAirtableConfigured(BASE_ID)) return { filed: 0, skipped: "Airtable isn't configured" };
   const keywords = cleanKeywords(batch.keywords);
   const thoughts = batch.thoughts.trim().slice(0, 2000);
-  // Nothing typed and nothing to say: don't fill the table with untagged rows.
-  if (!keywords && !thoughts) return { filed: 0, skipped: "Nothing typed" };
+  // The two primary tags come from the event, not from whoever is uploading —
+  // locked dropdowns so the content plan can count on them (see the field
+  // descriptions in Airtable). A file that carries a seeded tag is worth a row
+  // even when nobody typed a word, which is most uploads: the whole point is
+  // that footage arrives already sorted into the bucket a slot draws from.
+  const eventType = (batch.eventType || "").trim();
+  const venueTypes = (batch.venueTypes || []).map((v) => v.trim()).filter(Boolean);
+  // Nothing typed, nothing to say, and nothing seeded: don't fill the table
+  // with rows that say nothing at all.
+  if (!keywords && !thoughts && !eventType) return { filed: 0, skipped: "Nothing typed" };
 
   const uploadedAt = new Date().toISOString();
   let filed = 0;
@@ -119,6 +131,8 @@ export async function fileMediaRows(
           // Only send what was actually typed. An empty string sent to a
           // multi-select creates a blank option that then sits in the field's
           // list forever — the write test made exactly that mess.
+          ...(eventType ? { "Event Type": eventType } : {}),
+          ...(venueTypes.length ? { "Venue Type": venueTypes } : {}),
           ...(keywords ? { Keywords: keywords } : {}),
           ...(thoughts ? { Thoughts: thoughts } : {}),
           ...(f.size ? { Size: f.size } : {}),

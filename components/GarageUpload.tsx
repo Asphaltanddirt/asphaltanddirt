@@ -197,6 +197,8 @@ export default function GarageUpload({
           folderId: folderIdRef.current,
           kind: target?.type,
           label: target?.label,
+          // Lets the server seed the media's primary tags from the event.
+          slug: target?.type === "event" ? target.slug : undefined,
           sent,
           failed,
           keywords,

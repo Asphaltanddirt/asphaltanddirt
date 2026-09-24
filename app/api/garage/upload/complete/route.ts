@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/garageAuth";
 import { folderUrl } from "@/lib/googleDrive";
 import { fileMediaRows, type MediaRowInput } from "@/lib/mediaLibrary";
+import { getEventBySlug } from "@/lib/events";
 import { sendEmail } from "@/lib/resendEmail";
 
 function esc(value: string) {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     folderId?: string;
     kind?: "event" | "vlog";
     label?: string;
+    slug?: string;
     sent?: number;
     failed?: number;
     keywords?: string;
@@ -47,6 +49,15 @@ export async function POST(req: NextRequest) {
         fileId: String(f.id).slice(0, 100),
         size: Number.isFinite(f.size) ? Number(f.size) : undefined,
       }));
+    // The two primary tags are seeded from the event, never typed: Event Type
+    // (Asphalt / Dirt / Both) and its Venue Type(s). Best-effort — a footage
+    // row with no seed is still better than no row, so a failed lookup must
+    // not cost the whole write.
+    const event =
+      body.kind !== "vlog" && body.slug
+        ? await getEventBySlug(String(body.slug).slice(0, 200), { includeCrewOnly: true }).catch(() => null)
+        : null;
+
     if (files.length) {
       const result = await fileMediaRows(files, {
         kind: body.kind === "vlog" ? "vlog" : "event",
@@ -55,6 +66,8 @@ export async function POST(req: NextRequest) {
         keywords: String(body.keywords || "").slice(0, 600),
         thoughts: String(body.thoughts || "").slice(0, 2000),
         uploadedBy: session.name || session.email,
+        eventType: event?.eventType,
+        venueTypes: event?.venueTypes,
       });
       filed = result.filed;
       if (result.skipped) console.warn("media library:", result.skipped);
