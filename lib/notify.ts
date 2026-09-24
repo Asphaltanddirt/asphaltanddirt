@@ -184,13 +184,15 @@ export function effectiveWindow(post: SocialPost): string {
  */
 export function needsAHuman(post: SocialPost): boolean {
   if (isAutoPlatform(post.platform)) return false;
-  if (post.status === "Posted" || post.status === "Skipped") return false;
-  // A slot with nothing on it isn't a task. The Wednesday trail clips generate
-  // a card every week but wait on footage that often never arrives (Anthony
-  // films weekends now), and nudging for work that can't be done is exactly
-  // the noise that gets notifications muted. Same test the auto-poster uses to
-  // refuse a post: is there actually anything to put out?
-  return Boolean(post.caption.trim() || post.drafts.length > 0 || post.assets.length > 0);
+  return post.status !== "Posted" && post.status !== "Skipped";
+  // NOT gated on having a caption or an attachment. That guard was added and
+  // removed the same day (2026-09-23): it suppressed the Wednesday trail clips
+  // because their cards were empty, and Jose then posted both of them anyway —
+  // on TikTok and YouTube he posts natively from his phone, so the card is a
+  // reminder and a record, never the source of the file. An empty by-hand card
+  // is the NORMAL state of a real task on exactly the platforms that are
+  // by-hand. A slot that genuinely isn't wanted comes off the Posting Schedule;
+  // that decision belongs to a person, not to a heuristic about attachments.
 }
 
 const timeLabel = (d: Date) =>

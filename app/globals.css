@@ -2506,3 +2506,24 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-upload-count{ margin:10px 0 0; color:var(--text-muted); }
 .garage-upload-warning{ margin:14px auto 0; max-width:34ch; font-size:16px; font-weight:600; color:var(--text); }
 .garage-upload-done{ text-align:center; display:flex; flex-direction:column; gap:12px; padding:var(--sp-3) 0; }
+
+/* Garage → the posting week at a glance. What's left, not what was planned:
+   done work greys out, and the auto-posted ones are a count, never a list. */
+.garage-week{ margin:0 0 var(--sp-3); }
+.garage-week-top{ display:flex; align-items:baseline; gap:8px; margin:0 0 8px; }
+.garage-week-missed{ color:var(--accent); font-size:.85rem; }
+.garage-week-days{ list-style:none; margin:0; padding:0; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+.garage-week-day{ display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--border); }
+.garage-week-day:first-child{ border-top:0; }
+.garage-week-day.is-past{ opacity:.55; }
+.garage-week-day.is-today{ background:var(--bg-card); }
+.garage-week-day.has-open{ box-shadow:inset 3px 0 0 var(--accent); }
+.garage-week-date{ display:flex; flex-direction:column; align-items:center; min-width:34px; line-height:1.1; }
+.garage-week-dow{ font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); }
+.garage-week-dom{ font-size:1.05rem; font-weight:600; }
+.garage-week-items{ display:flex; flex-direction:column; gap:3px; min-width:0; font-size:.9rem; }
+.garage-week-item.is-done{ color:var(--text-muted); text-decoration:line-through; text-decoration-thickness:1px; }
+.garage-week-what{ color:var(--text-muted); }
+.garage-week-auto{ font-size:.82rem; color:var(--text-muted); }
+.garage-week-auto.has-failed{ color:var(--accent); font-weight:600; }
+.garage-week-link{ display:inline-block; margin-top:8px; font-size:.9rem; }

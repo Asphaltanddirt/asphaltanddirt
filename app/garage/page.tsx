@@ -10,6 +10,8 @@ import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
 import { getDueReminders } from "@/lib/garageReminders";
 import { getPostsNeedingAttention } from "@/lib/garageSocial";
+import GarageWeekStrip from "@/components/GarageWeekStrip";
+import { getPostingWeek } from "@/lib/garageWeek";
 
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
@@ -73,12 +75,13 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // day on a phone — the posting fetch used to wait for the first three to
   // finish for no reason, which is a quarter of a second of nothing, every time.
   // Only the head count below genuinely has to wait (it needs the event id).
-  const [events, allTasks, reminders, posting] = await Promise.all([
+  const [events, allTasks, reminders, posting, postingWeek] = await Promise.all([
     getCrewEvents().catch(() => ({ upcoming: [], past: [] })),
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
     // Owners post the socials: today's and overdue posts, straight to the board.
     canSeeOwnerOnly(session) ? getPostsNeedingAttention(today).catch(() => []) : Promise.resolve([]),
+    canSeeOwnerOnly(session) ? getPostingWeek(today).catch(() => null) : Promise.resolve(null),
   ]);
   const postingOverdue = posting.filter((p) => p.due < today).length;
   // The head count everyone asks about first, on the card they already look at.
@@ -178,6 +181,13 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
               {posting.length > 3 && " …"} · Open the board →
             </span>
           </Link>
+        )}
+
+        {postingWeek && (
+          <>
+            <h2 className="garage-section">Posting this week</h2>
+            <GarageWeekStrip week={postingWeek} />
+          </>
         )}
 
         <h2 className="garage-section">Your week</h2>
