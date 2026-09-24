@@ -4,7 +4,7 @@ import { getEventBySlug } from "@/lib/events";
 import { listRecords } from "@/lib/airtable";
 import { getEditableEvent, listAllEvents, updateEvent } from "@/lib/garageEventEditor";
 import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
-import { postEventNotice, sendEventNotice, type NoticeResult } from "@/lib/eventNotice";
+import { createTikTokNoticeCard, postEventNotice, sendEventNotice, type NoticeResult } from "@/lib/eventNotice";
 import { notifyFailure } from "@/lib/notify";
 import { sendEmail } from "@/lib/resendEmail";
 import { reconfirmLink } from "@/lib/rsvpReconfirm";
@@ -201,6 +201,17 @@ export async function POST(req: NextRequest) {
     }
   } else {
     steps.social = `Couldn't prepare the notice. ${notice.errors.join("; ")}`;
+  }
+
+  // 4. TikTok, by hand: a card with the same image + caption on the board.
+  if (notice && image) {
+    const tiktok = await createTikTokNoticeCard({ event, kind, text: notice.text, rescheduled, image }).catch((err) => {
+      console.error("tiktok notice card failed", err);
+      return null;
+    });
+    steps.tiktok = tiktok
+      ? "TikTok is by hand: post the image with the caption below (it's also on the board under By hand)."
+      : "TikTok is by hand: post the image with the caption below.";
   }
 
   return NextResponse.json({

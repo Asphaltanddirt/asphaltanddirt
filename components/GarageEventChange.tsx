@@ -135,6 +135,21 @@ export default function GarageEventChange({
 
         {done.kind !== "update" && (
           <>
+            <h2 className="mt-4">TikTok, by hand</h2>
+            <p className="garage-form-note">
+              TikTok can&apos;t be posted automatically. Save the image, then post it in TikTok as a photo post with this caption.
+            </p>
+            <div className="card-actions">
+              {preview && (
+                <a className="btn btn-primary btn-sm" href={preview} download={photo?.name || "notice.jpg"}>
+                  Save image
+                </a>
+              )}
+              <button className="btn btn-outline btn-sm" onClick={() => copy(done.text, "tiktok")}>
+                {copied === "tiktok" ? "Copied" : "Copy TikTok caption"}
+              </button>
+            </div>
+
             <h2 className="mt-4">Last step: the Facebook group</h2>
             <p className="garage-form-note">
               Meta has no Groups posting API, so share the Page post into the group — same image, same words.
@@ -181,7 +196,7 @@ export default function GarageEventChange({
       <h2>Call it off or send an update</h2>
       <p className="garage-form-note">
         {callingOff
-          ? `One send does all of it: the event is marked, ${people} emailed, the notice posted to X, Threads, the Facebook Page and Instagram, and any queued promos held.`
+          ? `One send does all of it: the event is marked, ${people} emailed, the notice posted to X, Threads, the Facebook Page and Instagram, any queued promos held, and TikTok handed to you to post by hand.`
           : `Emails the ${people}. Nothing else changes.`}
       </p>
 

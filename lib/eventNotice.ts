@@ -149,6 +149,42 @@ export async function sendEventNotice(input: {
   return results;
 }
 
+/**
+ * TikTok gets the notice too, by hand (Jose, 2026-09-24, after the Mud Run
+ * move: "everything worked except tiktok"). There is no TikTok posting API
+ * wired, so this is a card in the board's By hand section, carrying the same
+ * image and caption as the other four, never approved. The done screen also
+ * hands over Save image + Copy caption so it can be posted on the spot.
+ */
+export async function createTikTokNoticeCard(input: {
+  event: EventDetail;
+  kind: EventUpdateKind;
+  text: string;
+  rescheduled?: boolean;
+  image: { filename: string; contentType: string; base64: string };
+}): Promise<string | null> {
+  const today = todayNY();
+  const label = input.rescheduled ? "Back on" : input.kind === "cancelled" ? "Cancelled" : "Postponed";
+  const card = await createRecord(
+    POSTS,
+    {
+      Name: `${label} · ${input.event.title.trim()} · TikTok`,
+      "Week Of": weekOf(today),
+      Due: today,
+      Window: "Now",
+      Platform: "TikTok",
+      Asset: "Square",
+      Status: "Planned",
+      Caption: input.text,
+      Event: input.event.slug,
+      Notes: "Event notice — TikTok is by hand. Post the attached image as a photo post with this caption, then mark it posted.",
+    },
+    { baseId: BASE_ID, typecast: true },
+  );
+  await addAsset(card.id, input.image);
+  return card.id;
+}
+
 /** Has a notice already gone out for this event today? Stops a double-tap. */
 export async function noticeAlreadySent(slug: string): Promise<boolean> {
   try {
