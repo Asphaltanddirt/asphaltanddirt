@@ -2,7 +2,7 @@ import type { EventDetail } from "@/lib/events";
 import type { EventUpdateKind } from "@/lib/eventEmails";
 import { createRecord, listRecords, updateRecord } from "@/lib/airtable";
 import { autoPostNow } from "@/lib/autoPost";
-import { getPost } from "@/lib/garageSocial";
+import { addAsset, getPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
 import { xLength } from "@/lib/socialCopy";
 
@@ -33,12 +33,21 @@ import { xLength } from "@/lib/socialCopy";
 const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
 const POSTS = "Social Posts";
 
-/** Goes out the instant the switch is flipped — all three take text-only. */
-export const NOTICE_PLATFORMS = ["X", "Threads", "Facebook Page"] as const;
-
-/** Waits for the graphic. Instagram requires media on every post, so its card
- *  is created empty and posts itself the moment an image is attached. */
-export const IMAGE_PLATFORM = "Instagram" as const;
+/**
+ * Everywhere the notice goes, and they all carry the SAME image and caption
+ * (Jose, 2026-09-23: "all socials get the image, not just text. caption and
+ * image, so everyone waits for the image").
+ *
+ * The earlier version fired X, Threads and Facebook as text the instant the
+ * switch flipped and left Instagram waiting. That was faster by a couple of
+ * minutes and wrong: the event was announced with a graphic, so a bare line of
+ * text reads like a half-finished thought on the channels people are scrolling.
+ * One notice, one look, everywhere.
+ *
+ * The cost is deliberate — nothing social goes out until the image exists. The
+ * email does not wait, so the people who gave us an address hear immediately.
+ */
+export const NOTICE_PLATFORMS = ["X", "Threads", "Facebook Page", "Instagram"] as const;
 
 const formatDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -132,14 +141,15 @@ export async function postEventNotice(input: {
   why: string;
   newDate?: string;
   by: string;
-}): Promise<{ text: string; results: NoticeResult[]; imageCardId: string; prompt: string }> {
+}): Promise<{ text: string; cardIds: string[]; prompt: string; errors: string[] }> {
   const text = buildEventNotice(input);
   const today = todayNY();
-  const results: NoticeResult[] = [];
+  const cardIds: string[] = [];
+  const errors: string[] = [];
 
   for (const platform of NOTICE_PLATFORMS) {
     try {
-      const created = await createRecord(
+      const card = await createRecord(
         POSTS,
         {
           Name: `${input.kind === "cancelled" ? "Cancelled" : "Postponed"} · ${input.event.title.trim()} · ${platform}`,
@@ -147,61 +157,61 @@ export async function postEventNotice(input: {
           Due: today,
           Window: "Now",
           Platform: platform,
-          Asset: "Text post",
+          Asset: "Square",
           Status: "Planned",
           Caption: text,
           Event: input.event.slug,
-          Approved: true,
-          "Approved By": input.by,
-          Notes: "Event notice — created and sent from Garage → Events.",
+          Notes: "Event notice — waiting on the graphic. Attach the image and all of these go out together.",
         },
         { baseId: BASE_ID, typecast: true },
       );
-
-      const outcome = await autoPostNow(created.id);
-      const post = await getPost(created.id);
-      const posted = post?.autoStatus === "Posted";
-      results.push({
-        platform,
-        posted,
-        url: post?.postUrl || undefined,
-        error: posted ? undefined : outcome?.message || post?.autoLog || "Didn't send.",
-      });
-      if (!posted) {
-        // Leave a failed notice unapproved so nothing retries it on a slot
-        // time hours from now, when the news is stale.
-        await updateRecord(POSTS, created.id, { Approved: false }, { baseId: BASE_ID }).catch(() => {});
-      }
+      cardIds.push(card.id);
     } catch (err) {
-      results.push({ platform, posted: false, error: err instanceof Error ? err.message : "Couldn't create the post." });
+      errors.push(`${platform}: ${err instanceof Error ? err.message : "couldn't make the card"}`);
     }
   }
 
-  // Instagram's card is made now and posts itself once a graphic is attached.
-  let imageCardId = "";
-  try {
-    const card = await createRecord(
-      POSTS,
-      {
-        Name: `${input.kind === "cancelled" ? "Cancelled" : "Postponed"} · ${input.event.title.trim()} · ${IMAGE_PLATFORM}`,
-        "Week Of": weekOf(today),
-        Due: today,
-        Window: "Now",
-        Platform: IMAGE_PLATFORM,
-        Asset: "Square",
-        Status: "Planned",
-        Caption: text,
-        Event: input.event.slug,
-        Notes: "Event notice — waiting on the graphic. Attach an image and it goes out.",
-      },
-      { baseId: BASE_ID, typecast: true },
-    );
-    imageCardId = card.id;
-  } catch (err) {
-    console.error("couldn't make the Instagram notice card", err);
+  return { text, cardIds, prompt: noticeImagePrompt(input), errors };
+}
+
+/**
+ * The image landed. Put it on every notice card and send them all.
+ *
+ * One upload, one fan-out — the alternative is attaching the same picture four
+ * times from a phone, which is how one of them ends up missed.
+ */
+export async function sendEventNotice(input: {
+  cardIds: string[];
+  image: { filename: string; contentType: string; base64: string };
+}): Promise<NoticeResult[]> {
+  const results: NoticeResult[] = [];
+
+  for (const id of input.cardIds) {
+    const card = await getPost(id);
+    if (!card) {
+      results.push({ platform: "unknown", posted: false, error: "That card is gone." });
+      continue;
+    }
+    try {
+      await addAsset(id, input.image);
+      await updateRecord(POSTS, id, { Approved: true }, { baseId: BASE_ID });
+      const outcome = await autoPostNow(id);
+      const after = await getPost(id);
+      const posted = after?.autoStatus === "Posted";
+      results.push({
+        platform: card.platform,
+        posted,
+        url: after?.postUrl || undefined,
+        error: posted ? undefined : outcome?.message || after?.autoLog || "Didn't send.",
+      });
+      // Don't let a failed notice retry at some slot time when it's stale news.
+      if (!posted) await updateRecord(POSTS, id, { Approved: false }, { baseId: BASE_ID }).catch(() => {});
+    } catch (err) {
+      results.push({ platform: card.platform, posted: false, error: err instanceof Error ? err.message : "Failed." });
+    }
   }
 
-  return { text, results, imageCardId, prompt: noticeImagePrompt(input) };
+  return results;
 }
 
 /** Has a notice already gone out for this event today? Stops a double-tap. */

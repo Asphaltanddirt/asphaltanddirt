@@ -5,7 +5,6 @@ import { getEditableEvent, listAllEvents, updateEvent } from "@/lib/garageEventE
 import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
 import { postEventNotice } from "@/lib/eventNotice";
 import { sendEmail } from "@/lib/resendEmail";
-import { notifyFailure } from "@/lib/notify";
 
 export const maxDuration = 60;
 
@@ -20,13 +19,13 @@ export const maxDuration = 60;
  *
  *   1. Status → Cancelled (or the new date, for a postponement). That alone
  *      holds any queued promo cards and moves the comms row, via updateEvent.
- *   2. Emails every confirmed RSVP, with the reason.
- *   3. Posts the text notice to X, Threads and the Facebook Page.
- *   4. Makes an Instagram card that is waiting on a graphic, and hands back
- *      the Robin prompt already filled in.
+ *   2. Emails every confirmed RSVP, with the reason. This does NOT wait.
+ *   3. Prepares one notice card per channel — X, Threads, Facebook Page and
+ *      Instagram — all carrying the same caption and all waiting on the image.
+ *   4. Hands back the Robin brief, already filled in.
  *
- * What is left for a person: make the image, upload it (Instagram then posts
- * itself), and post in the Facebook group. Nothing else.
+ * What is left for a person: make the image, upload it once (all four then go
+ * out together), and post in the Facebook group. Nothing else.
  *
  * Owner only. Nothing here is undoable by tapping it again.
  */
@@ -89,31 +88,29 @@ export async function POST(req: NextRequest) {
     steps.email = `Couldn't email: ${err instanceof Error ? err.message : "unknown"}`;
   }
 
-  // 3 + 4. The public notice, and the graphic brief.
+  // 3 + 4. The notice cards and the graphic brief. NOTHING SOCIAL SENDS YET.
+  // Every channel carries the same image and they all wait for it — Jose's
+  // reason, which is better than the consistency argument: "plain text can be
+  // missed in scrolling, an image will not be so easy to miss." A cancellation
+  // that gets scrolled past has failed, however fast it went out.
+  //
+  // The email does not wait, so anyone who gave us an address hears now.
   const notice = await postEventNotice({ event, kind, why, newDate, by: session.name || session.email }).catch((err) => {
-    console.error("notice failed", err);
+    console.error("notice cards failed", err);
     return null;
   });
   steps.social = notice
-    ? `${notice.results.filter((r) => r.posted).map((r) => r.platform).join(", ") || "Nothing"} posted.`
-    : "Couldn't post the notice.";
-
-  // A notice that didn't reach a channel is the kind of silent miss that
-  // matters most here — say so on the phone, not just on the screen.
-  const missed = notice?.results.filter((r) => !r.posted) || [];
-  if (missed.length) {
-    await notifyFailure(
-      { id: slug, name: `${event.title.trim()} notice`, platform: missed.map((m) => m.platform).join(" · ") },
-      "the cancellation notice didn't post — do it by hand",
-    ).catch(() => {});
-  }
+    ? `${notice.cardIds.length} notice${notice.cardIds.length === 1 ? "" : "s"} ready — waiting on the graphic.${
+        notice.errors.length ? ` ${notice.errors.join("; ")}` : ""
+      }`
+    : "Couldn't prepare the notice.";
 
   return NextResponse.json({
     status: "ok",
     steps,
     text: notice?.text || "",
     prompt: notice?.prompt || "",
-    imageCardId: notice?.imageCardId || "",
+    cardIds: notice?.cardIds || [],
     emailed,
   });
 }

@@ -12,7 +12,7 @@ import { useRef, useState } from "react";
  * So the only things a person does here are: pick cancelled or postponed,
  * type why, confirm — and then attach the graphic when it exists.
  */
-type Done = { steps: Record<string, string>; text: string; prompt: string; imageCardId: string; emailed: number };
+type Done = { steps: Record<string, string>; text: string; prompt: string; cardIds: string[]; emailed: number };
 
 export default function GarageEventCallOff({ slug, rsvpCount }: { slug: string; rsvpCount: number }) {
   const [kind, setKind] = useState<"cancelled" | "postponed">("cancelled");
@@ -47,23 +47,24 @@ export default function GarageEventCallOff({ slug, rsvpCount }: { slug: string; 
   }
 
   async function uploadImage(file: File) {
-    if (!done?.imageCardId) return;
+    if (!done?.cardIds.length) return;
     setBusy(true);
     setNote("");
     try {
       const form = new FormData();
-      form.set("id", done.imageCardId);
+      form.set("cardIds", done.cardIds.join(","));
       form.set("file", file);
-      const up = await fetch("/api/garage/social/upload", { method: "POST", body: form });
-      if (!up.ok) throw new Error((await up.json()).error || "Upload failed.");
-
-      const post = await fetch("/api/garage/social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "post-now", id: done.imageCardId }),
-      });
-      const data = await post.json().catch(() => ({}));
-      setNote(post.ok ? "Image up — Instagram posted. Just the Facebook group left." : data.error || "Image saved, but Instagram didn't post. Open the board.");
+      const res = await fetch("/api/garage/event/notice-image", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "That didn't send.");
+      const ok = data.results.filter((r: { posted: boolean }) => r.posted).map((r: { platform: string }) => r.platform);
+      const bad = data.results.filter((r: { posted: boolean }) => !r.posted);
+      setNote(
+        `${ok.join(", ") || "Nothing"} posted.` +
+          (bad.length
+            ? ` Still to do by hand: ${bad.map((r: { platform: string; error?: string }) => `${r.platform} (${r.error})`).join(", ")}.`
+            : " Just the Facebook group left."),
+      );
     } catch (err) {
       setNote(err instanceof Error ? err.message : "That didn't work.");
     } finally {
@@ -89,13 +90,15 @@ export default function GarageEventCallOff({ slug, rsvpCount }: { slug: string; 
         </button>
 
         <h2 className="mt-4">2. Upload it</h2>
-        <p className="garage-form-note">Instagram posts itself the moment the image lands.</p>
+        <p className="garage-form-note">
+          One upload. X, Threads, the Facebook Page and Instagram all go out together, same image, same caption.
+        </p>
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])}
-          disabled={busy || !done.imageCardId}
+          disabled={busy || !done.cardIds.length}
         />
 
         <h2 className="mt-4">3. The Facebook group</h2>
