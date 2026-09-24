@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageLibrary, { type LibraryItem } from "@/components/GarageLibrary";
-import { getSession } from "@/lib/garageAuth";
+import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { displayKind } from "@/lib/mediaKinds";
 import { getMediaLibrary } from "@/lib/mediaLibrary";
 
@@ -59,7 +59,7 @@ export default async function GarageLibraryPage() {
         </div>
 
         {items ? (
-          <GarageLibrary items={items} />
+          <GarageLibrary items={items} canAttach={canSeeOwnerOnly(session)} />
         ) : (
           <section className="garage-panel">
             <p className="garage-error">Couldn&apos;t read the media library. Try again in a minute.</p>

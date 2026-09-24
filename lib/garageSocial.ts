@@ -474,3 +474,15 @@ export async function saveText(
 export async function addAsset(id: string, file: { filename: string; contentType: string; base64: string }) {
   await uploadAttachment(id, "Assets", file, { baseId: BASE_ID });
 }
+
+/**
+ * Adds a file to a post's Assets by URL, keeping what's already there.
+ * For clips too big for uploadAttachment's 5 MB (see lib/mediaLink.ts).
+ * Airtable fetches the URL itself, a few seconds later.
+ */
+export async function addAssetFromUrl(id: string, file: { url: string; filename: string }) {
+  const rows = await listRecords(POSTS, `RECORD_ID() = '${id}'`, { baseId: BASE_ID });
+  if (!rows[0]) throw new Error("That card is gone.");
+  const existing = (rows[0].fields.Assets as { id: string }[] | undefined) || [];
+  await updateRecord(POSTS, id, { Assets: [...existing.map((a) => ({ id: a.id })), file] }, { baseId: BASE_ID });
+}
