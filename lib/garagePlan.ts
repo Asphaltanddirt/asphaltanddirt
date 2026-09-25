@@ -131,7 +131,12 @@ function postItems(posts: SocialPost[], isPast: boolean, name: (o: string) => st
       ownerName: name(owner),
       need,
       fix,
-      href: `/garage/social?week=${weekOf(top.post.due) || monday}&all=1#card-${top.post.id}`,
+      // A missing clip is fixed in the Library (one pick fills every card in
+      // the slot); everything else is fixed on the card itself.
+      href:
+        need === "missing" && top.what === "no clip"
+          ? "/garage/library"
+          : `/garage/social?week=${weekOf(top.post.due) || monday}&all=1#card-${top.post.id}`,
       done: false,
     });
   }
