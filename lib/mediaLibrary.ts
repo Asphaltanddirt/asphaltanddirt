@@ -1,4 +1,4 @@
-import { createRecord, listRecords, isAirtableConfigured } from "@/lib/airtable";
+import { createRecord, listRecords, isAirtableConfigured, updateRecord } from "@/lib/airtable";
 import { getEventBySlug } from "@/lib/events";
 import { KIND_LABEL, type UploadKind } from "@/lib/mediaKinds";
 
@@ -70,6 +70,8 @@ export interface MediaRow {
   venueTypes: string[];
   /** Bytes, when the uploader's browser reported it. 0 = not known. */
   size: number;
+  /** When it was last put on a posting slot from the Library. "" = unused. */
+  usedAt: string;
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -218,6 +220,7 @@ function toMediaRow(r: { id: string; fields: Record<string, unknown> }): MediaRo
     eventType: str(f["Event Type"]),
     venueTypes: list(f["Venue Type"]),
     size: typeof f.Size === "number" && f.Size > 0 ? f.Size : 0,
+    usedAt: str(f["Used At"]),
   };
 }
 
@@ -279,4 +282,14 @@ export async function checkMediaLibrary(): Promise<Record<string, unknown>> {
       detail: err instanceof Error ? err.message.slice(0, 120) : "",
     };
   }
+}
+
+/** Stamps a file as used on a posting slot, so the Planning Calendar's
+ *  footage count only counts clips nobody has posted yet. Best-effort: the
+ *  clip is already on the cards, and a failed stamp must not undo that. */
+export async function markMediaUsed(rowId: string, slot: string): Promise<void> {
+  if (!isAirtableConfigured(BASE_ID)) return;
+  await updateRecord(TABLE, rowId, { "Used At": new Date().toISOString(), "Used On": slot.slice(0, 250) }, { baseId: BASE_ID }).catch(
+    (err) => console.error("couldn't mark media used", rowId, err),
+  );
 }

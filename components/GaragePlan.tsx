@@ -17,7 +17,7 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
   const todayIndex = Math.max(0, week.findIndex((d) => d.isToday));
   const [sel, setSel] = useState(todayIndex);
 
-  const mine = (i: PlanItem) => i.owner === me;
+  const mine = (i: PlanItem) => i.owner === me || i.owner === "everyone";
   const open = (i: PlanItem) => !i.done && i.need !== "missed";
   const mineOpen = (d: PlanDay) => d.items.filter((i) => mine(i) && open(i));
 
@@ -174,6 +174,15 @@ function Planning({ plan, mine, open }: { plan: Plan; mine: Is; open: Is }) {
             {ahead[0].label} {ahead[0].dayOfMonth} → {ahead[5].label} {ahead[5].dayOfMonth}
           </span>
         </div>
+        <p className="garage-plan-quiet">
+          Footage in the Library:{" "}
+          {plan.footage.map((f, i) => (
+            <span key={f.side}>
+              {i > 0 && " · "}
+              {f.side} {f.unused} unused (~{f.weeks} wk{f.weeks === 1 ? "" : "s"})
+            </span>
+          ))}
+        </p>
         {aheadRows.length ? (
           <div className="garage-plan-rows">
             {aheadRows.map((d) => (

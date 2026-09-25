@@ -4,6 +4,7 @@ import { listGarageUsers } from "@/lib/garageAuth";
 import { getCrewEvents } from "@/lib/events";
 import { isAutoPlatform } from "@/lib/socialCopy";
 import { planPublish } from "@/lib/autoPost";
+import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
 
 /**
  * The Planning Calendar on the Garage home (spec: 9. Analytics/Planning
@@ -27,11 +28,11 @@ export type PlanNeed = "missing" | "approve" | "by-hand" | "task" | "missed";
 
 export interface PlanItem {
   id: string;
-  kind: "post" | "task";
+  kind: "post" | "task" | "footage";
   title: string;
   /** What's missing, in a few words, e.g. "Instagram: no clip". */
   sub: string;
-  /** Lowercase email, or "claude". */
+  /** Lowercase email, "claude", or "everyone" (orange for whoever's looking). */
   owner: string;
   ownerName: string;
   need: PlanNeed;
@@ -54,11 +55,39 @@ export interface PlanDay {
   events: { title: string; href: string }[];
 }
 
+/** Unused clips in the Library for one side, against how fast we burn them. */
+export interface FootageStock {
+  side: "Asphalt" | "Dirt";
+  unused: number;
+  perWeek: number;
+  /** Whole weeks the stock lasts at perWeek. */
+  weeks: number;
+}
+
 export interface Plan {
   today: string;
   monday: string;
   /** 14 days from this week's Monday. */
   days: PlanDay[];
+  footage: FootageStock[];
+}
+
+/**
+ * How many clips a week each side uses (the clip-supply memory, Jose 9/24):
+ * the Wednesday trail clip is always dirt, and the Feature and Alternate clips
+ * are one asphalt and one dirt (Thursday's cuts from the two Garage Takes).
+ * Fewer than LOW_WEEKS of stock on a side and the look-ahead says "film".
+ */
+const CLIPS_PER_WEEK = { Dirt: 2, Asphalt: 1 } as const;
+const LOW_WEEKS = 2;
+const isVideo = (r: MediaRow) => /\.(mov|mp4|m4v)$/i.test(r.fileName);
+
+function footageStock(rows: MediaRow[]): FootageStock[] {
+  const unused = rows.filter((r) => isVideo(r) && !r.usedAt);
+  return (["Asphalt", "Dirt"] as const).map((side) => {
+    const n = unused.filter((r) => r.eventType === side || r.eventType === "Both").length;
+    return { side, unused: n, perWeek: CLIPS_PER_WEEK[side], weeks: Math.floor(n / CLIPS_PER_WEEK[side]) };
+  });
 }
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -163,16 +192,18 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
   const monday = weekOf(reference);
   const last = addDays(monday, 13);
 
-  const [posts, tasks, users, events] = await Promise.all([
+  const [posts, tasks, users, events, media] = await Promise.all([
     getPostsBetween(monday, last).catch(() => [] as SocialPost[]),
     getTasksBetween(monday, last).catch(() => [] as GarageTask[]),
     listGarageUsers().catch(() => []),
     getCrewEvents().catch(() => ({ upcoming: [], past: [] })),
+    getMediaLibrary().catch(() => [] as MediaRow[]),
   ]);
   if (posts.length === 0 && tasks.length === 0) return null;
 
   const names = new Map(users.map((u) => [u.email.trim().toLowerCase(), u.name.split(" ")[0] || u.name]));
-  const name = (owner: string) => (owner === "claude" ? "Claude" : names.get(owner) || owner.split("@")[0] || "Someone");
+  const name = (owner: string) =>
+    owner === "claude" ? "Claude" : owner === "everyone" ? "Anyone" : names.get(owner) || owner.split("@")[0] || "Someone";
 
   const days: PlanDay[] = [];
   for (let i = 0; i < 14; i += 1) {
@@ -202,5 +233,22 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
         .map((e) => ({ title: e.title, href: `/garage/events/${e.slug}` })),
     });
   }
-  return { today, monday, days };
+  // Running low on one side's clips is lead-time work: it lands on the first
+  // look-ahead day, orange for everyone until the footage exists.
+  const footage = footageStock(media);
+  for (const f of footage.filter((x) => x.weeks < LOW_WEEKS)) {
+    days[8].items.push({
+      id: `footage-${f.side}`,
+      kind: "footage",
+      title: `Film ${f.side.toLowerCase()} clips`,
+      sub: `${f.unused} unused in the Library, about ${f.weeks} week${f.weeks === 1 ? "" : "s"} at ${f.perWeek} a week`,
+      owner: "everyone",
+      ownerName: name("everyone"),
+      need: "missing",
+      fix: "Upload",
+      href: "/garage/upload",
+      done: false,
+    });
+  }
+  return { today, monday, days, footage };
 }

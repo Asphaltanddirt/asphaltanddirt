@@ -3,7 +3,7 @@ import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getDriveFileInfo } from "@/lib/googleDrive";
 import { DOWNLOAD_LIMIT_BYTES } from "@/lib/mediaKinds";
 import { signedMediaUrl } from "@/lib/mediaLink";
-import { findMediaByFileId } from "@/lib/mediaLibrary";
+import { findMediaByFileId, markMediaUsed } from "@/lib/mediaLibrary";
 import { addAssetFromUrl, getPost, getWeekPosts, saveText, setApproved, type SocialPost } from "@/lib/garageSocial";
 import { isAutoPlatform } from "@/lib/socialCopy";
 import { todayNY, weekOf } from "@/lib/garageTasks";
@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
         approved.push(p.platform);
       }
     }
+    await markMediaUsed(row.id, `${dayOf(card.due)} ${card.due} · ${card.topic} (${cards.map((p) => p.platform).join(", ")})`);
     return NextResponse.json({
       status: "ok",
       card: `${dayOf(card.due)} · ${card.topic}`,
