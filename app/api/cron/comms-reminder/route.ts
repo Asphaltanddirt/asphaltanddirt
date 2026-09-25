@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { feedbackUrl } from "@/lib/eventFeedback";
 import { getEventBySlug, listRsvpsForEvent } from "@/lib/events";
 import { getSettingsDueForReminder, getSettingsToClose, markActivated, markClosedEmailSent, getAttendeesForEmail } from "@/lib/eventComms";
 import { buildWaiverInvite, buildCommsClosing } from "@/lib/eventEmails";
@@ -105,7 +106,7 @@ async function run(req: NextRequest) {
     for (const a of attendees) {
       if (!a.email) continue;
       try {
-        const built = buildCommsClosing({ recipientName: a.screenName, event, recapUrl });
+        const built = buildCommsClosing({ recipientName: a.screenName, event, recapUrl, feedbackUrl: feedbackUrl(settings.eventSlug) });
         await sendEmail({ to: a.email, subject: built.subject, html: built.html, replyTo: TEAM_EMAIL });
         sent++;
       } catch (err) {

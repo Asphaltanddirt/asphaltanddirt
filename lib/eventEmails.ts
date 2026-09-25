@@ -381,11 +381,13 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
 /** Tailgate's thank-you email: goes out 3 hours after staff taps Trail over
  *  (or at the end of the 48-hour window if nobody did). Its job is getting
  *  photos and video in, so the upload link leads and it's clear it never expires.
- *  It also carries the attendees' field note (#11, Jose 9/25): one optional
- *  "how was it? just reply" line, replies to team@. The crew's field note is
+ *  It also carries the attendees' field note (#11, Jose 9/25): a "Tell us how
+ *  it went" link to /events/<slug>/feedback, stored in Event Feedback.
+ *  Tailgate events send it 3 h after Trail over to Tailgate sign-ups; events
+ *  without Tailgate send it to RSVPs the morning after (lib/attendeeTrack.ts). The crew's field note is
  *  the optional "Anything worth saying about the day?" box on Garage Upload. */
-export function buildCommsClosing(input: { recipientName: string; event: EventDetail; recapUrl: string }): EventEmail {
-  const { recipientName, event, recapUrl } = input;
+export function buildCommsClosing(input: { recipientName: string; event: EventDetail; recapUrl: string; feedbackUrl: string }): EventEmail {
+  const { recipientName, event, recapUrl, feedbackUrl } = input;
   const first = esc(firstNameOf(recipientName));
 
   const bodyRows = `
@@ -414,7 +416,8 @@ export function buildCommsClosing(input: { recipientName: string; event: EventDe
     </tr>
     <tr>
       <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
-        <p style="margin:0;"><strong>How was it?</strong> Just reply and tell us: the good, the muddy, and anything we should change.</p>
+        <p style="margin:0 0 12px;"><strong>How was it?</strong> Two quick questions: the good, the muddy, and anything we should change.</p>
+        <p style="margin:0;"><a href="${feedbackUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Tell Us How It Went &rarr;</a></p>
       </td>
     </tr>
   `;

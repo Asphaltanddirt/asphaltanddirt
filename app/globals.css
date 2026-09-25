@@ -2723,3 +2723,9 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-shoot-shots{ margin:8px 0 16px; padding-left:22px; display:grid; gap:10px; }
 .garage-shoot-shots strong{ display:block; }
 .garage-shoot-shots span{ display:block; font-size:14px; color:var(--text-muted); }
+
+/* Garage event page: post-ride feedback (#11). */
+.garage-feedback{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:10px; }
+.garage-feedback li{ border-left:3px solid var(--accent); padding:4px 0 4px 12px; }
+.garage-feedback p{ margin:0 0 4px; white-space:pre-line; }
+.garage-feedback span{ font-size:13px; color:var(--text-muted); }

@@ -1,5 +1,7 @@
 import { getCommsSettings } from "@/lib/eventComms";
-import { buildDayBeforeReminder, buildPlanEmail } from "@/lib/eventEmails";
+import { buildCommsClosing, buildDayBeforeReminder, buildPlanEmail } from "@/lib/eventEmails";
+import { feedbackUrl } from "@/lib/eventFeedback";
+import { SITE_URL } from "@/lib/site";
 import { getLiveEventsOn, listRsvpsForAttendeeTrack, stampRsvp, type EventDetail } from "@/lib/events";
 import { todayNY } from "@/lib/garageTasks";
 import { sendEmail } from "@/lib/resendEmail";
@@ -45,7 +47,7 @@ function hourNY(now: Date): number {
 
 export interface AttendeeTrackResult {
   slug: string;
-  email: "plan" | "reminder";
+  email: "plan" | "reminder" | "thanks";
   sent: number;
   failed: number;
   skippedNoStamp: number;
@@ -53,7 +55,7 @@ export interface AttendeeTrackResult {
 
 async function sendOnce(
   rsvpId: string,
-  field: "Plan Email Sent" | "Reminder Sent",
+  field: "Plan Email Sent" | "Reminder Sent" | "Thank You Sent",
   send: () => Promise<void>,
 ): Promise<"sent" | "failed" | "no-stamp"> {
   try {
@@ -73,22 +75,39 @@ async function sendOnce(
   }
 }
 
-async function runForEvent(event: EventDetail, kind: "plan" | "reminder"): Promise<AttendeeTrackResult> {
+async function runForEvent(event: EventDetail, kind: "plan" | "reminder" | "thanks"): Promise<AttendeeTrackResult> {
   const result: AttendeeTrackResult = { slug: event.slug, email: kind, sent: 0, failed: 0, skippedNoStamp: 0 };
   const settings = await getCommsSettings(event.slug).catch(() => null);
   const hasTailgate = Boolean(settings?.active);
   // Tailgate's own day-before email covers D−1 for this event (see top).
   if (kind === "reminder" && hasTailgate) return result;
+  // Tailgate events thank their Tailgate sign-ups 3 h after Trail over; this is
+  // the same email for events without Tailgate (a pop-up, a meet), to everyone
+  // who RSVP'd, the morning after (Jose 9/25: they take photos too).
+  if (kind === "thanks" && hasTailgate) return result;
 
   const rsvps = await listRsvpsForAttendeeTrack(event.id);
   for (const r of rsvps) {
-    if (kind === "plan" ? r.planSentAt : r.reminderSentAt) continue;
-    const outcome = await sendOnce(r.id, kind === "plan" ? "Plan Email Sent" : "Reminder Sent", async () => {
+    if (kind === "plan" ? r.planSentAt : kind === "reminder" ? r.reminderSentAt : r.thankYouSentAt) continue;
+    const field = kind === "plan" ? "Plan Email Sent" : kind === "reminder" ? "Reminder Sent" : "Thank You Sent";
+    const outcome = await sendOnce(r.id, field, async () => {
       const built =
         kind === "plan"
           ? buildPlanEmail({ recipientName: r.name, event, hasTailgate })
-          : buildDayBeforeReminder({ recipientName: r.name, event, releaseUrl: releaseLink(event.slug, r.id, event.date) });
-      await sendEmail({ to: r.email, subject: built.subject, html: built.html });
+          : kind === "reminder"
+            ? buildDayBeforeReminder({ recipientName: r.name, event, releaseUrl: releaseLink(event.slug, r.id, event.date) })
+            : buildCommsClosing({
+                recipientName: r.name,
+                event,
+                recapUrl: `${SITE_URL}/events/${event.slug}#photos`,
+                feedbackUrl: feedbackUrl(event.slug),
+              });
+      await sendEmail({
+        to: r.email,
+        subject: built.subject,
+        html: built.html,
+        ...(kind === "thanks" ? { replyTo: "team@asphaltanddirt.com" } : {}),
+      });
     });
     if (outcome === "sent") result.sent++;
     else if (outcome === "failed") result.failed++;
@@ -108,11 +127,13 @@ export async function runAttendeeTrack(now = new Date()): Promise<AttendeeTrackR
   const today = todayNY();
   const planDay = addDays(today, 3);
   const reminderDay = addDays(today, 1);
-  const events = await getLiveEventsOn([planDay, reminderDay]);
+  // Yesterday's events only, never older: nothing is backfilled to past events.
+  const thanksDay = addDays(today, -1);
+  const events = await getLiveEventsOn([planDay, reminderDay, thanksDay]);
   const results: AttendeeTrackResult[] = [];
   for (const event of events) {
     try {
-      results.push(await runForEvent(event, event.date === planDay ? "plan" : "reminder"));
+      results.push(await runForEvent(event, event.date === planDay ? "plan" : event.date === reminderDay ? "reminder" : "thanks"));
     } catch (err) {
       console.error("attendee track failed for", event.slug, err);
     }

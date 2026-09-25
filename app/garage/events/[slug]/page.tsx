@@ -6,6 +6,7 @@ import GarageAnswer from "@/components/GarageAnswer";
 import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import GarageRsvpTools from "@/components/GarageRsvpTools";
 import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers, seesEventDetails } from "@/lib/garageAuth";
+import { getFeedbackFor, type EventFeedback } from "@/lib/eventFeedback";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
@@ -49,12 +50,14 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   // 9/25). Read from the fresh answers below, not the 60-second cache in
   // lib/eventAccess.ts, so tapping Going unlocks the page straight away.
   const owner = canRunEvents(session);
-  const [responses, settings, roster, users, promo] = await Promise.all([
+  const [responses, settings, roster, users, promo, feedback] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
     getCommsSettings(slug).catch(() => null),
     event.crewOnly ? Promise.resolve([] as RsvpPerson[]) : getRsvpRoster(event.id).catch((): RsvpPerson[] | null => null),
     listGarageUsers().catch(() => []),
     owner && !event.crewOnly ? getPromoMeasurement(event.id, slug).catch((): PromoMeasurement | null => null) : Promise.resolve(null),
+    // What attendees said afterwards (#11): owners only, once the day has come.
+    owner && past ? getFeedbackFor(slug).catch((): EventFeedback[] => []) : Promise.resolve([] as EventFeedback[]),
   ]);
   const mine = responses.find((r) => r.email === session.email)?.response || null;
   const staff = owner || mine === "Going";
@@ -204,6 +207,34 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
             randomized (each platform picks who sees what, and events differ
             in type, weather and lead time), so this is a comparison across
             events, never proof. Counts only: no names here. */}
+        {owner && past && (
+          <section className="garage-panel">
+            <h2>How was it? ({feedback.length})</h2>
+            {feedback.length === 0 ? (
+              <p className="garage-empty">No answers yet. The thank-you email asks everyone.</p>
+            ) : (
+              <>
+                <p className="garage-form-note">
+                  Come again: {feedback.filter((f) => f.comeAgain === "Yes").length} yes ·{" "}
+                  {feedback.filter((f) => f.comeAgain === "Maybe").length} maybe ·{" "}
+                  {feedback.filter((f) => f.comeAgain === "No").length} no
+                </p>
+                <ul className="garage-feedback">
+                  {feedback.map((f) => (
+                    <li key={f.id}>
+                      {f.howWasIt && <p>{f.howWasIt}</p>}
+                      <span>
+                        {f.name || "Anonymous"}
+                        {f.comeAgain ? ` · come again: ${f.comeAgain}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+        )}
+
         {promo && (
           <section className="garage-panel">
             <h2>Where RSVPs came from</h2>

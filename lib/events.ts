@@ -524,6 +524,7 @@ export async function getLiveEventsOn(dates: string[]): Promise<EventDetail[]> {
 export interface AttendeeTrackRsvp extends RsvpRecipient {
   planSentAt: string;
   reminderSentAt: string;
+  thankYouSentAt: string;
 }
 
 /** Confirmed RSVPs for one event with the attendee track's sent stamps. The
@@ -542,13 +543,14 @@ export async function listRsvpsForAttendeeTrack(eventRecordId: string): Promise<
       email: str(r.fields.Email),
       planSentAt: str(r.fields["Plan Email Sent"]),
       reminderSentAt: str(r.fields["Reminder Sent"]),
+      thankYouSentAt: str(r.fields["Thank You Sent"]),
     }))
     .filter((r) => r.email);
 }
 
 /** Stamp an attendee-track email as sent. Throws if the field is missing,
  *  which the sweep treats as "don't send". */
-export async function stampRsvp(recordId: string, field: "Plan Email Sent" | "Reminder Sent"): Promise<void> {
+export async function stampRsvp(recordId: string, field: "Plan Email Sent" | "Reminder Sent" | "Thank You Sent"): Promise<void> {
   assertConfigured();
   await updateRecord(RSVPS_TABLE, recordId, { [field]: new Date().toISOString() }, { baseId: BASE_ID });
 }
