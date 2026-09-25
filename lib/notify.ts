@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -69,7 +69,7 @@ export function ledgerKey(kind: NotifyKind, id: string, day: string) {
   return `${kind.toLowerCase().replace(/\s+/g, "-")}:${id}:${day}`;
 }
 
-async function alreadySent(key: string): Promise<boolean> {
+export async function alreadySent(key: string): Promise<boolean> {
   if (!isAirtableConfigured(GARAGE_BASE)) return false;
   // Escape single quotes so a key can never break the formula.
   const safe = key.replace(/'/g, "\\'");
@@ -77,7 +77,7 @@ async function alreadySent(key: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-async function record(key: string, kind: NotifyKind, subject: string, channel: string, result: string, detail: string) {
+export async function record(key: string, kind: NotifyKind, subject: string, channel: string, result: string, detail: string) {
   if (!isAirtableConfigured(GARAGE_BASE)) return;
   const fields: AirtableFields = {
     Key: key,

@@ -113,10 +113,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.webp" },
     // No tile art of its own yet, so it borrows Media's until there is some.
     { href: "/garage/library", label: "Library", sub: "Find any clip, save it to your phone", img: "/img/garage/tile-library.webp" },
-    { href: "/garage/shoot", label: "Shoot guide", sub: "What to film, and what we're short on", img: "/img/garage/tile-upload.webp" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.webp" },
     ...(canSeeOwnerOnly(session)
       ? [
+          { href: "/garage/shoot", label: "Shot list", sub: "What to film, what the Library is short on", img: "/img/garage/tile-upload.webp" },
           { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.webp" },
           { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.webp" },
           { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.webp" },
