@@ -13,9 +13,12 @@ import type { Plan, PlanDay, PlanItem } from "@/lib/garagePlan";
  * other day shows only what's due on it.
  */
 export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
-  const week = plan.days.slice(0, 7);
-  const todayIndex = Math.max(0, week.findIndex((d) => d.isToday));
+  const todayIndex = Math.max(0, plan.days.findIndex((d) => d.isToday));
+  // Two weeks of buttons, one at a time: this week, and next week (whose
+  // Monday is the plan you'll actually sit down with).
+  const [page, setPage] = useState(todayIndex >= 7 ? 1 : 0);
   const [sel, setSel] = useState(todayIndex);
+  const week = plan.days.slice(page * 7, page * 7 + 7);
 
   const mine = (i: PlanItem) => i.owner === me || i.owner === "everyone";
   const open = (i: PlanItem) => !i.done && i.need !== "missed";
@@ -26,7 +29,8 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
   return (
     <div className="garage-plan">
       <div className="garage-plan-strip" role="group" aria-label="This week">
-        {week.map((d, i) => {
+        {week.map((d, j) => {
+          const i = page * 7 + j;
           const due = !d.isPast || d.isToday ? mineOpen(d).length : 0;
           const cls = ["garage-plan-day", due ? "has-mine" : "", d.isToday ? "is-today" : "", i === sel ? "is-selected" : ""]
             .filter(Boolean)
@@ -46,8 +50,19 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
           );
         })}
       </div>
+      <div className="garage-plan-pager">
+        {page === 0 ? (
+          <button type="button" onClick={() => { setPage(1); setSel(7); }}>
+            Next week ›
+          </button>
+        ) : (
+          <button type="button" onClick={() => { setPage(0); setSel(todayIndex); }}>
+            ‹ This week
+          </button>
+        )}
+      </div>
 
-      {sel === 0 ? <Planning plan={plan} mine={mine} open={open} /> : <DayView day={day} mine={mine} open={open} />}
+      {day.label === "Mon" ? <Planning plan={plan} start={sel} mine={mine} open={open} /> : <DayView day={day} mine={mine} open={open} />}
     </div>
   );
 }
@@ -112,10 +127,10 @@ function postingLine(d: PlanDay) {
 }
 
 /** Monday: plan Tuesday → next Monday, and look six days further. */
-function Planning({ plan, mine, open }: { plan: Plan; mine: Is; open: Is }) {
-  const monday = plan.days[0];
-  const week = plan.days.slice(1, 8);
-  const ahead = plan.days.slice(8, 14);
+function Planning({ plan, start, mine, open }: { plan: Plan; start: number; mine: Is; open: Is }) {
+  const monday = plan.days[start];
+  const week = plan.days.slice(start + 1, start + 8);
+  const ahead = plan.days.slice(start + 8, start + 14);
   const all = [monday, ...week];
   const mineCount = all.flatMap((d) => d.items).filter((i) => mine(i) && open(i)).length;
   const openCount = all.flatMap((d) => d.items).filter(open).length;

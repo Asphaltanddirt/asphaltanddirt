@@ -67,7 +67,8 @@ export interface FootageStock {
 export interface Plan {
   today: string;
   monday: string;
-  /** 14 days from this week's Monday. */
+  /** 21 days from this week's Monday: this week and next on the day buttons,
+   *  plus the six look-ahead days after next Monday's plan. */
   days: PlanDay[];
   footage: FootageStock[];
 }
@@ -190,7 +191,7 @@ function taskItem(task: GarageTask, isPast: boolean, name: (o: string) => string
 export async function getPlan(reference = todayNY()): Promise<Plan | null> {
   const today = todayNY();
   const monday = weekOf(reference);
-  const last = addDays(monday, 13);
+  const last = addDays(monday, 20);
 
   const [posts, tasks, users, events, media] = await Promise.all([
     getPostsBetween(monday, last).catch(() => [] as SocialPost[]),
@@ -206,7 +207,7 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
     owner === "claude" ? "Claude" : owner === "everyone" ? "Anyone" : names.get(owner) || owner.split("@")[0] || "Someone";
 
   const days: PlanDay[] = [];
-  for (let i = 0; i < 14; i += 1) {
+  for (let i = 0; i < 21; i += 1) {
     const date = addDays(monday, i);
     const d = new Date(`${date}T12:00:00Z`);
     const isPast = date < today;
@@ -236,8 +237,10 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
   // Running low on one side's clips is lead-time work: it lands on the first
   // look-ahead day, orange for everyone until the footage exists.
   const footage = footageStock(media);
+  // The first look-ahead day of whichever Monday plan comes next.
+  const firstAhead = days.findIndex((d) => d.date > today && d.label === "Tue") + 7;
   for (const f of footage.filter((x) => x.weeks < LOW_WEEKS)) {
-    days[8].items.push({
+    days[Math.min(Math.max(firstAhead, 8), days.length - 1)].items.push({
       id: `footage-${f.side}`,
       kind: "footage",
       title: `Film ${f.side.toLowerCase()} clips`,

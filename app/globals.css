@@ -2532,6 +2532,9 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-plan-day.has-mine b{ color:var(--ad-black); }
 .garage-plan-day.is-today{ box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
 .garage-plan-day.is-selected::after{ content:""; position:absolute; left:22%; right:22%; bottom:-8px; height:3px; border-radius:2px; background:var(--text); }
+.garage-plan-pager{ display:flex; justify-content:flex-end; margin:-10px 4px 10px; }
+.garage-plan-pager button{ background:none; border:0; padding:4px 0; color:var(--text-muted); font-size:.85rem; font-weight:600; cursor:pointer; }
+.garage-plan-pager button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 .garage-plan-headline{ padding:0 4px 12px; }
 .garage-plan-big{ font-family:var(--font-display); font-weight:800; font-size:44px; line-height:.9; color:var(--accent); font-variant-numeric:tabular-nums; }
 .garage-plan-big.is-zero{ color:var(--text); }
