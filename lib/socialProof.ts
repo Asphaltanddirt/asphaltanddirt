@@ -60,6 +60,8 @@ export async function getApprovedSocialProof(limit = 8): Promise<SocialProofPost
         posterName: (r.fields["Poster Name"] as string) || "",
         platform: (r.fields.Platform as "Instagram" | "TikTok") || "Instagram",
         postUrl: (r.fields["Post URL"] as string) || "",
+        // Our own screenshot, for posts TikTok won't let other sites embed.
+        manualThumb: ((r.fields.Thumbnail as { url?: string }[] | undefined) || [])[0]?.url || null,
         displayOrder: r.fields["Display Order"] as number | undefined,
         createdTime: r.createdTime,
       }))
@@ -75,7 +77,7 @@ export async function getApprovedSocialProof(limit = 8): Promise<SocialProofPost
       .slice(0, limit);
 
     const built = await Promise.all(
-      posts.map(async ({ id, posterName, platform, postUrl }) => {
+      posts.map(async ({ id, posterName, platform, postUrl, manualThumb }) => {
         // Instagram's oEmbed now requires a Meta app + access token (not
         // public like TikTok's) — until that's set up, Instagram posts have
         // no thumbnail source here. TikTok is the only platform in use so far.
@@ -85,13 +87,14 @@ export async function getApprovedSocialProof(limit = 8): Promise<SocialProofPost
           posterName,
           platform,
           postUrl,
-          thumbnailUrl: oembed?.thumbnail_url || null,
+          thumbnailUrl: oembed?.thumbnail_url || manualThumb,
           caption: oembed?.title || "",
-          // TikTok's oEmbed only fails for a post that's gone (deleted,
-          // private, region-blocked). Its live-widget fallback then renders a
-          // tall "Video currently unavailable" card that breaks the grid
-          // (Jose, 2026-09-24: Rachel's post did exactly that), so hide it.
-          unavailable: platform === "TikTok" && !oembed?.thumbnail_url,
+          // TikTok's oEmbed fails when a post is gone OR when the creator
+          // has embedding turned off (Rachel's mug video, 2026-09-24: live on
+          // her page, "Video currently unavailable" anywhere else). The live
+          // widget then renders a tall broken box that wrecks the grid, so:
+          // use our own Thumbnail if one's attached, otherwise hide the post.
+          unavailable: platform === "TikTok" && !oembed?.thumbnail_url && !manualThumb,
         };
       }),
     );
