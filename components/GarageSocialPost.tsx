@@ -322,7 +322,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         )
       )}
 
-      {item.notes && <p className="garage-form-note">{item.notes}</p>}
+      {item.notes && <p className="garage-form-note garage-social-notes">{item.notes}</p>}
 
       {auto && item.status === "Planned" && !editing && (
         <div className={`garage-social-auto is-${(item.autoStatus || (item.approved ? "approved" : "off")).toLowerCase().replace(" ", "-")}`}>

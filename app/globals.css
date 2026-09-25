@@ -2574,6 +2574,8 @@ details.garage-plan-row{ display:block; padding:0; }
 .garage-plan-chip.is-done{ color:var(--text-dim); text-decoration:line-through; }
 .garage-plan-chip.is-mine{ border-color:var(--accent); color:var(--text); background:var(--accent-soft); }
 .garage-plan-quiet{ margin:0; padding:0 4px; font-size:.85rem; color:var(--text-dim); }
+/* Card notes carry long Drive links; let them break instead of running off the card. */
+.garage-social-notes{ overflow-wrap:anywhere; white-space:pre-line; }
 /* Opening a card from the calendar lands on it and marks it. */
 .garage-social-grid > article{ scroll-margin-top:calc(var(--garage-top, 16px) + 12px); }
 .garage-social-grid > article:target{ outline:2px solid var(--accent); outline-offset:3px; }
