@@ -45,7 +45,6 @@ export default function GarageEventChange({
   rsvpCount,
   canCallOff,
   cancelled = false,
-  preset,
 }: {
   slug: string;
   title: string;
@@ -56,17 +55,10 @@ export default function GarageEventChange({
   /** Cancelled events can come back: "Back on" is a postpone with a new date,
    *  and everyone who RSVP'd gets asked whether it works (waivers stay). */
   cancelled?: boolean;
-  /** "go": the morning-of "it's on" email (punchlist 14) — opens on Just an
-   *  update with the words already written, ready to check and send. */
-  preset?: "go";
 }) {
-  const [kind, setKind] = useState<NoticeKind>(preset === "go" ? "update" : canCallOff ? "cancelled" : cancelled ? "postponed" : "update");
+  const [kind, setKind] = useState<NoticeKind>(canCallOff ? "cancelled" : cancelled ? "postponed" : "update");
   const [newDate, setNewDate] = useState("");
-  const [why, setWhy] = useState(
-    preset === "go"
-      ? "It's a go! Weather and trails look good. Meet at the spot and time in your details email, fueled up and with your GMRS radio ready. See you there."
-      : "",
-  );
+  const [why, setWhy] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [armed, setArmed] = useState(false);

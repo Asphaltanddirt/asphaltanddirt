@@ -5,7 +5,6 @@ import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
 import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import GarageRsvpTools from "@/components/GarageRsvpTools";
-import { todayNY } from "@/lib/garageTasks";
 import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
@@ -62,11 +61,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   // After a postponement: who has said the new date works, and who still owes an answer.
   const owesAnswer = roster ? roster.filter((p) => p.newDate !== "") : [];
   const waiting = owesAnswer.filter((p) => p.newDate === "waiting").length;
-  // "It's a go" (punchlist 14): the morning-of email is Call it off's
-  // "Just an update", pre-filled, offered the day before and the day of.
-  const today = todayNY();
-  const tomorrow = new Date(Date.parse(`${today}T12:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
-  const goDay = !event.crewOnly && (event.date === today || event.date === tomorrow);
+
 
   return (
     <div className="garage">
@@ -107,11 +102,6 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
         {canSeeOwnerOnly(session) && (
           <Link href={`/garage/events/edit/${event.id}`} className="btn btn-outline garage-block-btn">
             Edit event
-          </Link>
-        )}
-        {canSeeOwnerOnly(session) && goDay && (
-          <Link href={`/garage/events/call-off/${event.id}?preset=go`} className="btn btn-primary garage-block-btn">
-            It&apos;s a go: email everyone
           </Link>
         )}
         {canSeeOwnerOnly(session) && event.date && (
