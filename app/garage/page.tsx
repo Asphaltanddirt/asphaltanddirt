@@ -148,6 +148,12 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
             <img src={session.photoUrl} alt="" className="garage-avatar" />
           )}
           <span>{session.name}</span>
+          {/* The way back out to the public site (Jose 9/25: there wasn't
+              one). Outside the installed app's /garage scope, so on a phone
+              it opens over the Garage with a Done button back. */}
+          <Link href="/" className="garage-site-link">
+            Site
+          </Link>
           <form action="/api/auth/signout" method="post">
             <button type="submit" className="garage-signout">Sign out</button>
           </form>

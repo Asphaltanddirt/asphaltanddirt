@@ -1932,6 +1932,8 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-
 }
 .garage-who{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted); }
 .garage-avatar{ width:30px; height:30px; border-radius:50%; object-fit:cover; }
+.garage-site-link{ color:var(--accent); font-size:13px; font-weight:600; text-decoration:none; padding:6px; }
+.garage-site-link:hover{ text-decoration:underline; }
 .garage-signout{ background:none; border:none; color:var(--text-dim); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:6px; }
 .garage-signout:hover{ color:var(--accent); }
 .garage-body{ max-width:900px; margin:0 auto; padding:var(--sp-3) var(--sp-3) var(--sp-8); }
