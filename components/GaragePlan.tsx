@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Plan, PlanDay, PlanItem } from "@/lib/garagePlan";
 
 /**
@@ -83,14 +84,62 @@ function Headline({ count, label, note }: { count: number; label: string; note: 
 
 function ItemRow({ item, mine }: { item: PlanItem; mine: Is }) {
   const m = mine(item);
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  /** Calendar v2: tick your own task off (or back on) right here. */
+  async function tick(done: boolean) {
+    setBusy(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/garage/task", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, done }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't save.");
+      router.refresh();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't save.");
+      setBusy(false);
+    }
+  }
+
+  /** Calendar v2: "I've got it" turns a shared item into your own task. */
+  async function claim() {
+    setBusy(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/garage/plan/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ side: item.side }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't claim it.");
+      router.refresh();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't claim it.");
+      setBusy(false);
+    }
+  }
+
+  const canTick = item.kind === "task" && m;
   return (
     <li className={item.done ? "is-done" : ""}>
-      <div>
+      {canTick && (
+        <input
+          type="checkbox"
+          className="garage-plan-tick"
+          checked={item.done}
+          disabled={busy}
+          onChange={(e) => tick(e.target.checked)}
+          aria-label={item.done ? `Mark "${item.title}" not done` : `Mark "${item.title}" done`}
+        />
+      )}
+      <div className="garage-plan-item-text">
         {m && !item.done ? <strong>{item.title}</strong> : item.title}
         {item.sub && <span className="garage-plan-sub">{item.sub}</span>}
+        {err && <span className="garage-plan-sub" role="alert">{err}</span>}
       </div>
       {item.done ? (
         <span className="garage-plan-fix">✓ done</span>
+      ) : item.kind === "footage" && item.side ? (
+        <button type="button" className="garage-plan-fix is-mine garage-plan-claim" onClick={claim} disabled={busy}>
+          {busy ? "…" : "I've got it"}
+        </button>
       ) : m ? (
         <Link href={item.href} className="garage-plan-fix is-mine">
           {item.need === "missed" ? "Missed" : item.fix} →
@@ -311,14 +360,20 @@ function DayView({ day, mine, open }: { day: PlanDay; mine: Is; open: Is }) {
           <span>{day.isPast && !day.isToday ? "Still open" : "Due"}</span>
           <span>{done.length ? `${done.length} done` : ""}</span>
         </div>
-        {due.length ? (
+        {due.length || done.length ? (
           <ul className="garage-plan-items is-boxed">
-            {due.map((i) => (
+            {[...due, ...done].map((i) => (
               <ItemRow key={i.id} item={i} mine={mine} />
             ))}
           </ul>
         ) : (
           <p className="garage-plan-quiet">Nothing needs anyone this day.</p>
+        )}
+        {day.unmarked > 0 && (
+          <p className="garage-plan-quiet mt-2">
+            {day.unmarked} by-hand post{day.unmarked === 1 ? "" : "s"} never marked posted (fine if you posted from the app).{" "}
+            <Link href="/garage/social?all=1">Open the board</Link>
+          </p>
         )}
       </div>
     </>

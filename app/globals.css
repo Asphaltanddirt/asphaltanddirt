@@ -2653,3 +2653,7 @@ details.garage-plan-row{ display:block; padding:0; }
 .trail-rating-link{ display:inline-block; margin:8px 0 0 4px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
 .trail-rating-link:hover{ text-decoration:underline; }
 .trail-rating-section{ scroll-margin-top:80px; }
+.garage-plan-items li{ align-items:center; }
+.garage-plan-item-text{ flex:1; min-width:0; }
+.garage-plan-tick{ flex:none; width:22px; height:22px; accent-color:var(--accent); margin:0; }
+button.garage-plan-claim{ background:none; border:1px solid var(--accent); border-radius:999px; padding:4px 10px; cursor:pointer; }

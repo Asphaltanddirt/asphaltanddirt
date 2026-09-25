@@ -40,6 +40,10 @@ export interface PlanItem {
   fix: string;
   href: string;
   done: boolean;
+  /** Footage items: which side, so "I've got it" can claim it. */
+  side?: "Asphalt" | "Dirt";
+  /** A post group that is only by-hand platforms (TikTok, YouTube, FB Group). */
+  handOnly?: boolean;
 }
 
 export interface PlanDay {
@@ -53,6 +57,9 @@ export interface PlanDay {
   autoTotal: number;
   items: PlanItem[];
   events: { title: string; href: string }[];
+  /** Past days only: by-hand posts never marked posted. Usually posted
+   *  straight from the phone, so they're a quiet count, not a list of misses. */
+  unmarked: number;
 }
 
 /** Unused clips in the Library for one side, against how fast we burn them. */
@@ -153,6 +160,7 @@ function postItems(posts: SocialPost[], isPast: boolean, name: (o: string) => st
     const fix =
       need === "missed" ? "Open" : need === "approve" ? "Approve" : need === "by-hand" ? "Post" : title === "Trail Talk" ? "Write" : "Pick";
     items.push({
+      handOnly: g.needs.every((n) => n.need === "by-hand"),
       id: top.post.id,
       kind: "post",
       title,
@@ -220,6 +228,8 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
       // the card is the one with the post on it.
       .filter((t) => !(hasGroupCard && t.templateKey === "fb-group-trail-talk"));
 
+    const all = [...postItems(dayPosts, isPast, name, monday), ...dayTasks.map((t) => taskItem(t, isPast, name))];
+    const quiet = (i: PlanItem) => isPast && i.kind === "post" && i.handOnly === true;
     days.push({
       date,
       label: DAY_LABELS[d.getUTCDay()],
@@ -228,7 +238,8 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
       isPast,
       autoTotal: autoPosts.filter((p) => p.status !== "Skipped").length,
       autoReady: autoPosts.filter((p) => p.status !== "Skipped" && !cardNeed(p)).length,
-      items: [...postItems(dayPosts, isPast, name, monday), ...dayTasks.map((t) => taskItem(t, isPast, name))],
+      items: all.filter((i) => !quiet(i)),
+      unmarked: all.filter(quiet).length,
       events: events.upcoming
         .filter((e) => e.date === date)
         .map((e) => ({ title: e.title, href: `/garage/events/${e.slug}` })),
@@ -239,7 +250,10 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
   const footage = footageStock(media);
   // The first look-ahead day of whichever Monday plan comes next.
   const firstAhead = days.findIndex((d) => d.date > today && d.label === "Tue") + 7;
-  for (const f of footage.filter((x) => x.weeks < LOW_WEEKS)) {
+  // Once somebody taps "I've got it", the claim is a real task on their
+  // calendar and the shared item goes away for everyone else.
+  const claimed = new Set(tasks.filter((t) => t.templateKey.startsWith("claim-footage-")).map((t) => t.templateKey));
+  for (const f of footage.filter((x) => x.weeks < LOW_WEEKS && !claimed.has(`claim-footage-${x.side.toLowerCase()}`))) {
     days[Math.min(Math.max(firstAhead, 8), days.length - 1)].items.push({
       id: `footage-${f.side}`,
       kind: "footage",
@@ -248,9 +262,10 @@ export async function getPlan(reference = todayNY()): Promise<Plan | null> {
       owner: "everyone",
       ownerName: name("everyone"),
       need: "missing",
-      fix: "Upload",
+      fix: "I've got it",
       href: "/garage/upload",
       done: false,
+      side: f.side,
     });
   }
   return { today, monday, days, footage };
