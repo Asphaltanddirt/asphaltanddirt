@@ -351,6 +351,49 @@ async function pullYouTubeAnalytics(token: string, now: Date, trackedVideoIds: s
       push("subscribers_lost", row.subscribersLost, "count");
     }
 
+    // By format: the podcast pilot scorecard (approved 2026-09-21: "track per
+    // format, no made-up thresholds"). Shorts vs long-form vs live, weekly
+    // through the pilot's Dec 31 end, so the review compares like with like.
+    // Best-effort: a failure here never costs the channel or per-video rows.
+    const fmt = await ytaReport(token, {
+      startDate: w.start,
+      endDate: end,
+      dimensions: "creatorContentType",
+      metrics: "views,engagedViews,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,likes,comments,shares",
+    }).catch(() => ({ headers: [] as string[], rows: [] as YtaRow[] }));
+    const FORMAT: Record<string, string> = { shorts: "shorts", videoOnDemand: "long_form", liveStream: "live" };
+    for (const r of fmt.rows) {
+      const row = Object.fromEntries(fmt.headers.map((h, i) => [h, r[i]]));
+      const format = FORMAT[String(row.creatorContentType)];
+      if (!format) continue;
+      const pushF = (metric: string, value: unknown, unit: string, notes?: string) =>
+        out.push({
+          fields: {
+            observation_id: `YTA-format-${format}-${metric}-${tag}-${end}`,
+            scope: "Channel",
+            entity_id: `${YT_CHANNEL_ID}:${format}`,
+            observed_date: end,
+            period_start: w.start,
+            period_end: end,
+            window: w.label,
+            metric: `${format}_${metric}`,
+            value: Number(value),
+            unit,
+            source: `YouTube Analytics API (cron, by format, data through ${end})`,
+            notes: ["Podcast pilot scorecard: per-format row.", notes].filter(Boolean).join(" "),
+          },
+        });
+      pushF("views", row.views, "count");
+      pushF("engaged_views", row.engagedViews, "count");
+      pushF("watch_time", row.estimatedMinutesWatched, "count", "Value is minutes watched.");
+      pushF("average_view_duration", row.averageViewDuration, "seconds");
+      pushF("average_view_percentage", row.averageViewPercentage, "percent");
+      pushF("subscribers_gained", row.subscribersGained, "count");
+      pushF("likes", row.likes, "count");
+      pushF("comments", row.comments, "count");
+      pushF("shares", row.shares, "count");
+    }
+
     // Per-video.
     const pv = await ytaReport(token, {
       startDate: w.start,
