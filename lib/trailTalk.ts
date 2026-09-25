@@ -8,9 +8,9 @@ import { socialLinks } from "@/lib/social";
  * the blog explains, Trail Talk asks.
  *
  * No blog link here on purpose — the X, Threads and group posts already
- * carry it. The group button goes to the group itself, not the thread: the
- * group is private, so a thread link shows non-members "content isn't
- * available", while the group page lets them ask to join.
+ * carry it. The group button goes to the week's thread: members land on it,
+ * and Facebook sends non-members of the private group to the group page
+ * with "Join group" (checked logged-out 2026-09-24), so it never dead-ends.
  *
  * Everything comes from rows we already fill each week, so there's nothing
  * extra to maintain: the question from the newest Newsletters row with a
@@ -67,7 +67,7 @@ export async function getCurrentTrailTalk(): Promise<TrailTalk | null> {
       title: str(f["Trail Talk - Title"]),
       body: str(f["Trail Talk - Body"]),
       imageUrl: image,
-      groupUrl: socialLinks.facebookGroup,
+      groupUrl: str(f["Trail Talk - Link"]) || socialLinks.facebookGroup,
       xUrl: xUrl || socialLinks.x,
       threadsUrl: threadsUrl || THREADS_PROFILE,
       xIsPost: Boolean(xUrl),

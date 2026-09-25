@@ -21,7 +21,7 @@ export default function TrailTalkSection({ talk }: { talk: TrailTalk }) {
             <p className="trail-talk-lead">Pick a spot and weigh in:</p>
             <div className="trail-talk-actions">
               <a className="btn btn-primary" href={talk.groupUrl} target="_blank" rel="noopener">
-                Join the group
+                Weigh in on Facebook
               </a>
               <a className="btn btn-outline" href={talk.xUrl} target="_blank" rel="noopener">
                 {talk.xIsPost ? "Answer on X" : "Find us on X"}
@@ -30,7 +30,7 @@ export default function TrailTalkSection({ talk }: { talk: TrailTalk }) {
                 {talk.threadsIsPost ? "Answer on Threads" : "Find us on Threads"}
               </a>
             </div>
-            <p className="trail-talk-note">The group is private: ask to join and you&apos;ll find the thread at the top.</p>
+            <p className="trail-talk-note">The Facebook group is private: not a member yet? You&apos;ll be asked to join first.</p>
           </div>
         </div>
       </div>
