@@ -5,7 +5,8 @@ import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
 import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import GarageRsvpTools from "@/components/GarageRsvpTools";
-import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
+import { canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
+import { canRunEvent } from "@/lib/eventAccess";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
@@ -45,7 +46,8 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   if (!event) notFound();
 
   const past = isPastEvent(event.date);
-  const staff = canRunEvents(session);
+  // Owners, and whoever marked Going on this event (lib/eventAccess.ts).
+  const staff = await canRunEvent(session, slug);
   const [responses, settings, roster, users, promo] = await Promise.all([
     getEventResponses([slug]).catch(() => []),
     staff ? getCommsSettings(slug).catch(() => null) : Promise.resolve(null),
@@ -85,7 +87,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
 
         {!past && <GarageAnswer slug={slug} initialResponse={mine} />}
 
-        {tailgateOpen && canRunEvents(session) && (
+        {tailgateOpen && staff && (
           <Link href={`/comms/${slug}`} className="btn btn-primary garage-block-btn">
             Open Tailgate
           </Link>

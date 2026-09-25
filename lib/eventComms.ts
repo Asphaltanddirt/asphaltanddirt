@@ -1,6 +1,7 @@
 import { listRecords, createRecord, updateRecord, deleteRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
 import { DEFAULT_WAIVER_VERSION, PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
-import { getSession, canRunEvents } from "@/lib/garageAuth";
+import { getSession } from "@/lib/garageAuth";
+import { canRunEvent } from "@/lib/eventAccess";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
 
@@ -323,7 +324,8 @@ export async function staffViewer(
   providedCode: string | null | undefined,
 ): Promise<{ isStaff: boolean; staffName: string }> {
   const session = await getSession();
-  if (session && canRunEvents(session)) return { isStaff: true, staffName: session.name };
+  // Owners, plus anyone who marked Going on this event (lib/eventAccess.ts).
+  if (session && settings?.eventSlug && (await canRunEvent(session, settings.eventSlug))) return { isStaff: true, staffName: session.name };
   return { isStaff: isStaffCode(settings, providedCode), staffName: "" };
 }
 

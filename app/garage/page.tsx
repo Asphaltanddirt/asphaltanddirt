@@ -100,13 +100,20 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // disappears just because the week rolled over.
   const tasks = allTasks.filter((t) => (t.due ? weekOf(t.due) <= thisWeek : true) && (!t.done || t.due >= today));
   const nextEvent = events.upcoming[0];
+  const me = session.email.trim().toLowerCase();
+  const goingSomewhere = canRunEvents(session)
+    ? true
+    : await getEventResponses(events.upcoming.map((e) => e.slug))
+        .then((rs) => rs.some((r) => r.email === me && r.response === "Going"))
+        .catch(() => false);
   const firstName = session.name.split(" ")[0] || "there";
 
   // `href: null` = built next; the tile shows "Coming soon" instead of leading
   // to a dead page.
   const tiles: { href: string | null; label: string; sub: string; img: string }[] = [
     { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.webp" },
-    ...(canRunEvents(session)
+    // Owners always; the crew once they've marked Going on an upcoming event.
+    ...(canRunEvents(session) || goingSomewhere
       ? [{ href: "/garage/tailgate", label: "Tailgate", sub: "Run the event chat", img: "/img/garage/tile-tailgate.webp" }]
       : []),
     { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-upload.webp" },
@@ -128,12 +135,14 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
         ]
       : []),
     ...(canSeeFinance(session)
-      ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.webp" }]
+      ? [
+          { href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.webp" },
+          // Both owners (Jose 9/25); view-only, so nothing to edit by mistake.
+          { href: "/garage/numbers", label: "Numbers", sub: "What changed this week, and a report to copy", img: "/img/garage/tile-control.webp" },
+        ]
       : []),
     ...(canSeeControlRoom(session)
       ? [
-          // No tile art of its own yet; borrows the Control Room's.
-          { href: "/garage/numbers", label: "Numbers", sub: "What changed this week, and a report to copy", img: "/img/garage/tile-control.webp" },
           { href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.webp" },
         ]
       : []),

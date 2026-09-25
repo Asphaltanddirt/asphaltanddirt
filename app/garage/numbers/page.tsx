@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageNumbers from "@/components/GarageNumbers";
 import { getSession } from "@/lib/garageAuth";
-import { canSeeControlRoom } from "@/lib/garageControl";
+import { canSeeFinance } from "@/lib/garageFinance";
 import { getNumbers } from "@/lib/garageNumbers";
 
 export const dynamic = "force-dynamic";
@@ -14,12 +14,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Garage → Numbers (punchlist #9). Jose only for now (9/25): it carries
- *  merch revenue, and it's easier to get right for one reader first. */
+/** Garage → Numbers (punchlist #9). Both owners (Jose 9/25), same list as
+ *  Finance. View-only by design: the one screen that edits these numbers,
+ *  Weekly Socials, stays on the owners' posting side. */
 export default async function GarageNumbersPage() {
   const session = await getSession();
   if (!session) redirect("/garage");
-  if (!canSeeControlRoom(session)) redirect("/garage");
+  if (!canSeeFinance(session)) redirect("/garage");
   const numbers = await getNumbers();
 
   return (

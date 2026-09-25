@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import { canRunEvents, getSession } from "@/lib/garageAuth";
+import { isGoing } from "@/lib/eventAccess";
 import { getCommsSettings, isCommsOpen, reminderSendTime } from "@/lib/eventComms";
 import { getPublishedEvents } from "@/lib/events";
 
@@ -20,16 +21,19 @@ function when(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 }
 
-/** Staff's way into an event's Tailgate: no staff code, no link to pass
- *  around. Being signed in to the Garage as Owner/Staff is the credential,
- *  and messages post under the name on their Google account. */
+/** The crew's way into an event's Tailgate: no staff code, no link to pass
+ *  around. Owners see every event; everyone else sees the events they marked
+ *  Going on (lib/eventAccess.ts). Messages post under their Google name. */
 export default async function GarageTailgatePage() {
   const session = await getSession();
   if (!session) redirect("/garage");
-  if (!canRunEvents(session)) redirect("/garage");
 
   const { upcoming } = await getPublishedEvents().catch(() => ({ upcoming: [], past: [] }));
-  const soon = upcoming.slice(0, 5);
+  const all = upcoming.slice(0, 5);
+  const everyEvent = canRunEvents(session);
+  const going = everyEvent ? all.map(() => true) : await Promise.all(all.map((e) => isGoing(session.email, e.slug)));
+  const soon = all.filter((_, i) => going[i]);
+  if (!everyEvent && soon.length === 0) redirect("/garage");
   const settings = await Promise.all(soon.map((e) => getCommsSettings(e.slug).catch(() => null)));
 
   const rows = soon.map((event, i) => {
