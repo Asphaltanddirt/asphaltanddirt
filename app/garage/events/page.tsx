@@ -42,6 +42,7 @@ export default async function GarageEventsPage() {
     getRsvpSummaries(shown.map((e) => e.id)).catch(() => new Map()),
   ]);
   const mine = new Map(responses.filter((r) => r.email === session.email).map((r) => [r.eventSlug, r.response]));
+  const insider = (slug: string) => canSeeOwnerOnly(session) || mine.get(slug) === "Going";
 
   return (
     <div className="garage">
@@ -68,14 +69,16 @@ export default async function GarageEventsPage() {
                 date={formatDate(event.date)}
                 area={event.generalArea}
                 blurb={event.publicBlurb}
-                meetup={detail?.meetupPoint || ""}
-                details={detail?.fullDetails || ""}
+                // The private spot and run-of-show only once you're Going
+                // (owners always): the Garage access rule, 9/25.
+                meetup={insider(event.slug) ? detail?.meetupPoint || "" : ""}
+                details={insider(event.slug) ? detail?.fullDetails || "" : ""}
                 rsvps={event.crewOnly ? null : rsvps.get(event.id)?.count ?? null}
                 crewOnly={event.crewOnly}
                 crewGoing={crewPicture([], responses, event.slug).going.length}
                 initialResponse={mine.get(event.slug) || null}
                 others={responses
-                  .filter((r) => r.eventSlug === event.slug && r.email !== session.email)
+                  .filter((r) => insider(event.slug) && r.eventSlug === event.slug && r.email !== session.email)
                   .map((r) => ({ name: r.name || r.email, response: r.response }))}
                 isPast={isPast}
               />
