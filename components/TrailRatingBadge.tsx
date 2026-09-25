@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { TrailRating } from "@/lib/trailRating";
 
 /**
- * The A&D Trail Rating badge (lib/trailRating.ts). Drawn in CSS so it works
- * before Robin's badge art exists; the shape is part of the badge so the
- * level never depends on color alone.
+ * The A&D Trail Rating badge (lib/trailRating.ts): Robin's art (2026-09-25),
+ * hexagon with the trail symbol, name and plain word, so the level never
+ * depends on color alone.
  */
 export default function TrailRatingBadge({
   rating,
@@ -18,14 +18,17 @@ export default function TrailRatingBadge({
 }) {
   return (
     <div className="trail-rating">
-      <div className="trail-rating-badge" style={{ ["--tr" as string]: rating.hex }}>
-        <span className={`trail-rating-shape is-${rating.shape}`} aria-hidden="true" />
-        <span className="trail-rating-text">
-          <span className="trail-rating-label">A&amp;D Trail Rating</span>
-          <strong>{rating.name}</strong>
-          <span className="trail-rating-plain">{rating.plain}</span>
-        </span>
-      </div>
+      {/* The art carries the shape, name and plain word; the alt text says the
+          same for screen readers, so nothing depends on the picture alone. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={rating.image}
+        alt={`A&D Trail Rating: ${rating.name} (${rating.plain})`}
+        width={120}
+        height={120}
+        className="trail-rating-img"
+        loading="lazy"
+      />
       {link && (
         <Link href="/events#trail-rating" className="trail-rating-link">
           What the ratings mean

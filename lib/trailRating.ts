@@ -21,7 +21,8 @@ export interface TrailRating {
   plain: string;
   shape: "circle" | "square" | "diamond" | "double-diamond";
   hex: string;
-  /** Badge art from Robin, once it exists (public/img/trail-rating/). */
+  /** Badge art (Robin, 2026-09-25): public/img/trail-rating/. The .png beside
+   *  each .webp is for email, where webp support is patchy. */
   image: string;
   /** The standard "what to expect / what you need" lines for this level. */
   lines: string[];
@@ -34,7 +35,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     plain: "Easy",
     shape: "circle",
     hex: "#2e9e48",
-    image: "/img/trail-rating/trail-rating-cruise.png",
+    image: "/img/trail-rating/trail-rating-cruise.webp",
     lines: [
       "Smooth dirt and fire roads with gentle grades.",
       "Stock 4x4s welcome. Great first ride.",
@@ -47,7 +48,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     plain: "Moderate",
     shape: "square",
     hex: "#1f6fd1",
-    image: "/img/trail-rating/trail-rating-get-dirty.png",
+    image: "/img/trail-rating/trail-rating-get-dirty.webp",
     lines: [
       "Mud, water, ruts and some obstacles. Your rig will get dirty.",
       "Stock 4x4s welcome; all-terrain tires recommended.",
@@ -60,7 +61,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     plain: "Difficult",
     shape: "diamond",
     hex: "#111111",
-    image: "/img/trail-rating/trail-rating-send-it.png",
+    image: "/img/trail-rating/trail-rating-send-it.webp",
     lines: [
       "Technical sections: steep or rocky climbs and tight lines.",
       "Built rigs: bigger tires, armor and lockers recommended.",
@@ -73,7 +74,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     plain: "Extreme",
     shape: "double-diamond",
     hex: "#d42a1f",
-    image: "/img/trail-rating/trail-rating-built-only.png",
+    image: "/img/trail-rating/trail-rating-built-only.webp",
     lines: [
       "Extreme obstacles for purpose-built vehicles.",
       "Experienced drivers only. Winch and a full recovery kit required.",

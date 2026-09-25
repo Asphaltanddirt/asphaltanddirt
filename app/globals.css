@@ -2657,3 +2657,5 @@ details.garage-plan-row{ display:block; padding:0; }
 .garage-plan-item-text{ flex:1; min-width:0; }
 .garage-plan-tick{ flex:none; width:22px; height:22px; accent-color:var(--accent); margin:0; }
 button.garage-plan-claim{ background:none; border:1px solid var(--accent); border-radius:999px; padding:4px 10px; cursor:pointer; }
+.trail-rating-img{ display:block; width:120px; height:auto; }
+.trail-rating-grid .trail-rating-img{ width:150px; }
