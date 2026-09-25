@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEventCard from "@/components/GarageEventCard";
 import Link from "next/link";
-import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
+import { canSeeOwnerOnly, getSession, seesEventDetails } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getCrewEvents, getEventBySlug, getRsvpSummaries } from "@/lib/events";
 
@@ -42,7 +42,8 @@ export default async function GarageEventsPage() {
     getRsvpSummaries(shown.map((e) => e.id)).catch(() => new Map()),
   ]);
   const mine = new Map(responses.filter((r) => r.email === session.email).map((r) => [r.eventSlug, r.response]));
-  const insider = (slug: string) => canSeeOwnerOnly(session) || mine.get(slug) === "Going";
+  // Crew see everything; outside ambassadors once they're Going (9/25).
+  const insider = (slug: string) => seesEventDetails(session, mine.get(slug) === "Going");
 
   return (
     <div className="garage">
@@ -69,8 +70,6 @@ export default async function GarageEventsPage() {
                 date={formatDate(event.date)}
                 area={event.generalArea}
                 blurb={event.publicBlurb}
-                // The private spot and run-of-show only once you're Going
-                // (owners always): the Garage access rule, 9/25.
                 meetup={insider(event.slug) ? detail?.meetupPoint || "" : ""}
                 details={insider(event.slug) ? detail?.fullDetails || "" : ""}
                 rsvps={event.crewOnly ? null : rsvps.get(event.id)?.count ?? null}

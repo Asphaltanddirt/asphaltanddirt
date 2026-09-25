@@ -5,7 +5,7 @@ import GarageBack from "@/components/GarageBack";
 import GarageAnswer from "@/components/GarageAnswer";
 import GarageDoubleTapLink from "@/components/GarageDoubleTapLink";
 import GarageRsvpTools from "@/components/GarageRsvpTools";
-import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers } from "@/lib/garageAuth";
+import { canRunEvents, canSeeOwnerOnly, getSession, listGarageUsers, seesEventDetails } from "@/lib/garageAuth";
 import { crewPicture, getEventResponses } from "@/lib/garageEvents";
 import { getEventBySlug, getRsvpRoster, isPastEvent, type RsvpPerson } from "@/lib/events";
 import { getCommsSettings, isCommsOpen } from "@/lib/eventComms";
@@ -58,6 +58,9 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
   ]);
   const mine = responses.find((r) => r.email === session.email)?.response || null;
   const staff = owner || mine === "Going";
+  // Crew see the whole event whether or not they're Going; outside
+  // ambassadors see the public view until they are.
+  const details = seesEventDetails(session, mine === "Going");
   const crew = crewPicture(users, responses, slug);
   const tailgateOpen = isCommsOpen(settings);
   const firstTimers = roster ? roster.filter((p) => p.earlierEvents.length === 0).length : 0;
@@ -98,7 +101,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
         <Link href={`/garage/upload?event=${slug}`} className="btn btn-primary garage-block-btn">
           Upload photos &amp; videos
         </Link>
-        {staff && event.driveFolderUrl && (
+        {details && event.driveFolderUrl && (
           <a href={event.driveFolderUrl} target="_blank" rel="noopener" className="btn btn-outline garage-block-btn">
             Open Drive folder ↗
           </a>
@@ -249,7 +252,7 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           </section>
         )}
 
-        {staff && (
+        {details && (
         <section className="garage-panel">
           <h2>Crew</h2>
           {crew.going.length > 0 && <p><strong>Going:</strong> {crew.going.join(", ")}</p>}
@@ -268,19 +271,19 @@ export default async function GarageEventPage({ params }: { params: Promise<{ sl
           )}
         </section>
         )}
-        {!staff && !past && (
+        {!details && !past && (
           <p className="garage-form-note">Mark Going to see the meetup spot, details and who else is going.</p>
         )}
 
         {/* Crew-only: the exact spot and the run-of-show. The public page keeps
             these behind an RSVP email. */}
-        {staff && event.meetupPoint && (
+        {details && event.meetupPoint && (
           <section className="garage-panel">
             <h2>Meetup</h2>
             <p>{event.meetupPoint}</p>
           </section>
         )}
-        {staff && event.fullDetails && (
+        {details && event.fullDetails && (
           <section className="garage-panel">
             <h2>Details</h2>
             <p>{event.fullDetails}</p>

@@ -27,7 +27,10 @@ const STATE_COOKIE = "ad_garage_state";
 /** Sessions last two weeks; event days and posting days are spread out. */
 const SESSION_DAYS = 14;
 
-export type GarageRole = "Owner" | "Staff" | "Crew";
+/** Owner = Jose + Anthony. Staff/Crew = the volunteer crew (see every event's
+ *  details). Ambassador = outside ambassadors: events look like the public
+ *  page until they mark Going (the Garage access rule, Jose 9/25). */
+export type GarageRole = "Owner" | "Staff" | "Crew" | "Ambassador";
 
 export interface GarageUser {
   id: string;
@@ -130,6 +133,12 @@ export function canSeeOwnerOnly(session: GarageSession | null) {
 }
 
 /** Staff-side abilities: running an event day (Tailgate staff mode, check-in). */
+/** The full event details (meetup spot, run-of-show, crew names, Drive
+ *  folder): everyone but an outside ambassador who isn't Going. */
+export function seesEventDetails(session: GarageSession | null, going: boolean) {
+  return Boolean(session) && (session?.role !== "Ambassador" || going);
+}
+
 export function canRunEvents(session: GarageSession | null) {
   return session?.role === "Owner" || session?.role === "Staff";
 }
@@ -217,7 +226,7 @@ function toUser(r: { id: string; fields: AirtableFields }): GarageUser {
     id: r.id,
     email: ((r.fields.Email as string) || "").trim().toLowerCase(),
     name: (r.fields.Name as string) || "",
-    role: role === "Owner" || role === "Staff" ? role : "Crew",
+    role: role === "Owner" || role === "Staff" || role === "Ambassador" ? role : "Crew",
     photoUrl: (r.fields["Photo URL"] as string) || "",
   };
 }
