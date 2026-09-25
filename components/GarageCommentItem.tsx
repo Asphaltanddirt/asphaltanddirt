@@ -10,7 +10,8 @@ const ago = (iso: string) => {
   return d < 1 ? "today" : d === 1 ? "yesterday" : d < 30 ? `${d}d ago` : `${Math.round(d / 30)}mo ago`;
 };
 
-/** One harvested comment. The reply itself is written on YouTube, by hand. */
+/** One harvested comment. The reply itself is written on its platform (YouTube,
+ *  Instagram or Facebook), by hand. */
 export default function GarageCommentItem({ item }: { item: HarvestedComment }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -39,8 +40,9 @@ export default function GarageCommentItem({ item }: { item: HarvestedComment }) 
   return (
     <article className={done ? "garage-social-card is-posted" : "garage-social-card"}>
       <header className="garage-social-head">
-        <span className="garage-social-platform">{item.author || "YouTube"}</span>
+        <span className="garage-social-platform">{item.author || item.platform}</span>
         <span className="garage-tag">{item.bucket}</span>
+        {item.platform !== "YouTube" && <span className="garage-tag">{item.platform}</span>}
         <span className="garage-social-when">{ago(item.publishedAt)}</span>
       </header>
       <p className="garage-social-what">
@@ -66,7 +68,7 @@ export default function GarageCommentItem({ item }: { item: HarvestedComment }) 
           <div className="garage-social-row">
             {item.url && (
               <a className="btn btn-primary btn-sm" href={item.url} target="_blank" rel="noopener">
-                Open on YouTube
+                Open on {item.platform}
               </a>
             )}
           </div>

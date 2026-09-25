@@ -19,6 +19,11 @@ import { createRecord, listRecords, updateRecord, isAirtableConfigured, SOCIAL_B
  *
  * Reads the public YouTube Data API with YOUTUBE_API_KEY (comments on our own
  * channel are public data, so no OAuth token is needed).
+ *
+ * Since 2026-09-25 it also reads Instagram and Facebook Page comments on our
+ * recent posts (punchlist #8), with the Meta System User token, which needed
+ * pages_read_user_content added for Facebook. Same buckets, same board; the
+ * Platform column says where each one came from.
  */
 
 const BASE_ID = SOCIAL_BASE_ID;
@@ -48,6 +53,8 @@ export interface HarvestedComment {
   bucket: Bucket;
   status: CommentStatus;
   notes: string;
+  /** "YouTube" for every row before 2026-09-25. */
+  platform: "YouTube" | "Instagram" | "Facebook";
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -150,6 +157,119 @@ async function titlesFor(ids: string[]): Promise<Map<string, string>> {
   return out;
 }
 
+// ─────────────────────────────────────────────── Instagram + Facebook Page
+
+const GRAPH = `https://graph.facebook.com/${process.env.META_GRAPH_VERSION || "v26.0"}`;
+/** How many recent posts to look at per platform. Comments on older posts are
+ *  rare and were picked up by earlier runs. */
+const META_POSTS = 30;
+
+interface MetaComment {
+  platform: "Instagram" | "Facebook";
+  commentId: string;
+  postId: string;
+  postTitle: string;
+  url: string;
+  author: string;
+  text: string;
+  likes: number;
+  replies: number;
+  publishedAt: string;
+}
+
+async function graph<T>(path: string, params: Record<string, string>, token: string): Promise<T> {
+  const res = await fetch(`${GRAPH}/${path}?${new URLSearchParams({ ...params, access_token: token })}`, { cache: "no-store" });
+  const data = (await res.json().catch(() => ({}))) as T & { error?: { message?: string } };
+  if (!res.ok || data?.error) throw new Error(`Meta said: ${data?.error?.message || `HTTP ${res.status}`}`);
+  return data;
+}
+
+const snippet = (text: string) => text.replace(/\s+/g, " ").trim().slice(0, 70);
+
+async function instagramComments(token: string): Promise<MetaComment[]> {
+  const ig = process.env.META_IG_USER_ID;
+  if (!ig) return [];
+  const me = await graph<{ username?: string }>(ig, { fields: "username" }, token);
+  const media = await graph<{ data: { id: string; caption?: string; permalink?: string; comments_count?: number }[] }>(
+    `${ig}/media`,
+    { fields: "id,caption,permalink,comments_count", limit: String(META_POSTS) },
+    token,
+  );
+  const out: MetaComment[] = [];
+  for (const m of media.data.filter((x) => (x.comments_count || 0) > 0)) {
+    const c = await graph<{ data: { id: string; text?: string; timestamp?: string; username?: string; like_count?: number; replies?: { data?: unknown[] } }[] }>(
+      `${m.id}/comments`,
+      { fields: "id,text,timestamp,username,like_count,replies{id}", limit: "50" },
+      token,
+    );
+    for (const x of c.data) {
+      // Our own replies are not audience comments.
+      if (me.username && x.username === me.username) continue;
+      out.push({
+        platform: "Instagram",
+        commentId: `ig_${x.id}`,
+        postId: m.id,
+        postTitle: `Instagram: ${snippet(m.caption || "")}`,
+        url: m.permalink || "",
+        author: x.username || "",
+        text: x.text || "",
+        likes: x.like_count ?? 0,
+        replies: x.replies?.data?.length ?? 0,
+        publishedAt: x.timestamp || "",
+      });
+    }
+  }
+  return out;
+}
+
+async function facebookComments(token: string): Promise<MetaComment[]> {
+  const pageId = process.env.META_PAGE_ID;
+  if (!pageId) return [];
+  // Page reads need the Page's own token; the System User can fetch it.
+  const pt = (await graph<{ access_token?: string }>(pageId, { fields: "access_token" }, token)).access_token || token;
+  const posts = await graph<{ data: { id: string; message?: string; permalink_url?: string; comments?: { summary?: { total_count?: number } } }[] }>(
+    `${pageId}/posts`,
+    { fields: "id,message,permalink_url,comments.summary(true).limit(0)", limit: String(META_POSTS) },
+    pt,
+  );
+  const out: MetaComment[] = [];
+  for (const p of posts.data.filter((x) => (x.comments?.summary?.total_count || 0) > 0)) {
+    const c = await graph<{ data: { id: string; message?: string; created_time?: string; from?: { id?: string; name?: string }; like_count?: number; comment_count?: number; permalink_url?: string }[] }>(
+      `${p.id}/comments`,
+      { fields: "id,message,created_time,from,like_count,comment_count,permalink_url", limit: "50" },
+      pt,
+    );
+    for (const x of c.data) {
+      if (x.from?.id === pageId) continue;
+      out.push({
+        platform: "Facebook",
+        commentId: `fb_${x.id}`,
+        postId: p.id,
+        postTitle: `Facebook: ${snippet(p.message || "")}`,
+        url: x.permalink_url || p.permalink_url || "",
+        author: x.from?.name || "",
+        text: x.message || "",
+        likes: x.like_count ?? 0,
+        replies: x.comment_count ?? 0,
+        publishedAt: x.created_time || "",
+      });
+    }
+  }
+  return out;
+}
+
+/** Both Meta platforms. A failure on one never costs the other, or YouTube. */
+async function metaComments(): Promise<{ comments: MetaComment[]; errors: string[] }> {
+  const token = process.env.META_GRAPH_TOKEN;
+  if (!token) return { comments: [], errors: [] };
+  const errors: string[] = [];
+  const [ig, fb] = await Promise.all([
+    instagramComments(token).catch((e) => (errors.push(`Instagram: ${e instanceof Error ? e.message : e}`), [] as MetaComment[])),
+    facebookComments(token).catch((e) => (errors.push(`Facebook: ${e instanceof Error ? e.message : e}`), [] as MetaComment[])),
+  ]);
+  return { comments: [...ig, ...fb], errors };
+}
+
 export async function isHarvestOn(): Promise<boolean> {
   if (!isAirtableConfigured(BASE_ID)) return false;
   const rows = await listRecords(SETTINGS, `{Setting} = 'Comment harvest'`, { baseId: BASE_ID });
@@ -169,6 +289,10 @@ export interface HarvestResult {
   added: number;
   ours: number;
   byBucket: Record<Bucket, number>;
+  /** New comments filed per platform this run. */
+  byPlatform?: Record<string, number>;
+  /** Anything that failed without stopping the run. */
+  errors?: string[];
 }
 
 /**
@@ -261,7 +385,39 @@ export async function harvestComments(opts: { force?: boolean; pages?: number } 
     added++;
   }
 
-  return { scanned, added, ours, byBucket };
+  // Instagram + Facebook Page: same filing, keyed by their own ids.
+  const meta = await metaComments();
+  const byPlatform: Record<string, number> = { YouTube: added, Instagram: 0, Facebook: 0 };
+  for (const c of meta.comments) {
+    scanned++;
+    if (known.has(c.commentId)) continue;
+    const bucket = bucketFor(c.text);
+    await createRecord(
+      TABLE,
+      {
+        "Comment ID": c.commentId,
+        "Video ID": c.postId,
+        "Video Title": c.postTitle,
+        URL: c.url,
+        Author: c.author,
+        Text: c.text,
+        Likes: c.likes,
+        Replies: c.replies,
+        ...(c.publishedAt ? { "Published At": new Date(c.publishedAt).toISOString() } : {}),
+        "Harvested At": harvestedAt,
+        Bucket: bucket,
+        Status: "New",
+        Platform: c.platform,
+      },
+      { baseId: BASE_ID, typecast: true },
+    );
+    known.add(c.commentId);
+    byBucket[bucket]++;
+    byPlatform[c.platform]++;
+    added++;
+  }
+
+  return { scanned, added, ours, byBucket, byPlatform, errors: meta.errors };
 }
 
 // ───────────────────────────────────────────────────────────── the board
@@ -287,6 +443,7 @@ export async function getComments(): Promise<HarvestedComment[]> {
       bucket: (str(f.Bucket) || "Noise") as Bucket,
       status: (str(f.Status) || "New") as CommentStatus,
       notes: str(f.Notes),
+      platform: (str(f.Platform) || "YouTube") as HarvestedComment["platform"],
     };
   });
   const rank: Record<Bucket, number> = { Question: 0, Debate: 1, Praise: 2, Noise: 3 };

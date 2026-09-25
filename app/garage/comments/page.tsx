@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const BLURB: Record<Bucket, string> = {
-  Question: "Real questions from viewers. These are what the Q&A episode is waiting for — answer them on YouTube too.",
+  Question: "Real questions from viewers. These are what the Q&A episode is waiting for — answer them where they were asked, too.",
   Debate: "Disagreements and comparisons. A good one is a Garage Take on its own.",
   Praise: "Worth a like and a short thank you. Nothing else needed.",
   Noise: "Emoji, one-liners and spam. Here so nothing is silently thrown away.",
@@ -50,9 +50,9 @@ export default async function GarageCommentsPage() {
 
         <section className="garage-panel">
           <p>
-            Every Monday this pulls the week&apos;s new YouTube comments and sorts them into four piles. The sorting is
+            Every Monday this pulls the week&apos;s new YouTube, Instagram and Facebook comments and sorts them into four piles. The sorting is
             keyword matching, so it gets things wrong — move a comment to the right pile with the arrows on its card.
-            <strong> Reply on YouTube itself</strong>; nothing here posts anything. Anything marked
+            <strong> Reply on the platform itself</strong>; nothing here posts anything. Anything marked
             <strong> Q&amp;A episode</strong> or <strong>Garage Take</strong> stays on the list as material.
           </p>
         </section>
