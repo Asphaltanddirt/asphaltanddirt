@@ -58,7 +58,10 @@ export function weekOf(dateStr: string): string {
 
 export async function getTasksFor(email: string): Promise<GarageTask[]> {
   if (!isAirtableConfigured(BASE_ID) || !email) return [];
-  const records = await listRecords(TASKS, undefined, { baseId: BASE_ID });
+  // Ask Airtable for this person's rows only. It used to download every task
+  // ever made and filter here, on every Garage home load.
+  const who = email.trim().toLowerCase().replace(/'/g, "\\'");
+  const records = await listRecords(TASKS, `LOWER(TRIM({Assignee})) = '${who}'`, { baseId: BASE_ID });
   return records
     .map(toTask)
     .filter((t) => t.assignee === email.trim().toLowerCase())
@@ -69,7 +72,8 @@ export async function getTasksFor(email: string): Promise<GarageTask[]> {
 export async function getWeekTasks(): Promise<GarageTask[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
   const monday = weekOf(todayNY());
-  const records = await listRecords(TASKS, undefined, { baseId: BASE_ID });
+  const sunday = new Date(Date.parse(`${monday}T12:00:00Z`) + 6 * 86_400_000).toISOString().slice(0, 10);
+  const records = await listRecords(TASKS, `AND(NOT(IS_BEFORE({Due}, '${monday}')), NOT(IS_AFTER({Due}, '${sunday}')))`, { baseId: BASE_ID });
   return records
     .map(toTask)
     .filter((t) => t.due && weekOf(t.due) === monday)
