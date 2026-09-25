@@ -85,6 +85,9 @@ async function getEventVenues(ids: string[]): Promise<EventVenue[]> {
 }
 
 export interface EventDetail extends EventSummary {
+  /** The day it was last moved to a new date ("" = never). People who RSVP'd
+   *  on or before it owe an answer about the new date. */
+  postponedOn: string;
   /** Reachable by direct link only (test events, private invites) — keep it
    *  out of search engines too. */
   unlisted: boolean;
@@ -271,6 +274,7 @@ export async function getEventBySlug(
     unlisted: record.fields.Status === "Unlisted",
     fullDetails: (record.fields["Full Details"] as string) || "",
     meetupPoint: (record.fields["Meetup Point"] as string) || "",
+    postponedOn: ((record.fields["Postponed On"] as string) || "").slice(0, 10),
     meetupPublic: Boolean(record.fields["Show Meetup Publicly"]),
     atAGlance: ((record.fields["At A Glance"] as string) || "")
       .split("\n")
@@ -588,6 +592,23 @@ export interface RsvpPerson {
    *  means this is their first RSVP with us. It's RSVPs, not check-ins, so it
    *  says "RSVP'd before", never "came before". */
   earlierEvents: string[];
+  /** After a postponement: this person's answer about the CURRENT date.
+   *  "" = the event wasn't postponed after they RSVP'd, so there's nothing to
+   *  answer. "waiting" = they owe an answer (see lib/rsvpReconfirm.ts). */
+  newDate: "" | "Yes" | "Not sure" | "waiting";
+}
+
+/** Where one RSVP stands on the current date after a postponement. Only
+ *  people who RSVP'd on or before the day it moved owe an answer; anyone who
+ *  RSVP'd after already said yes to the new date by RSVPing. */
+function reconfirmState(fields: Record<string, unknown>, eventDate: string, postponedOn: string): RsvpPerson["newDate"] {
+  if (!postponedOn) return "";
+  const rsvpDate = ((fields["RSVP Date"] as string) || "").slice(0, 10);
+  if (rsvpDate && rsvpDate > postponedOn) return "";
+  const answeredFor = ((fields["Answered For"] as string) || "").slice(0, 10);
+  const answer = (fields["New Date Answer"] as string) || "";
+  if (answeredFor === eventDate && (answer === "Yes" || answer === "Not sure")) return answer;
+  return "waiting";
 }
 
 /** The public RSVP list for one event, with names, for event-day use. Emails
@@ -604,6 +625,7 @@ export async function getRsvpRoster(eventRecordId: string): Promise<RsvpPerson[]
     events.map((e) => [e.id, { title: (e.fields.Title as string) || "", date: (e.fields.Date as string) || "" }]),
   );
   const thisDate = eventInfo.get(eventRecordId)?.date || "";
+  const postponedOn = ((events.find((e) => e.id === eventRecordId)?.fields["Postponed On"] as string) || "").slice(0, 10);
 
   const eventsByEmail = new Map<string, Set<string>>();
   for (const r of rsvps) {
@@ -631,6 +653,7 @@ export async function getRsvpRoster(eventRecordId: string): Promise<RsvpPerson[]
         inFbGroup: (r.fields["Already In FB Group"] as RsvpPerson["inFbGroup"]) || "",
         rsvpDate: ((r.fields["RSVP Date"] as string) || "").slice(0, 10),
         earlierEvents: earlier,
+        newDate: reconfirmState(r.fields, thisDate, postponedOn),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

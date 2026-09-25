@@ -119,7 +119,8 @@ export function buildRsvpConfirmation(input: {
         ${requirementsBlock(event)}
         ${fbNudge}
         ${listsNote}
-        <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">View This Event On The Site &rarr;</a></p>
+        <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}/calendar.ics" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Add It To Your Calendar &rarr;</a></p>
+        <p style="margin:8px 0 0;font-size:13px;"><a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">View This Event On The Site &rarr;</a></p>
       </td>
     </tr>
   `;

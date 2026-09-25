@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, canSeeOwnerOnly } from "@/lib/garageAuth";
 import { getEventBySlug } from "@/lib/events";
-import { listRecords } from "@/lib/airtable";
+import { listRecords, updateRecord } from "@/lib/airtable";
 import { getEditableEvent, listAllEvents, updateEvent } from "@/lib/garageEventEditor";
 import { buildRsvpUpdate, type EventUpdateKind } from "@/lib/eventEmails";
 import { createTikTokNoticeCard, postEventNotice, sendEventNotice, type NoticeResult } from "@/lib/eventNotice";
 import { notifyFailure } from "@/lib/notify";
 import { sendEmail } from "@/lib/resendEmail";
 import { reconfirmLink } from "@/lib/rsvpReconfirm";
+import { todayNY } from "@/lib/garageTasks";
 
 export const maxDuration = 60;
 
@@ -119,6 +120,13 @@ export async function POST(req: NextRequest) {
       slug,
     );
     steps.event = kind === "cancelled" ? "Cancelled." : rescheduled ? `Back on, ${newDate}.` : `Moved to ${newDate}.`;
+    // The day it moved: everyone who RSVP'd up to today owes an answer about
+    // the new date, and the Garage event page lists who hasn't given one.
+    if (kind === "postponed") {
+      await updateRecord("Events", editable.id, { "Postponed On": todayNY() }, { baseId: process.env.AIRTABLE_EVENTS_BASE_ID || "app5LS6dvcTKdxGqr" }).catch(
+        (err) => console.error("couldn't stamp Postponed On", err),
+      );
+    }
   } catch (err) {
     steps.event = `Couldn't change the event: ${err instanceof Error ? err.message : "unknown"}`;
   }

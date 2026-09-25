@@ -102,14 +102,17 @@ export async function recordReconfirm(recordId: string, newDate: string, answer:
   );
 }
 
-/** Everyone who still has not answered about the current date. */
-export async function pendingReconfirms(eventRecordId: string, eventDate: string) {
+/** Everyone who still has not answered about the current date. With the day
+ *  it was postponed, people who RSVP'd after that are left out: RSVPing to
+ *  the new date already answers it. */
+export async function pendingReconfirms(eventRecordId: string, eventDate: string, postponedOn = "") {
   const rows = await listRecords(RSVPS, "", { baseId: BASE_ID });
   return rows
     .filter((r) => ((r.fields.Event as string[]) || []).includes(eventRecordId))
     .filter((r) => str(r.fields.Status) === "Confirmed")
     // An answer about a previous date says nothing about this one.
     .filter((r) => str(r.fields["Answered For"]).slice(0, 10) !== eventDate)
+    .filter((r) => !postponedOn || !str(r.fields["RSVP Date"]) || str(r.fields["RSVP Date"]).slice(0, 10) <= postponedOn)
     .map((r) => ({ id: r.id, name: str(r.fields.Name), email: str(r.fields.Email) }))
     .filter((r) => r.email);
 }

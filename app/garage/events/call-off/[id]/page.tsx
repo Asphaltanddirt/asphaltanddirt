@@ -19,12 +19,19 @@ export const metadata: Metadata = {
  * double-tap from the event, so it's never opened by accident. Owners only:
  * Jose or Anthony, whoever isn't driving.
  */
-export default async function GarageCallOffPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function GarageCallOffPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ preset?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/garage");
   if (!canSeeOwnerOnly(session)) redirect("/garage/events");
 
   const { id } = await params;
+  const { preset } = await searchParams;
   const event = await getEditableEvent(id).catch(() => null);
   if (!event) notFound();
   const live = event.status !== "Draft" && event.status !== "Cancelled";
@@ -41,6 +48,7 @@ export default async function GarageCallOffPage({ params }: { params: Promise<{ 
           rsvpCount={event.rsvpCount}
           canCallOff={live}
           cancelled={event.status === "Cancelled"}
+          preset={preset === "go" ? "go" : undefined}
         />
       </div>
     </div>

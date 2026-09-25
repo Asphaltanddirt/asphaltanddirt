@@ -109,6 +109,11 @@ export default function RsvpForm({
         <p className="lead" style={{ maxWidth: 480 }}>
           Check your email for the meetup details — we just sent them to you.
         </p>
+        <p style={{ maxWidth: 480 }}>
+          <a href={`/events/${slug}/calendar.ics`} className="btn btn-outline btn-sm">
+            Add to calendar
+          </a>
+        </p>
         {joinedLists.length > 0 && (
           <p style={{ maxWidth: 480 }}>
             You&apos;re also on {joinedLists.join(" and ")}. Every email has an unsubscribe link if you change your mind.
