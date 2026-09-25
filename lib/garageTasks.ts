@@ -25,6 +25,8 @@ export interface GarageTask {
   done: boolean;
   details: string;
   link: string;
+  /** The template it came from, e.g. "gt-codex". Blank for one-off tasks. */
+  templateKey: string;
 }
 
 function toTask(r: { id: string; fields: AirtableFields }): GarageTask {
@@ -36,6 +38,7 @@ function toTask(r: { id: string; fields: AirtableFields }): GarageTask {
     done: r.fields.Status === "Done",
     details: (r.fields.Details as string) || "",
     link: (r.fields.Link as string) || "",
+    templateKey: (((r.fields["Template Key"] as string) || "").split("|")[0] || "").trim(),
   };
 }
 
@@ -71,6 +74,13 @@ export async function getWeekTasks(): Promise<GarageTask[]> {
     .map(toTask)
     .filter((t) => t.due && weekOf(t.due) === monday)
     .sort((a, b) => a.due.localeCompare(b.due));
+}
+
+/** Everyone's tasks due between two dates (inclusive), for the Planning Calendar. */
+export async function getTasksBetween(from: string, to: string): Promise<GarageTask[]> {
+  if (!isAirtableConfigured(BASE_ID)) return [];
+  const records = await listRecords(TASKS, `AND(NOT(IS_BEFORE({Due}, '${from}')), NOT(IS_AFTER({Due}, '${to}')))`, { baseId: BASE_ID });
+  return records.map(toTask).sort((a, b) => a.due.localeCompare(b.due));
 }
 
 export async function setTaskDone(id: string, done: boolean): Promise<void> {

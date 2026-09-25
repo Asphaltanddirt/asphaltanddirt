@@ -5,7 +5,7 @@ import GarageBack from "@/components/GarageBack";
 import GarageSocialGenerate from "@/components/GarageSocialGenerate";
 import GarageSocialPost from "@/components/GarageSocialPost";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
+import { getPost, getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
 
@@ -25,13 +25,23 @@ const shift = (monday: string, days: number) => {
 const label = (iso: string, opts: Intl.DateTimeFormatOptions) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
 
-export default async function GarageSocialPage({ searchParams }: { searchParams: Promise<{ week?: string; all?: string }> }) {
+export default async function GarageSocialPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string; all?: string; card?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/garage");
   if (!canSeeOwnerOnly(session)) redirect("/garage");
 
   const today = todayNY();
-  const { week, all } = await searchParams;
+  const { week, all, card } = await searchParams;
+  // ?card=<id> (notifications, the Planning Calendar): open the card's own
+  // week with every day showing, scrolled to that card.
+  if (card && /^rec[A-Za-z0-9]{14}$/.test(card)) {
+    const post = await getPost(card).catch(() => null);
+    if (post) redirect(`/garage/social?week=${weekOf(post.due)}&all=1#card-${post.id}`);
+  }
   const monday = weekOf(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : today);
   const posts = await getWeekPosts(monday).catch((): SocialPost[] | null => null);
 

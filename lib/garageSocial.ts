@@ -6,7 +6,7 @@ import { isAutoPlatform } from "@/lib/socialCopy";
 /**
  * The social posting board in A&D Garage (/garage/social).
  *
- * Two tables in the Analytics base:
+ * Two tables in the A&D Social Ops base (split out of Analytics 2026-09-25):
  *  - Posting Schedule: the repeating week, one row per slot (day, topic,
  *    platform, time window). Change the week there, no deploy needed.
  *  - Social Posts: the real posts, generated per week from the active slots.
@@ -107,7 +107,13 @@ export interface SocialPost {
   /** The event's date/time/place as they were when this card was last drafted
    *  or approved. The fresh-facts check compares against it. */
   eventFacts: string;
+  /** Email of the person this card is on (Planning Calendar). Blank = the
+   *  posting owner, see POSTING_OWNER. */
+  owner: string;
 }
+
+/** Whose job a card is when its Owner is blank: Jose posts the socials. */
+export const POSTING_OWNER = (process.env.GARAGE_POSTING_OWNER || "jrodrigues1278@gmail.com").toLowerCase();
 
 const escapeFormula = (v: string) => v.replace(/'/g, "\\'");
 const num = (v: unknown) => (typeof v === "number" ? v : null);
@@ -165,6 +171,7 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     creative: str(f.Creative),
     variant: str(f.Variant),
     eventFacts: str(f["Event Facts"]),
+    owner: str(f.Owner).trim().toLowerCase() || POSTING_OWNER,
   };
 }
 
@@ -177,6 +184,24 @@ export async function getWeekPosts(monday: string): Promise<SocialPost[]> {
   if (!isSocialConfigured()) return [];
   const [posts, schedule] = await Promise.all([
     listRecords(POSTS, `IS_SAME({Week Of}, '${monday}', 'day')`, { baseId: BASE_ID }),
+    listRecords(SCHEDULE, undefined, { baseId: BASE_ID }),
+  ]);
+  const sortBySlot = new Map(schedule.map((s) => [s.id, Number(s.fields.Sort || 0)]));
+  return posts
+    .map((r) => {
+      const post = toPost(r);
+      post.sort = sortBySlot.get(str(r.fields["Slot Key"]).split("|")[0]) ?? 999;
+      return post;
+    })
+    .sort((a, b) => a.due.localeCompare(b.due) || a.sort - b.sort);
+}
+
+/** Every card due between two dates (inclusive), whatever week it belongs to.
+ *  The Planning Calendar reads 14 days that span two or three weeks. */
+export async function getPostsBetween(from: string, to: string): Promise<SocialPost[]> {
+  if (!isSocialConfigured()) return [];
+  const [posts, schedule] = await Promise.all([
+    listRecords(POSTS, `AND(NOT(IS_BEFORE({Due}, '${from}')), NOT(IS_AFTER({Due}, '${to}')))`, { baseId: BASE_ID }),
     listRecords(SCHEDULE, undefined, { baseId: BASE_ID }),
   ]);
   const sortBySlot = new Map(schedule.map((s) => [s.id, Number(s.fields.Sort || 0)]));
@@ -343,6 +368,7 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
         ...(blog?.title ? { "Blog Title": blog.title } : {}),
         ...(blog?.url ? { "Blog URL": blog.url } : {}),
         ...(f.Notes ? { Notes: str(f.Notes) } : {}),
+        ...(f.Owner ? { Owner: str(f.Owner) } : {}),
       },
       { baseId: BASE_ID, typecast: true },
     );

@@ -274,10 +274,24 @@ export default async function ControlRoomPage({ searchParams }: { searchParams: 
               body={{ action: "autopost-on" }}
             />
           )}
-          <p>Threads: {threadsConnected ? "connected" : "not connected"}</p>
-          <a className="btn btn-outline btn-sm" href="/api/threads/connect">
-            {threadsConnected ? "Reconnect Threads" : "Connect Threads"}
-          </a>
+          {/* Connected is the normal state, and a big "Reconnect" button next to
+              the auto-posting switch read like a request to do it (Jose, 9/25).
+              The token renews itself; reconnecting is only for when it breaks. */}
+          {threadsConnected ? (
+            <p>
+              Threads: connected ·{" "}
+              <a href="/api/threads/connect" className="garage-form-note">
+                reconnect only if posting to Threads fails
+              </a>
+            </p>
+          ) : (
+            <>
+              <p>Threads: not connected</p>
+              <a className="btn btn-outline btn-sm" href="/api/threads/connect">
+                Connect Threads
+              </a>
+            </>
+          )}
           {threadsMsg && <p className="garage-form-note" role="status">Threads: {threadsMsg}</p>}
           <p className="garage-form-note">
             Approve posts on the <Link href="/garage/social">posting board</Link>. TikTok (TikTok Studio) and the Facebook Group stay by hand.

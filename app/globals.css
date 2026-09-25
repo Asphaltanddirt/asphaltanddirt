@@ -2520,26 +2520,60 @@ a.control-cell:hover{ border-color:var(--accent); }
 .garage-upload-warning{ margin:14px auto 0; max-width:34ch; font-size:16px; font-weight:600; color:var(--text); }
 .garage-upload-done{ text-align:center; display:flex; flex-direction:column; gap:12px; padding:var(--sp-3) 0; }
 
-/* Garage → the posting week at a glance. What's left, not what was planned:
-   done work greys out, and the auto-posted ones are a count, never a list. */
-.garage-week{ margin:0 0 var(--sp-3); }
-.garage-week-top{ display:flex; align-items:baseline; gap:8px; margin:0 0 8px; }
-.garage-week-missed{ color:var(--accent); font-size:.85rem; }
-.garage-week-days{ list-style:none; margin:0; padding:0; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
-.garage-week-day{ display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--border); }
-.garage-week-day:first-child{ border-top:0; }
-.garage-week-day.is-past{ opacity:.55; }
-.garage-week-day.is-today{ background:var(--bg-card); }
-.garage-week-day.has-open{ box-shadow:inset 3px 0 0 var(--accent); }
-.garage-week-date{ display:flex; flex-direction:column; align-items:center; min-width:34px; line-height:1.1; }
-.garage-week-dow{ font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); }
-.garage-week-dom{ font-size:1.05rem; font-weight:600; }
-.garage-week-items{ display:flex; flex-direction:column; gap:3px; min-width:0; font-size:.9rem; }
-.garage-week-item.is-done{ color:var(--text-muted); text-decoration:line-through; text-decoration-thickness:1px; }
-.garage-week-what{ color:var(--text-muted); }
-.garage-week-auto{ font-size:.82rem; color:var(--text-muted); }
-.garage-week-auto.has-failed{ color:var(--accent); font-weight:600; }
-.garage-week-link{ display:inline-block; margin-top:8px; font-size:.9rem; }
+/* Planning Calendar (components/GaragePlan.tsx). Orange OUTLINE = today,
+   SOLID orange = the signed-in person has something due that day. Orange is
+   only ever "this needs you"; everything else stays grey. */
+.garage-plan{ margin:0 0 var(--sp-3); }
+.garage-plan-strip{ display:grid; grid-template-columns:repeat(7,1fr); gap:7px; margin:0 0 20px; padding:4px 4px 0; }
+.garage-plan-day{ position:relative; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:10px; padding:6px 0 8px; font-family:var(--font-display); text-transform:uppercase; line-height:1; }
+.garage-plan-day span{ display:block; font-weight:700; font-size:11px; letter-spacing:.08em; }
+.garage-plan-day b{ display:block; font-weight:800; font-size:18px; margin-top:3px; font-variant-numeric:tabular-nums; color:var(--text); }
+.garage-plan-day.has-mine{ background:var(--accent); border-color:var(--accent); color:var(--ad-black); }
+.garage-plan-day.has-mine b{ color:var(--ad-black); }
+.garage-plan-day.is-today{ box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.garage-plan-day.is-selected::after{ content:""; position:absolute; left:22%; right:22%; bottom:-8px; height:3px; border-radius:2px; background:var(--text); }
+.garage-plan-headline{ padding:0 4px 12px; }
+.garage-plan-big{ font-family:var(--font-display); font-weight:800; font-size:44px; line-height:.9; color:var(--accent); font-variant-numeric:tabular-nums; }
+.garage-plan-big.is-zero{ color:var(--text); }
+.garage-plan-big small{ font-size:22px; color:var(--text); font-weight:700; margin-left:6px; }
+.garage-plan-headline p{ margin:4px 0 0; font-size:.85rem; color:var(--text-muted); }
+.garage-plan-zone{ margin-top:14px; }
+.garage-plan-label{ display:flex; justify-content:space-between; font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:.1em; font-size:12px; color:var(--text-dim); padding:0 4px 6px; }
+.garage-plan-line{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:.9rem; color:var(--text-muted); }
+.garage-plan-line strong{ color:var(--text); font-weight:600; }
+.garage-plan-ok{ color:var(--text-dim); font-size:.8rem; white-space:nowrap; }
+.garage-plan-rows{ border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.garage-plan-rows > * + *{ border-top:1px solid var(--border); }
+.garage-plan-row, .garage-plan-row > summary{ display:grid; grid-template-columns:40px 1fr auto; gap:10px; align-items:center; padding:10px 12px; font-size:.9rem; }
+details.garage-plan-row{ display:block; padding:0; }
+.garage-plan-row > summary{ list-style:none; cursor:pointer; }
+.garage-plan-row > summary::-webkit-details-marker{ display:none; }
+.garage-plan-row > summary:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+.garage-plan-row.is-mine{ background:var(--accent-soft); }
+.garage-plan-date{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; line-height:1; font-size:13px; color:var(--text-muted); }
+.garage-plan-date b{ display:block; font-size:20px; color:var(--text); font-variant-numeric:tabular-nums; }
+.garage-plan-row.is-ready .garage-plan-date b{ color:var(--text-muted); }
+.garage-plan-what{ color:var(--text-muted); min-width:0; }
+.garage-plan-what strong{ color:var(--text); font-weight:600; }
+.garage-plan-event{ display:block; font-family:var(--font-display); font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-size:12px; color:var(--text); }
+.garage-plan-pill{ font-weight:700; font-size:11px; border-radius:999px; padding:2px 8px; white-space:nowrap; border:1px solid var(--border); color:var(--text-muted); }
+.garage-plan-pill.is-mine{ background:var(--accent); border-color:var(--accent); color:var(--ad-black); }
+.garage-plan-items{ list-style:none; margin:0; padding:0 12px 12px 62px; display:grid; gap:10px; }
+.garage-plan-items.is-boxed{ padding:12px; border:1px solid var(--border); border-radius:10px; }
+.garage-plan-items li{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:.88rem; color:var(--text); }
+.garage-plan-items li.is-done{ color:var(--text-dim); text-decoration:line-through; }
+.garage-plan-sub{ display:block; color:var(--text-muted); font-size:.8rem; }
+.garage-plan-fix{ font-weight:600; font-size:.8rem; white-space:nowrap; color:var(--text-dim); text-decoration:none; }
+.garage-plan-fix.is-mine{ color:var(--accent); }
+.garage-plan-chips{ display:flex; gap:6px; flex-wrap:wrap; padding:0 4px; }
+.garage-plan-chip{ font-size:.8rem; border:1px solid var(--border); border-radius:999px; padding:4px 10px; color:var(--text-muted); text-decoration:none; }
+.garage-plan-chip em{ font-style:normal; color:var(--text-dim); }
+.garage-plan-chip.is-done{ color:var(--text-dim); text-decoration:line-through; }
+.garage-plan-chip.is-mine{ border-color:var(--accent); color:var(--text); background:var(--accent-soft); }
+.garage-plan-quiet{ margin:0; padding:0 4px; font-size:.85rem; color:var(--text-dim); }
+/* Opening a card from the calendar lands on it and marks it. */
+.garage-social-grid > article{ scroll-margin-top:calc(var(--garage-top, 16px) + 12px); }
+.garage-social-grid > article:target{ outline:2px solid var(--accent); outline-offset:3px; }
 
 /* Garage → Library (2026-09-24). Chips are real buttons with aria-pressed (or
    radios on the upload screen), 44px tall so a thumb hits them. Two cards

@@ -17,13 +17,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   try {
-    const made = await generateWeek();
-    // The posting board's week, from the Posting Schedule. A failure here
+    // This week AND next week. The Planning Calendar plans Tuesday → next
+    // Monday and looks 6 days further, so next week's cards and tasks have to
+    // exist by Monday morning or the gaps it's there to show can't be seen.
+    const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    const made = [...(await generateWeek()), ...(await generateWeek(nextWeek))];
+    // The posting board's weeks, from the Posting Schedule. A failure here
     // never blocks the tasks above.
-    const social = await generateSocialWeek().catch((err) => {
-      console.error("social week generation failed", err);
-      return [];
-    });
+    const social = await Promise.all([generateSocialWeek(), generateSocialWeek(nextWeek)])
+      .then(([a, b]) => [...a, ...b])
+      .catch((err) => {
+        console.error("social week generation failed", err);
+        return [] as string[];
+      });
     // Fill the board's 7-day numbers (Meta + X). Daily, so no post skips its
     // 7–10 day window. Failures never block the rest.
     const [metaStats, xStats, threadsStats] = await Promise.all([

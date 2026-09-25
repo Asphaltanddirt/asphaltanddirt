@@ -186,7 +186,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     .join(" ");
 
   return (
-    <article className={className}>
+    <article id={`card-${item.id}`} className={className}>
       <header className="garage-social-head">
         <span className="garage-social-platform">{item.platform}</span>
         <span className="garage-tag">{item.topic}</span>

@@ -9,9 +9,8 @@ import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
 import { getDueReminders } from "@/lib/garageReminders";
-import { getPostsNeedingAttention } from "@/lib/garageSocial";
-import GarageWeekStrip from "@/components/GarageWeekStrip";
-import { getPostingWeek } from "@/lib/garageWeek";
+import GaragePlan from "@/components/GaragePlan";
+import { getPlan } from "@/lib/garagePlan";
 
 /** The app name Google shows on its sign-in screen is "A and D Garage" (Google
  *  rejects "&"), so this page says the same thing in its title — that's what
@@ -75,15 +74,14 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // day on a phone — the posting fetch used to wait for the first three to
   // finish for no reason, which is a quarter of a second of nothing, every time.
   // Only the head count below genuinely has to wait (it needs the event id).
-  const [events, allTasks, reminders, posting, postingWeek] = await Promise.all([
+  const [events, allTasks, reminders, plan] = await Promise.all([
     getCrewEvents().catch(() => ({ upcoming: [], past: [] })),
     getTasksFor(session.email).catch(() => []),
     getDueReminders(session.email, canSeeOwnerOnly(session)).catch(() => []),
-    // Owners post the socials: today's and overdue posts, straight to the board.
-    canSeeOwnerOnly(session) ? getPostsNeedingAttention(today).catch(() => []) : Promise.resolve([]),
-    canSeeOwnerOnly(session) ? getPostingWeek(today).catch(() => null) : Promise.resolve(null),
+    // The Planning Calendar: owners for now (Jose + Anthony). The crew and
+    // ambassadors get their own view later, once what they see is decided.
+    canSeeOwnerOnly(session) ? getPlan(today).catch(() => null) : Promise.resolve(null),
   ]);
-  const postingOverdue = posting.filter((p) => p.due < today).length;
   // The head count everyone asks about first, on the card they already look at.
   const [rsvps, crewGoing] = events.upcoming[0]
     ? await Promise.all([
@@ -170,25 +168,10 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           <p className="garage-empty">No events on the calendar yet.</p>
         )}
 
-        {posting.length > 0 && (
-          <Link href="/garage/social" className="garage-posting-due">
-            <span className="garage-next-label">Posting</span>
-            <strong>
-              {posting.length - postingOverdue > 0 && `${posting.length - postingOverdue} to post today`}
-              {posting.length - postingOverdue > 0 && postingOverdue > 0 && " · "}
-              {postingOverdue > 0 && `${postingOverdue} overdue`}
-            </strong>
-            <span className="garage-next-date">
-              {posting.slice(0, 3).map((p) => `${p.platform} (${p.topic})`).join(" · ")}
-              {posting.length > 3 && " …"} · Open the board →
-            </span>
-          </Link>
-        )}
-
-        {postingWeek && (
+        {plan && (
           <>
-            <h2 className="garage-section">Posting this week</h2>
-            <GarageWeekStrip week={postingWeek} />
+            <h2 className="garage-section">Plan</h2>
+            <GaragePlan plan={plan} me={session.email.trim().toLowerCase()} />
           </>
         )}
 
