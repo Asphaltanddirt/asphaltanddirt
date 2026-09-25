@@ -108,7 +108,7 @@ function Thumb({ fileId, fileName }: { fileId: string; fileName: string }) {
   );
 }
 
-type OpenCard = { id: string; name: string; due: string; platform: string; clips: number };
+type OpenCard = { id: string; name: string; due: string; platform: string; clips: number; needsCaption: boolean };
 let cardsRequest: Promise<OpenCard[]> | null = null;
 /** One fetch of the open clip cards per page view, shared by every clip. */
 function loadOpenCards(): Promise<OpenCard[]> {
@@ -131,6 +131,8 @@ function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }
   const [open, setOpen] = useState(false);
   const [cards, setCards] = useState<OpenCard[] | null>(null);
   const [cardId, setCardId] = useState("");
+  const [caption, setCaption] = useState("");
+  const [approve, setApprove] = useState(true);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
@@ -149,11 +151,14 @@ function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }
       const res = await fetch("/api/garage/library/attach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileId, cardId }),
+        body: JSON.stringify({ fileId, cardId, caption, approve }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't attach it.");
-      setNote(`Added to ${data.card}. It shows on the card in a few seconds; approve it on the board.`);
+      const parts = [`Added to ${data.card}: ${(data.platforms as string[]).join(", ")}.`];
+      if (data.approved?.length) parts.push(`Approved ${data.approved.join(", ")}: posts on its own at the slot time.`);
+      if (data.noCaption?.length) parts.push(`${data.noCaption.join(", ")} still need${data.noCaption.length === 1 ? "s" : ""} a caption, then Approve on the board.`);
+      setNote(parts.join(" "));
       setOpen(false);
     } catch (err) {
       setNote(err instanceof Error ? err.message : "Couldn't attach it.");
@@ -175,20 +180,37 @@ function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }
   return (
     <div className="garage-form garage-library-attach">
       {cards === null ? (
-        <p className="garage-form-note">Loading the open clip cards…</p>
+        <p className="garage-form-note">Loading the open clip slots…</p>
       ) : cards.length === 0 ? (
-        <p className="garage-form-note">No open clip cards this week or next.</p>
+        <p className="garage-form-note">No open clip slots this week or next.</p>
       ) : (
         <>
-          <label htmlFor={`attach-${fileId}`}>Which card</label>
+          <label htmlFor={`attach-${fileId}`}>Which slot</label>
           <select id={`attach-${fileId}`} value={cardId} onChange={(e) => setCardId(e.target.value)}>
             {cards.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.due.slice(5)} · {c.name}
+                {c.due.slice(5)} · {c.name} · {c.platform}
                 {c.clips ? ` (has ${c.clips})` : ""}
               </option>
             ))}
           </select>
+          <p className="garage-form-note">One clip goes on every card in the slot.</p>
+          {cards.find((c) => c.id === cardId)?.needsCaption && (
+            <>
+              <label htmlFor={`caption-${fileId}`}>Caption</label>
+              <textarea
+                id={`caption-${fileId}`}
+                rows={3}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Goes on every card in the slot that doesn't have one yet"
+              />
+            </>
+          )}
+          <label className="garage-choice garage-choice-inline">
+            <input type="checkbox" checked={approve} onChange={(e) => setApprove(e.target.checked)} />
+            <span>Approve the auto-post cards too</span>
+          </label>
           <div className="card-actions">
             <button type="button" className="btn btn-primary btn-sm" onClick={attach} disabled={busy || !cardId}>
               {busy ? "Adding…" : "Add it"}
