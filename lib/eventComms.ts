@@ -232,9 +232,16 @@ export async function syncCommsDate(slug: string, date: string): Promise<"update
   }
 }
 
+/** Tailgate opens (and the waiver invite goes) at 7 PM Eastern the evening
+ *  before the event, the same moment as the crew's night-before email. It used
+ *  to be "end time minus 22 hours", but end times are only a planning guess
+ *  (Jose 9/25: rides end sooner or later), and a night run ending at 10 PM
+ *  would have opened at midnight. What happens after the ride keys off Trail
+ *  over, not the end time. */
 export function reminderSendTime(settings: Pick<CommsSettings, "eventDate" | "eventEndTime">): Date {
-  const end = nyDateTime(settings.eventDate, settings.eventEndTime);
-  return new Date(end.getTime() - 22 * 60 * 60 * 1000);
+  const [y, m, d] = settings.eventDate.split("-").map(Number);
+  const eve = new Date(Date.UTC(y, m - 1, d - 1, 12)).toISOString().slice(0, 10);
+  return nyDateTime(eve, "19:00");
 }
 
 /** Every Active, not-yet-activated settings row whose computed reminder

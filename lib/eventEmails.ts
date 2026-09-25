@@ -117,6 +117,13 @@ export function buildRsvpConfirmation(input: {
               `${event.generalArea ? `Area: ${event.generalArea}\n\n` : ""}We'll follow up with exact meetup details as it gets closer.`,
           )}</td></tr>
         </table>
+        ${
+          // No meetup spot yet is normal: it goes out 3 days before, in case
+          // anything changes (Jose 9/25). Planning can't always wait that long.
+          event.meetupPoint
+            ? ""
+            : `<p style="margin:16px 0 0;">The exact meetup spot and full plan go out 3 days before the ride, in case anything changes. Need details sooner to plan travel or time off? Just reply to this email and we'll help.</p>`
+        }
         ${trailRatingBlock(event)}${requirementsBlock(event)}
         ${fbNudge}
         ${listsNote}

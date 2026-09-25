@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       joinedEventUpdates: joinEventUpdatesList,
       joinedNewsletter: joinNewsletter,
     });
-    await sendEmail({ to: email, subject: confirmation.subject, html: confirmation.html });
+    await sendEmail({ to: email, subject: confirmation.subject, html: confirmation.html, replyTo: "team@asphaltanddirt.com" });
   } catch (err) {
     console.error("RSVP confirmation email failed", err);
   }

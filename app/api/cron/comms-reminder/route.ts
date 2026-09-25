@@ -13,9 +13,9 @@ export const maxDuration = 60;
 const TEAM_EMAIL = process.env.EVENT_COMMS_TEAM_EMAIL || "team@asphaltanddirt.com";
 
 /**
- * Hourly (not daily — each event's send time is computed from its own
- * Event End Time, see lib/eventComms.ts reminderSendTime, so a fixed daily
- * slot can't hit every event's target). Three independent sweeps:
+ * Hourly: each event opens at 7 PM Eastern the evening before it (see
+ * lib/eventComms.ts reminderSendTime), and an hourly sweep catches it within
+ * the hour whatever the season's UTC offset. Three independent sweeps:
  *
  *  1. Reminder: events whose computed send time has passed and haven't
  *     been activated yet — opens the 48h/24h windows (Activated At) and
