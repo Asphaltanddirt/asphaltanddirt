@@ -1,5 +1,5 @@
 import { posts } from "@/lib/blog";
-import { episodes } from "@/lib/episodes";
+import { getAllEpisodes } from "@/lib/episodes";
 import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { HOSTS, TRAIL_AMBASSADORS } from "@/lib/team";
@@ -43,7 +43,7 @@ export async function searchSite(query: string): Promise<SearchResult[]> {
     }
   }
 
-  for (const ep of episodes) {
+  for (const ep of await getAllEpisodes()) {
     if (matches(q, ep.title, ep.description)) {
       results.push({
         type: "Podcast",

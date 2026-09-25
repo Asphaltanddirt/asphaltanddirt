@@ -9,7 +9,7 @@ import {
   youtubeIdFromUrl,
   type YouTubeVideo,
 } from "@/lib/youtube";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
+import { findEpisodeByYoutubeId } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
@@ -374,7 +374,7 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
   if (overrideVideo) {
     videoHit = { label: `Watch: ${overrideVideo.title}`, ctaText: "Watch", url: overrideVideo.url };
   } else if (latestVideo) {
-    const episode = getEpisodeByYoutubeId(latestVideo.videoId);
+    const episode = await findEpisodeByYoutubeId(latestVideo.videoId);
     // Before the first full episode, the newest podcast video is the trailer.
     const isTrailer = /trailer/i.test(episode?.slug || latestVideo.title);
     videoHit = {

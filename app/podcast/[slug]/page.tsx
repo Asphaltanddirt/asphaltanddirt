@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { episodes, getEpisodeBySlug, getRelatedEpisodes } from "@/lib/episodes";
+import { findEpisodeBySlug, findRelatedEpisodes, getAllEpisodes } from "@/lib/episodes";
 import YouTubeEmbed from "@/components/YouTubeEmbed";
 import PlatformLinks from "@/components/PlatformLinks";
 import DescriptionTranscriptPanel from "@/components/DescriptionTranscriptPanel";
@@ -10,8 +10,13 @@ import GuestRow from "@/components/GuestRow";
 import ShareEpisodeButton from "@/components/ShareEpisodeButton";
 import { SITE_URL } from "@/lib/site";
 
-export function generateStaticParams() {
-  return episodes.map((e) => ({ slug: e.slug }));
+/** Episodes added in Airtable show up within 5 minutes: known slugs are
+ *  built ahead, new ones render on first visit and then refresh. */
+export const revalidate = 300;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return (await getAllEpisodes()).map((e) => ({ slug: e.slug }));
 }
 
 export async function generateMetadata({
@@ -20,7 +25,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const episode = getEpisodeBySlug(slug);
+  const episode = await findEpisodeBySlug(slug);
   if (!episode) return {};
 
   const url = `${SITE_URL}/podcast/${episode.slug}`;
@@ -50,10 +55,10 @@ export default async function EpisodePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const episode = getEpisodeBySlug(slug);
+  const episode = await findEpisodeBySlug(slug);
   if (!episode) notFound();
 
-  const related = getRelatedEpisodes(episode);
+  const related = await findRelatedEpisodes(episode);
   const publishedDate = new Date(episode.publicationDate);
   const formattedDate = publishedDate.toLocaleDateString("en-US", {
     month: "long",

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { YouTubeVideo } from "@/lib/youtube";
-import { getEpisodeByYoutubeId } from "@/lib/episodes";
+import { findEpisodeByYoutubeId } from "@/lib/episodes";
 import { excerpt } from "@/lib/text";
 
 /** A trail/event video card. Opens the on-site video page when one exists
  *  (lib/episodes.ts, type "trail-event"), otherwise YouTube in a new tab. */
-export default function RecapCard({ video }: { video: YouTubeVideo }) {
-  const internal = getEpisodeByYoutubeId(video.videoId);
+export default async function RecapCard({ video }: { video: YouTubeVideo }) {
+  const internal = await findEpisodeByYoutubeId(video.videoId);
   const cardBody = (
     <>
       <div className="card-media">

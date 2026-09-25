@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { episodes } from "@/lib/episodes";
+import { getAllEpisodes } from "@/lib/episodes";
 import { builds } from "@/lib/builds";
 import { HOSTS, TRAIL_AMBASSADORS } from "@/lib/team";
 import { getPublishedPosts } from "@/lib/blog";
@@ -9,7 +9,7 @@ import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const episodeEntries: MetadataRoute.Sitemap = episodes.map((e) => ({
+  const episodeEntries: MetadataRoute.Sitemap = (await getAllEpisodes()).map((e) => ({
     url: `${SITE_URL}/podcast/${e.slug}`,
     lastModified: e.publicationDate,
     changeFrequency: "monthly",

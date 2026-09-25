@@ -3,13 +3,12 @@ import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import HeroVideo from "@/components/HeroVideo";
 import PlatformGrid from "@/components/PlatformGrid";
-import { episodes } from "@/lib/episodes";
+import { episodes, getLatestPodcastEpisode } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs } from "@/lib/fourthwall";
 import { getProductSlugsFor } from "@/lib/featuredProducts";
 import { getApprovedTestimonials } from "@/lib/testimonials";
 import TestimonialGrid from "@/components/TestimonialGrid";
 
-const latestEpisode = episodes[0];
 
 // Title and description come from the root layout; the home page only needs
 // to name itself as the one true address (not ?utm= or non-www variants).
@@ -21,11 +20,15 @@ export default async function HomePage() {
   // The "Home" section of the Featured Products Airtable table drives this
   // grid; if it's empty or unconfigured, fall back to the newest products.
   const homeSlugs = await getProductSlugsFor("Home");
-  const [products, testimonials] = await Promise.all([
+  const [products, testimonials, latest] = await Promise.all([
     homeSlugs.length ? getProductsBySlugs(homeSlugs) : getFeaturedProducts(),
     // Hand-picked (Homepage checkbox), ordered merch -> community -> event.
     getApprovedTestimonials(3, "homepage"),
+    // Newest real episode, Airtable's included; the built-in first entry if
+    // Airtable is unreachable.
+    getLatestPodcastEpisode().catch(() => undefined),
   ]);
+  const latestEpisode = latest || episodes[0];
 
   return (
     <>

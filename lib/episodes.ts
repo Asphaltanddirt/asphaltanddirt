@@ -1,3 +1,5 @@
+import { listRecords, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
+
 export interface GuestSocialLink {
   /** Free-text platform label ("Instagram", "TikTok", "Website", ...) —
    *  matches the Guest Intake form's shape 1:1, so a submission can be
@@ -200,4 +202,135 @@ export function getRelatedEpisodes(episode: Episode): Episode[] {
   return episode.relatedSlugs
     .map((slug) => getEpisodeBySlug(slug))
     .filter((e): e is Episode => Boolean(e));
+}
+
+// ---------------------------------------------------------------------------
+// Airtable episodes (punchlist #1, 2026-09-25)
+//
+// New episodes are added in Airtable (Podcast Production → Episodes, Status =
+// Published) and appear on the site within 5 minutes, no deploy. The list
+// above stays as the built-in set; an Airtable row with the same slug wins,
+// so an old page can be taken over and edited in Airtable too.
+// ---------------------------------------------------------------------------
+
+const PODCAST_BASE = process.env.AIRTABLE_PODCAST_PRODUCTION_BASE_ID;
+const REVALIDATE = 300;
+const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+const links = (v: unknown) => (Array.isArray(v) ? (v as string[]) : []);
+
+/** "https://www.buzzsprout.com/123/456789-title" → "456789" (the player id). */
+function buzzsproutId(url: string): string | undefined {
+  return [...url.matchAll(/\/(\d{5,})(?=[-/?.]|$)/g)].pop()?.[1] || undefined;
+}
+
+function socials(text: string): GuestSocialLink[] {
+  return text
+    .split("\n")
+    .map((l) => l.match(/^\s*([^:]+):\s*(https?:\/\/\S+)/))
+    .filter((m): m is RegExpMatchArray => Boolean(m))
+    .map((m) => ({ platform: m[1].trim(), url: m[2] }));
+}
+
+async function airtableEpisodes(): Promise<Episode[]> {
+  if (!PODCAST_BASE || !isAirtableConfigured(PODCAST_BASE)) return [];
+  const rows = await listRecords("Episodes", "{Status} = 'Published'", { baseId: PODCAST_BASE, revalidate: REVALIDATE });
+  if (!rows.length) return [];
+  const needGuests = rows.some((r) => links(r.fields.Guests).length);
+  const needSponsors = rows.some((r) => links(r.fields.Sponsors).length);
+  const [guestRows, sponsorRows] = await Promise.all([
+    needGuests ? listRecords("Guests", undefined, { baseId: PODCAST_BASE, revalidate: REVALIDATE }) : Promise.resolve([] as AirtableRecord[]),
+    needSponsors ? listRecords("Sponsors", undefined, { baseId: PODCAST_BASE, revalidate: REVALIDATE }) : Promise.resolve([] as AirtableRecord[]),
+  ]);
+  const guests = new Map<string, Guest>(
+    guestRows.map((g) => [
+      g.id,
+      {
+        name: str(g.fields["Guest Name"]),
+        bio: str(g.fields["Public Bio"]) || undefined,
+        photo: (g.fields.Photo as { url: string }[] | undefined)?.[0]?.url,
+        socialLinks: socials(str(g.fields["Social Links"])),
+      },
+    ]),
+  );
+  const sponsors = new Map<string, Sponsor>(
+    sponsorRows.map((s) => [
+      s.id,
+      {
+        name: str(s.fields["Sponsor Name"]),
+        url: str(s.fields["Website URL"]) || undefined,
+        disclosure: str(s.fields["Public Disclosure Text"]) || undefined,
+      },
+    ]),
+  );
+  const slugById = new Map(rows.map((r) => [r.id, str(r.fields.Slug)]));
+
+  return rows
+    .filter((r) => str(r.fields.Slug) && str(r.fields.Title))
+    .map((r): Episode => {
+      const f = r.fields;
+      const yt = str(f["YouTube Video ID"]);
+      const art = (f.Artwork as { url: string }[] | undefined)?.[0]?.url;
+      const title = str(f.Title);
+      return {
+        slug: str(f.Slug),
+        title,
+        publicationDate: str(f["Publication Date"]) || new Date().toISOString().slice(0, 10),
+        description: str(f.Description),
+        showNotes: str(f["Show Notes"]) || undefined,
+        transcript: str(f.Transcript) || undefined,
+        youtubeVideoId: yt || undefined,
+        youtubePlaylistUrl: str(f["YouTube Playlist URL"]) || undefined,
+        buzzsproutEpisodeId: buzzsproutId(str(f["Buzzsprout Embed URL"])),
+        spotifyUrl: str(f["Spotify URL"]) || undefined,
+        appleUrl: str(f["Apple Podcasts URL"]) || undefined,
+        amazonMusicUrl: str(f["Amazon Music URL"]) || undefined,
+        youtubeMusicUrl: str(f["YouTube Music URL"]) || undefined,
+        eventRegistrationUrl: str(f["Event Registration URL"]) || undefined,
+        affiliateDisclosure: str(f["Affiliate Disclosure"]) || undefined,
+        type: str(f.Type) === "Trail Event" ? "trail-event" : "podcast",
+        guests: links(f.Guests).map((id) => guests.get(id)).filter((g): g is Guest => Boolean(g?.name)),
+        sponsors: links(f.Sponsors).map((id) => sponsors.get(id)).filter((x): x is Sponsor => Boolean(x?.name)),
+        relatedSlugs: links(f["Related Episodes"]).map((id) => slugById.get(id) || "").filter(Boolean),
+        artwork: {
+          src: art || (yt ? `https://i.ytimg.com/vi/${yt}/maxresdefault.jpg` : "/img/podcast/hero.jpg"),
+          alt: `${title} artwork`,
+        },
+      };
+    });
+}
+
+/** Every episode the site shows: Airtable's published ones (newest first),
+ *  then the built-in list minus any slug Airtable took over. If Airtable is
+ *  down, the built-in list still renders. */
+export async function getAllEpisodes(): Promise<Episode[]> {
+  const fromAirtable = await airtableEpisodes().catch((err) => {
+    console.error("episodes: Airtable read failed, using the built-in list", err);
+    return [] as Episode[];
+  });
+  const taken = new Set(fromAirtable.map((e) => e.slug));
+  return [
+    ...fromAirtable.sort((a, b) => b.publicationDate.localeCompare(a.publicationDate)),
+    ...episodes.filter((e) => !taken.has(e.slug)),
+  ];
+}
+
+export async function findEpisodeBySlug(slug: string): Promise<Episode | undefined> {
+  return (await getAllEpisodes()).find((e) => e.slug === slug);
+}
+
+export async function findEpisodeByYoutubeId(videoId: string): Promise<Episode | undefined> {
+  return (await getAllEpisodes()).find((e) => e.youtubeVideoId === videoId);
+}
+
+export async function findRelatedEpisodes(episode: Episode): Promise<Episode[]> {
+  if (!episode.relatedSlugs?.length) return [];
+  const all = await getAllEpisodes();
+  return episode.relatedSlugs.map((slug) => all.find((e) => e.slug === slug)).filter((e): e is Episode => Boolean(e));
+}
+
+/** The newest real podcast episode (not a trail video), for "The Latest Episode". */
+export async function getLatestPodcastEpisode(): Promise<Episode | undefined> {
+  return (await getAllEpisodes())
+    .filter((e) => e.type === "podcast")
+    .sort((a, b) => b.publicationDate.localeCompare(a.publicationDate))[0];
 }
