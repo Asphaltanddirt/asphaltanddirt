@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
 import { syncCommsDate } from "@/lib/eventComms";
 import { holdEventPromos } from "@/lib/garageSocial";
-import { ensureEventFolders, folderUrl, isDriveConfigured } from "@/lib/googleDrive";
+import { ensureEventFolders, folderUrl, isDriveConfigured, moveEventFolderDate, trashEventFolderIfEmpty } from "@/lib/googleDrive";
 
 /**
  * Adding and editing events from the Garage (replaces the Airtable "Add an
@@ -230,6 +230,26 @@ export async function updateEvent(id: string, edit: EventEdit, previousSlug: str
   const moved = Boolean(previous?.date && event.date && previous.date !== event.date);
   if (nowCancelled || moved) {
     await holdEventPromos(event.slug, nowCancelled ? "event cancelled" : `event moved from ${previous?.date}`);
+  }
+
+  // Keep Drive tidy (Jose, 2026-09-24): a moved event's folder takes the new
+  // date; a cancelled event's folder goes if nothing was uploaded to it. If it
+  // comes Back on, the folder is simply made again. Best-effort: Drive trouble
+  // must never block calling off a ride.
+  if (event.driveFolderUrl && isDriveConfigured()) {
+    try {
+      if (nowCancelled) {
+        const result = await trashEventFolderIfEmpty(event.driveFolderUrl);
+        if (result === "trashed") {
+          await updateRecord(EVENTS, id, { "Drive Folder": "" }, { baseId: BASE_ID });
+          event.driveFolderUrl = "";
+        }
+      } else if (moved && event.date) {
+        await moveEventFolderDate(event.driveFolderUrl, event.date);
+      }
+    } catch (err) {
+      console.error("event drive folder tidy failed", err);
+    }
   }
 
   refreshPublicPages([previousSlug, event.slug]);

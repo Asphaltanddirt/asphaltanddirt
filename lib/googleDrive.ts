@@ -171,6 +171,50 @@ async function getItem(fileId: string): Promise<(DriveFile & { trashed?: boolean
   }
 }
 
+/**
+ * An event moved to a new day: rename its folder so the date prefix matches
+ * (Jose, 2026-09-24 — the Mud Run folder still read 2026.09.26 after it moved
+ * to Oct 17). Only the prefix changes; the rest of the name is left as the
+ * team wrote it. Returns false when there was nothing to rename.
+ */
+export async function moveEventFolderDate(folderLink: string, newIsoDate: string): Promise<boolean> {
+  const id = folderIdFromUrl(folderLink);
+  const item = id ? await getItem(id) : null;
+  if (!item || item.trashed) return false;
+  const prefix = eventFolderPrefix(newIsoDate);
+  const rest = item.name.replace(/^\d{4}\.\d{2}\.\d{2}\s*-?\s*/, "");
+  const name = `${prefix} - ${rest || "Event"}`;
+  if (name === item.name) return false;
+  await renameItem(item.id, name);
+  return true;
+}
+
+/** Whether a folder holds any real file anywhere inside it (subfolders don't count). */
+async function folderHasFiles(folderId: string, depth = 0): Promise<boolean> {
+  if (depth > 5) return true; // deeper than any event layout: don't risk calling it empty
+  const children = await listChildren(folderId);
+  if (children.some((c) => c.mimeType !== FOLDER_MIME)) return true;
+  for (const sub of children) {
+    if (await folderHasFiles(sub.id, depth + 1)) return true;
+  }
+  return false;
+}
+
+/**
+ * An event was cancelled: trash its folder if nothing was ever uploaded, so
+ * empty event folders don't pile up in Drive (Jose, 2026-09-24). A folder with
+ * any file in it is kept — footage is never thrown away by a cancellation.
+ * Drive keeps trash 30 days.
+ */
+export async function trashEventFolderIfEmpty(folderLink: string): Promise<"trashed" | "kept" | "none"> {
+  const id = folderIdFromUrl(folderLink);
+  const item = id ? await getItem(id) : null;
+  if (!item || item.trashed) return "none";
+  if (await folderHasFiles(item.id)) return "kept";
+  await trashDriveItem(item.id);
+  return "trashed";
+}
+
 export interface EventForDrive {
   date: string;
   title: string;
