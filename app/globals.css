@@ -2648,3 +2648,8 @@ details.garage-plan-row{ display:block; padding:0; }
 
 /* Event page teaser: keep the line breaks people type in the Garage. */
 .event-blurb{ white-space:pre-line; }
+.trail-rating-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:24px; }
+.trail-rating-grid .trail-rating{ margin:0; }
+.trail-rating-link{ display:inline-block; margin:8px 0 0 4px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
+.trail-rating-link:hover{ text-decoration:underline; }
+.trail-rating-section{ scroll-margin-top:80px; }

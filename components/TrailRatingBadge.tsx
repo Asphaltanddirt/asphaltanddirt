@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { TrailRating } from "@/lib/trailRating";
 
 /**
@@ -5,7 +6,16 @@ import type { TrailRating } from "@/lib/trailRating";
  * before Robin's badge art exists; the shape is part of the badge so the
  * level never depends on color alone.
  */
-export default function TrailRatingBadge({ rating, showLines = false }: { rating: TrailRating; showLines?: boolean }) {
+export default function TrailRatingBadge({
+  rating,
+  showLines = false,
+  link = false,
+}: {
+  rating: TrailRating;
+  showLines?: boolean;
+  /** Link to the explainer on the Events page (on event pages). */
+  link?: boolean;
+}) {
   return (
     <div className="trail-rating">
       <div className="trail-rating-badge" style={{ ["--tr" as string]: rating.hex }}>
@@ -16,6 +26,11 @@ export default function TrailRatingBadge({ rating, showLines = false }: { rating
           <span className="trail-rating-plain">{rating.plain}</span>
         </span>
       </div>
+      {link && (
+        <Link href="/events#trail-rating" className="trail-rating-link">
+          What the ratings mean
+        </Link>
+      )}
       {showLines && (
         <ul className="trail-rating-lines">
           {rating.lines.map((l) => (

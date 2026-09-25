@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { TRAIL_RATINGS, TRAIL_RATING_COLORS } from "@/lib/trailRating";
+import TrailRatingBadge from "@/components/TrailRatingBadge";
 import Link from "next/link";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
 import EventCover from "@/components/EventCover";
@@ -100,6 +102,29 @@ export default async function EventsPage() {
               })}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* How we rate our rides (Jose 2026-09-25). Every event badge and the
+          RSVP emails link here. A&D-branded; the four colors and shapes are
+          the standard trail scale riders already know. */}
+      <section id="trail-rating" className="section-pt-tight section-pb-tight trail-rating-section">
+        <div className="container">
+          <h2 className="eyebrow">A&amp;D Trail Rating</h2>
+          <p className="lead mt-2" style={{ maxWidth: "62ch" }}>
+            How we rate our rides. Same colors and shapes you know from trail maps, so you can pick a ride that fits
+            your rig and your comfort level before you RSVP.
+          </p>
+          <div className="trail-rating-grid mt-4">
+            {TRAIL_RATING_COLORS.map((c) => (
+              <TrailRatingBadge key={c} rating={TRAIL_RATINGS[c]} showLines />
+            ))}
+          </div>
+          <p className="mt-4" style={{ maxWidth: "62ch", color: "var(--text-muted)" }}>
+            A rating is our call for normal conditions. Weather can move a ride up a level: rain turns an easy sand road
+            into a GET DIRTY day. If that happens, we&apos;ll tell everyone who RSVP&apos;d before the ride. Not sure your rig is
+            ready? Ask us before you RSVP. No shame, no pressure.
+          </p>
         </div>
       </section>
 

@@ -121,7 +121,7 @@ export default async function EventDetailPage({
                   {event.generalArea}
                 </p>
               )}
-              {trailRating && <TrailRatingBadge rating={trailRating} showLines={!past} />}
+              {trailRating && <TrailRatingBadge rating={trailRating} showLines={!past} link />}
               {/* Paragraphs and line breaks as written in the Garage: the first
                   paragraph is the lead, the rest keep their own lines (lists,
                   headings). It used to collapse into one run-on paragraph. */}
