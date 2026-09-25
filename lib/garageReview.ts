@@ -15,7 +15,6 @@ const BUILDS_BASE = process.env.AIRTABLE_BUILD_SUBMISSIONS_BASE_ID;
 const BUILDS_TABLE = process.env.AIRTABLE_BUILD_SUBMISSIONS_TABLE || "Submissions";
 const REVIEWS_BASE = process.env.AIRTABLE_TESTIMONIALS_BASE_ID;
 const REVIEWS_TABLE = process.env.AIRTABLE_TESTIMONIALS_TABLE || "Testimonials";
-const SOCIAL_TABLE = "Social Proof";
 const FEATURED_BUILDS_BASE = process.env.AIRTABLE_FEATURED_BUILDS_BASE_ID;
 const FEATURED_BUILDS_TABLE = process.env.AIRTABLE_FEATURED_BUILDS_TABLE || "Featured Builds";
 const FEATURED_PRODUCTS_BASE = process.env.AIRTABLE_FEATURED_PRODUCTS_BASE_ID;
@@ -117,7 +116,7 @@ export async function setBuildSubmission(id: string, change: { state?: ReviewSta
 }
 
 // ---------------------------------------------------------------------------
-// Reviews (Testimonials) and tagged posts (Social Proof)
+// Reviews (Testimonials)
 // ---------------------------------------------------------------------------
 
 export interface ReviewItem {
@@ -163,46 +162,6 @@ export async function setReview(id: string, change: { state?: ReviewState; homep
   if (change.homepage !== undefined) fields.Homepage = change.homepage;
   await updateRecord(REVIEWS_TABLE, id, fields, { baseId: REVIEWS_BASE });
   refresh(["/", "/merch", "/community", "/reviews"]);
-}
-
-export interface TaggedPost {
-  id: string;
-  posterName: string;
-  platform: string;
-  postUrl: string;
-  approved: boolean;
-  order: number | null;
-}
-
-export async function listTaggedPosts(): Promise<TaggedPost[]> {
-  if (!isAirtableConfigured(REVIEWS_BASE)) return [];
-  const records = await listRecords(SOCIAL_TABLE, undefined, { baseId: REVIEWS_BASE });
-  return records
-    .map((r) => ({
-      id: r.id,
-      posterName: str(r.fields["Poster Name"]),
-      platform: str(r.fields.Platform),
-      postUrl: str(r.fields["Post URL"]),
-      approved: r.fields.Approved === true,
-      order: typeof r.fields["Display Order"] === "number" ? (r.fields["Display Order"] as number) : null,
-    }))
-    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-}
-
-export async function setTaggedPost(id: string, approved: boolean): Promise<void> {
-  if (!isAirtableConfigured(REVIEWS_BASE)) throw new Error("Testimonials base is not configured.");
-  await updateRecord(SOCIAL_TABLE, id, { Approved: approved }, { baseId: REVIEWS_BASE });
-  refresh(["/community"]);
-}
-
-export async function addTaggedPost(post: { posterName: string; platform: string; postUrl: string }): Promise<void> {
-  if (!isAirtableConfigured(REVIEWS_BASE)) throw new Error("Testimonials base is not configured.");
-  await createRecord(
-    SOCIAL_TABLE,
-    { "Poster Name": post.posterName, Platform: post.platform, "Post URL": post.postUrl, Approved: true },
-    { baseId: REVIEWS_BASE },
-  );
-  refresh(["/community"]);
 }
 
 // ---------------------------------------------------------------------------

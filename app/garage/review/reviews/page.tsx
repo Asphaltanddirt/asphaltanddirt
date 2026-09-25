@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageReviewActions from "@/components/GarageReviewActions";
-import GarageTaggedPosts from "@/components/GarageTaggedPosts";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { listReviews, listTaggedPosts, type ReviewItem } from "@/lib/garageReview";
+import { listReviews, type ReviewItem } from "@/lib/garageReview";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -56,7 +55,7 @@ export default async function GarageReviewReviewsPage() {
   const session = await getSession();
   if (!session) redirect("/garage");
   if (!canSeeOwnerOnly(session)) redirect("/garage");
-  const [reviews, posts] = await Promise.all([listReviews().catch(() => null), listTaggedPosts().catch(() => null)]);
+  const reviews = await listReviews().catch(() => null);
   const waiting = reviews?.filter((r) => r.state === "waiting") || [];
   const approved = reviews?.filter((r) => r.state === "approved") || [];
   const declined = reviews?.filter((r) => r.state === "declined") || [];
@@ -92,11 +91,6 @@ export default async function GarageReviewReviewsPage() {
           </>
         )}
 
-        <h2 className="garage-section">Tagged posts</h2>
-        <section className="garage-panel">
-          <p className="garage-form-note">Posts that tagged A&amp;D, shown on the Community page.</p>
-          {posts ? <GarageTaggedPosts posts={posts} /> : <p className="garage-error">Couldn&apos;t read the Social Proof table.</p>}
-        </section>
       </div>
     </div>
   );

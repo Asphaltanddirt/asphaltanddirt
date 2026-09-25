@@ -3,14 +3,12 @@ import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import {
   FEATURED_RIGS_MAX,
   PRODUCT_SECTIONS,
-  addTaggedPost,
   listFeaturableBuilds,
   productCatalog,
   setBuildSubmission,
   setFeaturedBuilds,
   setFeaturedProducts,
   setReview,
-  setTaggedPost,
   type ProductSectionValue,
   type ReviewState,
 } from "@/lib/garageReview";
@@ -48,21 +46,6 @@ export async function POST(req: NextRequest) {
         if (!isRecordId(body.id)) return bad();
         await setReview(body.id, { state, homepage: typeof body.homepage === "boolean" ? body.homepage : undefined });
         break;
-      case "post":
-        if (!isRecordId(body.id) || typeof body.approved !== "boolean") return bad();
-        await setTaggedPost(body.id, body.approved);
-        break;
-      case "post-add": {
-        const posterName = typeof body.posterName === "string" ? body.posterName.trim().slice(0, 80) : "";
-        const platform = body.platform === "Instagram" || body.platform === "TikTok" ? body.platform : "";
-        const postUrl = typeof body.postUrl === "string" ? body.postUrl.trim() : "";
-        if (!posterName || !platform) return bad("Add who posted it and the platform.");
-        if (!/^https:\/\/(www\.)?(instagram\.com|tiktok\.com|vm\.tiktok\.com)\//i.test(postUrl)) {
-          return bad("Paste the post's Instagram or TikTok link.");
-        }
-        await addTaggedPost({ posterName, platform, postUrl });
-        break;
-      }
       case "featured-builds": {
         const slugs = slugList(body.slugs);
         if (!slugs || slugs.length > FEATURED_RIGS_MAX) return bad(`Pick up to ${FEATURED_RIGS_MAX} builds.`);

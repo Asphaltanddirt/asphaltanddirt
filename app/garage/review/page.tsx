@@ -23,7 +23,7 @@ export default async function GarageReviewHub() {
 
   const rows = [
     { href: "/garage/review/builds", label: "Builds", sub: waiting(counts.builds), hint: "Rigs sent in from /builds/submit" },
-    { href: "/garage/review/reviews", label: "Reviews & tagged posts", sub: waiting(counts.reviews), hint: "Reviews from /reviews/submit, posts that tagged us" },
+    { href: "/garage/review/reviews", label: "Reviews", sub: waiting(counts.reviews), hint: "Reviews from /reviews/submit" },
     { href: "/garage/review/featured", label: "Featured on the site", sub: "", hint: "Featured Rigs on /builds, products on Home and Merch" },
   ];
 
