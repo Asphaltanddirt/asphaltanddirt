@@ -1,5 +1,7 @@
 import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { getPostBySlug } from "@/lib/blog";
+import { publishedGarageTakes } from "@/lib/garageTakes";
+import { SITE_URL } from "@/lib/site";
 import { todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
 
@@ -110,6 +112,9 @@ export interface SocialPost {
   /** Email of the person this card is on (Planning Calendar). Blank = the
    *  posting owner, see POSTING_OWNER. */
   owner: string;
+  /** The Garage Take page this card's clip comes from (same story as its blog
+   *  post), when there is one. Clips link back to it, not to the blog. */
+  takeUrl: string;
 }
 
 /** Whose job a card is when its Owner is blank: Jose posts the socials. */
@@ -118,6 +123,13 @@ export const POSTING_OWNER = (process.env.GARAGE_POSTING_OWNER || "jrodrigues127
 const escapeFormula = (v: string) => v.replace(/'/g, "\\'");
 const num = (v: unknown) => (typeof v === "number" ? v : null);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+/** Blog post URL → its published Garage Take page, or "". */
+function takeUrlFor(blogUrl: string): string {
+  const slug = blogUrl.split("/blog/")[1]?.split(/[?#/]/)[0];
+  const take = slug ? publishedGarageTakes().find((t) => t.blogSlug === slug) : undefined;
+  return take ? `${SITE_URL}/garage-takes/${take.slug}` : "";
+}
 
 function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
   const f = r.fields;
@@ -172,6 +184,7 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     variant: str(f.Variant),
     eventFacts: str(f["Event Facts"]),
     owner: str(f.Owner).trim().toLowerCase() || POSTING_OWNER,
+    takeUrl: takeUrlFor(str(f["Blog URL"])),
   };
 }
 
