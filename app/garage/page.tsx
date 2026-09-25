@@ -114,7 +114,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
     { href: "/garage/upload", label: "Upload", sub: "Photos, videos and vlogs to Drive", img: "/img/garage/tile-upload.webp" },
     { href: "/garage/media", label: "Media", sub: "Star the good ones, flag the rest", img: "/img/garage/tile-media.webp" },
     // No tile art of its own yet, so it borrows Media's until there is some.
-    { href: "/garage/library", label: "Library", sub: "Find any clip, save it to your phone", img: "/img/garage/tile-media.webp" },
+    { href: "/garage/library", label: "Library", sub: "Find any clip, save it to your phone", img: "/img/garage/tile-library.webp" },
     { href: "/garage/crew", label: "Crew", sub: "Your code, links and profile", img: "/img/garage/tile-crew.webp" },
     ...(canSeeOwnerOnly(session)
       ? [
