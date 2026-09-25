@@ -2713,3 +2713,13 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-library-unlisted{ margin-bottom:16px; }
 .garage-library-unlisted ul{ margin:8px 0 0; padding-left:20px; font-size:14px; }
 .garage-library-unlisted li{ margin:0 0 4px; overflow-wrap:anywhere; }
+
+/* Garage → Shoot guide (#19c). */
+.garage-shoot-need{ margin-bottom:12px; }
+.garage-shoot-stock{ list-style:none; margin:8px 0; padding:0; display:grid; gap:6px; font-size:15px; }
+.garage-shoot-stock li.is-low{ color:var(--accent); font-weight:600; }
+.garage-shoot-list{ margin:8px 0 16px; padding-left:20px; display:grid; gap:8px; font-size:15px; }
+.garage-shoot-list.is-never li::marker{ color:var(--accent); }
+.garage-shoot-shots{ margin:8px 0 16px; padding-left:22px; display:grid; gap:10px; }
+.garage-shoot-shots strong{ display:block; }
+.garage-shoot-shots span{ display:block; font-size:14px; color:var(--text-muted); }

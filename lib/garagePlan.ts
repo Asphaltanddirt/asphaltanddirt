@@ -90,7 +90,7 @@ const CLIPS_PER_WEEK = { Dirt: 2, Asphalt: 1 } as const;
 const LOW_WEEKS = 2;
 const isVideo = (r: MediaRow) => /\.(mov|mp4|m4v)$/i.test(r.fileName);
 
-function footageStock(rows: MediaRow[]): FootageStock[] {
+export function footageStock(rows: MediaRow[]): FootageStock[] {
   const unused = rows.filter((r) => isVideo(r) && !r.usedAt);
   return (["Asphalt", "Dirt"] as const).map((side) => {
     const n = unused.filter((r) => r.eventType === side || r.eventType === "Both").length;
