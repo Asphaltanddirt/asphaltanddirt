@@ -15,15 +15,19 @@ const WATCH_PLATFORMS: Platform[] = [
   {
     name: "YouTube",
     color: "#FF0000",
-    badge: "Live & Video",
+    badge: "Video",
     badgeColor: "var(--accent)",
     url: "https://www.youtube.com/@Asphaltanddirtpodcast",
     icon: <path d="M8 5v14l11-7z" fill="currentColor" />,
   },
+];
+
+// Spotify and Apple are audio-only until we add video there (planned after 3-4
+// episodes, if people ask). They move back to Watch with a Video badge then.
+const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Spotify",
     color: "#1DB954",
-    badge: "Video",
     url: "https://open.spotify.com/show/1OJaB7uFY09JChAwTNpoko?si=902839da51f04b52",
     icon: (
       <>
@@ -36,13 +40,9 @@ const WATCH_PLATFORMS: Platform[] = [
   {
     name: "Apple Podcasts",
     color: "#9b3fe0",
-    badge: "Video",
     url: "https://podcasts.apple.com/us/podcast/asphalt-dirt-podcast/id6805523570",
     icon: <path d="M3 13a9 9 0 0 1 18 0M3 13v7a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 7 20v-6a1.5 1.5 0 0 0-1.5-1.5h-1A1.5 1.5 0 0 0 3 14zM21 13v7a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-6a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 21 14z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
   },
-];
-
-const LISTEN_PLATFORMS: Platform[] = [
   {
     name: "Amazon Music",
     color: "#00A8E1",
