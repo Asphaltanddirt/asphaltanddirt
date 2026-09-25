@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateWeek } from "@/lib/garageTasks";
 import { generateSocialWeek } from "@/lib/garageSocial";
+import { matchPostedMedia } from "@/lib/mediaUsage";
 import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
 import { checkThreadsSetup, isThreadsConnected } from "@/lib/threadsPost";
 
@@ -37,10 +38,15 @@ export async function GET(req: NextRequest) {
       syncSocialStatsFromX().catch((err) => ({ ok: false, error: String(err) })),
       syncSocialStatsFromThreads().catch((err) => ({ ok: false, error: String(err) })),
     ]);
+    // Stamp Library footage that went out on a card without a Library pick
+    // (#7), so the Planning Calendar's footage count stays honest.
+    const mediaUsage = await matchPostedMedia({ write: true })
+      .then((r) => ({ tagged: r.tagged, unlisted: r.unlisted.length }))
+      .catch((err) => ({ error: String(err) }));
     // Touch the Threads token daily so it renews in its last 20 days even in a
     // quiet week (it only refreshes when used).
     const threads = (await isThreadsConnected().catch(() => false)) ? await checkThreadsSetup() : { ok: false, skipped: "not connected" };
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats, threads });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats, threads, mediaUsage });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });

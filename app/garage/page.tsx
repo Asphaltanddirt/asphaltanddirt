@@ -130,7 +130,11 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
       ? [{ href: "/garage/finance", label: "Finance", sub: "Money in and out, P&L, who owes whom", img: "/img/garage/tile-finance.webp" }]
       : []),
     ...(canSeeControlRoom(session)
-      ? [{ href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.webp" }]
+      ? [
+          // No tile art of its own yet; borrows the Control Room's.
+          { href: "/garage/numbers", label: "Numbers", sub: "What changed this week, and a report to copy", img: "/img/garage/tile-control.webp" },
+          { href: "/garage/control", label: "Control Room", sub: "Is it all running, and what needs you", img: "/img/garage/tile-control.webp" },
+        ]
       : []),
   ];
 

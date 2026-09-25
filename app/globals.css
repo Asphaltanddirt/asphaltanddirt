@@ -2680,3 +2680,34 @@ button.garage-plan-claim{ background:none; border:1px solid var(--accent); borde
 .garage-upload-quick{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0; }
 .garage-upload-quick-label{ flex-basis:100%; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
 .garage-upload-quick .chip{ padding:8px 12px; min-height:40px; }
+
+/* Garage → Numbers (#9). */
+.garage-numbers section{ margin-bottom:8px; }
+.garage-numbers-list{ list-style:none; margin:8px 0 12px; padding:0; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card); }
+.garage-numbers-row{ display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; align-items:center; gap:10px; padding:10px 12px; border-top:1px solid var(--border); }
+.garage-numbers-row:first-child{ border-top:none; }
+.garage-numbers-row.is-plain{ grid-template-columns:minmax(0,1fr) auto auto; }
+span.garage-numbers-trend{ display:block; width:64px; }
+.garage-numbers-name{ display:flex; flex-direction:column; min-width:0; font-weight:600; }
+.garage-numbers-name small{ font-weight:400; font-size:12px; color:var(--text-muted); }
+.garage-numbers-value{ font-family:var(--font-display); font-weight:800; font-size:20px; text-align:right; }
+.garage-numbers-change{ font-size:13px; font-weight:600; white-space:nowrap; min-width:64px; text-align:right; }
+.garage-numbers-change.is-up{ color:#4cc26b; }
+.garage-numbers-change.is-down{ color:#ff7a59; }
+.garage-numbers-change.is-flat{ color:var(--text-muted); font-weight:400; }
+.garage-numbers-trend{ color:var(--accent); }
+.garage-numbers-sub{ margin:14px 0 0; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+.garage-numbers-posts{ margin:8px 0; padding-left:22px; display:grid; gap:10px; }
+.garage-numbers-posts a{ color:var(--text); text-decoration:none; }
+.garage-numbers-posts a strong{ color:var(--accent); }
+.garage-numbers-posts span, .garage-numbers-weak span{ display:block; font-size:13px; color:var(--text-muted); }
+.garage-numbers-weak{ margin:4px 0 12px; font-size:14px; }
+@media (max-width:420px){
+  .garage-numbers-row{ grid-template-columns:minmax(0,1fr) auto auto; }
+  .garage-numbers-trend{ display:none; }
+}
+
+/* Library: posted clips the Library has never seen (#7). */
+.garage-library-unlisted{ margin-bottom:16px; }
+.garage-library-unlisted ul{ margin:8px 0 0; padding-left:20px; font-size:14px; }
+.garage-library-unlisted li{ margin:0 0 4px; overflow-wrap:anywhere; }

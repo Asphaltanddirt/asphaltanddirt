@@ -6,6 +6,7 @@ import GarageLibrary, { type LibraryItem } from "@/components/GarageLibrary";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { displayKind } from "@/lib/mediaKinds";
 import { getMediaLibrary } from "@/lib/mediaLibrary";
+import { matchPostedMedia } from "@/lib/mediaUsage";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,7 +25,11 @@ export default async function GarageLibraryPage() {
   const session = await getSession();
   if (!session) redirect("/garage");
 
-  const rows = await getMediaLibrary().catch(() => null);
+  const [rows, usage] = await Promise.all([
+    getMediaLibrary().catch(() => null),
+    // Owners only: posted clips the Library has never seen (#7).
+    canSeeOwnerOnly(session) ? matchPostedMedia().catch(() => null) : Promise.resolve(null),
+  ]);
   // Only what the screen shows goes to the browser: Thoughts and the AI
   // keywords stay on the server, and every row gets its display Kind here.
   const items: LibraryItem[] | null =
@@ -57,6 +62,24 @@ export default async function GarageLibraryPage() {
             <Link href="/garage/media">Media</Link>
           </nav>
         </div>
+
+        {usage && usage.unlisted.length > 0 && (
+          <section className="garage-panel garage-library-unlisted" aria-labelledby="library-unlisted">
+            <h2 id="library-unlisted" className="garage-section">Posted, not in the Library</h2>
+            <p className="garage-form-note">
+              These clips went out on a card in the last 4 weeks but were never uploaded here, so the footage count can&apos;t
+              see them. Upload each one once (Garage → Upload) and it drops off this list.
+            </p>
+            <ul>
+              {usage.unlisted.map((u) => (
+                <li key={u.fileName}>
+                  <Link href={`/garage/social?card=${u.cardId}`}>{u.fileName}</Link> · {u.platform}, {u.due}
+                  {u.topic ? ` · ${u.topic}` : ""}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {items ? (
           <GarageLibrary items={items} canAttach={canSeeOwnerOnly(session)} />
