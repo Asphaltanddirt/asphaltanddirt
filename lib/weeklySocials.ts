@@ -1,5 +1,6 @@
 import { createRecord, listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
 import { todayNY, weekOf } from "@/lib/garageTasks";
+import { xFetch } from "@/lib/xPost";
 
 /**
  * Garage → Weekly Socials (punchlist #10, 2026-09-25). The three audience
@@ -18,7 +19,7 @@ const TABLE = "Audience Snapshot";
 
 export const WEEKLY_SOCIALS = [
   { key: "tiktok", platform: "TikTok", metric: "Followers", label: "TikTok followers", where: "TikTok app → Profile" },
-  { key: "x", platform: "X", metric: "Followers", label: "X followers", where: "X → Profile" },
+  { key: "x", platform: "X", metric: "Followers", label: "X followers", where: "Fills itself Monday morning from X; fix it here only if it looks wrong" },
   { key: "fbgroup", platform: "Facebook Group", metric: "Members", label: "Facebook Group members", where: "Group → Members" },
 ] as const;
 export type WeeklySocialKey = (typeof WEEKLY_SOCIALS)[number]["key"];
@@ -72,4 +73,24 @@ export async function saveWeeklySocials(values: Partial<Record<WeeklySocialKey, 
     saved++;
   }
   return saved;
+}
+
+/**
+ * X followers, read from X on the Monday snapshot run (Jose 9/25, "yes X")
+ * and saved to this week's Weekly Socials row, so Jose only types TikTok and
+ * the Facebook Group. One /2/users/me call a week (pay-per-use, well under a
+ * cent). Typing a number on the screen afterwards still overwrites it.
+ */
+export async function autoFillXFollowers(): Promise<{ ok: boolean; followers?: number; error?: string }> {
+  try {
+    const me = await xFetch<{ data?: { public_metrics?: { followers_count?: number } } }>("/2/users/me?user.fields=public_metrics", {
+      method: "GET",
+    });
+    const followers = me.data?.public_metrics?.followers_count;
+    if (typeof followers !== "number") return { ok: false, error: "X didn't return a follower count." };
+    await saveWeeklySocials({ x: followers }, "X API");
+    return { ok: true, followers };
+  } catch (err) {
+    return { ok: false, error: String(err).slice(0, 200) };
+  }
 }

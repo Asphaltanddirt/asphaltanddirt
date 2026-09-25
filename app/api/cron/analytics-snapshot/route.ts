@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAirtableConfigured } from "@/lib/airtable";
 import { runAnalyticsSnapshot } from "@/lib/analyticsSnapshot";
+import { autoFillXFollowers } from "@/lib/weeklySocials";
 import { syncSocialStatsFromMeta } from "@/lib/socialStatsSync";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,9 @@ async function run(req: NextRequest) {
         socialStats = { ok: false, error: String(e) };
       }
     }
-    return NextResponse.json({ status: "ok", result, socialStats });
+    // X followers into this week's Weekly Socials row (never fails the run).
+    const xFollowers = dry ? undefined : await autoFillXFollowers();
+    return NextResponse.json({ status: "ok", result, socialStats, xFollowers });
   } catch (err) {
     console.error("analytics-snapshot cron error", err);
     return NextResponse.json({ error: "Snapshot failed.", detail: String(err) }, { status: 502 });
