@@ -78,3 +78,14 @@ export async function getCurrentTrailTalk(): Promise<TrailTalk | null> {
     return null;
   }
 }
+
+/** The week's Trail Talk image (Newsletters → "Trail Talk - Image"), if any. */
+export async function trailTalkImageFor(weekOf: string): Promise<{ url: string; filename: string } | null> {
+  if (!NEWS_BASE || !isAirtableConfigured(NEWS_BASE) || !/^\d{4}-\d{2}-\d{2}$/.test(weekOf)) return null;
+  const rows = await listRecords(NEWSLETTERS, `IS_SAME({Week Of}, '${weekOf}', 'day')`, { baseId: NEWS_BASE }).catch(() => []);
+  for (const r of rows) {
+    const img = ((r.fields["Trail Talk - Image"] as { url?: string; filename?: string }[] | undefined) || [])[0];
+    if (img?.url) return { url: img.url, filename: img.filename || "trail-talk.jpg" };
+  }
+  return null;
+}

@@ -1,5 +1,6 @@
 import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
-import { getAutoPostQueue, getPost, markPosted, saveAutoResult, type SocialPost } from "@/lib/garageSocial";
+import { addAssetFromUrl, getAutoPostQueue, getPost, markPosted, saveAutoResult, type SocialPost } from "@/lib/garageSocial";
+import { trailTalkImageFor } from "@/lib/trailTalk";
 import { todayNY } from "@/lib/garageTasks";
 import { isMetaPostingConfigured, publishToFacebook, publishToInstagram } from "@/lib/metaPost";
 import { isXConfigured, publishToX } from "@/lib/xPost";
@@ -309,6 +310,19 @@ export async function runAutoPoster(opts: { at?: Date; dryRun?: boolean } = {}):
   const live = sw.on && !opts.dryRun;
   const outcomes: AutoPostOutcome[] = [];
   for (const post of queue) {
+    // Trail Talk on X and Threads carries the same image as the Community
+    // page (Jose, 2026-09-24: "add photo to threads and x that match trail
+    // talk photo"). If the card has no image yet but the week's Newsletters
+    // row does, attach it and let the next run post it — Airtable copies the
+    // file a few seconds after the write, so posting now would go out bare.
+    // Only when the card has NO attachments, so a copy that fails can't loop.
+    if (post.topic === "Trail Talk" && (post.platform === "X" || post.platform === "Threads") && post.assets.length === 0) {
+      const img = await trailTalkImageFor(post.weekOf).catch(() => null);
+      if (img) {
+        await addAssetFromUrl(post.id, { url: img.url, filename: img.filename }).catch((err) => console.error("trail talk image attach failed", err));
+        continue;
+      }
+    }
     // Failed posts wait for a person (un-approve/approve or Post now), except
     // ones that failed only because they weren't ready yet.
     if (post.autoStatus === "Failed" && !post.autoLog.startsWith("Not posted:")) continue;
