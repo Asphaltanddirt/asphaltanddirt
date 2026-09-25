@@ -25,7 +25,8 @@ export interface TrailRating {
    *  each .webp is for email, where webp support is patchy. */
   image: string;
   /** What to expect: three short labeled lines plus one note (Jose 9/25:
-   *  readable at a glance, not a wall of text). */
+   *  readable at a glance, not a wall of text). Rated recovery points are
+   *  required at every level (Jose 9/25). */
   facts: { terrain: string; rig: string; gear: string; note: string };
 }
 
@@ -49,7 +50,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     facts: {
       terrain: "Dirt and fire roads, gentle grades",
       rig: "Stock 4x4 is fine",
-      gear: "Nice to have, not needed",
+      gear: "Rated recovery points required; the rest is nice to have",
       note: "Great first ride.",
     },
   },
@@ -63,7 +64,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     facts: {
       terrain: "Mud, water, ruts, some obstacles",
       rig: "Stock 4x4, all-terrain tires",
-      gear: "Rated recovery points + basic kit",
+      gear: "Rated recovery points required + a basic kit",
       note: "Getting stuck happens. We'll get you out.",
     },
   },
@@ -77,7 +78,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     facts: {
       terrain: "Steep, rocky climbs and tight lines",
       rig: "Bigger tires, armor, lockers",
-      gear: "Full recovery kit",
+      gear: "Rated recovery points + a full recovery kit, required",
       note: "Spotters on the hard parts.",
     },
   },
@@ -91,7 +92,7 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     facts: {
       terrain: "Extreme obstacles",
       rig: "Purpose-built rigs, experienced drivers",
-      gear: "Winch + full recovery kit",
+      gear: "Rated recovery points, a winch + a full recovery kit, required",
       note: "Talk to us before you RSVP.",
     },
   },
