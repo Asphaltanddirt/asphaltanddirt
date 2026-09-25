@@ -2675,3 +2675,8 @@ button.garage-plan-claim{ background:none; border:1px solid var(--accent); borde
 .trail-rating-panel-name span{ font-size:14px; letter-spacing:.12em; color:var(--text-muted); margin-left:8px; }
 .trail-rating-footnote{ margin:16px 0 0; max-width:62ch; font-size:14px; color:var(--text-muted); }
 @media (prefers-reduced-motion: reduce){ .trail-rating-tab{ transition:none; } }
+
+/* Garage Upload one-tap keywords (#19b). */
+.garage-upload-quick{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0; }
+.garage-upload-quick-label{ flex-basis:100%; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+.garage-upload-quick .chip{ padding:8px 12px; min-height:40px; }

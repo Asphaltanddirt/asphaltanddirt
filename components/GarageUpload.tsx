@@ -66,6 +66,25 @@ function putChunk(url: string, blob: Blob, start: number, total: number, onProgr
   });
 }
 
+const QUICK_TAGS = [
+  { label: "Rig", words: ["jeep", "bronco", "4runner", "truck", "car"] },
+  { label: "What happened", words: ["mud", "water", "rocks", "sand road", "recovery", "night", "street cruise", "car show", "talking"] },
+];
+
+function keywordList(text: string): string[] {
+  return text
+    .split(",")
+    .map((w) => w.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** Add the word if it isn't in the box, take it out if it is. */
+function toggleKeyword(text: string, word: string): string {
+  const list = keywordList(text);
+  const next = list.includes(word) ? list.filter((w) => w !== word) : [...list, word];
+  return next.join(", ");
+}
+
 export default function GarageUpload({
   vlogTitles,
   events,
@@ -453,6 +472,28 @@ export default function GarageUpload({
                 <label htmlFor="garage-upload-keywords" className="garage-upload-label">
                   What&apos;s in these? <span>A few words, comma separated</span>
                 </label>
+                {/* One-tap words (punchlist #19b): the things we search for
+                    most. A tap adds or removes the word in the box below, so
+                    the box stays the one place keywords live. */}
+                {QUICK_TAGS.map((group) => (
+                  <div key={group.label} className="garage-upload-quick" role="group" aria-label={group.label}>
+                    <span className="garage-upload-quick-label">{group.label}</span>
+                    {group.words.map((w) => {
+                      const on = keywordList(keywords).includes(w);
+                      return (
+                        <button
+                          key={w}
+                          type="button"
+                          className={`chip${on ? " active" : ""}`}
+                          aria-pressed={on}
+                          onClick={() => setKeywords(toggleKeyword(keywords, w))}
+                        >
+                          {w}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
                 <input
                   id="garage-upload-keywords"
                   value={keywords}
