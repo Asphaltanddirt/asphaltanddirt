@@ -3,7 +3,7 @@ import { sendEmail } from "@/lib/resendEmail";
 import { sendToUser, isPushConfigured, type PushPayload } from "@/lib/push";
 import { slotStart, planPublish } from "@/lib/autoPost";
 import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
-import { todayNY, weekOf } from "@/lib/garageTasks";
+import { getTasksBetween, todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
 import { SITE_URL } from "@/lib/site";
 
@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -110,7 +110,7 @@ function emailHtml(payload: PushPayload) {
  * Push first, email only if push could not land. Never both for one key —
  * two alerts for one thing is the same noise problem in a different coat.
  */
-async function deliver(key: string, kind: NotifyKind, subject: string, payload: PushPayload): Promise<boolean> {
+async function deliver(key: string, kind: NotifyKind, subject: string, payload: PushPayload, to: string = NOTIFY_EMAIL): Promise<boolean> {
   if (await alreadySent(key)) return false;
 
   let channel = "None";
@@ -118,7 +118,7 @@ async function deliver(key: string, kind: NotifyKind, subject: string, payload: 
   let detail = "";
 
   if (isPushConfigured()) {
-    const push = await sendToUser(NOTIFY_EMAIL, payload);
+    const push = await sendToUser(to, payload);
     detail = `push sent=${push.sent} failed=${push.failed} retired=${push.retired} ${push.errors.join(" | ")}`.trim();
     if (push.sent > 0) {
       channel = "Push";
@@ -131,7 +131,7 @@ async function deliver(key: string, kind: NotifyKind, subject: string, payload: 
   if (result !== "Sent") {
     try {
       await sendEmail({
-        to: NOTIFY_EMAIL,
+        to,
         subject: `${payload.title} — ${payload.body}`.slice(0, 120),
         html: emailHtml(payload),
       });
@@ -237,6 +237,8 @@ export interface NotifyRun {
   lastCalls: string[];
   notReady: string[];
   digest: string | null;
+  /** People reminded of their own tasks due today (9 AM). */
+  dueToday?: string[];
 }
 
 export async function runNotifications(options: { now?: Date; force?: boolean } = {}): Promise<NotifyRun> {
@@ -253,6 +255,10 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
   out.ran = true;
 
   const today = todayNY();
+  out.dueToday = await remindDueToday(now, today).catch((err) => {
+    console.error("due-today reminders failed", err);
+    return [];
+  });
   const posts = (await getWeekPosts(weekOf(today))).filter((p) => p.due === today);
   /** Blocked auto slots, grouped by the time their window opens. */
   const notReady = new Map<string, { post: SocialPost; reason: string }[]>();
@@ -429,4 +435,38 @@ export async function sendTestNotification(): Promise<boolean> {
     body: "This is what a posting reminder will look like.",
     url: "/garage/social",
   });
+}
+
+// ---------------------------------------------------------------- due today
+
+/**
+ * 9 AM Eastern: everyone except Jose gets one alert listing their own open
+ * Garage tasks due today (Jose 9/25: Anthony gets notifications too, e.g. the
+ * Tuesday "film both Garage Takes"). Jose already has the posting nudges and
+ * the calendar, so he's left out to keep his phone quiet. Claude's own tasks
+ * never alert anyone. Push first, email only if no push landed; the ledger
+ * key makes it once per person per day.
+ */
+async function remindDueToday(now: Date, today: string): Promise<string[]> {
+  const hourNY = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(now));
+  if (hourNY !== 9) return [];
+  const tasks = (await getTasksBetween(today, today)).filter((t) => !t.done);
+  const byPerson = new Map<string, string[]>();
+  for (const t of tasks) {
+    const who = (t.assignee || "").trim().toLowerCase();
+    if (!who || who === "claude" || who === "everyone" || who === NOTIFY_EMAIL) continue;
+    byPerson.set(who, [...(byPerson.get(who) || []), t.title]);
+  }
+  const sent: string[] = [];
+  for (const [email, titles] of byPerson) {
+    const key = ledgerKey("Due today", email, today);
+    const payload: PushPayload = {
+      title: titles.length === 1 ? "Due today" : `${titles.length} things due today`,
+      body: titles.join(" · ").slice(0, 180),
+      url: "/garage",
+      tag: key,
+    };
+    if (await deliver(key, "Due today", `Due today for ${email}`, payload, email)) sent.push(email);
+  }
+  return sent;
 }

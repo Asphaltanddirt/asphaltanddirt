@@ -19,7 +19,8 @@ function urlBase64ToUint8Array(base64: string) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-export default function GarageNotifications() {
+/** `showDigest` is the owners' Control Room extra; the Crew page leaves it off. */
+export default function GarageNotifications({ showDigest = true }: { showDigest?: boolean } = {}) {
   const [state, setState] = useState<State>("checking");
   const [message, setMessage] = useState("");
 
@@ -155,7 +156,7 @@ export default function GarageNotifications() {
       <button className="btn btn-outline btn-sm" onClick={state === "on" ? turnOff : turnOn} disabled={state === "working"}>
         {state === "working" ? "Working…" : state === "on" ? "Turn off on this device" : "Turn on for this device"}
       </button>
-      {state === "on" && (
+      {state === "on" && showDigest && (
         <button className="btn btn-outline btn-sm" onClick={resendDigest}>
           Send today&apos;s digest
         </button>
