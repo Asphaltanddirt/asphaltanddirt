@@ -246,6 +246,7 @@ function renderFooter() {
     link("TikTok", socialLinks.tiktok),
     link("YouTube", socialLinks.youtube),
     link("X", socialLinks.x),
+    ...(socialLinks.whatsapp ? [link("WhatsApp", socialLinks.whatsapp)] : []),
   ].join('<span style="color:#555;"> &middot; </span>');
   return `
     <div style="background:${BLACK};padding:40px 24px;border-radius:8px;text-align:center;">
