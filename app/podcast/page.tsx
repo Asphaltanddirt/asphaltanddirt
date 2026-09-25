@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   description: "Built street rides. Trail culture. Real events. Real talk. The Asphalt & Dirt podcast — launching soon.",
 };
 
-// Anthony's vlog series playlist. Labeled "YT Shorts" on the page for now —
-// filled with Shorts until there are 3 real vlogs worth showing, at which
-// point flip the section copy ("YT Shorts" -> "VLOG", "See All Shorts" ->
-// "See All Vlogs") below. Same playlist ID either way, nothing else changes.
-const VLOG_PLAYLIST_ID = "PLKHAREsF7JDw";
+// The channel's Shorts playlist, parked here until podcast episodes are up.
+// (Was a separate "VLOG" playlist made 9/12 as a stand-in for Anthony's vlogs;
+// those became Garage Takes with their own pages, so the stand-in — a copy of
+// Shorts — was retired 9/24 and this points at the real Shorts playlist.)
+const VLOG_PLAYLIST_ID = "PLKEZJPl1lIfzt5WY1WynZDBaxa70z7wwL";
 
 export default async function PodcastIndexPage() {
   const vlogVideos = await fetchLatestFromPlaylist(VLOG_PLAYLIST_ID, 3);
