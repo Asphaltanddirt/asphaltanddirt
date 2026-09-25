@@ -9,6 +9,7 @@ import GarageTaskList from "@/components/GarageTaskList";
 import { getTasksFor, todayNY, weekOf } from "@/lib/garageTasks";
 import GarageReminders from "@/components/GarageReminders";
 import { getDueReminders } from "@/lib/garageReminders";
+import GarageNotifications from "@/components/GarageNotifications";
 import GaragePlan from "@/components/GaragePlan";
 import { getPlan } from "@/lib/garagePlan";
 
@@ -197,6 +198,15 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
 
         <h2 className="garage-section">Your week</h2>
         <GarageTaskList tasks={tasks} today={today} />
+        {/* Everyone's own "due today" alert at 9 AM (lib/notify.ts). Hidden
+            for Jose: the same phone switch carries his posting alerts, so his
+            stays in the Control Room where it can't be tapped by mistake. */}
+        {!canSeeControlRoom(session) && (
+          <div className="garage-notify-inline">
+            <span>9 AM alert on days you have something due:</span>
+            <GarageNotifications showDigest={false} />
+          </div>
+        )}
 
         <h2 className="garage-section">Reminders</h2>
         <GarageReminders reminders={reminders} today={today} />

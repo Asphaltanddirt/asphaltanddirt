@@ -2729,3 +2729,6 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-feedback li{ border-left:3px solid var(--accent); padding:4px 0 4px 12px; }
 .garage-feedback p{ margin:0 0 4px; white-space:pre-line; }
 .garage-feedback span{ font-size:13px; color:var(--text-muted); }
+
+/* Garage home: the per-person alert toggle under Your week. */
+.garage-notify-inline{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:10px 0 0; font-size:13px; color:var(--text-muted); }

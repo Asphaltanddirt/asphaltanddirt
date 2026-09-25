@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageProfileForm from "@/components/GarageProfileForm";
 import { getSession } from "@/lib/garageAuth";
-import GarageNotifications from "@/components/GarageNotifications";
 import { getCrewMonths, getCrewProfile } from "@/lib/garageCrew";
 
 export const dynamic = "force-dynamic";
@@ -126,17 +125,6 @@ export default async function GarageCrewPage() {
             </section>
           </>
         )}
-
-        {/* Anyone's own task alerts (lib/notify.ts remindDueToday). The
-            opt-in used to live only in the Control Room, which is Jose's. */}
-        <section className="garage-panel">
-          <h2>Notifications on this phone</h2>
-          <p>
-            A reminder at 9 AM on days you have something due in the Garage. Turn it on from the Garage app on your
-            Home Screen, not from Safari.
-          </p>
-          <GarageNotifications showDigest={false} />
-        </section>
 
         {/* Always here, so an ambassador who lost the welcome email can still
             find the guide and media kit after signing in. */}
