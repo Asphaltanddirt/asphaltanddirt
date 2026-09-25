@@ -1,4 +1,4 @@
-import { listRecords, isAirtableConfigured } from "@/lib/airtable";
+import { listRecords, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { socialLinks } from "@/lib/social";
 
 /**
@@ -20,7 +20,7 @@ import { socialLinks } from "@/lib/social";
 
 const NEWS_BASE = process.env.AIRTABLE_NEWSLETTER_BASE_ID;
 const NEWSLETTERS = process.env.AIRTABLE_NEWSLETTERS_TABLE || "Newsletters";
-const SOCIAL_BASE = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const SOCIAL_BASE = SOCIAL_BASE_ID;
 const THREADS_PROFILE = "https://www.threads.com/@asphaltanddirtpodcast";
 
 export interface TrailTalk {

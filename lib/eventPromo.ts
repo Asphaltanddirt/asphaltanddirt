@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { slotStart } from "@/lib/autoPost";
 import { getEventBySlug, getPublishedEvents, type EventDetail } from "@/lib/events";
 import { getPost, type SocialPost } from "@/lib/garageSocial";
@@ -35,7 +35,7 @@ import { isAutoPlatform, xLength } from "@/lib/socialCopy";
  * row has no key, so the daily pass would make it again.
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const EVENTS_BASE_ID = process.env.AIRTABLE_EVENTS_BASE_ID;
 const POSTS = "Social Posts";
 

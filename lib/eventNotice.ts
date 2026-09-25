@@ -1,6 +1,6 @@
 import type { EventDetail } from "@/lib/events";
 import type { EventUpdateKind } from "@/lib/eventEmails";
-import { createRecord, listRecords, updateRecord } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { autoPostNow } from "@/lib/autoPost";
 import { addAsset, getPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
@@ -30,7 +30,7 @@ import { buildEventNotice, noticeImagePrompt } from "@/lib/eventNoticeText";
  * two places a person has to act, rather than pretending they are covered.
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const POSTS = "Social Posts";
 
 /**

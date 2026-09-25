@@ -1,5 +1,5 @@
 import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
-import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
+import { listRecords, updateRecord, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
 import type { PublishInput, PublishResult } from "@/lib/autoPost";
 import { signedMediaUrl } from "@/lib/socialMedia";
 
@@ -20,7 +20,7 @@ import { signedMediaUrl } from "@/lib/socialMedia";
 
 const GRAPH = "https://graph.threads.net/v1.0";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com";
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const SETTINGS = "Garage Settings";
 const ROW = "Threads connection";
 const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_replies", "threads_manage_insights", "threads_read_replies"];

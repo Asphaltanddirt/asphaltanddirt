@@ -1,4 +1,4 @@
-import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { getPostBySlug } from "@/lib/blog";
 import { todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
@@ -18,7 +18,7 @@ import { isAutoPlatform } from "@/lib/socialCopy";
  * Newsletters row so the Thursday digest picks it up.
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const SCHEDULE = "Posting Schedule";
 const POSTS = "Social Posts";
 const NEWSLETTER_BASE_ID = process.env.AIRTABLE_NEWSLETTER_BASE_ID;

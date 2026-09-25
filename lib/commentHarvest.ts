@@ -1,4 +1,4 @@
-import { createRecord, listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
 
 /**
  * The comment harvester (Jose, 2026-09-21: "can we pull comments through the
@@ -21,7 +21,7 @@ import { createRecord, listRecords, updateRecord, isAirtableConfigured } from "@
  * channel are public data, so no OAuth token is needed).
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const TABLE = "Comments";
 const SETTINGS = "Garage Settings";
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UCxW12IVrVrAx-UKFoNfq45Q";

@@ -1,4 +1,4 @@
-import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { sendEmail } from "@/lib/resendEmail";
 import { sendToUser, isPushConfigured, type PushPayload } from "@/lib/push";
 import { slotStart, planPublish } from "@/lib/autoPost";
@@ -28,7 +28,7 @@ import { SITE_URL } from "@/lib/site";
  */
 
 const GARAGE_BASE = process.env.AIRTABLE_GARAGE_BASE_ID || "apptUHYPJL0wjAuPe";
-const ANALYTICS_BASE = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const SOCIAL_BASE = SOCIAL_BASE_ID;
 const LEDGER = "Notifications";
 const SETTINGS = "Garage Settings";
 const SWITCH = "Notifications";
@@ -51,15 +51,15 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
 // ---------------------------------------------------------------- the switch
 
 export async function getNotifySwitch(): Promise<{ on: boolean; id: string | null }> {
-  if (!isAirtableConfigured(ANALYTICS_BASE)) return { on: false, id: null };
-  const rows = await listRecords(SETTINGS, `{Setting} = '${SWITCH}'`, { baseId: ANALYTICS_BASE });
+  if (!isAirtableConfigured(SOCIAL_BASE)) return { on: false, id: null };
+  const rows = await listRecords(SETTINGS, `{Setting} = '${SWITCH}'`, { baseId: SOCIAL_BASE });
   return { on: rows[0]?.fields?.On === true, id: rows[0]?.id || null };
 }
 
 export async function setNotifySwitch(on: boolean, by: string) {
   const current = await getNotifySwitch();
   if (!current.id) throw new Error("The Notifications row is missing from Garage Settings.");
-  await updateRecord(SETTINGS, current.id, { On: on, "Changed By": by, "Changed At": new Date().toISOString() }, { baseId: ANALYTICS_BASE });
+  await updateRecord(SETTINGS, current.id, { On: on, "Changed By": by, "Changed At": new Date().toISOString() }, { baseId: SOCIAL_BASE });
 }
 
 // ---------------------------------------------------------------- the ledger

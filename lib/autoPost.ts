@@ -1,4 +1,4 @@
-import { listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
+import { listRecords, updateRecord, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { addAssetFromUrl, getAutoPostQueue, getPost, markPosted, saveAutoResult, type SocialPost } from "@/lib/garageSocial";
 import { trailTalkImageFor } from "@/lib/trailTalk";
 import { todayNY } from "@/lib/garageTasks";
@@ -23,7 +23,7 @@ import { fullCaption, isAutoPlatform, linkPlan, xLength, type AutoPlatform } fro
  * its ids; the next run picks up from there rather than posting twice.
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const SETTINGS = "Garage Settings";
 const SWITCH = "Auto-posting";
 

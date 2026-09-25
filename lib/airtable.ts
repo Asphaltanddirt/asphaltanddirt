@@ -13,6 +13,13 @@
 
 const BASE_URL = "https://api.airtable.com/v0";
 
+/** A&D Social Ops: the daily posting machinery (Social Posts, Posting
+ *  Schedule, Garage Settings, Reply Queue, Reply Targets, Comments). Split
+ *  out of the Analytics base on 2026-09-25 so the tables written every day
+ *  don't slow down the measurement base. Analytics keeps Content,
+ *  Performance, Audience Snapshot and the other history tables. */
+export const SOCIAL_BASE_ID = process.env.AIRTABLE_SOCIAL_BASE_ID || "appREJzEYhkFTY8k5";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AirtableFields = Record<string, any>;
 

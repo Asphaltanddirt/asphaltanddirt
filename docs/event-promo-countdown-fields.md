@@ -5,7 +5,7 @@ read is guarded (a missing field reads as blank), and the RSVP form still saves
 if its three new fields are missing. The promo generator and the attendee-track
 emails do nothing useful until their fields exist.
 
-## Analytics base (appzbX0Mz3rXtc1GN): table `Social Posts`
+## Analytics base (appREJzEYhkFTY8k5 (A&D Social Ops; was the Analytics base appzbX0Mz3rXtc1GN until 2026-09-25)): table `Social Posts`
 
 | Field | Type | Choices / notes |
 |---|---|---|

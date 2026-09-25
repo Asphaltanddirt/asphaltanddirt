@@ -14,12 +14,12 @@
  * its 7–10 day window on some run.
  */
 
-import { listRecords, updateRecord, type AirtableFields } from "@/lib/airtable";
+import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { facebookPosts, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
 import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
 import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const POSTS = "Social Posts";
 
 /** Days after posting when lifetime numbers still read as 7-day numbers. */

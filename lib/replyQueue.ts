@@ -1,4 +1,4 @@
-import { createRecord, listRecords, updateRecord, isAirtableConfigured } from "@/lib/airtable";
+import { createRecord, listRecords, updateRecord, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { isXConfigured, xFetch } from "@/lib/xPost";
 
 /**
@@ -18,7 +18,7 @@ import { isXConfigured, xFetch } from "@/lib/xPost";
  * double it). Off switch: Garage Settings → "Reply search".
  */
 
-const BASE_ID = process.env.AIRTABLE_ANALYTICS_BASE_ID || "appzbX0Mz3rXtc1GN";
+const BASE_ID = SOCIAL_BASE_ID;
 const TARGETS = "Reply Targets";
 const QUEUE = "Reply Queue";
 const SETTINGS = "Garage Settings";
