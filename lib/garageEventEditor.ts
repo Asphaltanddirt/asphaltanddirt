@@ -1,3 +1,4 @@
+import { TRAIL_RATING_COLORS } from "@/lib/trailRating";
 import { revalidatePath } from "next/cache";
 import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
 import { syncCommsDate } from "@/lib/eventComms";
@@ -49,6 +50,8 @@ export interface EventEdit {
   showMeetupPublicly: boolean;
   fullDetails: string;
   recap: string;
+  /** A&D Trail Rating: Green / Blue / Black / Red, or "" for none. */
+  trailRating: string;
 }
 
 export interface EditableEvent extends EventEdit {
@@ -88,6 +91,7 @@ function toEditable(r: AirtableRecord): EditableEvent {
     showMeetupPublicly: f["Show Meetup Publicly"] === true,
     fullDetails: str(f["Full Details"]),
     recap: str(f.Recap),
+    trailRating: str(f["Trail Rating"]),
     photoUrl: ((f.Photo as { url: string; thumbnails?: { large?: { url: string } } }[] | undefined) || [])[0]?.thumbnails?.large?.url || ((f.Photo as { url: string }[] | undefined) || [])[0]?.url || "",
     driveFolderUrl: str(f["Drive Folder"]),
     rsvpCount: ((f.RSVPs as string[] | undefined) || []).length,
@@ -158,6 +162,7 @@ export function cleanEventEdit(body: Record<string, unknown>, venueIds: Set<stri
     showMeetupPublicly: body.showMeetupPublicly === true,
     fullDetails: text("fullDetails"),
     recap: text("recap"),
+    trailRating: (TRAIL_RATING_COLORS as string[]).includes(text("trailRating", 10)) ? text("trailRating", 10) : "",
   };
 }
 
@@ -178,6 +183,7 @@ function toFields(edit: EventEdit) {
     "Meetup Point": orNull(edit.meetupPoint),
     "Show Meetup Publicly": edit.showMeetupPublicly,
     "Full Details": orNull(edit.fullDetails),
+    "Trail Rating": orNull(edit.trailRating),
     Recap: orNull(edit.recap),
   };
 }

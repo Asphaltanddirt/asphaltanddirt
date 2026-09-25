@@ -6,6 +6,8 @@ import { socialLinks } from "@/lib/social";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import RsvpForm from "@/components/RsvpForm";
 import EventRequirementsSection from "@/components/EventRequirements";
+import TrailRatingBadge from "@/components/TrailRatingBadge";
+import { trailRatingFor } from "@/lib/trailRating";
 import { needsVenueWaiver, requirementsFor } from "@/lib/vehicleRules";
 import BuildGallery from "@/components/BuildGallery";
 import EventPhotoSubmissionForm from "@/components/EventPhotoSubmissionForm";
@@ -51,6 +53,7 @@ export default async function EventDetailPage({
   // email goes out the same evening and links straight to #photos.
   const canUpload = uploadsOpen(event.date);
   const requirements = requirementsFor(event);
+  const trailRating = trailRatingFor(event.trailRating);
   const submittedPhotos = past ? await getApprovedEventPhotoSubmissions(event.id) : [];
   // Every photo gets a text alternative: its approved description, or until
   // someone writes one, which photo it is and where it's from.
@@ -118,7 +121,20 @@ export default async function EventDetailPage({
                   {event.generalArea}
                 </p>
               )}
-              {event.publicBlurb && <p className="lead mt-3">{event.publicBlurb}</p>}
+              {trailRating && <TrailRatingBadge rating={trailRating} showLines={!past} />}
+              {/* Paragraphs and line breaks as written in the Garage: the first
+                  paragraph is the lead, the rest keep their own lines (lists,
+                  headings). It used to collapse into one run-on paragraph. */}
+              {event.publicBlurb &&
+                event.publicBlurb
+                  .split(/\n\s*\n/)
+                  .map((para) => para.trim())
+                  .filter(Boolean)
+                  .map((para, i) => (
+                    <p key={i} className={i === 0 ? "lead mt-3 event-blurb" : "event-blurb"}>
+                      {para}
+                    </p>
+                  ))}
 
               {!past && event.atAGlance.length > 0 && (
                 <div className="event-glance">

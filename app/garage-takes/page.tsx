@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroCTAGroup from "@/components/HeroCTAGroup";
 import Link from "next/link";
 import { fetchPublicFromPlaylist, GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
 import { publishedGarageTakes, takeCompanionPost } from "@/lib/garageTakes";
@@ -56,6 +57,9 @@ export default async function GarageTakesPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </a>
           )}
+        </div>
+        <div className="mt-3">
+          <HeroCTAGroup source="garage_takes_hero" returnTo="/garage-takes" />
         </div>
 
         {takes.length ? (

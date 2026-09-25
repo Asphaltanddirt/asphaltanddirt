@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroCTAGroup from "@/components/HeroCTAGroup";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -114,6 +115,7 @@ export default function AmbassadorsPage() {
               craftsmanship, respect, adventure, and real participation.
             </p>
             <p>This isn&apos;t a follower-count contest. It&apos;s a group of people helping keep automotive culture worth showing up for.</p>
+            <HeroCTAGroup source="ambassadors_hero" returnTo="/ambassadors" />
           </div>
         </div>
       </section>

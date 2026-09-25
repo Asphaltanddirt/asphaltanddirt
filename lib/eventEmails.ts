@@ -1,4 +1,5 @@
 import type { EventDetail } from "@/lib/events";
+import { trailRatingFor } from "@/lib/trailRating";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
 import { requirementsFor } from "@/lib/vehicleRules";
@@ -116,7 +117,7 @@ export function buildRsvpConfirmation(input: {
               `${event.generalArea ? `Area: ${event.generalArea}\n\n` : ""}We'll follow up with exact meetup details as it gets closer.`,
           )}</td></tr>
         </table>
-        ${requirementsBlock(event)}
+        ${trailRatingBlock(event)}${requirementsBlock(event)}
         ${fbNudge}
         ${listsNote}
         <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}/calendar.ics" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Add It To Your Calendar &rarr;</a></p>
@@ -131,6 +132,16 @@ export function buildRsvpConfirmation(input: {
 /** The event's Requirements (lib/vehicleRules.ts): its own items, then the
  *  standard set for each Venue Type. Repeated in the email so riders have them offline at the
  *  trailhead. Empty when the event has none. */
+/** The A&D Trail Rating (lib/trailRating.ts): the shape, name and plain word,
+ *  then that level's standard lines. Emails can't rely on color alone either,
+ *  so the shape character and the plain word always travel with it. */
+function trailRatingBlock(event: EventDetail): string {
+  const r = trailRatingFor(event.trailRating);
+  if (!r) return "";
+  const shape = { circle: "●", square: "■", diamond: "◆", "double-diamond": "◆◆" }[r.shape];
+  return `<p style="margin:16px 0 4px;font-weight:bold;color:#1a1712;">A&amp;D Trail Rating: <span style="color:${r.hex};">${shape}</span> ${esc(r.name)} <span style="font-weight:normal;color:#7a746c;">(${esc(r.plain)})</span></p><ul style="margin:0;padding-left:20px;">${r.lines.map((l) => `<li style="margin:0 0 4px;">${esc(l)}</li>`).join("")}</ul>`;
+}
+
 function requirementsBlock(event: EventDetail): string {
   const req = requirementsFor(event);
   if (!req) return "";
@@ -455,7 +466,7 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
         <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&apos;s the plan.</p>
         ${box(`${label("Where And When")}<div style="white-space:pre-wrap;">${esc(where)}</div>`)}
         ${bring.length ? box(`${label("Bring")}<ul style="margin:0;padding-left:20px;">${bring.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}
-        ${requirementsBlock(event)}
+        ${trailRatingBlock(event)}${requirementsBlock(event)}
         ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&apos;ll get an email from us and we&apos;ll post it on our socials, so check before you leave.`)}
         ${box(`${label("Waiver")}${
           hasTailgate
@@ -493,7 +504,7 @@ export function buildDayBeforeReminder(input: { recipientName: string; event: Ev
         <p style="margin:0 0 16px;">Hey ${first},</p>
         <p style="margin:0 0 16px;"><strong>${esc(event.title.trim())}</strong> is tomorrow, ${esc(formatDate(event.date))}.</p>
         ${where ? `<p style="margin:0 0 16px;white-space:pre-wrap;">${esc(where)}</p>` : ""}
-        ${requirementsBlock(event)}
+        ${trailRatingBlock(event)}${requirementsBlock(event)}
       </td>
     </tr>
     ${releaseRow(releaseUrl)}

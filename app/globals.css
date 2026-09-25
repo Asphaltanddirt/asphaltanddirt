@@ -2630,3 +2630,21 @@ details.garage-plan-row{ display:block; padding:0; }
 .trail-talk-lead{ font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim); margin:0 0 var(--sp-2); }
 .trail-talk-actions{ display:flex; flex-wrap:wrap; gap:10px; }
 .trail-talk-note{ font-size:13px; color:var(--text-dim); margin:var(--sp-2) 0 0; }
+
+/* A&D Trail Rating badge (components/TrailRatingBadge.tsx). The shape carries
+   the level as well as the color, so it never depends on color alone. */
+.trail-rating{ margin:16px 0 4px; }
+.trail-rating-badge{ display:inline-flex; align-items:center; gap:12px; padding:8px 16px 8px 10px; border:2px solid var(--tr); border-radius:var(--radius-md); background:var(--bg-card); }
+.trail-rating-shape{ flex:none; width:30px; height:30px; background:var(--tr); outline:2px solid var(--text-dim); outline-offset:1px; }
+.trail-rating-shape.is-circle{ border-radius:50%; }
+.trail-rating-shape.is-diamond{ width:24px; height:24px; margin:3px; transform:rotate(45deg); }
+.trail-rating-shape.is-double-diamond{ width:18px; height:18px; margin:0 12px 0 3px; transform:rotate(45deg); box-shadow:22px -22px 0 0 var(--tr); }
+.trail-rating-text{ display:flex; flex-direction:column; line-height:1.05; }
+.trail-rating-label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); }
+.trail-rating-text strong{ font-family:var(--font-display); font-weight:800; font-style:italic; font-size:26px; text-transform:uppercase; color:var(--text); }
+.trail-rating-plain{ font-size:13px; color:var(--text-muted); }
+.trail-rating-lines{ margin:10px 0 0; padding-left:20px; color:var(--text-muted); font-size:15px; }
+.trail-rating-lines li{ margin:0 0 4px; }
+
+/* Event page teaser: keep the line breaks people type in the Garage. */
+.event-blurb{ white-space:pre-line; }

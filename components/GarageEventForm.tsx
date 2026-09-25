@@ -1,5 +1,6 @@
 "use client";
 
+import { TRAIL_RATINGS, TRAIL_RATING_COLORS } from "@/lib/trailRating";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { compressImage } from "@/lib/imageCompress";
@@ -47,6 +48,7 @@ const EMPTY: EventEdit = {
   showMeetupPublicly: false,
   fullDetails: "",
   recap: "",
+  trailRating: "",
 };
 
 function toBase64(file: File): Promise<string> {
@@ -217,6 +219,20 @@ export default function GarageEventForm({ initial, venues }: { initial: Editable
         <label htmlFor="ev-req">Requirements</label>
         <textarea id="ev-req" rows={4} {...text("requirements")} placeholder={"GMRS or FRS radio in every vehicle\nFull-size spare"} aria-describedby="ev-req-help" />
         <p id="ev-req-help" className="garage-form-note">One per line. People tick a box agreeing to these when they RSVP.</p>
+
+        <fieldset className="garage-choice-group">
+          <legend>A&amp;D Trail Rating</legend>
+          {[{ value: "", name: "None", plain: "Car shows, meets, meals" }, ...TRAIL_RATING_COLORS.map((c) => ({ value: c, name: `${c} · ${TRAIL_RATINGS[c].name}`, plain: TRAIL_RATINGS[c].plain }))].map((r) => (
+            <label key={r.value || "none"} className="garage-choice">
+              <input type="radio" name="trailRating" checked={form.trailRating === r.value} onChange={() => setForm((f) => ({ ...f, trailRating: r.value }))} />
+              <span>
+                <strong>{r.name}</strong>
+                <small>{r.plain}</small>
+              </span>
+            </label>
+          ))}
+          <p className="garage-form-note">Shows as a badge on the event page and in the RSVP email, with that level&apos;s standard lines.</p>
+        </fieldset>
 
         <fieldset className="garage-choice-group">
           <legend>Asphalt or dirt?</legend>

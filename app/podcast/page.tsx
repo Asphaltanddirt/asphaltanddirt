@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroCTAGroup from "@/components/HeroCTAGroup";
 import Link from "next/link";
 import PlatformGrid from "@/components/PlatformGrid";
 import SubscribeButton from "@/components/SubscribeButton";
@@ -43,6 +44,7 @@ export default async function PodcastIndexPage() {
               <span className="line">Trail Culture.</span>
               <span className="line accent-text">Real Events. Real Talk.</span>
             </h1>
+            <HeroCTAGroup source="podcast_hero" returnTo="/podcast" />
           </div>
         </div>
       </section>
@@ -50,10 +52,10 @@ export default async function PodcastIndexPage() {
       <section className="section-alt section-pb-tight">
         <div className="container" style={{ maxWidth: 620, marginInline: "auto", textAlign: "center" }}>
           <div className="eyebrow accent">The Podcast</div>
-          <h2 className="mt-2">First Episodes Coming Soon</h2>
+          <h2 className="mt-2">First Episode: Wednesday, November 11</h2>
           <p className="lead mt-3">
-            The show&apos;s in production right now. First episodes drop this September &mdash; join
-            the newsletter and we&apos;ll tell you the moment they&apos;re live.
+            The show&apos;s in production right now, with a new episode every Wednesday from November 11 &mdash;
+            join the newsletter and we&apos;ll tell you the moment each one is live.
           </p>
           <div className="mt-4" style={{ display: "flex", justifyContent: "center" }}>
             <SubscribeButton source="podcast" label="Notify Me" returnTo="/podcast" />
