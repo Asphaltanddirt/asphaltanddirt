@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
 import TestimonialGrid from "@/components/TestimonialGrid";
-import SocialProofGrid from "@/components/SocialProofGrid";
+import TrailTalkSection from "@/components/TrailTalkSection";
 import { socialLinks } from "@/lib/social";
 import { getApprovedTestimonials } from "@/lib/testimonials";
-import { getApprovedSocialProof } from "@/lib/socialProof";
+import { getCurrentTrailTalk } from "@/lib/trailTalk";
 import { getCommunityPhotos } from "@/lib/events";
 import CommunityPhotoStack from "@/components/CommunityPhotoStack";
 import Link from "next/link";
@@ -44,9 +44,9 @@ const PLATFORMS = [
 ];
 
 export default async function CommunityPage() {
-  const [testimonials, socialProof, communityPhotos] = await Promise.all([
+  const [testimonials, trailTalk, communityPhotos] = await Promise.all([
     getApprovedTestimonials(3, "community"),
-    getApprovedSocialProof(8),
+    getCurrentTrailTalk(),
     getCommunityPhotos(12),
   ]);
 
@@ -150,16 +150,9 @@ export default async function CommunityPage() {
         </section>
       )}
 
-      {socialProof.length > 0 && (
-        <section className="section-pt-tight section-pb-tight">
-          <div className="container">
-            <div className="section-head">
-              <h2 className="eyebrow">Tag Us On TikTok To Be Featured</h2>
-            </div>
-            <SocialProofGrid posts={socialProof} />
-          </div>
-        </section>
-      )}
+      {/* Replaced the "Tag us on TikTok" embeds (2026-09-24): strangers' embed
+       *  settings kept breaking the grid. Trail Talk is ours and changes weekly. */}
+      {trailTalk && <TrailTalkSection talk={trailTalk} />}
 
       {/* "Friends Of The Channel" logo strip removed 2026-09-09 — placeholder
        *  brand names, no real partnership. A "Sponsors" section lands here
