@@ -2643,13 +2643,9 @@ details.garage-plan-row{ display:block; padding:0; }
 .trail-rating-label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); }
 .trail-rating-text strong{ font-family:var(--font-display); font-weight:800; font-style:italic; font-size:26px; text-transform:uppercase; color:var(--text); }
 .trail-rating-plain{ font-size:13px; color:var(--text-muted); }
-.trail-rating-lines{ margin:10px 0 0; padding-left:20px; color:var(--text-muted); font-size:15px; }
-.trail-rating-lines li{ margin:0 0 4px; }
 
 /* Event page teaser: keep the line breaks people type in the Garage. */
 .event-blurb{ white-space:pre-line; }
-.trail-rating-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:24px; }
-.trail-rating-grid .trail-rating{ margin:0; }
 .trail-rating-link{ display:inline-block; margin:8px 0 0 4px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
 .trail-rating-link:hover{ text-decoration:underline; }
 .trail-rating-section{ scroll-margin-top:80px; }
@@ -2658,4 +2654,24 @@ details.garage-plan-row{ display:block; padding:0; }
 .garage-plan-tick{ flex:none; width:22px; height:22px; accent-color:var(--accent); margin:0; }
 button.garage-plan-claim{ background:none; border:1px solid var(--accent); border-radius:999px; padding:4px 10px; cursor:pointer; }
 .trail-rating-img{ display:block; width:120px; height:auto; }
-.trail-rating-grid .trail-rating-img{ width:150px; }
+
+/* Trail Rating facts + the Events page picker (Jose 9/25: tap a badge). */
+.trail-rating-facts{ margin-top:10px; max-width:460px; }
+.trail-rating-facts dl{ margin:0; display:grid; gap:6px; }
+.trail-rating-facts dl > div{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:baseline; }
+.trail-rating-facts dt{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); }
+.trail-rating-facts dd{ margin:0; font-size:15px; color:var(--text); }
+.trail-rating-note{ margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); font-size:14px; color:var(--text-muted); }
+.trail-rating-picker{ margin-top:var(--sp-3, 20px); max-width:640px; }
+.trail-rating-tabs{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.trail-rating-tab{ background:none; border:2px solid transparent; border-radius:var(--radius-md); padding:6px; cursor:pointer; opacity:.5; transition:opacity .15s ease, border-color .15s ease; }
+.trail-rating-tab:hover{ opacity:.85; }
+.trail-rating-tab.is-active{ opacity:1; border-color:var(--tr); background:var(--bg-card); }
+.trail-rating-tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.trail-rating-tab img{ display:block; width:100%; height:auto; }
+.trail-rating-panel{ margin-top:10px; background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--tr, var(--accent)); border-radius:var(--radius-md); padding:16px 18px; }
+.trail-rating-panel .trail-rating-facts{ margin-top:8px; }
+.trail-rating-panel-name{ margin:0; font-family:var(--font-display); font-weight:800; font-size:22px; text-transform:uppercase; color:var(--text); }
+.trail-rating-panel-name span{ font-size:14px; letter-spacing:.12em; color:var(--text-muted); margin-left:8px; }
+.trail-rating-footnote{ margin:16px 0 0; max-width:62ch; font-size:14px; color:var(--text-muted); }
+@media (prefers-reduced-motion: reduce){ .trail-rating-tab{ transition:none; } }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { TrailRating } from "@/lib/trailRating";
+import { ratingFacts, type TrailRating } from "@/lib/trailRating";
 
 /**
  * The A&D Trail Rating badge (lib/trailRating.ts): Robin's art (2026-09-25),
@@ -34,13 +34,25 @@ export default function TrailRatingBadge({
           What the ratings mean
         </Link>
       )}
-      {showLines && (
-        <ul className="trail-rating-lines">
-          {rating.lines.map((l) => (
-            <li key={l}>{l}</li>
-          ))}
-        </ul>
-      )}
+      {showLines && <TrailRatingFacts rating={rating} />}
+    </div>
+  );
+}
+
+/** Terrain / Rig / Gear, then the one-line note. Shared by the event page and
+ *  the picker on the Events page. */
+export function TrailRatingFacts({ rating }: { rating: TrailRating }) {
+  return (
+    <div className="trail-rating-facts">
+      <dl>
+        {ratingFacts(rating).map(([k, v]) => (
+          <div key={k}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="trail-rating-note">{rating.facts.note}</p>
     </div>
   );
 }

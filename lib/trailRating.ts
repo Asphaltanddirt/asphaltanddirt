@@ -24,8 +24,18 @@ export interface TrailRating {
   /** Badge art (Robin, 2026-09-25): public/img/trail-rating/. The .png beside
    *  each .webp is for email, where webp support is patchy. */
   image: string;
-  /** The standard "what to expect / what you need" lines for this level. */
-  lines: string[];
+  /** What to expect: three short labeled lines plus one note (Jose 9/25:
+   *  readable at a glance, not a wall of text). */
+  facts: { terrain: string; rig: string; gear: string; note: string };
+}
+
+/** The labeled lines, in order, for the site and the emails. */
+export function ratingFacts(r: TrailRating): [string, string][] {
+  return [
+    ["Terrain", r.facts.terrain],
+    ["Rig", r.facts.rig],
+    ["Gear", r.facts.gear],
+  ];
 }
 
 export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
@@ -36,11 +46,12 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     shape: "circle",
     hex: "#2e9e48",
     image: "/img/trail-rating/trail-rating-cruise.webp",
-    lines: [
-      "Smooth dirt and fire roads with gentle grades.",
-      "Stock 4x4s welcome. Great first ride.",
-      "Recovery gear is nice to have, not needed.",
-    ],
+    facts: {
+      terrain: "Dirt and fire roads, gentle grades",
+      rig: "Stock 4x4 is fine",
+      gear: "Nice to have, not needed",
+      note: "Great first ride.",
+    },
   },
   Blue: {
     color: "Blue",
@@ -49,11 +60,12 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     shape: "square",
     hex: "#1f6fd1",
     image: "/img/trail-rating/trail-rating-get-dirty.webp",
-    lines: [
-      "Mud, water, ruts and some obstacles. Your rig will get dirty.",
-      "Stock 4x4s welcome; all-terrain tires recommended.",
-      "Rated recovery points and basic recovery gear recommended. Getting stuck is possible, and we'll get you out.",
-    ],
+    facts: {
+      terrain: "Mud, water, ruts, some obstacles",
+      rig: "Stock 4x4, all-terrain tires",
+      gear: "Rated recovery points + basic kit",
+      note: "Getting stuck happens. We'll get you out.",
+    },
   },
   Black: {
     color: "Black",
@@ -62,11 +74,12 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     shape: "diamond",
     hex: "#111111",
     image: "/img/trail-rating/trail-rating-send-it.webp",
-    lines: [
-      "Technical sections: steep or rocky climbs and tight lines.",
-      "Built rigs: bigger tires, armor and lockers recommended.",
-      "Spotters used. Full recovery gear required.",
-    ],
+    facts: {
+      terrain: "Steep, rocky climbs and tight lines",
+      rig: "Bigger tires, armor, lockers",
+      gear: "Full recovery kit",
+      note: "Spotters on the hard parts.",
+    },
   },
   Red: {
     color: "Red",
@@ -75,11 +88,12 @@ export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {
     shape: "double-diamond",
     hex: "#d42a1f",
     image: "/img/trail-rating/trail-rating-built-only.webp",
-    lines: [
-      "Extreme obstacles for purpose-built vehicles.",
-      "Experienced drivers only. Winch and a full recovery kit required.",
-      "Talk to us before you RSVP.",
-    ],
+    facts: {
+      terrain: "Extreme obstacles",
+      rig: "Purpose-built rigs, experienced drivers",
+      gear: "Winch + full recovery kit",
+      note: "Talk to us before you RSVP.",
+    },
   },
 };
 
