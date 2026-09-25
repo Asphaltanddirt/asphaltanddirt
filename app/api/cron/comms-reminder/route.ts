@@ -106,7 +106,7 @@ async function run(req: NextRequest) {
       if (!a.email) continue;
       try {
         const built = buildCommsClosing({ recipientName: a.screenName, event, recapUrl });
-        await sendEmail({ to: a.email, subject: built.subject, html: built.html });
+        await sendEmail({ to: a.email, subject: built.subject, html: built.html, replyTo: TEAM_EMAIL });
         sent++;
       } catch (err) {
         console.error("Comms closing send failed for", a.email, err);

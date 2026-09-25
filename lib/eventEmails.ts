@@ -380,7 +380,10 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
  *  event's Recap & Gallery page (lib/events.ts) to view or add photos. */
 /** Tailgate's thank-you email: goes out 3 hours after staff taps Trail over
  *  (or at the end of the 48-hour window if nobody did). Its job is getting
- *  photos and video in, so the upload link leads and it's clear it never expires. */
+ *  photos and video in, so the upload link leads and it's clear it never expires.
+ *  It also carries the attendees' field note (#11, Jose 9/25): one optional
+ *  "how was it? just reply" line, replies to team@. The crew's field note is
+ *  the optional "Anything worth saying about the day?" box on Garage Upload. */
 export function buildCommsClosing(input: { recipientName: string; event: EventDetail; recapUrl: string }): EventEmail {
   const { recipientName, event, recapUrl } = input;
   const first = esc(firstNameOf(recipientName));
@@ -407,6 +410,11 @@ export function buildCommsClosing(input: { recipientName: string; event: EventDe
     <tr>
       <td align="center" style="padding:8px 32px 24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#7a746c;">
         This link doesn&rsquo;t expire. Come back any time you find more.
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+        <p style="margin:0;"><strong>How was it?</strong> Just reply and tell us: the good, the muddy, and anything we should change.</p>
       </td>
     </tr>
   `;
