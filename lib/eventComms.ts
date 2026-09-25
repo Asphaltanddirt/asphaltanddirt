@@ -1,5 +1,5 @@
 import { listRecords, createRecord, updateRecord, deleteRecord, isAirtableConfigured, type AirtableFields } from "@/lib/airtable";
-import { PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
+import { DEFAULT_WAIVER_VERSION, PRIVACY_POLICY_VERSION, type WaiverVersion } from "@/lib/waivers";
 import { getSession, canRunEvents } from "@/lib/garageAuth";
 import crypto from "crypto";
 import { revalidateTag } from "next/cache";
@@ -131,7 +131,9 @@ function toSettings(r: { id: string; fields: AirtableFields }): CommsSettings {
     eventEndTime: (r.fields["Event End Time"] as string) || DEFAULT_END_TIME,
     active: Boolean(r.fields.Active),
     activatedAt: (r.fields["Activated At"] as string) || null,
-    waiverVersion: ((r.fields["Waiver Version"] as WaiverVersion) || "ONE-DAY-1.0"),
+    // A blank Waiver Version means the current one-day agreement, never the
+    // retired 1.0 (punchlist #16a: a forgotten field used to fall back to 1.0).
+    waiverVersion: ((r.fields["Waiver Version"] as WaiverVersion) || DEFAULT_WAIVER_VERSION),
     trailStatus: status === "On trail" || status === "Trail over" ? status : "Not started",
     trailChannel: (r.fields["Trail Channel"] as string) || "",
     staffChannel: (r.fields["Staff Channel"] as string) || "",

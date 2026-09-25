@@ -13,6 +13,10 @@
 
 export type WaiverVersion = "ONE-DAY-1.0" | "MULTI-DAY-1.0" | "POP-UP-1.0" | "ONE-DAY-1.1" | "MULTI-DAY-1.1";
 
+/** What an event gets when its Waiver Version is left blank. 1.0 stays in
+ *  DOCUMENTS so older signatures still render, but nothing new falls into it. */
+export const DEFAULT_WAIVER_VERSION: WaiverVersion = "ONE-DAY-1.1";
+
 export const WAIVER_CONFIG = {
   ORGANIZER: "JLDA Holding Corp d/b/a Asphalt & Dirt",
   SYSTEM: "Tailgate",
@@ -527,7 +531,7 @@ export interface WaiverContext {
 
 /** The document for a version, with event details and config substituted in. */
 export function getWaiver(version: WaiverVersion | null | undefined, context: WaiverContext): WaiverDocument {
-  const doc = DOCUMENTS[version || "ONE-DAY-1.0"] || ONE_DAY;
+  const doc = DOCUMENTS[version || DEFAULT_WAIVER_VERSION] || ONE_DAY_V11;
   const fill = (text: string) =>
     text
       .replace(/\{\{ORGANIZER_V11\}\}/g, ORGANIZER_V11)
