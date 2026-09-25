@@ -74,7 +74,7 @@ export async function getApprovedSocialProof(limit = 8): Promise<SocialProofPost
       })
       .slice(0, limit);
 
-    return await Promise.all(
+    const built = await Promise.all(
       posts.map(async ({ id, posterName, platform, postUrl }) => {
         // Instagram's oEmbed now requires a Meta app + access token (not
         // public like TikTok's) — until that's set up, Instagram posts have
@@ -87,9 +87,15 @@ export async function getApprovedSocialProof(limit = 8): Promise<SocialProofPost
           postUrl,
           thumbnailUrl: oembed?.thumbnail_url || null,
           caption: oembed?.title || "",
+          // TikTok's oEmbed only fails for a post that's gone (deleted,
+          // private, region-blocked). Its live-widget fallback then renders a
+          // tall "Video currently unavailable" card that breaks the grid
+          // (Jose, 2026-09-24: Rachel's post did exactly that), so hide it.
+          unavailable: platform === "TikTok" && !oembed?.thumbnail_url,
         };
       }),
     );
+    return built.filter((p) => !p.unavailable).map((p) => ({ id: p.id, posterName: p.posterName, platform: p.platform, postUrl: p.postUrl, thumbnailUrl: p.thumbnailUrl, caption: p.caption }));
   } catch (err) {
     console.error("Social proof fetch error", err);
     return [];
