@@ -12,7 +12,8 @@ import { SITE_URL } from "@/lib/site";
  * The night-before email (Jose 9/25). Two versions of one email:
  *
  *  - Crew (Christina, Dan, Jack, anyone marked Going in the Garage): a thank
- *    you and three light tips. They're volunteers who own their own gear, so
+ *    you, three light tips and a heads-up that Tailgate opens that night
+ *    (joining in is optional). They're volunteers who own their own gear, so
  *    it's a wish, never an instruction: no settings lecture, no quotas, no
  *    rules. Phone footage is exactly right.
  *  - Owners (Jose + Anthony): the same, plus the real shot list, what the
@@ -103,6 +104,12 @@ export function crewEveHtml(input: {
     <p>Thanks for coming out tomorrow for <strong>${esc(event.title)}</strong>. We couldn't do these without you. Let's have a great ride.</p>
     <p>If you end up filming, a few things that help us most when we edit:</p>
     <ul style="padding-left:20px;">${tips.map((t) => `<li style="margin:0 0 8px;">${esc(t)}</li>`).join("")}</ul>
+    ${
+      // Crew-only rides take no RSVPs, so there's no Tailgate to mention.
+      event.crewOnly
+        ? ""
+        : `<p><strong>Heads up:</strong> Tailgate, our event chat, opens tonight. Everyone who RSVP'd can post in it, so you'll see questions and hellos. You don't have to jump in, but you're welcome to say hi or answer anything you know. It goes quiet once we roll out; on the trail it's the radio.</p>`
+    }
     <p>When you're home, drop it in <a href="${upload}" style="color:#f86000;">Garage → Upload</a> and pick the event. No rush.</p>
     <p>See you out there,<br>Jose &amp; Anthony</p>
     ${ownerPart}
