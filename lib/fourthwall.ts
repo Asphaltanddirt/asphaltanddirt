@@ -153,6 +153,7 @@ export const MERCH_COLLECTIONS = [
       "after-hours-hoodie",
       "trailhead-hoodie",
       "trailhead-trucker",
+      "wide-open-trucker",
       "cold-start-beanie",
     ],
   },
