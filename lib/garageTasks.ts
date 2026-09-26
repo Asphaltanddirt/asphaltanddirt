@@ -104,10 +104,15 @@ export async function getTask(id: string): Promise<GarageTask | null> {
 }
 
 /** Creates this week's tasks from the active templates. Safe to run daily:
- *  anything already generated for the week is skipped. Returns what it made. */
+ *  anything already generated for the week is skipped. Returns what it made.
+ *  Never creates a task whose due day has already passed: a template added
+ *  mid-week would otherwise backfill work that was done before it existed
+ *  (9/26: 8 finished tasks for the week of 9/21 showed up as overdue). Regular
+ *  weeks are unaffected, because the cron builds each week a week ahead. */
 export async function generateWeek(reference = todayNY()): Promise<string[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
   const monday = weekOf(reference);
+  const today = todayNY();
   const [templates, existing] = await Promise.all([
     listRecords(TEMPLATES, `{Active} = TRUE()`, { baseId: BASE_ID }),
     listRecords(TASKS, undefined, { baseId: BASE_ID }),
@@ -122,6 +127,7 @@ export async function generateWeek(reference = todayNY()): Promise<string[]> {
     const dayIndex = WEEKDAYS.indexOf((template.fields.Weekday as string) || "Monday");
     const due = new Date(`${monday}T12:00:00Z`);
     due.setUTCDate(due.getUTCDate() + ((dayIndex + 6) % 7));
+    if (due.toISOString().slice(0, 10) < today) continue;
 
     await createRecord(
       TASKS,
