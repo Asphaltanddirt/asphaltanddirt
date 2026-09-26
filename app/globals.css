@@ -2732,3 +2732,12 @@ span.garage-numbers-trend{ display:block; width:64px; }
 
 /* Garage home: the per-person alert toggle under Your week. */
 .garage-notify-inline{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:10px 0 0; font-size:13px; color:var(--text-muted); }
+
+/* Trail Rating picker on desktop (Jose 9/25): badges left, the selected
+   rating's card right, so the section fills the row like its neighbours.
+   Phones keep the stacked layout. */
+@media (min-width: 900px){
+  .trail-rating-picker{ max-width:none; display:grid; grid-template-columns:minmax(0, 560px) minmax(0, 1fr); gap:24px; align-items:center; }
+  .trail-rating-picker .trail-rating-panel{ margin-top:0; }
+  .trail-rating-picker .trail-rating-facts{ max-width:none; }
+}
