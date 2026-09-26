@@ -8,6 +8,16 @@ import { fullCaption, isAutoPlatform, linkPlan, xLength } from "@/lib/socialCopy
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
+/** The Feature alternates sides weekly (Jose 9/22): the week of 9/14 led with
+ *  asphalt, 9/21 dirt, 9/28 asphalt… So a Feature or Alternate card's badge
+ *  shows its side instead (Jose 9/26); other topics keep their own name. */
+function topicLabel(topic: string, weekOf: string): string {
+  if ((topic !== "Feature" && topic !== "Alternate") || !weekOf) return topic;
+  const weeks = Math.round((Date.parse(`${weekOf}T12:00:00Z`) - Date.parse("2026-09-14T12:00:00Z")) / (7 * 86400000));
+  const featureIsAsphalt = weeks % 2 === 0;
+  return (topic === "Feature") === featureIsAsphalt ? "Asphalt" : "Dirt";
+}
+
 async function post(body: Record<string, unknown>) {
   const res = await fetch("/api/garage/social", {
     method: "POST",
@@ -189,7 +199,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
     <article id={`card-${item.id}`} className={className}>
       <header className="garage-social-head">
         <span className="garage-social-platform">{item.platform}</span>
-        <span className="garage-tag">{item.topic}</span>
+        <span className="garage-tag">{topicLabel(item.topic, item.weekOf)}</span>
         {item.testSlot && <span className="garage-tag garage-tag-new">Test · {item.testSlot}</span>}
         {item.platform === "X" && item.linkPlacement && <span className="garage-tag garage-tag-new">Link test · {item.linkPlacement.toLowerCase()}</span>}
         <span className="garage-social-when">
