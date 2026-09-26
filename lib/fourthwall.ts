@@ -6,6 +6,13 @@ import { sizeChartFor, type SizeChart } from "@/lib/sizeCharts";
 
 const API_URL = "https://storefront-api.fourthwall.com/v1";
 
+// How long a Fourthwall product edit takes to reach the site. Was 1 h; cut
+// to 10 min (Jose 9/26) so Size & fit edits show up soon after saving.
+const REVALIDATE = 600;
+// Bump to force every product to re-fetch now instead of waiting out the
+// cache (the cache is keyed by URL). 2 = 2026-09-26 store rebuild.
+const CACHE_VERSION = "2";
+
 // Not secret — this is the public domain shoppers land on for checkout, safe
 // to reference in code. Confirmed via GET /v1/shop and the Fourthwall dashboard.
 const SHOP_DOMAIN = "asphalt-and-dirt-shop.fourthwall.com";
@@ -115,8 +122,9 @@ export async function getFeaturedProducts(
       url.searchParams.set("storefront_token", token);
       url.searchParams.set("currency", "USD");
       url.searchParams.set("page", String(page));
+      url.searchParams.set("v", CACHE_VERSION);
 
-      const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
+      const res = await fetch(url.toString(), { next: { revalidate: REVALIDATE } });
       if (!res.ok) {
         console.error("Fourthwall products fetch failed", res.status, await res.text());
         break;
@@ -511,8 +519,9 @@ export async function getProductDetail(slug: string): Promise<ProductDetail | nu
     const url = new URL(`${API_URL}/products/${slug}`);
     url.searchParams.set("storefront_token", token);
     url.searchParams.set("currency", "USD");
+    url.searchParams.set("v", CACHE_VERSION);
 
-    const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
+    const res = await fetch(url.toString(), { next: { revalidate: REVALIDATE } });
     if (!res.ok) {
       if (res.status !== 404) {
         console.error("Fourthwall product detail fetch failed", res.status, await res.text());
