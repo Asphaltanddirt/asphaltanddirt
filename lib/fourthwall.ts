@@ -478,6 +478,15 @@ function reshapeProductDetail(product: FourthwallProductDetail): ProductDetail {
     .map((s) => ({ title: (s.title || "").trim(), bodyHtml: (s.bodyHtml || "").trim() }))
     .filter((s) => s.title && s.bodyHtml);
 
+  // Care, from our own per-blank copy (Fourthwall's API can't edit product
+  // text). Sits right after Size & fit; skipped if the product already has one.
+  const care = sizeGuide?.chart?.care;
+  if (care?.length && !sections.some((s) => /care/i.test(s.title))) {
+    const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const at = sections.findIndex((s) => /size/i.test(s.title));
+    sections.splice(at >= 0 ? at + 1 : sections.length, 0, { title: "Care", bodyHtml: care.map((c) => `<p>${esc(c)}</p>`).join("") });
+  }
+
   return {
     id: product.id,
     name: product.name,

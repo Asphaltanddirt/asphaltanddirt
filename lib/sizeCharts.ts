@@ -17,7 +17,16 @@ export interface SizeChart {
   columns: { label: string; hint: string }[];
   rows: { size: string; values: string[] }[];
   note?: string;
+  /** Care lines shown as a "Care" section on the product page (Jose 9/26).
+   *  Fourthwall's API can't edit product text, so the site adds it per blank. */
+  care: string[];
 }
+
+/** Approved 2026-09-26. Every printed tee and hoodie is DTG. */
+const CARE =
+  "Treat it like you treat your rig. Turn it inside out, wash cold, tumble dry low (or hang it), and keep the iron and bleach away from the print. It'll look good for a lot of trail days.";
+// Parents reviewing these blanks mention a new-ink smell.
+const CARE_LITTLE = [CARE, "Wash before first wear."];
 
 const LENGTH = { label: "Length", hint: "Top of the shoulder by the collar, down to the hem" };
 const WIDTH = { label: "Width", hint: "Across the chest, armpit seam to armpit seam, laid flat" };
@@ -40,6 +49,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "3XL", values: ["32.5", "27.75", "23.25"] },
         { size: "4XL", values: ["33.5", "29.75", "24.63"] },
       ],
+      care: [CARE],
     },
   },
   {
@@ -58,6 +68,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "3XL", values: ["32", "28"] },
       ],
       note: "The supplier says this hoodie runs small. For a looser fit, go one size up.",
+      care: [CARE],
     },
   },
   {
@@ -74,6 +85,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "L", values: ["22.75", "17.5", "14.5"] },
         { size: "XL", values: ["26", "19.5", "15.5"] },
       ],
+      care: [CARE],
     },
   },
   {
@@ -89,6 +101,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "L", values: ["23", "18.5", "29.25"] },
         { size: "XL", values: ["25", "20", "32.5"] },
       ],
+      care: [CARE],
     },
   },
   {
@@ -103,6 +116,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "4T", values: ["17.5", "14"] },
         { size: "5T", values: ["18.5", "15"] },
       ],
+      care: CARE_LITTLE,
     },
   },
   {
@@ -117,6 +131,7 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "24M", values: ["15.5", "11.75"] },
       ],
       note: "The supplier doesn't publish 6M measurements. It's one size smaller than 12M.",
+      care: CARE_LITTLE,
     },
   },
 ];
