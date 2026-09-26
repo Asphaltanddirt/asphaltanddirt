@@ -2,8 +2,8 @@ import crypto from "node:crypto";
 import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
 import { slotStart } from "@/lib/autoPost";
 import { getEventBySlug, getPublishedEvents, type EventDetail } from "@/lib/events";
-import { getPost, type SocialPost } from "@/lib/garageSocial";
-import { todayNY, weekOf } from "@/lib/garageTasks";
+import { getPost, POSTING_OWNER, type SocialPost } from "@/lib/garageSocial";
+import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
 import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
 import { SITE_URL } from "@/lib/site";
 import { isAutoPlatform, xLength } from "@/lib/socialCopy";
@@ -537,6 +537,17 @@ export async function sweepHandPromos(): Promise<{ skipped: string[]; flagged: s
     if (!post) continue;
     const fresh = await checkPromoFreshness(post);
     if (fresh.ok || fresh.action === "error") continue;
+    // Already queued in TikTok Studio / the group's scheduler: fixing the card
+    // doesn't fix the queued post, so someone has to change it there.
+    if (post.scheduledAt) {
+      await addTask({
+        title: `${fresh.action === "skip" ? "Delete" : "Update"} the pre-scheduled ${post.platform} post: ${post.name}`,
+        assignee: post.owner || POSTING_OWNER,
+        due: todayNY(),
+        details: `${fresh.reason}. It was scheduled in ${post.platform === "TikTok" ? "TikTok Studio" : "the group's scheduled posts"}, so it will still go out as written unless it's changed there.`,
+        link: `/garage/social?card=${post.id}`,
+      }).catch((err) => console.error("couldn't add the scheduled-post task", err));
+    }
     if (fresh.action === "skip") {
       await skipPromoCard(post, fresh.reason);
       out.skipped.push(post.name);

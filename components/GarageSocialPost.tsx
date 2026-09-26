@@ -161,7 +161,10 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const pasteCaption = fullCaption(item);
   // X counts every character of the post, hashtags included.
   const overLimit = item.platform === "X" && xLength(pasteCaption) > 280;
-  const overdue = item.status === "Planned" && item.due < today;
+  // Scheduled natively ahead of time (Jose 9/26): handled, just waiting to go
+  // live, so it never reads as overdue.
+  const scheduled = !auto && item.status === "Planned" && Boolean(item.scheduledAt);
+  const overdue = item.status === "Planned" && !scheduled && item.due < today;
   const dueToday = item.status === "Planned" && item.due === today;
   // The Facebook Group's Trail Talk is picked from options and feeds the
   // newsletter; the X version is an ordinary captioned post.
@@ -200,6 +203,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
       <header className="garage-social-head">
         <span className="garage-social-platform">{item.platform}</span>
         <span className="garage-tag">{topicLabel(item.topic, item.weekOf)}</span>
+        {scheduled && <span className="garage-tag garage-tag-new">Scheduled ✓</span>}
         {item.testSlot && <span className="garage-tag garage-tag-new">Test · {item.testSlot}</span>}
         {item.platform === "X" && item.linkPlacement && <span className="garage-tag garage-tag-new">Link test · {item.linkPlacement.toLowerCase()}</span>}
         <span className="garage-social-when">
@@ -361,6 +365,27 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
               onBlur={() => setArmed(false)}
             >
               {armed ? "Tap again to post now" : "Post now"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!auto && item.status === "Planned" && !editing && (
+        <div className="garage-social-auto">
+          <span className="garage-social-label">Pre-schedule</span>
+          <p>
+            {scheduled
+              ? `Scheduled in ${item.platform === "TikTok" ? "TikTok Studio" : "the app"}${item.scheduledBy ? ` by ${item.scheduledBy.split(" ")[0]}` : ""}. No reminders; paste the link below once it's live.`
+              : `Scheduled it in ${item.platform === "TikTok" ? "TikTok Studio" : "the group"} already? Tap Scheduled and the reminders for it stop.`}
+          </p>
+          <div className="garage-social-row">
+            <button
+              type="button"
+              className={scheduled ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+              disabled={busy}
+              onClick={() => run({ action: scheduled ? "unscheduled" : "scheduled" })}
+            >
+              {scheduled ? "Not scheduled" : "Scheduled"}
             </button>
           </div>
         </div>

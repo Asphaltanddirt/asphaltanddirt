@@ -184,6 +184,8 @@ export function effectiveWindow(post: SocialPost): string {
  */
 export function needsAHuman(post: SocialPost): boolean {
   if (isAutoPlatform(post.platform)) return false;
+  // Scheduled natively ahead of time (Jose 9/26): it goes out on its own.
+  if (post.scheduledAt) return false;
   return post.status !== "Posted" && post.status !== "Skipped";
   // NOT gated on having a caption or an attachment. That guard was added and
   // removed the same day (2026-09-23) after it suppressed the Wednesday trail

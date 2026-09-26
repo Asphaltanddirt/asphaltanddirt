@@ -117,7 +117,7 @@ function shortReason(reason: string): string {
 /** What a card still needs, or null when it's ready / out / skipped. */
 function cardNeed(post: SocialPost): { need: PlanNeed; what: string } | null {
   if (post.status === "Posted" || post.status === "Skipped") return null;
-  if (!isAutoPlatform(post.platform)) return { need: "by-hand", what: "by hand" };
+  if (!isAutoPlatform(post.platform)) return post.scheduledAt ? null : { need: "by-hand", what: "by hand" };
   if (post.autoStatus === "Posted" || post.autoStatus === "Processing") return null;
   const plan = planPublish(post);
   if (!plan.ok) return { need: "missing", what: shortReason(plan.reason) };

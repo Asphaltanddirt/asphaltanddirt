@@ -2,7 +2,7 @@ import { createRecord, listRecords, updateRecord, uploadAttachment, isAirtableCo
 import { getPostBySlug } from "@/lib/blog";
 import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
-import { todayNY, weekOf } from "@/lib/garageTasks";
+import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
 
 /**
@@ -73,6 +73,11 @@ export interface SocialPost {
   postUrl: string;
   postedAt: string;
   postedBy: string;
+  /** By-hand cards (TikTok, FB Group) scheduled natively ahead of time and
+   *  ticked Scheduled on the board (Jose 9/26). Set = handled until it's live:
+   *  no nudges, not by-hand work on the calendar. Blank = not scheduled. */
+  scheduledAt: string;
+  scheduledBy: string;
   testSlot: string;
   stats: {
     views: number | null;
@@ -158,6 +163,8 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     postUrl: str(f["Post URL"]),
     postedAt: str(f["Posted At"]),
     postedBy: str(f["Posted By"]),
+    scheduledAt: str(f["Scheduled At"]),
+    scheduledBy: str(f["Scheduled By"]),
     testSlot: str(f["Test Slot"]),
     stats: {
       views: num(f["Views 7d"]),
@@ -251,6 +258,8 @@ export async function getPostsNeedingAttention(today = todayNY()): Promise<Socia
       // is stuck surfaces as a failure notification and as a short count on
       // the week strip, not as somebody's to-do.
       .filter((p) => !isAutoPlatform(p.platform))
+      // Pre-scheduled natively: it goes out on its own, so it isn't a to-do.
+      .filter((p) => !p.scheduledAt)
       .sort((a, b) => a.due.localeCompare(b.due))
   );
 }
@@ -275,6 +284,17 @@ export async function holdEventPromos(slug: string, reason: string): Promise<{ h
     const rows = await listRecords(POSTS, `AND({Event} = '${escapeFormula(slug)}', {Status} = 'Planned')`, { baseId: BASE_ID });
     let held = 0;
     for (const r of rows) {
+      // Already queued in TikTok Studio / the group's scheduler: skipping the
+      // card doesn't stop it, so someone has to delete it there.
+      if (r.fields["Scheduled At"]) {
+        await addTask({
+          title: `Delete the pre-scheduled ${str(r.fields.Platform)} post (${reason})`,
+          assignee: str(r.fields.Owner) || POSTING_OWNER,
+          due: todayNY(),
+          details: `"${str(r.fields.Name)}" (due ${str(r.fields.Due).slice(0, 10)}) was scheduled in ${str(r.fields.Platform) === "TikTok" ? "TikTok Studio" : "the group's scheduled posts"}. The card is skipped, but the scheduled post will still go out unless it's deleted there.`,
+          link: "/garage/social",
+        }).catch((err) => console.error("couldn't add the delete-scheduled task", err));
+      }
       const note = [str(r.fields.Notes), `Held ${new Date().toISOString().slice(0, 10)}: ${reason}`].filter(Boolean).join("\n");
       await updateRecord(POSTS, r.id, { Status: "Skipped", Approved: false, Notes: note.slice(0, 2000) }, { baseId: BASE_ID });
       held++;
@@ -467,6 +487,15 @@ export async function getAutoPostQueue(today = todayNY()): Promise<SocialPost[]>
     { baseId: BASE_ID },
   );
   return rows.map(toPost).sort((a, b) => a.due.localeCompare(b.due));
+}
+
+export async function setScheduled(id: string, on: boolean, by: string) {
+  await updateRecord(
+    POSTS,
+    id,
+    on ? { "Scheduled At": new Date().toISOString(), "Scheduled By": by } : { "Scheduled At": null, "Scheduled By": null },
+    { baseId: BASE_ID },
+  );
 }
 
 export async function setStatus(id: string, status: PostStatus) {

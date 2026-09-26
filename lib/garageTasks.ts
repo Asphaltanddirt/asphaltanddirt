@@ -109,6 +109,23 @@ export async function getTask(id: string): Promise<GarageTask | null> {
  *  mid-week would otherwise backfill work that was done before it existed
  *  (9/26: 8 finished tasks for the week of 9/21 showed up as overdue). Regular
  *  weeks are unaffected, because the cron builds each week a week ahead. */
+/** A one-off task (no template), e.g. a cleanup the system can't do itself. */
+export async function addTask(input: { title: string; assignee: string; due: string; details?: string; link?: string }): Promise<void> {
+  if (!isAirtableConfigured(BASE_ID)) return;
+  await createRecord(
+    TASKS,
+    {
+      Title: input.title,
+      Assignee: input.assignee,
+      Due: input.due,
+      Status: "To do",
+      Details: input.details || "",
+      ...(input.link ? { Link: input.link } : {}),
+    },
+    { baseId: BASE_ID, typecast: true },
+  );
+}
+
 export async function generateWeek(reference = todayNY()): Promise<string[]> {
   if (!isAirtableConfigured(BASE_ID)) return [];
   const monday = weekOf(reference);

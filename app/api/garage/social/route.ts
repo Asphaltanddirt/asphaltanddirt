@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { autoPostNow, planPublish } from "@/lib/autoPost";
-import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setStatus } from "@/lib/garageSocial";
+import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setScheduled, setStatus } from "@/lib/garageSocial";
 import { restampPromoFacts } from "@/lib/eventPromo";
+import { isAutoPlatform } from "@/lib/socialCopy";
 
 /** Posting board actions. Owners only. */
 export const maxDuration = 300;
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
         const outcome = await autoPostNow(post.id);
         return NextResponse.json({ status: "ok", result: outcome?.result, message: outcome?.message });
       }
+      case "scheduled":
+      case "unscheduled":
+        if (isAutoPlatform(post.platform)) return NextResponse.json({ error: "This one posts itself. Approve it instead." }, { status: 400 });
+        await setScheduled(post.id, body.action === "scheduled", session.name || session.email);
+        break;
       case "skip":
         await setStatus(post.id, "Skipped");
         break;

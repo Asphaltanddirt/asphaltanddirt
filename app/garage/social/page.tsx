@@ -68,7 +68,7 @@ export default async function GarageSocialPage({
       ).length;
   const byHand = groupByDay((posts || []).filter((p) => !isAutoPlatform(p.platform)));
   const auto = groupByDay((posts || []).filter((p) => isAutoPlatform(p.platform)));
-  const openHand = (posts || []).filter((p) => !isAutoPlatform(p.platform) && p.status === "Planned").length;
+  const openHand = (posts || []).filter((p) => !isAutoPlatform(p.platform) && p.status === "Planned" && !p.scheduledAt).length;
   const toApprove = (posts || []).filter((p) => isAutoPlatform(p.platform) && p.status === "Planned" && !p.approved).length;
   const posted = posts?.filter((p) => p.status === "Posted").length ?? 0;
   const open = posts?.filter((p) => p.status === "Planned").length ?? 0;
