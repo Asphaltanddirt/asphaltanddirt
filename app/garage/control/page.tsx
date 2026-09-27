@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 const OWNER_LINKS = [
   { label: "Airtable", href: "https://airtable.com" },
   { label: "Vercel", href: "https://vercel.com/team-1121/asphaltanddirt" },
-  { label: "A&D Trail Runs (Drive)", href: "https://drive.google.com/drive/folders/0AKXjKBxcWmfuUk9PVA" },
+  { label: "A&D Events (Drive)", href: "https://drive.google.com/drive/folders/0AKXjKBxcWmfuUk9PVA" },
   { label: "Fourthwall", href: "https://fourthwall.com" },
   { label: "Resend", href: "https://resend.com/emails" },
   { label: "YouTube Studio", href: "https://studio.youtube.com" },

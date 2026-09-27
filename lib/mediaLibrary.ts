@@ -13,7 +13,7 @@ import { KIND_LABEL, type UploadKind } from "@/lib/mediaKinds";
  *
  * WHERE THE TRUTH LIVES: Drive holds the file, always. This table is an index
  * that points at it, keyed on the Drive **file id**, which survives a rename
- * and a move — and A&D moves footage on purpose (Trail Runs → Youtube drive →
+ * and a move — and A&D moves footage on purpose (Events drive → Youtube drive →
  * the edit Mac). A folder path would not survive that; the id does.
  *
  * KEYWORDS ARE FREE TEXT, ON PURPOSE. "Jeep", "jeeps" and "JL" will all appear

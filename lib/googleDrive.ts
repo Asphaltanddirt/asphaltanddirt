@@ -1,5 +1,5 @@
 /**
- * Google Drive for event media, in the "A&D Trail Runs" Shared Drive. Every
+ * Google Drive for event media, in the "A&D Events" Shared Drive (was "A&D Trail Runs"; holds ALL events, asphalt or dirt). Every
  * event gets one folder with the same layout (Drive protocol, 2026-09-17):
  *
  *   YYYY.MM.DD - Event Title /

@@ -55,7 +55,7 @@ export default async function GarageTeamPage() {
 
   const links = [
     { label: "Airtable", href: "https://airtable.com" },
-    { label: "A&D Trail Runs (Drive)", href: "https://drive.google.com/drive/folders/0AKXjKBxcWmfuUk9PVA" },
+    { label: "A&D Events (Drive)", href: "https://drive.google.com/drive/folders/0AKXjKBxcWmfuUk9PVA" },
     { label: "Vercel", href: "https://vercel.com/team-1121/asphaltanddirt" },
     { label: "Fourthwall", href: "https://fourthwall.com" },
     { label: "Resend", href: "https://resend.com/emails" },
