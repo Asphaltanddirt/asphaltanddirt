@@ -133,7 +133,12 @@ export async function getFeaturedProducts(
       const data: { results: FourthwallProduct[]; paging: { hasNextPage: boolean } } =
         await res.json();
       products.push(
-        ...data.results.map(reshapeProduct).filter((p): p is Product => Boolean(p))
+        ...data.results
+          .map(reshapeProduct)
+          .filter((p): p is Product => Boolean(p))
+          // Road & Trail Crew kit items (slug "crew-…") exist in Fourthwall only
+          // so we can order them at cost; they're never shown on the site.
+          .filter((p) => !p.slug.startsWith("crew-"))
       );
 
       if (!data.paging?.hasNextPage) break;
