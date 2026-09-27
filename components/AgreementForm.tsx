@@ -153,7 +153,7 @@ export default function AgreementForm({ prefill = null }: { prefill?: AgreementP
       {/* Shipping */}
       <div className="form-section">
         <h2 className="form-section-title">Where To Ship Your Welcome Kit</h2>
-        <p className="form-section-hint">Patch, stickers, and a shirt — on us.</p>
+        <p className="form-section-hint">A shirt and stickers — on us.</p>
         <div className="form-field">
           <label htmlFor="shippingAddress">Shipping Address</label>
           <textarea

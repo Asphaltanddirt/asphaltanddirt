@@ -213,7 +213,7 @@ export function buildWelcomePart2(input: {
       <tr>
         <td style="padding:20px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
           <p style="margin:0 0 16px;">Share your code or your link. Customers get ${esc(discount)} off either way: your link applies your code at checkout for them. Every eligible sale made with your code, typed or through your link, counts toward your commission. Commission is paid on eligible net merch sales.</p>
-          <p style="margin:0;">Your welcome merch package (patch, stickers, shirt) ships separately — watch your mailbox.</p>
+          <p style="margin:0;">Your welcome merch package (shirt and stickers) ships separately — watch your mailbox.</p>
         </td>
       </tr>
       <tr>

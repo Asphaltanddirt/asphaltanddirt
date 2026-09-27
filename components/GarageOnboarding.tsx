@@ -192,7 +192,7 @@ export default function GarageOnboarding({ initial }: { initial: Onboarding }) {
             <p>Shipped{when(ob.kitSent) && ` ${when(ob.kitSent)}`}.</p>
           ) : (
             <>
-              <p>Patch, stickers and a shirt{ob.shirtSize ? `, size ${ob.shirtSize}` : ""}.</p>
+              <p>A shirt and stickers{ob.shirtSize ? `, size ${ob.shirtSize}` : ""}.</p>
               {ob.shippingAddress ? (
                 <p className="garage-address">{ob.shippingAddress}</p>
               ) : (

@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
         <ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">
           <li>${hasCode ? "Their code is already made." : "Create their code (type the code and % off; the Garage makes it in Fourthwall and makes their link)."}</li>
           <li>Send welcome email 2 (their code + link).</li>
-          <li>Pack &amp; ship the welcome kit (patch, stickers, shirt, size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b> in Airtable.</li>
+          <li>Pack &amp; ship the welcome kit (shirt and stickers; shirt size <b>${escapeHtml(shirtSize)}</b>) to the address above, then check <b>Kit Sent</b> + set <b>Kit Sent Date</b> in Airtable.</li>
         </ol>
         <p style="font-size:13px;color:#555;">Commission rate ${escapeHtml(rate)} and Start Date were filled in automatically if blank.</p>
       </div>
