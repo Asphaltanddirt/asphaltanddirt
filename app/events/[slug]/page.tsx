@@ -104,7 +104,7 @@ export default async function EventDetailPage({
               <img src={event.photoUrl || FALLBACK_IMAGE.src} alt={event.photoUrl ? event.title : FALLBACK_IMAGE.alt} />
             </div>
             {hasGallery && (
-              <div className="event-detail-gallery">
+              <div className="event-detail-gallery" id="gallery">
                 <h2>Gallery</h2>
                 <BuildGallery images={galleryImages} />
               </div>
