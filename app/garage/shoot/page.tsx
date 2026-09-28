@@ -4,7 +4,7 @@ import GarageBack from "@/components/GarageBack";
 import { NIGHT_SHOTS, OWNER_SHOTS, POSTING_REMINDERS } from "@/lib/crewEve";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { footageStock } from "@/lib/garagePlan";
-import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
+import { getMediaLibrary, type MediaRow, isFresh } from "@/lib/mediaLibrary";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,7 +30,7 @@ export default async function GarageShotListPage() {
 
   const rows = await getMediaLibrary().catch(() => [] as MediaRow[]);
   const stock = footageStock(rows);
-  const unusedVideo = rows.filter((r) => /\.(mov|mp4|m4v)$/i.test(r.fileName) && !r.usedAt);
+  const unusedVideo = rows.filter((r) => /\.(mov|mp4|m4v)$/i.test(r.fileName) && isFresh(r));
   const words = WATCH_WORDS.map((w) => ({
     word: w,
     count: unusedVideo.filter((r) =>

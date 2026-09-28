@@ -3,7 +3,7 @@ import { listGarageUsers, type GarageUser } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
 import { footageStock } from "@/lib/garagePlan";
 import { todayNY } from "@/lib/garageTasks";
-import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
+import { getMediaLibrary, type MediaRow, isFresh } from "@/lib/mediaLibrary";
 import { alreadySent, ledgerKey, record } from "@/lib/notify";
 import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
@@ -127,7 +127,7 @@ function libraryNeeds(rows: MediaRow[]): string[] {
   const needs = footageStock(rows)
     .filter((s) => s.weeks < 3)
     .map((s) => `${s.side.toLowerCase()} footage (${s.unused} unused)`);
-  const unusedVideo = rows.filter((r) => /\.(mov|mp4|m4v)$/i.test(r.fileName) && !r.usedAt);
+  const unusedVideo = rows.filter((r) => /\.(mov|mp4|m4v)$/i.test(r.fileName) && isFresh(r));
   for (const w of ["mud", "water", "night", "recovery"]) {
     const n = unusedVideo.filter((r) => r.keywords.toLowerCase().split(",").map((k) => k.trim()).includes(w)).length;
     if (n < 3) needs.push(w);

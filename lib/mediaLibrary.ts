@@ -87,6 +87,15 @@ const tags = (v: unknown): string =>
 const list = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : str(v) ? [str(v)] : [];
 
+/** A clip can go out again 90 days after it was last used (Jose 9/28).
+ *  "Fresh" = never used, or last used more than that long ago. */
+export const REUSE_AFTER_DAYS = 90;
+export function isFresh(row: { usedAt: string }, now = new Date()): boolean {
+  if (!row.usedAt) return true;
+  const t = Date.parse(row.usedAt);
+  return Number.isNaN(t) || now.getTime() - t > REUSE_AFTER_DAYS * 86_400_000;
+}
+
 export const driveFileUrl = (fileId: string) => `https://drive.google.com/file/d/${fileId}/view`;
 export const driveFolderUrl = (folderId: string) => `https://drive.google.com/drive/folders/${folderId}`;
 

@@ -4,7 +4,7 @@ import { listGarageUsers } from "@/lib/garageAuth";
 import { getCrewEvents } from "@/lib/events";
 import { isAutoPlatform } from "@/lib/socialCopy";
 import { planPublish } from "@/lib/autoPost";
-import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
+import { getMediaLibrary, type MediaRow, isFresh } from "@/lib/mediaLibrary";
 
 /**
  * The Planning Calendar on the Garage home (spec: 9. Analytics/Planning
@@ -91,7 +91,7 @@ const LOW_WEEKS = 2;
 const isVideo = (r: MediaRow) => /\.(mov|mp4|m4v)$/i.test(r.fileName);
 
 export function footageStock(rows: MediaRow[]): FootageStock[] {
-  const unused = rows.filter((r) => isVideo(r) && !r.usedAt);
+  const unused = rows.filter((r) => isVideo(r) && isFresh(r));
   return (["Asphalt", "Dirt"] as const).map((side) => {
     const n = unused.filter((r) => r.eventType === side || r.eventType === "Both").length;
     return { side, unused: n, perWeek: CLIPS_PER_WEEK[side], weeks: Math.floor(n / CLIPS_PER_WEEK[side]) };
