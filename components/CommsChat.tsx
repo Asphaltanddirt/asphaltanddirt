@@ -61,6 +61,8 @@ interface Attendee {
   checkedIn: boolean;
   /** Staff-only roster field. */
   phone?: string;
+  /** Staff-only: kids on this adult's waiver. They check in with the adult. */
+  children?: { name: string; age: string; vehicle: string }[];
 }
 
 export interface Trail {
@@ -596,6 +598,12 @@ export default function CommsChat({
     .map((r) => ({ ...r, allIn: r.people.every((a) => a.checkedIn) }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const rigsIn = rigs.filter((r) => r.allIn).length;
+  // Heads, not sign-ups: kids on an adult's waiver count too, and check in
+  // with that adult.
+  const heads = (a: Attendee) => 1 + (a.children?.length || 0);
+  const peopleTotal = roster.reduce((n, a) => n + heads(a), 0);
+  const peopleIn = alreadyCheckedIn.reduce((n, a) => n + heads(a), 0);
+  const kidsTotal = peopleTotal - roster.length;
   const updatedAt = trail.channelUpdatedAt ? formatTime(trail.channelUpdatedAt) : "";
 
   // Attendees on the trail: the channel and the emergency note, nothing to
@@ -729,8 +737,9 @@ export default function CommsChat({
               <p className="comms-staging-count">Nobody&apos;s signed up yet.</p>
             ) : (
               <p className="comms-staging-count">
-                <strong>{rigsIn}</strong> of {rigs.length} {rigs.length === 1 ? "rig" : "rigs"} · {alreadyCheckedIn.length} of{" "}
-                {roster.length} {roster.length === 1 ? "person" : "people"} checked in
+                <strong>{rigsIn}</strong> of {rigs.length} {rigs.length === 1 ? "rig" : "rigs"} · {peopleIn} of{" "}
+                {peopleTotal} {peopleTotal === 1 ? "person" : "people"} checked in
+                {kidsTotal > 0 && ` (incl. ${kidsTotal} ${kidsTotal === 1 ? "kid" : "kids"})`}
               </p>
             )}
             {signupQrSvg && (
@@ -754,7 +763,7 @@ export default function CommsChat({
                     {rig.people.length > 1 && (
                       <div className="comms-rig-head">
                         <span>
-                          <strong>{rig.name}</strong> · {rig.people.length} people
+                          <strong>{rig.name}</strong> · {rig.people.reduce((n, a) => n + heads(a), 0)} people
                         </span>
                         <button
                           type="button"
@@ -771,6 +780,14 @@ export default function CommsChat({
                           <strong>{a.screenName}</strong>
                           {rig.people.length === 1 && (
                             <span style={{ color: "var(--text-dim)", marginLeft: 6 }}>{a.vehicleCallsign}</span>
+                          )}
+                          {!!a.children?.length && (
+                            <span className="comms-roster-kids" style={{ display: "block", color: "var(--text-dim)", fontSize: "0.85em" }}>
+                              With:{" "}
+                              {a.children
+                                .map((c) => `${c.name}${c.age ? ` (${c.age})` : ""}${c.vehicle && c.vehicle.toLowerCase() !== a.vehicleCallsign.trim().toLowerCase() ? `, rides in ${c.vehicle}` : ""}`)
+                                .join(" · ")}
+                            </span>
                           )}
                           {a.phone && (
                             <a className="comms-roster-phone" href={`tel:${a.phone.replace(/[^\d+]/g, "")}`}>

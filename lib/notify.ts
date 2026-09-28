@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 

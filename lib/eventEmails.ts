@@ -124,7 +124,7 @@ export function buildRsvpConfirmation(input: {
             ? ""
             : `<p style="margin:16px 0 0;">The exact meetup spot and full plan go out 3 days before the ride, in case anything changes. Need details sooner to plan travel or time off? Just reply to this email and we'll help.</p>`
         }
-        ${trailRatingBlock(event)}${requirementsBlock(event)}
+        ${trailRatingBlock(event)}${requirementsNote(event, eventUrl)}
         ${fbNudge}
         ${listsNote}
         <p style="margin:20px 0 0;font-size:13px;"><a href="${eventUrl}/calendar.ics" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Add It To Your Calendar &rarr;</a></p>
@@ -136,9 +136,33 @@ export function buildRsvpConfirmation(input: {
   return { subject: `You're confirmed: ${event.title}`, html: shell(`You're confirmed for ${event.title}`, bodyRows) };
 }
 
+/** The confirmation's short version of the Requirements (Jose 9/28: the full
+ *  rules block in a first email "can scare off a newbie"). They already ticked
+ *  the box on the form, so: one line + a link, plus any venue to-dos (waiver,
+ *  pass) since those need doing before the day. The full set still rides in
+ *  the D−3 plan email, for reading offline at the trailhead. */
+function requirementsNote(event: EventDetail, eventUrl: string): string {
+  const req = requirementsFor(event);
+  if (!req) return "";
+  const which = req.ruleSets.map((set) => set.title).join(" and ");
+  const link = (url: string, label: string) =>
+    `<a href="${esc(url)}" style="color:${ORANGE};font-weight:bold;text-decoration:none;margin-right:16px;">${label} &rarr;</a>`;
+  const todos = req.venues
+    .filter((v) => v.waiverUrl || v.passUrl)
+    .map(
+      (v) =>
+        `<p style="margin:8px 0 0;"><strong>${esc(v.name)}:</strong> ${[
+          v.waiverUrl ? link(v.waiverUrl, "Sign Their Waiver") : "",
+          v.passUrl ? link(v.passUrl, "Get Your Pass") : "",
+        ].join("")}</p>`,
+    )
+    .join("");
+  return `<p style="margin:16px 0 0;">You agreed to this ride's requirements${which ? ` (${esc(which)})` : ""} when you RSVP'd. ${link(`${eventUrl}#requirements`, "Read Them Anytime")}</p>${todos}`;
+}
+
 /** The event's Requirements (lib/vehicleRules.ts): its own items, then the
- *  standard set for each Venue Type. Repeated in the email so riders have them offline at the
- *  trailhead. Empty when the event has none. */
+ *  standard set for each Venue Type. The full set goes in the D−3 plan email
+ *  so riders have them offline at the trailhead. Empty when the event has none. */
 /** The A&D Trail Rating (lib/trailRating.ts): the shape, name and plain word,
  *  then that level's standard lines. Emails can't rely on color alone either,
  *  so the shape character and the plain word always travel with it. */
@@ -331,13 +355,13 @@ export function buildWaiverInvite(input: {
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0 0 16px;"><strong>${esc(event.title)}</strong> is tomorrow, ${esc(formatDate(event.date))}. We&apos;re running a live group chat for the day &mdash; no app, no login. Quick waiver first, then you&apos;ll get your own link to the chat:</p>
+        <p style="margin:0 0 16px;"><strong>${esc(event.title)}</strong> is tomorrow, ${esc(formatDate(event.date))}. We&#39;re running a live group chat for the day &mdash; no app, no login. Quick waiver first, then you&#39;ll get your own link to the chat:</p>
       </td>
     </tr>
     <tr>
       <td align="center" style="padding:8px 32px 24px;">
         <a href="${waiverUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Sign Up For The Group Chat &rarr;</a>
-        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is just for you &mdash; please don&apos;t post it publicly or forward it to anyone not attending.</p>
+        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is just for you &mdash; please don&#39;t post it publicly or forward it to anyone not attending.</p>
       </td>
     </tr>
     ${releaseRow(releaseUrl)}
@@ -362,13 +386,13 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0 0 16px;">Here&apos;s your personal link to the group chat for <strong>${esc(event.title)}</strong>. We&apos;ll check everyone in at Staging before we roll out, and that&apos;s when the group chat opens up &mdash; until then this connects you straight to staff. Once you&apos;re in, you can post photos and videos from the day right in the chat.</p>
+        <p style="margin:0 0 16px;">Here&#39;s your personal link to the group chat for <strong>${esc(event.title)}</strong>. We&#39;ll check everyone in at Staging before we roll out, and that&#39;s when the group chat opens up &mdash; until then this connects you straight to staff. Once you&#39;re in, you can post photos and videos from the day right in the chat.</p>
       </td>
     </tr>
     <tr>
       <td align="center" style="padding:8px 32px 24px;">
         <a href="${commsUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Open Your Chat Link &rarr;</a>
-        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is yours alone &mdash; please don&apos;t forward it. Save this email so you can find it on event day.</p>
+        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is yours alone &mdash; please don&#39;t forward it. Save this email so you can find it on event day.</p>
       </td>
     </tr>
   `;
@@ -432,7 +456,7 @@ function releaseRow(releaseUrl?: string): string {
   return `
     <tr>
       <td align="center" style="padding:0 32px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;">
-        Can&apos;t make it after all? <a href="${releaseUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Release your spot &rarr;</a><br>
+        Can&#39;t make it after all? <a href="${releaseUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Release your spot &rarr;</a><br>
         <span style="font-size:13px;color:#948c81;">One tap. It frees the spot for someone else and tells us not to wait for you.</span>
       </td>
     </tr>`;
@@ -461,7 +485,7 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
   const first = esc(firstNameOf(recipientName));
   const eventUrl = `${SITE_URL}/events/${event.slug}`;
   const where = [event.meetupPoint, glanceTimes(event)].filter(Boolean).join("\n\n") ||
-    `${event.generalArea ? `${event.generalArea}. ` : ""}The exact spot is in your confirmation email.`;
+    `${event.generalArea ? `${event.generalArea}. ` : ""}The exact spot is coming by email shortly.`;
   const bring = event.atAGlance.filter((f) => /bring|gear|pack|need/i.test(f.label)).map((f) => f.value);
 
   const box = (html: string) => `
@@ -481,17 +505,19 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
     <tr>
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 8px;">Hey ${first},</p>
-        <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&apos;s the plan.</p>
+        <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&#39;s the plan.</p>
         ${box(`${label("Where And When")}<div style="white-space:pre-wrap;">${esc(where)}</div>`)}
         ${bring.length ? box(`${label("Bring")}<ul style="margin:0;padding-left:20px;">${bring.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}
         ${trailRatingBlock(event)}${requirementsBlock(event)}
-        ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&apos;ll get an email from us and we&apos;ll post it on our socials, so check before you leave.`)}
+        ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&#39;ll get an email from us and we&#39;ll post it on our socials, so check before you leave.`)}
         ${box(`${label("Waiver")}${
           hasTailgate
             ? "Your waiver link comes by email the evening before. It also gets you into the group chat for the day, so keep an eye out for it."
-            : "If the park or venue has its own waiver, it&apos;s linked in the requirements above. Sign it before you leave home; there&apos;s rarely signal at the trailhead."
+            : requirementsFor(event)?.venues.some((v) => v.waiverUrl)
+              ? "The venue has its own waiver, linked in the requirements above. Sign it before you leave home; there&#39;s rarely signal at the trailhead."
+              : "Nothing to sign for this one. Just show up."
         }`)}
-        ${box(`${label("Who&apos;s Riding With You?")}Bringing a passenger or a second rig? Every adult needs their own RSVP, so send them the event page: <a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">${esc(eventUrl.replace(/^https?:\/\//, ""))}</a>. Or just reply and tell us who&apos;s coming with you.`)}
+        ${box(`${label("Who&#39;s Riding With You?")}Bringing a passenger or a second rig? Every adult needs their own RSVP, so send them the event page: <a href="${eventUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">${esc(eventUrl.replace(/^https?:\/\//, ""))}</a>. Or just reply and tell us who&#39;s coming with you.`)}
       </td>
     </tr>
   `;

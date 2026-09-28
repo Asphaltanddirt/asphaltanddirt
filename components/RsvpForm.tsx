@@ -107,7 +107,7 @@ export default function RsvpForm({
         </div>
         <h2>{firstNameSubmitted ? `You're In, ${firstNameSubmitted}!` : "You're Confirmed!"}</h2>
         <p className="lead" style={{ maxWidth: 480 }}>
-          Check your email for the meetup details — we just sent them to you.
+          Your confirmation is in your inbox. The exact meetup spot comes with it, or 3 days before the ride.
         </p>
         <p style={{ maxWidth: 480 }}>
           <a href={`/events/${slug}/calendar.ics`} className="btn btn-outline btn-sm">

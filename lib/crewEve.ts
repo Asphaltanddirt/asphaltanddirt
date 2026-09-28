@@ -101,7 +101,12 @@ export function crewEveHtml(input: {
     : "";
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#1a1712;max-width:560px;">
     <p>Hey ${esc(firstName)},</p>
-    <p>Thanks for coming out tomorrow for <strong>${esc(event.title)}</strong>. We couldn't do these without you. Let's have a great ride.</p>
+    <p>${
+      // Owners get the crew email too (to see what crew see), so it can't thank them for coming.
+      owner
+        ? `Tomorrow is <strong>${esc(event.title)}</strong>. Below is what the crew got tonight, then your shot list.`
+        : `Thanks for coming out tomorrow for <strong>${esc(event.title)}</strong>. We couldn't do these without you. Let's have a great ride.`
+    }</p>
     <p>If you end up filming, a few things that help us most when we edit:</p>
     <ul style="padding-left:20px;">${tips.map((t) => `<li style="margin:0 0 8px;">${esc(t)}</li>`).join("")}</ul>
     ${
@@ -111,7 +116,7 @@ export function crewEveHtml(input: {
         : `<p><strong>Heads up:</strong> Tailgate, our event chat, opens tonight. Everyone who RSVP'd can post in it, so you'll see questions and hellos. You don't have to jump in, but you're welcome to say hi or answer anything you know. It goes quiet once we roll out; on the trail it's the radio.</p>`
     }
     <p>When you're home, drop it in <a href="${upload}" style="color:#f86000;">Garage → Upload</a> and pick the event. No rush.</p>
-    <p>See you out there,<br>Jose &amp; Anthony</p>
+    ${owner ? "" : "<p>See you out there,<br>Jose &amp; Anthony</p>"}
     ${ownerPart}
   </div>`;
   return { subject: `Tomorrow: ${event.title}`, html };

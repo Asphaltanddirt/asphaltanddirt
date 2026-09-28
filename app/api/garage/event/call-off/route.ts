@@ -171,6 +171,14 @@ export async function POST(req: NextRequest) {
 
   if (kind === "update") return NextResponse.json({ status: "ok", mode: "live", steps, emailed, text: "", cardIds: [], results: [] });
 
+  // A hidden event stays hidden: calling off a crew ride or an Unlisted event
+  // must not announce it on socials (found in the 9/28 readiness pass). The
+  // RSVPs (if any) were emailed above.
+  if (event.crewOnly || event.unlisted) {
+    steps.social = `Not posted to socials: this event is ${event.crewOnly ? "Crew Only" : "Unlisted"}, so it stays off public channels.`;
+    return NextResponse.json({ status: "ok", mode: "live", steps, emailed, text: "", cardIds: [], results: [] });
+  }
+
   // 3. The notice, posted now: the same text + image on every channel and in
   //    the email ("the text and the photo are repetitive, in case the image is
   //    skipped"). The photo is required up front, so nothing waits on it.

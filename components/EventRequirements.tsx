@@ -7,7 +7,7 @@ export default function EventRequirementsSection({ requirements }: { requirement
   const { items, venues, ruleSets } = requirements;
   const count = items.length + venues.length + ruleSets.reduce((n, set) => n + set.groups.reduce((m, g) => m + g.rules.length, 0), 0);
   return (
-    <details className="event-rules">
+    <details className="event-rules" id="requirements">
       <summary>
         <span className="eyebrow">Requirements</span>
         <span className="event-rules-hint">

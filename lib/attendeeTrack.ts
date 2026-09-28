@@ -6,6 +6,7 @@ import { getLiveEventsOn, listRsvpsForAttendeeTrack, stampRsvp, type EventDetail
 import { todayNY } from "@/lib/garageTasks";
 import { sendEmail } from "@/lib/resendEmail";
 import { releaseLink } from "@/lib/rsvpRelease";
+import { alreadySent, ledgerKey, record } from "@/lib/notify";
 
 /**
  * The attendee track (event promo countdown, 2026-09-24): what a site RSVP
@@ -35,6 +36,30 @@ import { releaseLink } from "@/lib/rsvpRelease";
 /** Not before 10 AM New York time on the day: a plan email at 1 AM reads as spam. */
 const SEND_FROM_HOUR = 10;
 
+/** The plan email's whole point is where to meet. With Meetup Point blank on
+ *  D−3 it waits (Jose gets an alert) until this hour, then goes anyway so
+ *  nobody is left with no plan at all (9/28 readiness pass). */
+const MEETUP_HOLD_UNTIL_HOUR = 18;
+const TEAM_EMAIL = process.env.EVENT_COMMS_TEAM_EMAIL || "team@asphaltanddirt.com";
+
+/** One email per event per day: "Meetup Point is blank". */
+async function alertMissingMeetup(event: EventDetail, when: "tomorrow" | "today"): Promise<void> {
+  const key = ledgerKey("Missing meetup", event.id, todayNY());
+  if (await alreadySent(key)) return;
+  const subject = `Meetup Point is blank: ${event.title.trim()}`;
+  const html = `<p>The 3-days-before plan email for <strong>${event.title.trim()}</strong> ${
+    when === "tomorrow" ? "goes out tomorrow from 10 AM" : "is due today and is on hold"
+  }, and the event has no <strong>Meetup Point</strong> yet.</p><p>Fill it in: Garage → Events → ${event.title.trim()} → Edit event. ${
+    when === "today" ? `The email waits until ${MEETUP_HOLD_UNTIL_HOUR - 12} PM, then goes without a location.` : ""
+  }</p>`;
+  try {
+    await sendEmail({ to: TEAM_EMAIL, subject, html });
+    await record(key, "Missing meetup", subject, "email", "sent", event.slug);
+  } catch (err) {
+    console.error("missing-meetup alert failed", event.slug, err);
+  }
+}
+
 function addDays(date: string, n: number): string {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
@@ -51,6 +76,8 @@ export interface AttendeeTrackResult {
   sent: number;
   failed: number;
   skippedNoStamp: number;
+  /** Set when the plan email was held for a blank Meetup Point. */
+  held?: string;
 }
 
 async function sendOnce(
@@ -75,7 +102,7 @@ async function sendOnce(
   }
 }
 
-async function runForEvent(event: EventDetail, kind: "plan" | "reminder" | "thanks"): Promise<AttendeeTrackResult> {
+async function runForEvent(event: EventDetail, kind: "plan" | "reminder" | "thanks", now: Date): Promise<AttendeeTrackResult> {
   const result: AttendeeTrackResult = { slug: event.slug, email: kind, sent: 0, failed: 0, skippedNoStamp: 0 };
   const settings = await getCommsSettings(event.slug).catch(() => null);
   const hasTailgate = Boolean(settings?.active);
@@ -85,6 +112,11 @@ async function runForEvent(event: EventDetail, kind: "plan" | "reminder" | "than
   // the same email for events without Tailgate (a pop-up, a meet), to everyone
   // who RSVP'd, the morning after (Jose 9/25: they take photos too).
   if (kind === "thanks" && hasTailgate) return result;
+
+  if (kind === "plan" && !event.meetupPoint.trim()) {
+    await alertMissingMeetup(event, "today");
+    if (hourNY(now) < MEETUP_HOLD_UNTIL_HOUR) return { ...result, held: "Meetup Point is blank" };
+  }
 
   const rsvps = await listRsvpsForAttendeeTrack(event.id);
   for (const r of rsvps) {
@@ -129,11 +161,16 @@ export async function runAttendeeTrack(now = new Date()): Promise<AttendeeTrackR
   const reminderDay = addDays(today, 1);
   // Yesterday's events only, never older: nothing is backfilled to past events.
   const thanksDay = addDays(today, -1);
-  const events = await getLiveEventsOn([planDay, reminderDay, thanksDay]);
+  const alertDay = addDays(today, 4);
+  const events = await getLiveEventsOn([planDay, reminderDay, thanksDay, alertDay]);
+  // A day's warning before the plan email, while there's time to fix it.
+  for (const event of events.filter((e) => e.date === alertDay && !e.meetupPoint.trim())) {
+    await alertMissingMeetup(event, "tomorrow");
+  }
   const results: AttendeeTrackResult[] = [];
-  for (const event of events) {
+  for (const event of events.filter((e) => e.date !== alertDay)) {
     try {
-      results.push(await runForEvent(event, event.date === planDay ? "plan" : event.date === reminderDay ? "reminder" : "thanks"));
+      results.push(await runForEvent(event, event.date === planDay ? "plan" : event.date === reminderDay ? "reminder" : "thanks", now));
     } catch (err) {
       console.error("attendee track failed for", event.slug, err);
     }

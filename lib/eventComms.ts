@@ -610,14 +610,66 @@ export interface RosterEntry {
   vehicleCallsign: string;
   checkedIn: boolean;
   phone: string;
+  /** Kids on this adult's waiver, so the headcount and the sweep include them
+   *  (found in the 9/28 readiness pass: an adult + child showed as 1 person). */
+  children: RosterChild[];
+}
+
+export interface RosterChild {
+  name: string;
+  age: string;
+  vehicle: string;
+}
+
+/** Children per signer email, from each person's latest waiver for the event.
+ *  Cached under the attendees tag, which signing already expires. */
+async function getChildrenByEmail(slug: string): Promise<Map<string, RosterChild[]>> {
+  const records = await listRecords(SIGNATURES_TABLE, `{Event Slug} = '${escapeFormulaString(slug)}'`, {
+    baseId: BASE_ID,
+    revalidate: ATTENDEES_CACHE_SECONDS,
+    tags: [commsTag("attendees", slug)],
+  });
+  const latest = new Map<string, { signedAt: string; children: RosterChild[] }>();
+  for (const r of records) {
+    const email = String(r.fields.Email || "").trim().toLowerCase();
+    if (!email) continue;
+    const signedAt = String(r.fields["Signed At"] || "");
+    const prev = latest.get(email);
+    if (prev && prev.signedAt >= signedAt) continue;
+    const children: RosterChild[] = [];
+    for (let n = 1; n <= 4; n++) {
+      const name = String(r.fields[`Child ${n} Name`] || "").trim();
+      if (!name) continue;
+      children.push({
+        name,
+        age: String(r.fields[`Child ${n} Age`] || "").trim(),
+        vehicle: String(r.fields[`Child ${n} Vehicle`] || "").trim(),
+      });
+    }
+    latest.set(email, { signedAt, children });
+  }
+  return new Map([...latest].map(([email, v]) => [email, v.children]));
 }
 
 /** Full roster for one event — staff-only (Staging). */
 export async function getAttendeeRoster(slug: string): Promise<RosterEntry[]> {
-  const attendees = await getEventAttendees(slug);
+  const [attendees, childrenByEmail] = await Promise.all([
+    getEventAttendees(slug),
+    getChildrenByEmail(slug).catch((err) => {
+      console.error("roster children lookup failed for", slug, err);
+      return new Map<string, RosterChild[]>();
+    }),
+  ]);
   return attendees
     .sort((a, b) => a.screenName.localeCompare(b.screenName))
-    .map((a) => ({ id: a.id, screenName: a.screenName, vehicleCallsign: a.vehicleCallsign, checkedIn: a.checkedIn, phone: a.phone }));
+    .map((a) => ({
+      id: a.id,
+      screenName: a.screenName,
+      vehicleCallsign: a.vehicleCallsign,
+      checkedIn: a.checkedIn,
+      phone: a.phone,
+      children: childrenByEmail.get(a.email.trim().toLowerCase()) || [],
+    }));
 }
 
 export async function setCheckedIn(slug: string, attendeeId: string, checkedIn: boolean): Promise<void> {
