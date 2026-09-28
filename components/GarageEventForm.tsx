@@ -302,7 +302,7 @@ export default function GarageEventForm({ initial, venues }: { initial: Editable
 
         <label htmlFor="ev-details">Full details</label>
         <textarea id="ev-details" rows={6} {...text("fullDetails")} aria-describedby="ev-details-help" />
-        <p id="ev-details-help" className="garage-form-note">Parking, what to bring, the plan. Emailed to RSVPs, never on the public page.</p>
+        <p id="ev-details-help" className="garage-form-note">Parking, what to bring, the plan. Goes out in the 3-days-before plan email (and the confirmation for anyone who RSVPs later than that), never on the public page. Put the meeting spot in Meetup Point too.</p>
       </section>
 
       {(isPast || form.recap) && (

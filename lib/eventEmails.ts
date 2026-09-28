@@ -60,6 +60,12 @@ export interface EventEmail {
  * and — only for people who said they're not already in the FB group —
  * a nudge to join it too.
  */
+/** Whole days from today (New York) to an event date. */
+function daysUntil(date: string): number {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+  return Math.round((Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
+}
+
 export function buildRsvpConfirmation(input: {
   rsvpName: string;
   alreadyInFbGroup: string;
@@ -68,6 +74,7 @@ export function buildRsvpConfirmation(input: {
   joinedEventUpdates?: boolean;
   joinedNewsletter?: boolean;
 }): EventEmail {
+  const lateRsvp = daysUntil(input.event.date) < 3;
   const { rsvpName, alreadyInFbGroup, event, joinedEventUpdates = false, joinedNewsletter = false } = input;
   const first = esc(firstNameOf(rsvpName));
   const eventUrl = `${SITE_URL}/events/${event.slug}`;
@@ -113,14 +120,17 @@ export function buildRsvpConfirmation(input: {
       <td style="padding:8px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;">
           <tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;white-space:pre-wrap;">${esc(
-            [event.meetupPoint, event.fullDetails].filter(Boolean).join("\n\n") ||
-              `${event.generalArea ? `Area: ${event.generalArea}\n\n` : ""}We'll follow up with exact meetup details as it gets closer.`,
+            // Full Details waits for the D−3 plan email (Jose 9/28: keep the
+            // first email short for newcomers). Late RSVPs (inside D−3) never
+            // get a plan email, so theirs carries everything now.
+            [event.meetupPoint, lateRsvp ? event.fullDetails : ""].filter(Boolean).join("\n\n") ||
+              (event.generalArea ? `Area: ${event.generalArea}` : "Location to come."),
           )}</td></tr>
         </table>
         ${
           // No meetup spot yet is normal: it goes out 3 days before, in case
           // anything changes (Jose 9/25). Planning can't always wait that long.
-          event.meetupPoint
+          event.meetupPoint || lateRsvp
             ? ""
             : `<p style="margin:16px 0 0;">The exact meetup spot and full plan go out 3 days before the ride, in case anything changes. Need details sooner to plan travel or time off? Just reply to this email and we'll help.</p>`
         }
@@ -507,6 +517,7 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
         <p style="margin:0 0 8px;">Hey ${first},</p>
         <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&#39;s the plan.</p>
         ${box(`${label("Where And When")}<div style="white-space:pre-wrap;">${esc(where)}</div>`)}
+        ${event.fullDetails ? box(`${label("The Full Rundown")}<div style="white-space:pre-wrap;">${esc(event.fullDetails)}</div>`) : ""}
         ${bring.length ? box(`${label("Bring")}<ul style="margin:0;padding-left:20px;">${bring.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}
         ${trailRatingBlock(event)}${requirementsBlock(event)}
         ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&#39;ll get an email from us and we&#39;ll post it on our socials, so check before you leave.`)}
