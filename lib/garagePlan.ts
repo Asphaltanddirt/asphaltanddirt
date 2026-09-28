@@ -132,6 +132,16 @@ function topicLabel(post: SocialPost): string {
   return `${post.topic || "Post"}${clip}`;
 }
 
+/** Whose move it is, not just whose card. Captions and images on the blog
+ *  cards (Feature / Alternate) and the Trail Talk copy are Claude's Monday
+ *  job; approving, clips and by-hand posts stay with the card's owner. Jose
+ *  9/28: a card missing its caption showed as "2 for you" when it wasn't his. */
+function whoseMove(post: SocialPost, n: { need: PlanNeed; what: string }): string {
+  const claudesCopy = ["Feature", "Alternate", "Trail Talk"].includes(post.topic) && post.asset !== "Vertical clip";
+  if (n.need === "missing" && claudesCopy && (n.what === "no caption" || n.what === "no image")) return "claude";
+  return post.owner;
+}
+
 /** Group a day's open cards by what they are and whose they are, so one clip
  *  going to three platforms reads as one thing to do, not three. */
 function postItems(posts: SocialPost[], isPast: boolean, name: (o: string) => string, monday: string): PlanItem[] {
@@ -139,7 +149,7 @@ function postItems(posts: SocialPost[], isPast: boolean, name: (o: string) => st
   for (const post of posts) {
     const n = cardNeed(post);
     if (!n) continue;
-    const key = `${topicLabel(post)}|${post.owner}`;
+    const key = `${topicLabel(post)}|${whoseMove(post, n)}`;
     const g = groups.get(key) || { posts: [], needs: [] };
     g.posts.push(post);
     g.needs.push({ post, ...n });
