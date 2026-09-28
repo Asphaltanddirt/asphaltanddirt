@@ -10,8 +10,8 @@
  *
  * Instagram and Facebook via Meta's insights; X via our own-post metrics
  * (added 2026-09-22 for the X link test). TikTok joins when its API review
- * clears. Runs daily from the garage-tasks cron, so every post passes through
- * its 7–10 day window on some run.
+ * clears. Runs Mondays from the garage-tasks cron (or on request with
+ * ?stats=1), so every post passes through its 7–13 day window on one run.
  */
 
 import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
@@ -22,9 +22,12 @@ import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 const BASE_ID = SOCIAL_BASE_ID;
 const POSTS = "Social Posts";
 
-/** Days after posting when lifetime numbers still read as 7-day numbers. */
+/** Days after posting when lifetime numbers still read as 7-day numbers.
+ *  7–13 since this runs Mondays only (Jose 9/28: daily pulls made week over
+ *  week hard to read), so every post lands in exactly one Monday's window.
+ *  Late-week posts read a little past 7 days; nearly all views come early. */
 const FILL_FROM_DAY = 7;
-const FILL_UNTIL_DAY = 10;
+const FILL_UNTIL_DAY = 13;
 
 export interface SocialStatsSyncResult {
   ok: boolean;

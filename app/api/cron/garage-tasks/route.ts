@@ -31,13 +31,20 @@ export async function GET(req: NextRequest) {
         console.error("social week generation failed", err);
         return [] as string[];
       });
-    // Fill the board's 7-day numbers (Meta + X). Daily, so no post skips its
-    // 7–10 day window. Failures never block the rest.
-    const [metaStats, xStats, threadsStats] = await Promise.all([
-      syncSocialStatsFromMeta().catch((err) => ({ ok: false, error: String(err) })),
-      syncSocialStatsFromX().catch((err) => ({ ok: false, error: String(err) })),
-      syncSocialStatsFromThreads().catch((err) => ({ ok: false, error: String(err) })),
-    ]);
+    // Fill the board's 7-day numbers (Meta + X + Threads). Mondays only, so
+    // Garage → Numbers moves once a week and week over week reads cleanly
+    // (Jose 9/28); ?stats=1 pulls an update on request. Failures never block
+    // the rest.
+    const weekdayNY = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(new Date());
+    const pullStats = weekdayNY === "Mon" || new URL(req.url).searchParams.get("stats") === "1";
+    const skipped = { ok: true, skipped: "Mondays only (add ?stats=1 to pull now)" };
+    const [metaStats, xStats, threadsStats] = pullStats
+      ? await Promise.all([
+          syncSocialStatsFromMeta().catch((err) => ({ ok: false, error: String(err) })),
+          syncSocialStatsFromX().catch((err) => ({ ok: false, error: String(err) })),
+          syncSocialStatsFromThreads().catch((err) => ({ ok: false, error: String(err) })),
+        ])
+      : [skipped, skipped, skipped];
     // Stamp Library footage that went out on a card without a Library pick
     // (#7), so the Planning Calendar's footage count stays honest.
     const mediaUsage = await matchPostedMedia({ write: true })
