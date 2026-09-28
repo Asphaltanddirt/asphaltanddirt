@@ -12,6 +12,47 @@ function esc(v: string) {
   return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/** Text typed into a Garage field, as email HTML. Gmail drops
+ *  white-space:pre-wrap, which ran Full Details together as one block (Jose
+ *  9/28). Blank lines split paragraphs, other line breaks stay as <br>, lines
+ *  starting "* ", "- " or "• " become a list, and a short ALL-CAPS line
+ *  becomes a bold heading. */
+function textToHtml(text: string): string {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n").map((l) => l.trim());
+  const out: string[] = [];
+  let para: string[] = [];
+  let list: string[] = [];
+  const flushPara = () => {
+    if (para.length) out.push(`<p style="margin:0 0 12px;">${para.map(esc).join("<br>")}</p>`);
+    para = [];
+  };
+  const flushList = () => {
+    if (list.length) out.push(`<ul style="margin:0 0 12px;padding-left:20px;">${list.map((l) => `<li style="margin:0 0 4px;">${esc(l)}</li>`).join("")}</ul>`);
+    list = [];
+  };
+  for (const line of lines) {
+    const bullet = line.match(/^[*•-]\s+(.*)$/);
+    const heading = line.length <= 40 && /[A-Z]/.test(line) && line === line.toUpperCase() && !/^\d/.test(line);
+    if (!line) {
+      flushPara();
+      flushList();
+    } else if (bullet) {
+      flushPara();
+      list.push(bullet[1]);
+    } else if (heading) {
+      flushPara();
+      flushList();
+      out.push(`<p style="margin:16px 0 6px;font-weight:bold;letter-spacing:1px;color:#1a1712;">${esc(line)}</p>`);
+    } else {
+      flushList();
+      para.push(line);
+    }
+  }
+  flushPara();
+  flushList();
+  return out.join("").replace(/^<p style="margin:16px/, '<p style="margin:0');
+}
+
 function firstNameOf(fullName: string) {
   return (fullName || "").trim().split(/\s+/)[0] || "there";
 }
@@ -119,7 +160,7 @@ export function buildRsvpConfirmation(input: {
     <tr>
       <td style="padding:8px 32px 0;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f2;border:1px solid #ded9d3;">
-          <tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;white-space:pre-wrap;">${esc(
+          <tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#4a453f;">${textToHtml(
             // Full Details waits for the D−3 plan email (Jose 9/28: keep the
             // first email short for newcomers). Late RSVPs (inside D−3) never
             // get a plan email, so theirs carries everything now.
@@ -320,7 +361,7 @@ export function buildRsvpUpdate(input: {
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         ${para(`Hey ${first},`)}
         ${para(opening)}
-        ${para(`<span style="white-space:pre-wrap;">${esc(message)}</span>`, closing ? "0 0 16px" : "0")}
+        ${textToHtml(message)}
         ${para(closing, confirmButton ? "0 0 4px" : "0")}
         ${confirmButton}
       </td>
@@ -338,46 +379,20 @@ export function buildRsvpUpdate(input: {
   return { subject, html: shell(`${eyebrow} — ${event.title.trim()}`, bodyRows) };
 }
 
-/** Day-before reminder — sent by the comms-reminder cron to every RSVP
- *  (and, separately, one copy to the team inbox to paste into the FB
- *  group). Links to the waiver/registration page, not the chat directly —
- *  the chat link itself is personal, emailed only after the waiver's
- *  signed (see buildPersonalCommsLink below). */
+/** The Tailgate day-before email: the same "See you tomorrow" email as events
+ *  without Tailgate, plus the group-chat sign-up (Jose 9/28: "can't 4 and 5 be
+ *  combined"). Sent by the comms-reminder cron to every RSVP, plus one team
+ *  copy (no release link) to paste into the FB group. Links to the waiver
+ *  page, not the chat: the chat link is personal, emailed after signing. */
 export function buildWaiverInvite(input: {
   recipientName: string;
   event: EventDetail;
   waiverUrl: string;
-  /** This person's signed "release your spot" link. The Tailgate invite IS
-   *  the day-before email for events with Tailgate, so the release link rides
-   *  in it rather than in a second email the same evening. Blank on the team copy. */
+  /** This person's signed "release your spot" link. Blank on the team copy. */
   releaseUrl?: string;
 }): EventEmail {
-  const { recipientName, event, waiverUrl, releaseUrl } = input;
-  const first = esc(firstNameOf(recipientName));
-
-  const bodyRows = `
-    <tr>
-      <td align="center" style="padding:40px 32px 8px;">
-        <p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${ORANGE};">See You Tomorrow</p>
-        <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:900;letter-spacing:0.5px;color:#1a1712;">${esc(event.title)}</h1>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
-        <p style="margin:0 0 16px;">Hey ${first},</p>
-        <p style="margin:0 0 16px;"><strong>${esc(event.title)}</strong> is tomorrow, ${esc(formatDate(event.date))}. We&#39;re running a live group chat for the day &mdash; no app, no login. Quick waiver first, then you&#39;ll get your own link to the chat:</p>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" style="padding:8px 32px 24px;">
-        <a href="${waiverUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Sign Up For The Group Chat &rarr;</a>
-        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is just for you &mdash; please don&#39;t post it publicly or forward it to anyone not attending.</p>
-      </td>
-    </tr>
-    ${releaseRow(releaseUrl)}
-  `;
-
-  return { subject: `Tomorrow: ${event.title} — sign up for the group chat`, html: shell(`See you tomorrow at ${event.title}`, bodyRows) };
+  const built = buildDayBeforeReminder(input);
+  return { ...built, subject: `Tomorrow: ${input.event.title.trim()} — sign up for the group chat` };
 }
 
 /** Sent immediately after someone signs the waiver — their actual, personal
@@ -516,8 +531,8 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
       <td style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 8px;">Hey ${first},</p>
         <p style="margin:0;"><strong>${esc(event.title.trim())}</strong> is ${esc(formatDate(event.date))}. Here&#39;s the plan.</p>
-        ${box(`${label("Where And When")}<div style="white-space:pre-wrap;">${esc(where)}</div>`)}
-        ${event.fullDetails ? box(`${label("The Full Rundown")}<div style="white-space:pre-wrap;">${esc(event.fullDetails)}</div>`) : ""}
+        ${box(`${label("Where And When")}${textToHtml(where)}`)}
+        ${event.fullDetails ? box(`${label("The Full Rundown")}${textToHtml(event.fullDetails)}`) : ""}
         ${bring.length ? box(`${label("Bring")}<ul style="margin:0;padding-left:20px;">${bring.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`) : ""}
         ${trailRatingBlock(event)}${requirementsBlock(event)}
         ${box(`${label("Weather")}Check the forecast${event.generalArea ? ` for ${esc(event.generalArea)}` : ""} the night before. If weather or trail conditions call it off, you&#39;ll get an email from us and we&#39;ll post it on our socials, so check before you leave.`)}
@@ -537,15 +552,32 @@ export function buildPlanEmail(input: { recipientName: string; event: EventDetai
 }
 
 /**
- * The D−1 reminder with "release your spot", for events WITHOUT Tailgate.
- * Events with Tailgate already send a day-before email (buildWaiverInvite,
- * from the comms-reminder cron), and the release link goes in that one, so
- * nobody gets two emails about tomorrow.
+ * The day-before email, one design for every event. Events with Tailgate get
+ * the group-chat sign-up in it (buildWaiverInvite, from the comms-reminder
+ * cron); events without get it from the attendee track. Either way it carries
+ * "release your spot", and nobody gets two emails about tomorrow. Rules are a
+ * link here (Jose 9/28): the full set is in the D−3 plan email.
  */
-export function buildDayBeforeReminder(input: { recipientName: string; event: EventDetail; releaseUrl: string }): EventEmail {
-  const { recipientName, event, releaseUrl } = input;
+export function buildDayBeforeReminder(input: { recipientName: string; event: EventDetail; releaseUrl?: string; waiverUrl?: string }): EventEmail {
+  const { recipientName, event, releaseUrl, waiverUrl } = input;
   const first = esc(firstNameOf(recipientName));
+  const eventUrl = `${SITE_URL}/events/${event.slug}`;
   const where = [event.meetupPoint, glanceTimes(event)].filter(Boolean).join("\n\n");
+
+  const tailgate = waiverUrl
+    ? `
+    <tr>
+      <td style="padding:0 32px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
+        <p style="margin:0;">We&#39;re running a live group chat for the day &mdash; no app, no login. Quick waiver first, then you&#39;ll get your own link to the chat:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:8px 32px 24px;">
+        <a href="${waiverUrl}" style="display:inline-block;background-color:${ORANGE};color:#1a1712;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;">Sign Up For The Group Chat &rarr;</a>
+        <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#948c81;">This link is just for you &mdash; please don&#39;t post it publicly or forward it to anyone not attending.</p>
+      </td>
+    </tr>`
+    : "";
 
   const bodyRows = `
     <tr>
@@ -558,10 +590,11 @@ export function buildDayBeforeReminder(input: { recipientName: string; event: Ev
       <td style="padding:16px 32px 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#4a453f;">
         <p style="margin:0 0 16px;">Hey ${first},</p>
         <p style="margin:0 0 16px;"><strong>${esc(event.title.trim())}</strong> is tomorrow, ${esc(formatDate(event.date))}.</p>
-        ${where ? `<p style="margin:0 0 16px;white-space:pre-wrap;">${esc(where)}</p>` : ""}
-        ${trailRatingBlock(event)}${requirementsBlock(event)}
+        ${where ? textToHtml(where) : ""}
+        ${trailRatingBlock(event)}${requirementsNote(event, eventUrl)}
       </td>
     </tr>
+    ${tailgate}
     ${releaseRow(releaseUrl)}
   `;
 
