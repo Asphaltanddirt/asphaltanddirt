@@ -174,7 +174,10 @@ export default async function EventDetailPage({
                     </div>
                   ) : (
                     <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
-                      The exact meetup spot goes out by email once you RSVP.{" "}
+                      {/* Set: it's in the RSVP confirmation. Blank: it comes with the D−3 plan email. */}
+                      {event.meetupPoint
+                        ? "The exact meetup spot goes out by email once you RSVP."
+                        : "The exact meetup spot goes out by email 3 days before the ride."}{" "}
                       <a href={socialLinks.facebookGroup} target="_blank" rel="noopener">Already in the FB group?</a> The
                       discussion&apos;s happening there too.
                     </p>
