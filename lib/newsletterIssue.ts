@@ -1,6 +1,7 @@
 import { listRecords, updateRecord } from "@/lib/airtable";
 import type { WeeklyDigestOptions } from "@/lib/newsletter";
 import { socialLinks } from "@/lib/social";
+import { builds } from "@/lib/builds";
 
 /**
  * The Newsletters table (one row per weekly digest) in the Newsletter base.
@@ -24,12 +25,46 @@ function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
+/** The build slug a Rig of the Week link or From the Garage field points at. */
+function buildSlugOf(value: unknown): string {
+  const v = str(value);
+  const m = v.match(/\/builds\/([a-z0-9-]+)/i);
+  return (m ? m[1] : v).toLowerCase();
+}
+
+/**
+ * From the Garage when nobody pinned one: the host build that has gone
+ * longest without appearing in EITHER build section (Rig of the Week or From
+ * the Garage), never this issue's own Rig of the Week. Jose 9/28: "keep them
+ * spaced out as far as possible". Ties go to the builds page order.
+ */
+function spacedGarageBuild(allRows: { fields: Record<string, unknown> }[], current: { fields: Record<string, unknown> }): string {
+  const week = str(current.fields["Week Of"]);
+  const thisRig = buildSlugOf(current.fields["Rig - Build Link"]);
+  const lastSeen = new Map<string, string>();
+  for (const r of allRows) {
+    const w = str(r.fields["Week Of"]);
+    if (!w || w >= week) continue;
+    for (const slug of [buildSlugOf(r.fields["Rig - Build Link"]), buildSlugOf(r.fields["Garage - Build slug"])]) {
+      if (slug && w > (lastSeen.get(slug) || "")) lastSeen.set(slug, w);
+    }
+  }
+  const pick = builds
+    .filter((b) => b.slug !== thisRig)
+    .map((b, i) => ({ slug: b.slug, seen: lastSeen.get(b.slug) || "", i }))
+    .sort((a, b) => a.seen.localeCompare(b.seen) || a.i - b.i)[0];
+  return pick?.slug || "";
+}
+
 /** The newest Draft row from the Newsletters table, mapped to digest
  *  options. Returns null if there's no Draft row (or the base isn't set). */
 export async function getDraftIssue(): Promise<DraftIssue | null> {
   if (!BASE_ID) return null;
 
-  const rows = await listRecords(TABLE, "{Status} = 'Draft'", { baseId: BASE_ID });
+  // Every row, not just Drafts: the sent ones are the history From the
+  // Garage is spaced against.
+  const allRows = await listRecords(TABLE, undefined, { baseId: BASE_ID });
+  const rows = allRows.filter((r) => str(r.fields.Status) === "Draft");
   if (rows.length === 0) return null;
 
   rows.sort((a, b) =>
@@ -52,7 +87,7 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
     };
   }
 
-  const garageBuild = str(f["Garage - Build slug"]);
+  const garageBuild = str(f["Garage - Build slug"]) || spacedGarageBuild(allRows, row);
   if (garageBuild) options.garageBuildSlug = garageBuild;
 
   const ttTitle = str(f["Trail Talk - Title"]);
