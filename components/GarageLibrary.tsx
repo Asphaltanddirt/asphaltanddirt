@@ -40,9 +40,9 @@ const RANGES: { value: Range; label: string }[] = [
   { value: "all", label: "All" },
 ];
 const KIND_ORDER = ["Event", "Garage Take", "Other footage"];
-/** Cards per "Show more". Two dozen thumbnails is about what a phone scrolls
- *  through before someone either finds it or narrows the search. */
-const PAGE = 24;
+/** Rows per "Show more". Rows are slim (9/29), so 40 is still only a few
+ *  phone screens before someone either finds it or narrows the search. */
+const PAGE = 40;
 
 function formatBytes(bytes: number) {
   if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
@@ -392,57 +392,71 @@ export default function GarageLibrary({ items, canAttach = false }: { items: Lib
           <p>Nothing matches. Try fewer words, or a wider date range.</p>
         </section>
       ) : (
-        <ul className="garage-library-grid" aria-label="Footage">
+        // One slim row per file (Jose 9/29: the cards were too long on a phone,
+        // "huge swipes" to reach the videos). Tap a row to open it in place with
+        // the full details, Download and Add to a posting card.
+        <ul className="garage-library-rows" aria-label="Footage">
           {visible.map((r) => {
             const tooBig = r.size > DOWNLOAD_LIMIT_BYTES;
             const tags = [r.eventType, ...r.venueTypes, r.kind].filter(Boolean);
+            const sub = [r.eventType, r.kind, formatDate(r.uploadedAt)].filter(Boolean).join(" · ");
             return (
-              <li key={r.id} className="garage-library-card">
-                <Thumb fileId={r.fileId} fileName={r.fileName} />
-                <div className="garage-library-info">
-                  <p className="garage-library-name">{r.fileName || "Untitled"}</p>
-                  {r.label && <p className="garage-library-label">{r.label}</p>}
-                  {tags.length > 0 && (
-                    <p className="garage-library-tags">
-                      {tags.map((t) => (
-                        <span key={t} className="garage-tag">
-                          {t}
-                        </span>
-                      ))}
-                    </p>
-                  )}
-                  {r.keywords && <p className="garage-library-keywords">{r.keywords}</p>}
-                  <p className="garage-library-meta">
-                    {formatDate(r.uploadedAt)}
-                    {r.uploadedBy ? ` · ${r.uploadedBy}` : ""}
-                    {r.size ? ` · ${formatBytes(r.size)}` : ""}
-                  </p>
-                </div>
-                {tooBig ? (
-                  // Over the limit: Drive's own app downloads it (see
-                  // DOWNLOAD_LIMIT_BYTES for why we don't stream it ourselves).
-                  <a
-                    href={r.driveLink || `https://drive.google.com/file/d/${r.fileId}/view`}
-                    target="_blank"
-                    rel="noopener"
-                    className="btn btn-outline garage-library-action"
-                  >
-                    Open in Drive ↗<span className="sr-only"> {r.fileName}</span>
-                  </a>
-                ) : (
-                  // No `download` attribute: the route's Content-Disposition
-                  // already saves it, and an older row with no Size may be
-                  // redirected to Drive, which `download` would save as HTML.
-                  <a
-                    href={`/api/garage/library/file?id=${encodeURIComponent(r.fileId)}`}
-                    className="btn btn-primary garage-library-action"
-                  >
-                    Download<span className="sr-only"> {r.fileName}</span>
-                  </a>
-                )}
-                {canAttach && !tooBig && /\.(mov|mp4|m4v)$/i.test(r.fileName) && (
-                  <AttachToCard fileId={r.fileId} fileName={r.fileName} />
-                )}
+              <li key={r.id}>
+                <details className="garage-library-row">
+                  <summary>
+                    <Thumb fileId={r.fileId} fileName={r.fileName} />
+                    <span className="garage-library-row-text">
+                      <span className="garage-library-row-title">{r.label || r.fileName || "Untitled"}</span>
+                      <span className="garage-library-row-sub">{sub}</span>
+                    </span>
+                    <span className="garage-library-row-size">{r.size ? formatBytes(r.size) : ""}</span>
+                  </summary>
+                  <div className="garage-library-row-body">
+                    <div className="garage-library-info">
+                      <p className="garage-library-name">{r.fileName || "Untitled"}</p>
+                      {tags.length > 0 && (
+                        <p className="garage-library-tags">
+                          {tags.map((t) => (
+                            <span key={t} className="garage-tag">
+                              {t}
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                      {r.keywords && <p className="garage-library-keywords">{r.keywords}</p>}
+                      <p className="garage-library-meta">
+                        {formatDate(r.uploadedAt)}
+                        {r.uploadedBy ? ` · ${r.uploadedBy}` : ""}
+                        {r.size ? ` · ${formatBytes(r.size)}` : ""}
+                      </p>
+                    </div>
+                    {tooBig ? (
+                      // Over the limit: Drive's own app downloads it (see
+                      // DOWNLOAD_LIMIT_BYTES for why we don't stream it ourselves).
+                      <a
+                        href={r.driveLink || `https://drive.google.com/file/d/${r.fileId}/view`}
+                        target="_blank"
+                        rel="noopener"
+                        className="btn btn-outline garage-library-action"
+                      >
+                        Open in Drive ↗<span className="sr-only"> {r.fileName}</span>
+                      </a>
+                    ) : (
+                      // No `download` attribute: the route's Content-Disposition
+                      // already saves it, and an older row with no Size may be
+                      // redirected to Drive, which `download` would save as HTML.
+                      <a
+                        href={`/api/garage/library/file?id=${encodeURIComponent(r.fileId)}`}
+                        className="btn btn-primary garage-library-action"
+                      >
+                        Download<span className="sr-only"> {r.fileName}</span>
+                      </a>
+                    )}
+                    {canAttach && !tooBig && /\.(mov|mp4|m4v)$/i.test(r.fileName) && (
+                      <AttachToCard fileId={r.fileId} fileName={r.fileName} />
+                    )}
+                  </div>
+                </details>
               </li>
             );
           })}

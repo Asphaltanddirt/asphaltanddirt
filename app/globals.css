@@ -2762,3 +2762,20 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-link-button{ background:none; border:0; padding:6px 0; font:inherit; color:inherit; text-transform:inherit; letter-spacing:inherit; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
 .garage-link-button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 .garage-done-toggle{ margin-top:6px; }
+
+/* Library as slim rows (2026-09-29): thumb · title · side/kind/date · size; tap to open. */
+.garage-library-search{ position:sticky; top:calc(var(--garage-top, 0px) + 4px); z-index:5; }
+.garage-library-rows{ list-style:none; margin:0; padding:0; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-card); }
+.garage-library-rows > li + li{ border-top:1px solid var(--border); }
+.garage-library-row > summary{ display:grid; grid-template-columns:56px 1fr auto; gap:12px; align-items:center; padding:8px 12px; min-height:64px; list-style:none; cursor:pointer; }
+.garage-library-row > summary::-webkit-details-marker{ display:none; }
+.garage-library-row > summary:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+.garage-library-row[open] > summary{ background:var(--bg-elevated); }
+.garage-library-row .garage-library-thumb{ width:56px; height:56px; aspect-ratio:auto; border-radius:6px; overflow:hidden; flex:none; }
+.garage-library-row .garage-library-nothumb{ font-size:10px; }
+.garage-library-row .garage-library-badge{ left:3px; bottom:3px; padding:1px 4px; font-size:9px; }
+.garage-library-row-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.garage-library-row-title{ font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.garage-library-row-sub{ font-size:12px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.garage-library-row-size{ font-size:12px; color:var(--text-dim); white-space:nowrap; }
+.garage-library-row-body{ display:flex; flex-direction:column; gap:8px; padding:4px 0 8px; border-top:1px solid var(--border); }
