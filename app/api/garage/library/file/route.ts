@@ -52,6 +52,9 @@ export async function GET(req: NextRequest) {
   // UTF-8 form for everything else (emoji and accents survive on a phone).
   const name = (info.name || row.fileName || "download").replace(/[\r\n"\\]/g, "");
   const ascii = name.replace(/[^\x20-\x7e]/g, "_");
-  headers.set("Content-Disposition", `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`);
+  // ?inline=1 plays it in the page (the Library's preview player, 9/29);
+  // otherwise it's a download.
+  const disposition = req.nextUrl.searchParams.get("inline") === "1" ? "inline" : "attachment";
+  headers.set("Content-Disposition", `${disposition}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`);
   return new Response(upstream.body, { status: upstream.status, headers });
 }

@@ -226,6 +226,35 @@ function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }
   );
 }
 
+/** The big look when a row is opened (Jose 9/29: "i cant watch the video or see
+ *  the photo without downloading it"). Photos show Drive's large JPEG preview
+ *  (so HEIC works everywhere); videos play in place, streamed with seeking.
+ *  Only mounted once the row is opened, so a long list doesn't load 40 videos.
+ *  Over DOWNLOAD_LIMIT_BYTES a function can't stream it in time: Drive plays it. */
+function Preview({ item }: { item: LibraryItem }) {
+  const isVideo = /\.(mov|mp4|m4v)$/i.test(item.fileName);
+  const poster = `/api/garage/library/thumb?id=${encodeURIComponent(item.fileId)}&size=1200`;
+  if (!isVideo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img className="garage-library-preview" src={poster} alt={item.label || item.fileName} />
+    );
+  }
+  if (item.size > DOWNLOAD_LIMIT_BYTES) {
+    return <p className="garage-form-note">Too big to play here. Open in Drive to watch it.</p>;
+  }
+  return (
+    <video
+      className="garage-library-preview"
+      controls
+      playsInline
+      preload="metadata"
+      poster={poster}
+      src={`/api/garage/library/file?id=${encodeURIComponent(item.fileId)}&inline=1`}
+    />
+  );
+}
+
 export default function GarageLibrary({ items, canAttach = false }: { items: LibraryItem[]; canAttach?: boolean }) {
   const [query, setQuery] = useState("");
   const [eventType, setEventType] = useState("");
@@ -233,6 +262,7 @@ export default function GarageLibrary({ items, canAttach = false }: { items: Lib
   const [kind, setKind] = useState("");
   const [range, setRange] = useState<Range>("all");
   const [shown, setShown] = useState(PAGE);
+  const [opened, setOpened] = useState<Set<string>>(new Set());
   // Fixed once per visit, so "this month" doesn't shift under someone mid-scroll.
   const [now] = useState(() => new Date());
 
@@ -402,7 +432,12 @@ export default function GarageLibrary({ items, canAttach = false }: { items: Lib
             const sub = [r.eventType, r.kind, formatDate(r.uploadedAt)].filter(Boolean).join(" · ");
             return (
               <li key={r.id}>
-                <details className="garage-library-row">
+                <details
+                  className="garage-library-row"
+                  onToggle={(e) => {
+                    if (e.currentTarget.open) setOpened((prev) => new Set(prev).add(r.id));
+                  }}
+                >
                   <summary>
                     <Thumb fileId={r.fileId} fileName={r.fileName} />
                     <span className="garage-library-row-text">
@@ -412,6 +447,7 @@ export default function GarageLibrary({ items, canAttach = false }: { items: Lib
                     <span className="garage-library-row-size">{r.size ? formatBytes(r.size) : ""}</span>
                   </summary>
                   <div className="garage-library-row-body">
+                    {opened.has(r.id) && <Preview item={r} />}
                     <div className="garage-library-info">
                       <p className="garage-library-name">{r.fileName || "Untitled"}</p>
                       {tags.length > 0 && (

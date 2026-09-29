@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
   const row = await findMediaByFileId(fileId).catch(() => null);
   if (!row) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
-  const upstream = await fetchDriveThumbnail(row.fileId).catch(() => null);
+  // ?size= for the bigger preview when a row is opened (9/29); rows use 480.
+  const size = Math.min(1600, Math.max(120, Number(req.nextUrl.searchParams.get("size")) || 480));
+  const upstream = await fetchDriveThumbnail(row.fileId, size).catch(() => null);
   if (!upstream?.body) return NextResponse.json({ error: "No thumbnail." }, { status: 404 });
 
   return new Response(upstream.body, {
