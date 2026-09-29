@@ -344,6 +344,8 @@ function DayRow({ day, mine, open }: { day: PlanDay; mine: Is; open: Is }) {
 function DayView({ day, mine, open }: { day: PlanDay; mine: Is; open: Is }) {
   const due = day.items.filter((i) => !i.done);
   const done = day.items.filter((i) => i.done);
+  // Done items stay out of the way (Jose 9/29); "Show" brings them back.
+  const [showDone, setShowDone] = useState(false);
   const mineCount = due.filter((i) => mine(i) && open(i)).length;
   return (
     <>
@@ -383,16 +385,22 @@ function DayView({ day, mine, open }: { day: PlanDay; mine: Is; open: Is }) {
       <div className="garage-plan-zone">
         <div className="garage-plan-label">
           <span>{day.isPast && !day.isToday ? "Still open" : "Due"}</span>
-          <span>{done.length ? `${done.length} done` : ""}</span>
+          <span>
+            {done.length > 0 && (
+              <button type="button" className="garage-link-button" onClick={() => setShowDone((v) => !v)}>
+                ✓ {done.length} done · {showDone ? "Hide" : "Show"}
+              </button>
+            )}
+          </span>
         </div>
-        {due.length || done.length ? (
+        {due.length || (showDone && done.length) ? (
           <ul className="garage-plan-items is-boxed">
-            {[...due, ...done].map((i) => (
+            {[...due, ...(showDone ? done : [])].map((i) => (
               <ItemRow key={i.id} item={i} mine={mine} />
             ))}
           </ul>
         ) : (
-          <p className="garage-plan-quiet">Nothing needs anyone this day.</p>
+          <p className="garage-plan-quiet">{done.length ? "All done." : "Nothing needs anyone this day."}</p>
         )}
         {day.unmarked > 0 && (
           <p className="garage-plan-quiet mt-2">

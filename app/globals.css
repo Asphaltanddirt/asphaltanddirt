@@ -2758,3 +2758,7 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-social-done-body > article:target{ outline:2px solid var(--accent); outline-offset:3px; }
 .garage-plan-weekbtn{ margin-top:14px; width:100%; min-height:44px; }
 .garage-social-day{ padding:0; margin-top:8px; }
+/* "✓ 3 done · Show" — ticked items hide until asked for (2026-09-29). */
+.garage-link-button{ background:none; border:0; padding:6px 0; font:inherit; color:inherit; text-transform:inherit; letter-spacing:inherit; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.garage-link-button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.garage-done-toggle{ margin-top:6px; }
