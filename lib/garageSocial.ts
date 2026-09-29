@@ -4,6 +4,7 @@ import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
+import { trailTalkImageFor } from "@/lib/trailTalk";
 
 /**
  * The social posting board in A&D Garage (/garage/social).
@@ -553,4 +554,30 @@ export async function addAssetFromUrl(id: string, file: { url: string; filename:
   if (!rows[0]) throw new Error("That card is gone.");
   const existing = (rows[0].fields.Assets as { id: string }[] | undefined) || [];
   await updateRecord(POSTS, id, { Assets: [...existing.map((a) => ({ id: a.id })), file] }, { baseId: BASE_ID });
+}
+
+/**
+ * Every Trail Talk card (X, Threads and the Facebook Group) gets the week's
+ * Trail Talk image as soon as the Newsletters row has one (Jose 9/29: "trail
+ * talk needs a photo for attention"). Before this only X/Threads got it, at
+ * the moment they posted, so the by-hand group card never had an image to
+ * save when it was scheduled on Monday. Cards that already have a file, or
+ * are Posted/Skipped, are left alone. Runs from the daily garage-tasks cron.
+ */
+export async function attachTrailTalkImages(mondays: string[]): Promise<number> {
+  let attached = 0;
+  for (const monday of mondays) {
+    const cards = (await getWeekPosts(monday)).filter(
+      (p) => p.topic === "Trail Talk" && p.assets.length === 0 && p.status !== "Posted" && p.status !== "Skipped",
+    );
+    if (!cards.length) continue;
+    const img = await trailTalkImageFor(monday).catch(() => null);
+    if (!img) continue;
+    for (const card of cards) {
+      await addAssetFromUrl(card.id, img)
+        .then(() => attached++)
+        .catch((err) => console.error("trail talk image attach failed", card.id, err));
+    }
+  }
+  return attached;
 }

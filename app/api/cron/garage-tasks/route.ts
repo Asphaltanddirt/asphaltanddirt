@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateWeek } from "@/lib/garageTasks";
-import { generateSocialWeek } from "@/lib/garageSocial";
+import { attachTrailTalkImages, generateSocialWeek } from "@/lib/garageSocial";
+import { generateWeek, todayNY, weekOf } from "@/lib/garageTasks";
 import { matchPostedMedia } from "@/lib/mediaUsage";
 import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
 import { checkThreadsSetup, isThreadsConnected } from "@/lib/threadsPost";
@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
         console.error("social week generation failed", err);
         return [] as string[];
       });
+    // The week's Trail Talk image onto every Trail Talk card (X, Threads, FB
+    // Group) once it exists, so the by-hand group card has it to save.
+    const trailTalkImages = await attachTrailTalkImages([weekOf(todayNY()), weekOf(nextWeek)]).catch((err) => {
+      console.error("trail talk images failed", err);
+      return 0;
+    });
     // Fill the board's 7-day numbers (Meta + X + Threads). Mondays only, so
     // Garage → Numbers moves once a week and week over week reads cleanly
     // (Jose 9/28); ?stats=1 pulls an update on request. Failures never block
@@ -53,7 +59,7 @@ export async function GET(req: NextRequest) {
     // Touch the Threads token daily so it renews in its last 20 days even in a
     // quiet week (it only refreshes when used).
     const threads = (await isThreadsConnected().catch(() => false)) ? await checkThreadsSetup() : { ok: false, skipped: "not connected" };
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, metaStats, xStats, threadsStats, threads, mediaUsage });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, trailTalkImages, metaStats, xStats, threadsStats, threads, mediaUsage });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });
