@@ -59,3 +59,13 @@ export function isAutoPlatform(platform: string): platform is AutoPlatform {
 export function xLength(text: string): number {
   return text.replace(/https?:\/\/\S+/g, "x".repeat(23)).length;
 }
+
+/** The Feature alternates sides weekly (Jose 9/22): the week of 9/14 led with
+ *  asphalt, 9/21 dirt, 9/28 asphalt… So a Feature or Alternate card's badge
+ *  shows its side instead (Jose 9/26); other topics keep their own name. */
+export function topicLabel(topic: string, weekOf: string): string {
+  if ((topic !== "Feature" && topic !== "Alternate") || !weekOf) return topic;
+  const weeks = Math.round((Date.parse(`${weekOf}T12:00:00Z`) - Date.parse("2026-09-14T12:00:00Z")) / (7 * 86400000));
+  const featureIsAsphalt = weeks % 2 === 0;
+  return (topic === "Feature") === featureIsAsphalt ? "Asphalt" : "Dirt";
+}

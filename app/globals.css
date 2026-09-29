@@ -2741,3 +2741,19 @@ span.garage-numbers-trend{ display:block; width:64px; }
   .trail-rating-picker .trail-rating-panel{ margin-top:0; }
   .trail-rating-picker .trail-rating-facts{ max-width:none; }
 }
+
+/* Posting board: Needs you / All set (2026-09-29). Handled cards are one line; tap to open. */
+.garage-social-done-rows{ border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.garage-social-done-rows > * + *{ border-top:1px solid var(--border); }
+.garage-social-done-row > summary{ display:grid; grid-template-columns:20px 1fr auto; gap:10px; align-items:center; padding:12px; font-size:.9rem; color:var(--text-muted); list-style:none; cursor:pointer; min-height:44px; }
+.garage-social-done-row > summary::-webkit-details-marker{ display:none; }
+.garage-social-done-row > summary:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+.garage-social-done-row[open] > summary{ border-bottom:1px solid var(--border); }
+.garage-social-done-check{ color:var(--accent); font-weight:700; }
+.garage-social-done-what{ min-width:0; }
+.garage-social-done-what strong{ color:var(--text); font-weight:600; }
+.garage-social-done-when{ color:var(--text-dim); }
+.garage-social-done-body{ padding:12px; }
+.garage-social-done-body > article{ scroll-margin-top:calc(var(--garage-top, 16px) + 12px); }
+.garage-social-done-body > article:target{ outline:2px solid var(--accent); outline-offset:3px; }
+.garage-plan-weekbtn{ margin-top:14px; width:100%; min-height:44px; }

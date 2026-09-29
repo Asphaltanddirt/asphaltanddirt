@@ -3,20 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, isAutoPlatform, linkPlan, xLength } from "@/lib/socialCopy";
+import { fullCaption, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
-
-/** The Feature alternates sides weekly (Jose 9/22): the week of 9/14 led with
- *  asphalt, 9/21 dirt, 9/28 asphalt… So a Feature or Alternate card's badge
- *  shows its side instead (Jose 9/26); other topics keep their own name. */
-function topicLabel(topic: string, weekOf: string): string {
-  if ((topic !== "Feature" && topic !== "Alternate") || !weekOf) return topic;
-  const weeks = Math.round((Date.parse(`${weekOf}T12:00:00Z`) - Date.parse("2026-09-14T12:00:00Z")) / (7 * 86400000));
-  const featureIsAsphalt = weeks % 2 === 0;
-  return (topic === "Feature") === featureIsAsphalt ? "Asphalt" : "Dirt";
-}
 
 async function post(body: Record<string, unknown>) {
   const res = await fetch("/api/garage/social", {

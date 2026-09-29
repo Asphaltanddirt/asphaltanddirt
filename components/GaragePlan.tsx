@@ -10,8 +10,9 @@ import type { Plan, PlanDay, PlanItem } from "@/lib/garagePlan";
  *
  * MON–SUN across the top. Orange OUTLINE = today, the day you're in; SOLID
  * orange = you have something due that day (Jose 9/25). Everyone opens on
- * today. Monday is the planning view (Tue → Mon plus the look-ahead); any
- * other day shows only what's due on it.
+ * today. Every day, Monday included, shows only what's due on it; Monday adds
+ * a "Plan the week" button that opens the planning view (Tue → Mon plus the
+ * look-ahead). Tapping a future Monday opens its plan directly.
  */
 export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
   const todayIndex = Math.max(0, plan.days.findIndex((d) => d.isToday));
@@ -19,6 +20,10 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
   // Monday is the plan you'll actually sit down with).
   const [page, setPage] = useState(todayIndex >= 7 ? 1 : 0);
   const [sel, setSel] = useState(todayIndex);
+  // On a Monday the home opens on Today, like every other day; the week plan
+  // waits behind a button (Jose 9/29: "a little overwhelming on a monday").
+  // Tapping a Monday that isn't today still goes straight to its plan.
+  const [planning, setPlanning] = useState(false);
   const week = plan.days.slice(page * 7, page * 7 + 7);
 
   const mine = (i: PlanItem) => i.owner === me || i.owner === "everyone";
@@ -43,7 +48,7 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
               className={cls}
               aria-pressed={i === sel}
               aria-label={`${d.label} ${d.dayOfMonth}${d.isToday ? ", today" : ""}${due ? `, ${due} for you` : ""}`}
-              onClick={() => setSel(i)}
+              onClick={() => { setSel(i); setPlanning(false); }}
             >
               <span>{d.label}</span>
               <b>{d.dayOfMonth}</b>
@@ -63,7 +68,27 @@ export default function GaragePlan({ plan, me }: { plan: Plan; me: string }) {
         )}
       </div>
 
-      {day.label === "Mon" ? <Planning plan={plan} start={sel} mine={mine} open={open} /> : <DayView day={day} mine={mine} open={open} />}
+      {day.label === "Mon" && (planning || !day.isToday) ? (
+        <>
+          {day.isToday && (
+            <div className="garage-plan-pager">
+              <button type="button" onClick={() => setPlanning(false)}>
+                ‹ Back to today
+              </button>
+            </div>
+          )}
+          <Planning plan={plan} start={sel} mine={mine} open={open} />
+        </>
+      ) : (
+        <>
+          <DayView day={day} mine={mine} open={open} />
+          {day.label === "Mon" && (
+            <button type="button" className="btn btn-outline btn-sm garage-plan-weekbtn" onClick={() => setPlanning(true)}>
+              Plan the week ›
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
