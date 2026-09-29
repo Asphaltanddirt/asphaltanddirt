@@ -55,8 +55,15 @@ export default async function GarageSocialPage({
   // card that's past due, or an auto card that failed, is always in Needs you.
   const showAll = all === "1";
   const finished = (p: SocialPost) => p.status === "Posted" || p.status === "Skipped";
+  // A by-hand card that's only scheduled still owes its link (Jose 9/29: "if i
+  // hit scheduled the card went away, even if i did not list the link"). It
+  // sits in All set until its posting day, then comes back to Needs you until
+  // the link is pasted or it's marked posted.
   const handled = (p: SocialPost) =>
-    finished(p) || (isAutoPlatform(p.platform) ? p.approved && p.autoStatus !== "Failed" : Boolean(p.scheduledAt));
+    finished(p) ||
+    (isAutoPlatform(p.platform)
+      ? p.approved && p.autoStatus !== "Failed"
+      : Boolean(p.scheduledAt) && (p.due > today || Boolean(p.postUrl)));
   const spent = (items: SocialPost[], day: string) => day < today && items.every(finished);
 
   const needsYou = (posts || []).filter((p) => !handled(p));
