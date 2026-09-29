@@ -214,7 +214,18 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
 
       <p className="garage-social-what">
         <strong>{item.asset}</strong>
-        {item.blogUrl ? (
+        {/* A Garage Take clip posts with its Take page, never the blog (Jose
+            9/29: a blog link here read as where the clip points). Until the
+            Take is live the title is plain text. */}
+        {item.asset === "Vertical clip" && (item.topic === "Feature" || item.topic === "Alternate") ? (
+          item.takeUrl ? (
+            <>
+              {" "}· <a href={item.takeUrl} target="_blank" rel="noopener">Anthony&#39;s take: {item.blogTitle || "the Take page"} ↗</a>
+            </>
+          ) : item.blogTitle ? (
+            <> · Anthony&#39;s take: {item.blogTitle} (its page goes live Thursday)</>
+          ) : null
+        ) : item.blogUrl ? (
           <>
             {" "}· <a href={item.blogUrl} target="_blank" rel="noopener">{item.blogTitle || "the blog post"} ↗</a>
           </>
