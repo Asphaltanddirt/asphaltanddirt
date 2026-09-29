@@ -9,6 +9,9 @@ import { driveFileUrl, findMediaByFileId } from "@/lib/mediaLibrary";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
+/** Largest piece the preview player gets per request (see GET). */
+const PREVIEW_CHUNK = 8 * 1024 * 1024;
+
 /**
  * Garage → Library → Download. Streams one library file from the private
  * Shared Drive to a signed-in Garage user, as an attachment so the phone saves
@@ -30,11 +33,31 @@ export async function GET(req: NextRequest) {
 
   const info = await getDriveFileInfo(row.fileId);
   if (!info) return NextResponse.json({ error: "That file isn't in Drive any more." }, { status: 404 });
-  if (info.size > DOWNLOAD_LIMIT_BYTES) return NextResponse.redirect(driveFileUrl(row.fileId), 303);
+  const inline = req.nextUrl.searchParams.get("inline") === "1";
+  if (info.size > DOWNLOAD_LIMIT_BYTES && !inline) return NextResponse.redirect(driveFileUrl(row.fileId), 303);
+
+  // The preview player (?inline=1, Jose 9/29: big videos "push to drive") gets
+  // at most PREVIEW_CHUNK per request, whatever it asked for. A 206 shorter than
+  // the requested range is allowed, and players just ask for the next piece, so
+  // no single response runs near maxDuration and a 900 MB 4K video still plays
+  // and seeks. Downloads keep the whole-file path (and the Drive redirect).
+  let range = req.headers.get("range");
+  if (inline && info.size > 0) {
+    const m = /^bytes=(\d*)-(\d*)$/.exec(range || "bytes=0-");
+    let start = m && m[1] ? Number(m[1]) : 0;
+    let end = m && m[2] ? Number(m[2]) : info.size - 1;
+    if (m && !m[1] && m[2]) {
+      start = Math.max(0, info.size - Number(m[2]));
+      end = info.size - 1;
+    }
+    end = Math.min(end, start + PREVIEW_CHUNK - 1, info.size - 1);
+    if (start > end) return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${info.size}` } });
+    range = `bytes=${start}-${end}`;
+  }
 
   let upstream: Response;
   try {
-    upstream = await fetchDriveMedia(row.fileId, req.headers.get("range"));
+    upstream = await fetchDriveMedia(row.fileId, range);
   } catch (err) {
     console.error("library download failed", err);
     return NextResponse.json({ error: "Couldn't load that file." }, { status: 502 });

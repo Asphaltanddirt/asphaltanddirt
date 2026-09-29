@@ -230,7 +230,8 @@ function AttachToCard({ fileId, fileName }: { fileId: string; fileName: string }
  *  the photo without downloading it"). Photos show Drive's large JPEG preview
  *  (so HEIC works everywhere); videos play in place, streamed with seeking.
  *  Only mounted once the row is opened, so a long list doesn't load 40 videos.
- *  Over DOWNLOAD_LIMIT_BYTES a function can't stream it in time: Drive plays it. */
+ *  Any size plays: the file route hands the player 8 MB pieces, so even a
+ *  900 MB 4K video never hits the function time limit. */
 function Preview({ item }: { item: LibraryItem }) {
   const isVideo = /\.(mov|mp4|m4v)$/i.test(item.fileName);
   const poster = `/api/garage/library/thumb?id=${encodeURIComponent(item.fileId)}&size=1200`;
@@ -239,9 +240,6 @@ function Preview({ item }: { item: LibraryItem }) {
       // eslint-disable-next-line @next/next/no-img-element
       <img className="garage-library-preview" src={poster} alt={item.label || item.fileName} />
     );
-  }
-  if (item.size > DOWNLOAD_LIMIT_BYTES) {
-    return <p className="garage-form-note">Too big to play here. Open in Drive to watch it.</p>;
   }
   return (
     <video
