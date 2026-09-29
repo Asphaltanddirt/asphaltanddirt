@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRecord, uploadAttachment, isAirtableConfigured } from "@/lib/airtable";
 import { CATEGORY_LABELS } from "@/lib/communityBuilds";
 import type { BuildCategory } from "@/lib/builds";
+import { notifySubmission } from "@/lib/notify";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.BUILD_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -71,6 +72,7 @@ async function writeToAirtable(
         { baseId: AIRTABLE_BASE_ID },
       );
     }
+    await notifySubmission({ kind: "build", id: record.id, title: values.rigName, detail: `${values.vehicle}, from ${values.name}` });
   } catch (err) {
     console.error("Airtable write error", err);
   }

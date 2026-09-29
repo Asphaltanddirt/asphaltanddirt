@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -408,6 +408,30 @@ export async function notifyFailure(post: { id: string; name: string; platform: 
  * the 9 PM digest is hours too late for that — so this one alerts the moment
  * it posts. Never throws, like notifyFailure.
  */
+/**
+ * Something new waiting in Garage → Review or Applications: a build, a review
+ * or an ambassador application (Jose 9/29: a build came in and the Garage said
+ * nothing). One push per submission, opening the screen it's on. Obeys the
+ * Notifications switch; never throws, so a form never fails because of it.
+ */
+export async function notifySubmission(input: { kind: "build" | "review" | "application"; id: string; title: string; detail?: string }): Promise<void> {
+  try {
+    const sw = await getNotifySwitch();
+    if (!sw.on) return;
+    const heading = { build: "New build", review: "New review", application: "New ambassador application" }[input.kind];
+    const url = { build: "/garage/review/builds", review: "/garage/review/reviews", application: `/garage/applications/${input.id}` }[input.kind];
+    const key = ledgerKey("New submission", input.id, todayNY());
+    await deliver(key, "New submission", `${heading}: ${input.title}`, {
+      title: heading,
+      body: [input.title, input.detail].filter(Boolean).join(" · "),
+      url,
+      tag: key,
+    });
+  } catch (err) {
+    console.error("submission notification failed", err);
+  }
+}
+
 export function needsPinning(post: { platform: string; topic: string; asset: string }): boolean {
   return post.platform === "X" && post.topic === "Feature" && post.asset === "X image";
 }

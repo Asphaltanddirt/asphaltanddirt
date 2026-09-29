@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRecord, uploadAttachment } from "@/lib/airtable";
 import { buildApplicationReceived } from "@/lib/ambassadorWelcome";
 import { sendEmail } from "@/lib/resendEmail";
+import { notifySubmission } from "@/lib/notify";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.AMBASSADOR_APPLICATIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -105,6 +106,7 @@ async function writeToAirtable(
     for (const photo of buildPhotos) {
       await uploadAttachment(record.id, "Build Photo(s)", photo);
     }
+    await notifySubmission({ kind: "application", id: record.id, title: values.name, detail: values.vehicle });
   } catch (err) {
     console.error("Airtable write threw", err);
   }

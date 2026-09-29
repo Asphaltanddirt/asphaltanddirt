@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRecord, uploadAttachment, isAirtableConfigured } from "@/lib/airtable";
+import { notifySubmission } from "@/lib/notify";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
 const TO_EMAIL = process.env.REVIEW_SUBMISSIONS_TO_EMAIL || "team@asphaltanddirt.com";
@@ -120,6 +121,7 @@ export async function POST(req: NextRequest) {
       console.error("Airtable photo upload error", err);
     }
   }
+  await notifySubmission({ kind: "review", id: recordId, title: `${name}, ${rating}★`, detail: role || "Community Member" });
 
   // Notification email is best-effort — the Airtable record above is the reliable
   // record either way, and a missing/misconfigured Resend key shouldn't block
