@@ -2757,3 +2757,4 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-social-done-body > article{ scroll-margin-top:calc(var(--garage-top, 16px) + 12px); }
 .garage-social-done-body > article:target{ outline:2px solid var(--accent); outline-offset:3px; }
 .garage-plan-weekbtn{ margin-top:14px; width:100%; min-height:44px; }
+.garage-social-day{ padding:0; margin-top:8px; }

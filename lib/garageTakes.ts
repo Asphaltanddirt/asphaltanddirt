@@ -31,6 +31,78 @@ export interface GarageTake {
 
 export const garageTakes: GarageTake[] = [
   {
+    slug: "summit-point-track-days-what-comes-next",
+    title: "Summit Point Track Days: What Comes Next?",
+    videoId: "kTv3On1m4mo",
+    publishedAt: "2026-09-29",
+    liveFrom: "2026-10-01",
+    summary:
+      "Summit Point is dropping Friday at the Track and Seat Time. Anthony says those events are where new drivers find their footing and their friends, but he gets it if fewer events are what keep the track open.",
+    blogSlug: "summit-point-track-days-what-changes-in-2027",
+    transcript: `Alright guys, we're back this week with a new topic. We're going to talk about Summit Point access changes. Alright. So, as many of you have seen or whoever follows, you know, Summit, they changed some of their, you know, some of the things that they're going to be doing moving forward. Basically getting rid of Friday at the Track, Seat Time, things like that. They're going to be keeping it basically open for like, you know, you can still rent the track, major events, things like that.
+
+My take on these things, right, just like most racetracks, I personally don't know their finances, neither do many of us. Usually things like this happen because of a financial standpoint, meaning they're either A, not getting enough attendance on Friday at the Track. They're not getting enough Seat Time attendance, meaning, you know, not many people are signing up. Or B, what's going on is they see the potential where they can rent out the track more often, meaning like, let's say on a Friday night, they can rent out the track, or during the times that they have Seat Time.
+
+You know, that's something we'll never know, that's something that's going to be up in the air. As far as my personal opinion on it, right? Well, where does the culture come from? The whole racing culture, right? Meeting up at the track with your friends, starting with, you know, nothing crazy. You know, seeing what your car can do, starting to build, starting to put money into your vehicle, starting to slowly go to the track, progress further, get it moving, right?
+
+And that's how the kind of the society, you know, the car club society sticks together and comes about. I feel like Friday at the Track is great for newcomers, new guys that are going to the track, getting ideas, never experienced the track. That's a perfect time for them to experience it. Perfect way for them to actually experience it. Same thing with Seat Time, right? Let's say you just, you know, built your, I don't know, let's say M340 or M3, M4, M5, M8, whatever the car is, you know, 370Z, GT-R.
+
+You know, let's say you put, you know, you just did some downpipes, bigger turbos, you know, full exhaust, tune, and you know, you want to see what your car can do. Perfect time to do that, right? Bring it down to Friday night at the Track, run, do a couple of runs, hang out with the boys, see what they got, what they're up to, get some ideas, talk with other enthusiasts as well.
+
+You know, so that's kind of takes away from the community a little bit in my eyes. Same thing with the Seat Time, right? Like if, you know, you're starting to get better, you know, you're familiar with the track, you actually want to get like, good at what you're practicing running down the track.
+
+You know, all these things are really important to keep kind of the car club, the car community alive.
+
+But again, you know, we have been losing tracks in the last, you know, 10 years, you know, everything, you know, tracks have been slowly shutting down, you know, minimalizing their events, because a, you know, property cost, meaning property taxes going up everywhere. It's getting expensive. Maintenance is getting expensive. Paying people is very expensive, right? You still got to pay these people, whether you got events going on or not.
+
+If the track's not making money, they're still dishing money out to pay their employees. They kind of got to figure out, you know, what they got to do. So at the same time, it's kind of like a double-edged sword here, right? It can hurt the car community, but at the same time, if it saves the track and it keeps them going and it keeps them moving in the right direction, that's probably the best thing they could do because there isn't many tracks, right? So maybe they can kind of figure out a way where they can maybe add those things back at a different time, maybe have adding more days that they're open, you know, maybe doing their events on different times.
+
+So it's kind of like a matter of time just to see where things are going to probably, you know, which way that things are going to pan out. But I genuinely do think that it's upsetting. It's, you know, it is going to hurt the car community because, you know, now the guy that's, you know, wants to run his car down the track for the first time may not have a place to do so.
+
+So my personal opinion is it's upsetting, but hopefully they got something better coming up for us. Catch you on the next one, guys.`,
+  },
+  {
+    slug: "rooftop-tent-vs-ground-tent",
+    title: "Rooftop Tent vs Ground Tent: Anthony's Take",
+    videoId: "ETfIPpcDRpM",
+    publishedAt: "2026-09-29",
+    liveFrom: "2026-10-01",
+    summary:
+      "Anthony camps about twice a month and is shopping for his first rooftop tent. It's the pick when camp moves every day; when camp stays put, he'd use a ground tent and keep the car free. And it's coming off his daily driver between trips.",
+    blogSlug: "rooftop-tent-fuel-economy-is-convenience-worth-it",
+    transcript: `Alright guys, back at it again with a great discussion actually.
+
+So we're going to talk about rooftop tents and personal takes, pros, cons, what I personally would do, what I wouldn't do and why.
+
+So I would like to say I camp pretty often, right? I would like to camp more often than I do, but you know two times a month is pretty often I would say. The way I look at rooftop tents, right? Rooftop tents are awesome if you're overlanding, meaning you're doing a trail, you stop, you sleep overnight, you pack up and you keep it going. Now if you are camping at a site for example, let's say, I don't know, Delaware Water Gap for example, and you are actually going to be setting up camp and then you're going to be going out to travel, look around, hike, fish, whatever it is.
+
+That's when I wouldn't do a rooftop tent. Reason being is, you know, it's kind of annoying having to open, close your tent, set up bed, break it down, opposed to where, you know, you can just, once you get to your site, you set up your tent, you set up your bed, it's all good to go, your car is ready to go.
+
+When it comes to the rooftop tent, right, there's a big question on oh but they weigh a lot and oh but they're horrible on gas mileage, right. I would not keep my rooftop tent on my daily driver every single day meaning like once I come back from my trip, that rooftop tent is coming right off my vehicle, getting put away, stored, cleaned and that's that. That tent would, you know, my rooftop would only go on if I'm going to be actually traveling, doing some kind of like trail with the boys and actually just, you know, opening it up, closing it down in the morning and then keep, you know, keep it moving with my vehicle.
+
+A, I wouldn't keep it on there because, you know, first of all, you know, what does it stop somebody from just walking up and opening your rooftop tent just because they want to be obnoxious or it getting damaged for, you know, whatever reason, you know, you're driving something flies off a car, hits your rooftop tent, you know, now your $5,000 rooftop is damaged.
+
+You know, again, just kind of keeps just for the safety. Also, gas mileage, like everybody's concerned about.
+
+I personally don't have a rooftop tent yet. I'm still looking into which rooftop tent I want, how often I'm going to use it. I soft tent camp, meaning like I just have a regular tent that I camp out of a mattress, throw down the mattress, put like a little cover underneath so that the cold doesn't seep up through it. And I actually love tent camping, like meaning not rooftop, just regular tent camping, because it's a little different, you know, it gives you that outdoorsy feel.
+
+But at the same time, again, pros and cons. In a rooftop tent, you're, you're not on the floor, you're away from, you know, you're away from the bugs, less chance of bugs getting into your tent bothering you.
+
+Right, nobody says that. That means that your soft tent is covered in bugs, right? You simply what I do, like I'm, I'm petrified of bugs. I don't like bugs. I don't do bugs. I hate them.
+
+I spray my tent from the outside with bug spray, and then I'll just leave the let the tent air out with like the windows open, and the netting closed so that this way it doesn't stink in there.
+
+You know, when, as far as convenience, I think rooftop tents are super convenient. They're super cool, super easy, just, you know, for the most part, flip them open, set up bed, you know, set up your bed, and you're good to go.
+
+When it comes down to soft tent camping, that's really good only, like I said, if you're just going setting up camp, and you're going to be using your vehicle to actually travel around, you know, and coming back to your campsite. That's when you would want a soft tent.
+
+Again, there's, you know, pros and cons. There's things that you're gonna be using. There's times that you're gonna wish you had a rooftop tent, but the soft tent is gonna be better.
+
+You know, again, like I said, my personal take is rooftop tents are great. I wouldn't keep it on my car all the time, especially being that it's a daily driver. I would be taking it on and off, and depending on the situation, what kind of camping we're doing, what this is, you know, depending on where we're going, what we're doing, would depend on whether I'm using a soft tent or my rooftop tent.
+
+But what does that mean? That means get that rooftop tent. Don't be soft.`,
+  },
+  {
     slug: "ko2-vs-ko3-vs-km3",
     title: "KO2 vs KO3 vs KM3: What Anthony's Buying Next",
     videoId: "3OfRavreR4Q",
