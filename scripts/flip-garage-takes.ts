@@ -1,14 +1,17 @@
 /**
- * Friday 9 AM: make this week's Garage Takes Public (Claude's job, Jose 9/25).
+ * Friday + Saturday 9 AM: make this week's Garage Takes Public (Claude's job,
+ * Jose 9/25). One a day (Jose 9/29: two at once hurts the algorithm): Friday
+ * flips the week's first take in lib/garageTakes.ts (the Feature), Saturday
+ * flips the rest.
  *
  * Runs on the laptop from a scheduled task, because the YouTube login that can
  * change a video's privacy (YOUTUBE_CAPTIONS_REFRESH_TOKEN, youtube.force-ssl)
  * deliberately lives only in .env.local, never on the server.
  *
  * Which videos: every take in lib/garageTakes.ts whose liveFrom is within the
- * last 7 days (that Friday's pair) and is still Unlisted. Anything already
- * Public or Private is left alone. Then the week's Garage task
- * "Make both vlogs Public" is ticked.
+ * last 7 days (that week's pair) and is still Unlisted. Anything already
+ * Public or Private is left alone. Once none of the pair is left Unlisted,
+ * the week's Garage task "Make both vlogs Public" is ticked.
  *
  *   npx tsx scripts/flip-garage-takes.ts          # flip
  *   npx tsx scripts/flip-garage-takes.ts --dry    # only report
@@ -49,11 +52,20 @@ async function main() {
   const auth = { Authorization: `Bearer ${await token()}` };
   const ids = due.map((t) => t.videoId).join(",");
   const list = await (await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status,snippet&id=${ids}`, { headers: auth })).json();
+  // YouTube returns the videos in any order; keep the file's order.
+  const items = due.map((t) => (list.items || []).find((v: { id: string }) => v.id === t.videoId)).filter(Boolean);
+  const isFriday = new Date(`${today}T12:00:00Z`).getUTCDay() === 5;
   const flipped: string[] = [];
-  for (const v of list.items || []) {
+  let left = 0;
+  for (const v of items) {
     const title = v.snippet?.title || v.id;
     if (v.status?.privacyStatus !== "unlisted") {
       console.log(`skip  ${v.id} ${title} (already ${v.status?.privacyStatus})`);
+      continue;
+    }
+    if (isFriday && flipped.length) {
+      left++;
+      console.log(`wait  ${v.id} ${title} (goes Public tomorrow)`);
       continue;
     }
     if (dry) {
@@ -74,7 +86,7 @@ async function main() {
     console.log(`public ${v.id} ${title}`);
   }
 
-  if (!dry) {
+  if (!dry && !left) {
     const key = `blog-fri-public-social|${weekOf(today)}`;
     const [task] = await listRecords("Tasks", `{Template Key} = '${key}'`, { baseId: process.env.AIRTABLE_GARAGE_BASE_ID });
     if (task && task.fields.Status !== "Done") {
