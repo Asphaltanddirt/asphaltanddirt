@@ -234,17 +234,31 @@ export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]
   for (const p of data.data ?? []) {
     const rows = await insights(
       `${p.id}/insights`,
-      ["post_media_view", "post_total_media_view_unique", "post_impressions_unique", "post_impressions", "post_engaged_users", "post_clicks"],
+      ["post_media_view", "post_total_media_view_unique", "post_impressions_unique", "post_impressions", "post_clicks"],
       {},
-      [{}],
+      [{}, { period: "lifetime" }],
       token,
     );
+    const stats = byMetric(rows);
+    // The post's own counts always answer, whatever Meta renames next.
+    try {
+      const c = await graph<{
+        shares?: { count?: number };
+        reactions?: { summary?: { total_count?: number } };
+        comments?: { summary?: { total_count?: number } };
+      }>(p.id, { fields: "shares,reactions.summary(true).limit(0),comments.summary(true).limit(0)" }, token);
+      if (typeof c.shares?.count === "number") stats.shares = c.shares.count;
+      if (typeof c.reactions?.summary?.total_count === "number") stats.likes = c.reactions.summary.total_count;
+      if (typeof c.comments?.summary?.total_count === "number") stats.comments = c.comments.summary.total_count;
+    } catch {
+      /* insights alone, then */
+    }
     posts.push({
       id: p.id,
       permalink: p.permalink_url || "",
       caption: p.message || "",
       timestamp: p.created_time || "",
-      stats: byMetric(rows),
+      stats,
     });
   }
   return posts;
@@ -261,7 +275,7 @@ export async function facebookReelStats(videoId: string): Promise<Record<string,
     `${videoId}/video_insights`,
     ["fb_reels_total_plays", "blue_reels_play_count", "post_impressions_unique", "post_video_avg_time_watched", "post_video_followers", "post_video_social_actions"],
     {},
-    [{}],
+    [{}, { period: "lifetime" }],
     token,
   );
   const stats = byMetric(rows);
