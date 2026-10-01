@@ -72,6 +72,8 @@ export interface SnapshotResult {
   searchConsole: { ok: boolean; skipped?: string; error?: string; rows?: number };
   meta: { ok: boolean; skipped?: string; error?: string; instagramFollowers?: number; facebookFollowers?: number; rows?: number };
   written: { performance: number; audienceSnapshot: number };
+  /** Public uploads that had no Content row and were added this run. */
+  contentAdded: { ok: boolean; error?: string; videos?: string[] };
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +99,43 @@ async function ytFetch(url: string) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`YouTube API ${res.status}: ${await res.text()}`);
   return res.json();
+}
+
+/** "PT1M5S" -> 65. */
+function isoSeconds(d: string): number {
+  const m = d.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  return m ? Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3] || 0) : 0;
+}
+
+/**
+ * Every public upload on the channel, from its uploads playlist. Uploads that
+ * never got a Content row (the Shorts, Garage Takes) were invisible to the
+ * per-video pull below, which only reports on the Content archive (found in
+ * the 10/1 quarterly dry run). Private and unlisted videos are left out.
+ */
+async function listPublicUploads(): Promise<{ id: string; title: string; published: string; seconds: number }[]> {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return [];
+  const playlist = `UU${YT_CHANNEL_ID.slice(2)}`;
+  const ids: string[] = [];
+  let page = "";
+  do {
+    const d = await ytFetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&playlistId=${playlist}&key=${key}${page ? `&pageToken=${page}` : ""}`,
+    );
+    for (const it of d.items ?? []) if (it.contentDetails?.videoId) ids.push(it.contentDetails.videoId);
+    page = d.nextPageToken || "";
+  } while (page);
+
+  const out: { id: string; title: string; published: string; seconds: number }[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const d = await ytFetch(`${YT_VIDEOS_URL}?part=snippet,contentDetails,status&id=${ids.slice(i, i + 50).join(",")}&key=${key}`);
+    for (const v of d.items ?? []) {
+      if (v.status?.privacyStatus !== "public") continue;
+      out.push({ id: v.id, title: v.snippet?.title || "", published: String(v.snippet?.publishedAt || "").slice(0, 10), seconds: isoSeconds(v.contentDetails?.duration || "") });
+    }
+  }
+  return out;
 }
 
 async function pullYouTube(videoIds: string[]) {
@@ -523,7 +562,41 @@ export async function runAnalyticsSnapshot(
   const today = isoDate(now);
 
   // Map YouTube content_id -> Airtable record id, for the Performance link field.
-  const contentRows = await listRecords(CONTENT_TABLE, "{platform} = 'YouTube'", { baseId: BASE_ID });
+  let contentRows = await listRecords(CONTENT_TABLE, "{platform} = 'YouTube'", { baseId: BASE_ID });
+
+  // Give every public upload a Content row first, so the per-video pull covers
+  // the whole channel. Up to 3 minutes counts as a Short (YouTube's own limit).
+  let contentAdded: SnapshotResult["contentAdded"] = { ok: true, videos: [] };
+  try {
+    const known = new Set(contentRows.map((r) => String(r.fields.platform_id || r.fields.content_id || "")));
+    const missing = (await listPublicUploads()).filter((v) => !known.has(v.id));
+    contentAdded = { ok: true, videos: missing.map((v) => `${v.id} ${v.title}`) };
+    if (missing.length && !opts.dryRun) {
+      await upsertRecords(
+        CONTENT_TABLE,
+        missing.map((v) => ({
+          fields: {
+            content_id: v.id,
+            platform_id: v.id,
+            platform: "YouTube",
+            title: v.title,
+            url: `https://www.youtube.com/watch?v=${v.id}`,
+            published_date: v.published,
+            duration_seconds: v.seconds,
+            type: v.seconds <= 180 ? "Short" : "Long-form video",
+            status: "Published",
+            notes: `Added automatically by the analytics snapshot (${today}).`,
+          },
+        })),
+        ["content_id"],
+        { baseId: BASE_ID },
+      );
+      contentRows = await listRecords(CONTENT_TABLE, "{platform} = 'YouTube'", { baseId: BASE_ID });
+    }
+  } catch (e) {
+    contentAdded = { ok: false, error: String(e) };
+  }
+
   const recIdByVideo: Record<string, string> = {};
   for (const r of contentRows) {
     const pid = (r.fields.platform_id as string) || (r.fields.content_id as string);
@@ -768,6 +841,7 @@ export async function runAnalyticsSnapshot(
   return {
     ranAt: now.toISOString(),
     dryRun: opts.dryRun ?? false,
+    contentAdded,
     fourthwall: fw.ok
       ? { ok: true, realOrders: fw.realOrders, revenue: fw.revenue, units: fw.units }
       : { ok: false, skipped: fw.skipped },
