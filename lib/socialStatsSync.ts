@@ -120,9 +120,9 @@ export async function syncSocialStatsFromMeta(
     filled: [],
     unmatchedPosts: [],
   };
-  const miss = (row: (typeof due)[number]) => {
+  const miss = (row: (typeof due)[number], why: string) => {
     result.unmatched++;
-    result.unmatchedPosts.push(`${row.fields.Platform}: ${row.fields.Name || row.id} (${row.fields["Post URL"]})`);
+    result.unmatchedPosts.push(`${row.fields.Platform}: ${row.fields.Name || row.id} (${row.fields["Post URL"]}): ${why}`);
   };
 
   for (const row of due) {
@@ -138,7 +138,7 @@ export async function syncSocialStatsFromMeta(
       s = byKey.get(key)?.stats;
     }
     if (!s) {
-      miss(row);
+      miss(row, key ? `no ${key.split(":")[0]} post found for it (${posts.length} fetched)` : "link not recognised");
       continue;
     }
 
@@ -156,7 +156,7 @@ export async function syncSocialStatsFromMeta(
     if (num(s.likes) !== undefined) fields["Likes 7d"] = s.likes;
     if (num(s.comments) !== undefined) fields["Replies 7d"] = s.comments;
     if (!Object.keys(fields).length) {
-      miss(row);
+      miss(row, `matched, but Meta gave no usable numbers (got: ${Object.keys(s).join(", ") || "nothing"})`);
       continue;
     }
 
