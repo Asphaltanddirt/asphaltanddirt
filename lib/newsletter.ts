@@ -10,6 +10,7 @@ import {
   type YouTubeVideo,
 } from "@/lib/youtube";
 import { findEpisodeByYoutubeId } from "@/lib/episodes";
+import { garageTakes } from "@/lib/garageTakes";
 import { getFeaturedProducts, getProductsBySlugs, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
@@ -387,15 +388,22 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
 
   const vlogUrl = options.vlogUrl?.trim();
   const vlog2Url = options.vlog2Url?.trim();
+  // "Garage Take: <title>" so the two links can't be mistaken for each other
+  // (Jose 10/1: "it's a 50/50 you go to the one you want").
+  const takeLabel = (url: string, fallback: string) => {
+    const take = garageTakes.find((t) => url.includes(`/garage-takes/${t.slug}`));
+    const title = take?.title.replace(/\s*[:—–-]\s*Anthony['’]s Take\s*$/i, "").trim();
+    return title ? `Garage Take: ${title}` : fallback;
+  };
 
   const quickHitItems = [
     vlogUrl && {
-      label: "Garage Takes: Anthony breaks down this week's story",
+      label: takeLabel(vlogUrl, "Garage Takes: Anthony breaks down this week's story"),
       ctaText: "Watch",
       url: vlogUrl,
     },
     vlog2Url && {
-      label: "Garage Takes: his take on the other story this week",
+      label: takeLabel(vlog2Url, "Garage Takes: his take on the other story this week"),
       ctaText: "Watch",
       url: vlog2Url,
     },
