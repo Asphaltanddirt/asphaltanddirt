@@ -3,7 +3,7 @@ import Link from "next/link";
 import HeroCaptureForm from "@/components/HeroCaptureForm";
 import HeroVideo from "@/components/HeroVideo";
 import PlatformGrid from "@/components/PlatformGrid";
-import { episodes, getLatestPodcastEpisode } from "@/lib/episodes";
+import { episodes, getLatestPodcastEpisode, episodePath } from "@/lib/episodes";
 import { getFeaturedProducts, getProductsBySlugs } from "@/lib/fourthwall";
 import { getProductSlugsFor } from "@/lib/featuredProducts";
 import { getApprovedTestimonials } from "@/lib/testimonials";
@@ -112,7 +112,7 @@ export default async function HomePage() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </Link>
             </div>
-            <Link href={`/podcast/${latestEpisode.slug}`} className="card">
+            <Link href={episodePath(latestEpisode)} className="card">
               <div className="card-media">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={latestEpisode.artwork.src} alt={latestEpisode.artwork.alt} />

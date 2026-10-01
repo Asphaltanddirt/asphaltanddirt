@@ -1,5 +1,5 @@
 import { posts } from "@/lib/blog";
-import { getAllEpisodes } from "@/lib/episodes";
+import { getAllEpisodes, episodePath } from "@/lib/episodes";
 import { builds } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { HOSTS, TRAIL_AMBASSADORS } from "@/lib/team";
@@ -49,7 +49,7 @@ export async function searchSite(query: string): Promise<SearchResult[]> {
         type: "Podcast",
         title: ep.title,
         description: ep.description,
-        href: `/podcast/${ep.slug}`,
+        href: episodePath(ep),
         image: ep.artwork.src,
       });
     }

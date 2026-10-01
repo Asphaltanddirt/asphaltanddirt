@@ -8,7 +8,7 @@ export const revalidate = 300;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return (await getAllEpisodes()).filter((e) => e.type !== "trail-event").map((e) => ({ slug: e.slug }));
+  return (await getAllEpisodes()).filter((e) => e.type === "trail-event").map((e) => ({ slug: e.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -16,5 +16,5 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  return <EpisodePageView slug={(await params).slug} kind="podcast" />;
+  return <EpisodePageView slug={(await params).slug} kind="trail-event" />;
 }

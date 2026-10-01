@@ -1,0 +1,282 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound, permanentRedirect } from "next/navigation";
+import { episodePath, findEpisodeBySlug, findRelatedEpisodes } from "@/lib/episodes";
+import YouTubeEmbed from "@/components/YouTubeEmbed";
+import PlatformLinks from "@/components/PlatformLinks";
+import DescriptionTranscriptPanel from "@/components/DescriptionTranscriptPanel";
+import BuzzsproutPlayer from "@/components/BuzzsproutPlayer";
+import GuestRow from "@/components/GuestRow";
+import ShareEpisodeButton from "@/components/ShareEpisodeButton";
+import { SITE_URL } from "@/lib/site";
+
+export type EpisodeKind = "podcast" | "trail-event";
+
+/** Metadata for either route; the canonical URL is always the episode's own path. */
+export async function episodeMetadata(slug: string): Promise<Metadata> {
+  const episode = await findEpisodeBySlug(slug);
+  if (!episode) return {};
+
+  const url = `${SITE_URL}${episodePath(episode)}`;
+  return {
+    title: episode.title,
+    description: episode.description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: episode.title,
+      description: episode.description,
+      url,
+      type: "article",
+      images: [{ url: episode.artwork.src, alt: episode.artwork.alt }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: episode.title,
+      description: episode.description,
+      images: [episode.artwork.src],
+    },
+  };
+}
+
+/** One page body for podcast episodes (/podcast/[slug]) and trail & event
+ *  videos (/events/videos/[slug]). A visit to the wrong route is sent to the
+ *  right one, so old /podcast/<trail-video> links keep working. */
+export default async function EpisodePageView({ slug, kind }: { slug: string; kind: EpisodeKind }) {
+  const episode = await findEpisodeBySlug(slug);
+  if (!episode) notFound();
+  if (episode.type !== kind) permanentRedirect(episodePath(episode));
+
+  const related = await findRelatedEpisodes(episode);
+  const publishedDate = new Date(episode.publicationDate);
+  const formattedDate = publishedDate.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const guests = episode.guests ?? [];
+  const hasGuests = guests.length > 0;
+  const hasDescOrTranscript = Boolean(episode.showNotes || episode.transcript);
+  const episodeUrl = `${SITE_URL}${episodePath(episode)}`;
+  const isTrailEvent = episode.type === "trail-event";
+
+  // Trail & event uploads are raw ride videos, not podcast episodes — plain
+  // VideoObject schema instead of PodcastEpisode/PodcastSeries so this stays
+  // an accurate description of what the content actually is.
+  const jsonLd = isTrailEvent
+    ? {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        name: episode.title,
+        description: episode.description,
+        thumbnailUrl: episode.artwork.src,
+        uploadDate: episode.publicationDate,
+        url: episodeUrl,
+        ...(episode.youtubeVideoId
+          ? { embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}` }
+          : {}),
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "PodcastEpisode",
+        name: episode.title,
+        datePublished: episode.publicationDate,
+        description: episode.description,
+        url: episodeUrl,
+        image: episode.artwork.src,
+        ...(episode.youtubeVideoId
+          ? {
+              associatedMedia: {
+                "@type": "VideoObject",
+                name: episode.title,
+                description: episode.description,
+                thumbnailUrl: episode.artwork.src,
+                uploadDate: episode.publicationDate,
+                embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}`,
+              },
+            }
+          : {}),
+        partOfSeries: {
+          "@type": "PodcastSeries",
+          name: "Asphalt & Dirt",
+          url: SITE_URL,
+        },
+      };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      <section>
+        <div className="container">
+          <div className="episode-hero-topbar">
+            {/* Trail & event videos are reached from the Events page's Ride
+                Recaps section, so that's where "back" should go. */}
+            <Link href={isTrailEvent ? "/events" : "/podcast"} className="back-link mb-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 6-6 6 6 6" />
+              </svg>
+              {isTrailEvent ? "Back To Events" : "Back To Podcast"}
+            </Link>
+            {/* Keep viewers on the site (Jose 9/30): the "see all" link goes to
+                our own list, not the YouTube playlist. */}
+            <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
+              {isTrailEvent ? "All Trail & Event Videos" : "All Episodes"}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          </div>
+
+          <div className="episode-hero-grid mt-4">
+            <div>
+              {episode.youtubeVideoId ? (
+                <YouTubeEmbed
+                  videoId={episode.youtubeVideoId}
+                  title={episode.title}
+                  eventContext={`episode:${episode.slug}`}
+                />
+              ) : (
+                <div className="video-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={episode.artwork.src} alt={episode.artwork.alt} />
+                </div>
+              )}
+            </div>
+
+            <div className="episode-hero-info">
+              <div className="eyebrow accent">{isTrailEvent ? "Trail & Event Video" : "Podcast Episode"}</div>
+              <h1 className="mt-2">{episode.title}</h1>
+              <div className="episode-meta mt-2">
+                <span>{formattedDate}</span>
+              </div>
+              <p className="lead mt-2">{episode.description}</p>
+              <PlatformLinks episode={episode} variant="icons" />
+              {episode.youtubeVideoId && (
+                <a
+                  href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="btn btn-primary btn-sm btn-block mt-3"
+                  style={{ whiteSpace: "normal", textAlign: "center" }}
+                >
+                  Watch, Subscribe &amp; Comment On YouTube
+                </a>
+              )}
+            </div>
+          </div>
+
+          {!isTrailEvent && (
+            <div className="episode-audio-strip mt-3">
+              {episode.buzzsproutEpisodeId ? (
+                <BuzzsproutPlayer episodeId={episode.buzzsproutEpisodeId} />
+              ) : episode.riversideEmbedUrl ? (
+                <iframe
+                  src={episode.riversideEmbedUrl}
+                  title={`${episode.title} — audio player`}
+                  style={{ width: "100%", height: 200, border: 0, borderRadius: "var(--radius-md)" }}
+                  allow="autoplay"
+                />
+              ) : (
+                <div className="audio-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 13a9 9 0 0 1 18 0" /><rect x="3" y="13" width="4" height="7" rx="1.5" /><rect x="17" y="13" width="4" height="7" rx="1.5" />
+                  </svg>
+                  <p>Audio player coming soon. This episode hasn&apos;t been published on Buzzsprout yet &mdash; once it is, the player embeds right here.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasGuests && (
+            <div className="mt-3">
+              <div className="eyebrow">{guests.length > 1 ? "Featured Guests" : "Featured Guest"}</div>
+              <div className="mt-3" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {guests.map((g) => (
+                  <GuestRow key={g.name} guest={g} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className={isTrailEvent ? "mt-3" : "two-col episode-panel-row mt-3"}>
+            {!isTrailEvent && (
+              <div>
+                <div className="eyebrow">Sponsor This Episode</div>
+                <div className="sponsor-block mt-3">
+                  {episode.sponsors?.length
+                    ? episode.sponsors.map((s) => (
+                        <div key={s.name}>
+                          <strong>{s.name}</strong>
+                          {s.disclosure && <p className="mt-2 mb-0">{s.disclosure}</p>}
+                        </div>
+                      ))
+                    : "Sponsor spot available on this episode. Reach out to advertise here."}
+                </div>
+              </div>
+            )}
+            <div>
+              <div className="eyebrow">Hype This Episode</div>
+              <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
+                <p className="mb-0">Loved this one? A like, a comment, or a share on YouTube goes a long way.</p>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  {episode.youtubeVideoId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="btn btn-primary btn-sm"
+                    >
+                      Like &amp; Comment On YouTube
+                    </a>
+                  )}
+                  <ShareEpisodeButton url={episodeUrl} title={episode.title} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {hasDescOrTranscript && (
+            // Lower priority on purpose (most visitors never open it — it's
+            // mainly substance for SEO/GEO) but same tight rhythm as
+            // everything above it, not a separately-padded section.
+            <div className="mt-3">
+              <DescriptionTranscriptPanel description={episode.showNotes} transcript={episode.transcript} />
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="section-alt">
+        <div className="container">
+          <div className="section-head">
+            <h2 className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</h2>
+            <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
+              {isTrailEvent ? "View All Recaps" : "View All Episodes"}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          </div>
+          {related.length ? (
+            <div className="grid grid-3">
+              {related.map((r) => (
+                <Link key={r.slug} href={episodePath(r)} className="card">
+                  <div className="card-media">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={r.artwork.src} alt={r.artwork.alt} />
+                  </div>
+                  <div className="card-body">
+                    <h3>{r.title}</h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-0">More episodes drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}

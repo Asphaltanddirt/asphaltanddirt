@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { YouTubeVideo } from "@/lib/youtube";
-import { findEpisodeByYoutubeId } from "@/lib/episodes";
+import { episodePath, findEpisodeByYoutubeId } from "@/lib/episodes";
 import { excerpt } from "@/lib/text";
 
 /** A trail/event video card. Opens the on-site video page when one exists
@@ -25,7 +25,7 @@ export default async function RecapCard({ video }: { video: YouTubeVideo }) {
     </>
   );
   return internal ? (
-    <Link className="card" href={`/podcast/${internal.slug}`}>
+    <Link className="card" href={episodePath(internal)}>
       {cardBody}
     </Link>
   ) : (

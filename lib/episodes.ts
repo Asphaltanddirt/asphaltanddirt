@@ -322,6 +322,13 @@ export async function findEpisodeByYoutubeId(videoId: string): Promise<Episode |
   return (await getAllEpisodes()).find((e) => e.youtubeVideoId === videoId);
 }
 
+/** Where an episode lives on the site. Trail & event videos sit under
+ *  Events (Jose 9/30: they were showing under Podcast); podcast episodes
+ *  under /podcast. */
+export function episodePath(e: Pick<Episode, "type" | "slug">): string {
+  return e.type === "trail-event" ? `/events/videos/${e.slug}` : `/podcast/${e.slug}`;
+}
+
 export async function findRelatedEpisodes(episode: Episode): Promise<Episode[]> {
   if (!episode.relatedSlugs?.length) return [];
   const all = await getAllEpisodes();
