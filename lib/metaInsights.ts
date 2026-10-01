@@ -49,8 +49,8 @@ class GraphCallError extends Error {
   }
 }
 
-async function graph<T>(path: string, params: Record<string, string> = {}): Promise<T> {
-  const qs = new URLSearchParams({ ...params, access_token: TOKEN() });
+async function graph<T>(path: string, params: Record<string, string> = {}, token = TOKEN()): Promise<T> {
+  const qs = new URLSearchParams({ ...params, access_token: token });
   const res = await fetch(`${GRAPH}/${path}?${qs}`, { cache: "no-store" });
   const data = (await res.json()) as T & { error?: GraphError };
   if (!res.ok || data?.error) {
@@ -82,6 +82,7 @@ async function insights(
   wishList: string[],
   params: Record<string, string> = {},
   variants: Record<string, string>[] = [{}, { metric_type: "total_value" }],
+  token = TOKEN(),
 ): Promise<InsightValue[]> {
   for (const variant of variants) {
     let metrics = [...wishList];
@@ -89,7 +90,7 @@ async function insights(
       try {
         const data = await graph<{
           data?: { name?: string; values?: { value?: unknown }[]; total_value?: { value?: unknown } }[];
-        }>(path, { ...params, ...variant, metric: metrics.join(",") });
+        }>(path, { ...params, ...variant, metric: metrics.join(",") }, token);
         const out: InsightValue[] = [];
         for (const row of data.data ?? []) {
           if (!row.name) continue;
@@ -193,16 +194,41 @@ export async function facebookPage(since: Date, until: Date): Promise<MetaAccoun
   return { followers: profile.followers_count ?? profile.fan_count, window: byMetric(rows) };
 }
 
+/**
+ * The Page's own token. Page posts and Reels only answer to it: with the
+ * System User token they fail "Invalid OAuth 2.0 Access Token" (found 10/1),
+ * which is why the board's Facebook numbers never filled. Same lookup as
+ * lib/metaPost.ts, cached half an hour.
+ */
+let pageTokenCache: { token: string; at: number } | null = null;
+async function pageToken(): Promise<string> {
+  if (pageTokenCache && Date.now() - pageTokenCache.at < 30 * 60 * 1000) return pageTokenCache.token;
+  let token = "";
+  try {
+    token = (await graph<{ access_token?: string }>(PAGE_ID(), { fields: "access_token" })).access_token || "";
+  } catch {
+    /* try the listing below */
+  }
+  if (!token) {
+    const pages = await graph<{ data?: { id: string; access_token?: string }[] }>("me/accounts", { fields: "id,access_token" });
+    token = pages.data?.find((p) => p.id === PAGE_ID())?.access_token || "";
+  }
+  if (!token) throw new Error("Couldn't get the Page's token.");
+  pageTokenCache = { token, at: Date.now() };
+  return token;
+}
+
 /** Facebook Page posts since `since`, each with whatever per-post insights exist. */
 export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]> {
   const id = PAGE_ID();
+  const token = await pageToken();
   const data = await graph<{
     data?: { id: string; message?: string; created_time?: string; permalink_url?: string }[];
   }>(`${id}/posts`, {
     fields: "id,message,created_time,permalink_url",
     limit: String(limit),
     since: unix(since),
-  });
+  }, token);
 
   const posts: MetaPost[] = [];
   for (const p of data.data ?? []) {
@@ -211,6 +237,7 @@ export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]
       ["post_media_view", "post_total_media_view_unique", "post_impressions_unique", "post_impressions", "post_engaged_users", "post_clicks"],
       {},
       [{}],
+      token,
     );
     posts.push({
       id: p.id,
@@ -229,17 +256,19 @@ export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]
  * stats live on the video itself. Wish list, so renamed metrics only cost one.
  */
 export async function facebookReelStats(videoId: string): Promise<Record<string, number>> {
+  const token = await pageToken();
   const rows = await insights(
     `${videoId}/video_insights`,
     ["fb_reels_total_plays", "blue_reels_play_count", "post_impressions_unique", "post_video_avg_time_watched", "post_video_followers", "post_video_social_actions"],
     {},
     [{}],
+    token,
   );
   const stats = byMetric(rows);
   try {
     const v = await graph<{ likes?: { summary?: { total_count?: number } }; comments?: { summary?: { total_count?: number } } }>(videoId, {
       fields: "likes.summary(true).limit(0),comments.summary(true).limit(0)",
-    });
+    }, token);
     if (typeof v.likes?.summary?.total_count === "number") stats.likes = v.likes.summary.total_count;
     if (typeof v.comments?.summary?.total_count === "number") stats.comments = v.comments.summary.total_count;
   } catch {

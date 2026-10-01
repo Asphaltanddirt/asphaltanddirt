@@ -93,17 +93,15 @@ export async function syncSocialStatsFromMeta(
 
   if (!due.length) return { ok: true, ...empty };
 
-  let posts: MetaPost[] = [];
+  // Instagram and Facebook fail separately, so one can't blank the other.
   const since = new Date(now.getTime() - (FILL_UNTIL_DAY + 2) * 86_400_000);
-  try {
-    const [ig, fb] = await Promise.all([
-      process.env.META_IG_USER_ID ? instagramPosts(since) : Promise.resolve([]),
-      process.env.META_PAGE_ID ? facebookPosts(since) : Promise.resolve([]),
-    ]);
-    posts = [...ig, ...fb];
-  } catch (e) {
-    return { ok: false, error: String(e), ...empty };
-  }
+  const [ig, fb] = await Promise.allSettled([
+    process.env.META_IG_USER_ID ? instagramPosts(since) : Promise.resolve([]),
+    process.env.META_PAGE_ID ? facebookPosts(since) : Promise.resolve([]),
+  ]);
+  const posts: MetaPost[] = [...(ig.status === "fulfilled" ? ig.value : []), ...(fb.status === "fulfilled" ? fb.value : [])];
+  const errors = [ig.status === "rejected" ? `Instagram: ${ig.reason}` : "", fb.status === "rejected" ? `Facebook: ${fb.reason}` : ""].filter(Boolean);
+  if (errors.length === 2) return { ok: false, error: errors.join("; "), ...empty };
 
   const byKey = new Map<string, MetaPost>();
   for (const p of posts) {
@@ -114,7 +112,14 @@ export async function syncSocialStatsFromMeta(
     if (fbId) byKey.set(`fb:${fbId}`, p);
   }
 
-  const result: SocialStatsSyncResult & { unmatchedPosts: string[] } = { ok: true, alreadyFilled: 0, unmatched: 0, filled: [], unmatchedPosts: [] };
+  const result: SocialStatsSyncResult & { unmatchedPosts: string[] } = {
+    ok: true,
+    ...(errors.length ? { error: errors.join("; ") } : {}),
+    alreadyFilled: 0,
+    unmatched: 0,
+    filled: [],
+    unmatchedPosts: [],
+  };
   const miss = (row: (typeof due)[number]) => {
     result.unmatched++;
     result.unmatchedPosts.push(`${row.fields.Platform}: ${row.fields.Name || row.id} (${row.fields["Post URL"]})`);
