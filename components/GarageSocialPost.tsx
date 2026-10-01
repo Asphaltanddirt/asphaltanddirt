@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
+import { fullCaption, hashtagsFor, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -149,6 +149,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const link = linkPlan(item);
   const auto = isAutoPlatform(item.platform);
   const pasteCaption = fullCaption(item);
+  const tags = hashtagsFor(item);
   // X counts every character of the post, hashtags included.
   const overLimit = item.platform === "X" && xLength(pasteCaption) > 280;
   // Scheduled natively ahead of time (Jose 9/26): handled, just waiting to go
@@ -271,14 +272,19 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         <div className="garage-social-caption">
           {item.caption && <p>{item.caption}</p>}
           {link.kind === "caption" && <p>{link.text}</p>}
-          {item.hashtags && <p className="garage-social-tags">{item.hashtags}</p>}
+          {tags.tags && (
+            <p className="garage-social-tags">
+              {tags.tags}
+              {tags.isDefault && <span className="garage-social-tags-note"> (default tags: the card had none. Edit to change.)</span>}
+            </p>
+          )}
           {overLimit && (
             <p className="garage-error">
               {xLength(pasteCaption)} characters, X allows 280. Edit before posting.
             </p>
           )}
           <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(pasteCaption, "caption")}>
-            {copied === "caption" ? "Copied" : item.hashtags ? "Copy caption + hashtags" : "Copy caption"}
+            {copied === "caption" ? "Copied" : tags.tags ? "Copy caption + hashtags" : "Copy caption"}
           </button>
         </div>
       ) : null}

@@ -37,13 +37,36 @@ export function linkPlan(
   return { kind: "none", text: "" };
 }
 
+/** Fallback subject tags for a card whose Hashtags field is blank. Every post
+ *  gets 5 on every platform (Jose 9/30); hand-made and event-promo cards were
+ *  going out with none. Subject tags, never the brand alone. */
+const DEFAULT_TAGS = {
+  Asphalt: "#CarCulture #CarCommunity #TrackDay #Motorsport #CarMeet",
+  Dirt: "#Offroad #4x4 #TrailRiding #Overlanding #4WD",
+  Both: "#CarCulture #Offroad #4x4 #CarCommunity #Overlanding",
+} as const;
+
+/** The card's own hashtags, or its side's 5 defaults when it has none (and has
+ *  a caption to hang them on). YouTube is left alone: exactly 3, by hand. */
+export function hashtagsFor(post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "topic" | "weekOf">): {
+  tags: string;
+  isDefault: boolean;
+} {
+  if (post.hashtags.trim() || !post.caption.trim() || post.platform.startsWith("YouTube")) return { tags: post.hashtags.trim(), isDefault: false };
+  const side = topicLabel(post.topic, post.weekOf);
+  const key = side === "Asphalt" ? "Asphalt" : side === "Dirt" || post.topic === "Trail clip" ? "Dirt" : "Both";
+  return { tags: DEFAULT_TAGS[key], isDefault: true };
+}
+
 /** Caption as it's pasted: the caption, the blog link when it belongs in the
  *  caption (Facebook Page), then hashtags on their own line. */
 export function fullCaption(
-  post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "blogUrl" | "firstComment" | "linkPlacement" | "asset"> & { takeUrl?: string },
+  post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "blogUrl" | "firstComment" | "linkPlacement" | "asset" | "topic" | "weekOf"> & {
+    takeUrl?: string;
+  },
 ): string {
   const link = linkPlan(post);
-  return [post.caption.trim(), link.kind === "caption" ? link.text : "", post.hashtags].filter(Boolean).join("\n\n");
+  return [post.caption.trim(), link.kind === "caption" ? link.text : "", hashtagsFor(post).tags].filter(Boolean).join("\n\n");
 }
 
 /** Platforms the auto-poster handles. TikTok is scheduled in TikTok Studio, Meta
