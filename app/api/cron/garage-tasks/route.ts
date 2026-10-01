@@ -17,6 +17,11 @@ export async function GET(req: NextRequest) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+  // ?stats=meta-dry: what the Meta sync would fill right now, writing nothing
+  // and skipping the rest of the run (checking the card matching, 10/1).
+  if (new URL(req.url).searchParams.get("stats") === "meta-dry") {
+    return NextResponse.json(await syncSocialStatsFromMeta(new Date(), { dryRun: true }).catch((err) => ({ ok: false, error: String(err) })));
+  }
   try {
     // This week AND next week. The Planning Calendar plans Tuesday → next
     // Monday and looks 6 days further, so next week's cards and tasks have to

@@ -208,7 +208,7 @@ export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]
   for (const p of data.data ?? []) {
     const rows = await insights(
       `${p.id}/insights`,
-      ["post_impressions_unique", "post_impressions", "post_engaged_users", "post_clicks"],
+      ["post_media_view", "post_total_media_view_unique", "post_impressions_unique", "post_impressions", "post_engaged_users", "post_clicks"],
       {},
       [{}],
     );
@@ -221,6 +221,31 @@ export async function facebookPosts(since: Date, limit = 50): Promise<MetaPost[]
     });
   }
   return posts;
+}
+
+/**
+ * One Facebook Reel's numbers. Reels aren't in the Page's /posts feed, so the
+ * board's Reel cards (Post URL "/reel/<id>/") never matched anything; their
+ * stats live on the video itself. Wish list, so renamed metrics only cost one.
+ */
+export async function facebookReelStats(videoId: string): Promise<Record<string, number>> {
+  const rows = await insights(
+    `${videoId}/video_insights`,
+    ["fb_reels_total_plays", "blue_reels_play_count", "post_impressions_unique", "post_video_avg_time_watched", "post_video_followers", "post_video_social_actions"],
+    {},
+    [{}],
+  );
+  const stats = byMetric(rows);
+  try {
+    const v = await graph<{ likes?: { summary?: { total_count?: number } }; comments?: { summary?: { total_count?: number } } }>(videoId, {
+      fields: "likes.summary(true).limit(0),comments.summary(true).limit(0)",
+    });
+    if (typeof v.likes?.summary?.total_count === "number") stats.likes = v.likes.summary.total_count;
+    if (typeof v.comments?.summary?.total_count === "number") stats.comments = v.comments.summary.total_count;
+  } catch {
+    // Counts are a bonus; the plays are what the card needs.
+  }
+  return stats;
 }
 
 function unix(d: Date) {

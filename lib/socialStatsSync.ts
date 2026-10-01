@@ -15,7 +15,7 @@
  */
 
 import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
-import { facebookPosts, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
+import { facebookPosts, facebookReelStats, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
 import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
 import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 
@@ -40,26 +40,47 @@ export interface SocialStatsSyncResult {
   filled: { name: string; platform: string; views?: number }[];
 }
 
-/** Permalinks differ by trailing slash, www, query string and protocol. */
-function permalinkKey(url: string): string {
-  return url
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .replace(/[?#].*$/, "")
-    .replace(/\/+$/, "");
+/**
+ * A post's identity from any link to it. Matching whole permalinks missed most
+ * cards (found 10/1): Instagram says /reel/ where a card says /p/, the
+ * auto-poster saves Facebook Reels as "/reel/<id>/", and the Page feed's ids
+ * are "<page>_<post>". IG = shortcode, FB post = post id, FB Reel = video id.
+ */
+function postKey(url: string): string {
+  const ig = url.match(/instagram\.com\/(?:[^/]+\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+  if (ig) return `ig:${ig[1]}`;
+  const reel = url.match(/\/(?:reel|videos)\/(\d+)/);
+  if (reel) return `fbreel:${reel[1]}`;
+  const post = url.match(/\/posts\/(?:[^/]+\/)?(\d+)/) || url.match(/[?&]story_fbid=(\d+)/);
+  if (post) return `fb:${post[1]}`;
+  return "";
+}
+
+/** Facebook "share" links (copied from the app) hide the post; follow the
+ *  redirect to the real address. Blank when Facebook won't say. */
+async function resolveShareLink(url: string): Promise<string> {
+  if (!/facebook\.com\/share\//.test(url)) return url;
+  try {
+    const res = await fetch(url, { redirect: "manual", headers: { "User-Agent": "Mozilla/5.0" } });
+    return res.headers.get("location") || "";
+  } catch {
+    return "";
+  }
 }
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
-export async function syncSocialStatsFromMeta(now = new Date()): Promise<SocialStatsSyncResult> {
+export async function syncSocialStatsFromMeta(
+  now = new Date(),
+  opts: { dryRun?: boolean } = {},
+): Promise<SocialStatsSyncResult & { unmatchedPosts?: string[] }> {
   const empty = { alreadyFilled: 0, unmatched: 0, filled: [] };
   if (!isMetaConfigured()) return { ok: false, skipped: "META_GRAPH_TOKEN not configured", ...empty };
 
   const rows = await listRecords(POSTS, `{Status} = 'Posted'`, { baseId: BASE_ID });
 
   // Only rows inside the fill window, on a platform we can reach, with a link.
+  // (Facebook Groups have no API for this; those stay by hand.)
   const due = rows.filter((r) => {
     const platform = String(r.fields.Platform || "");
     if (platform !== "Instagram" && platform !== "Facebook" && platform !== "Facebook Page") return false;
@@ -84,35 +105,57 @@ export async function syncSocialStatsFromMeta(now = new Date()): Promise<SocialS
     return { ok: false, error: String(e), ...empty };
   }
 
-  const byPermalink = new Map(posts.filter((p) => p.permalink).map((p) => [permalinkKey(p.permalink), p]));
+  const byKey = new Map<string, MetaPost>();
+  for (const p of posts) {
+    const key = postKey(p.permalink);
+    if (key) byKey.set(key, p);
+    // Page feed ids are "<page id>_<post id>".
+    const fbId = p.id.includes("_") ? p.id.split("_")[1] : "";
+    if (fbId) byKey.set(`fb:${fbId}`, p);
+  }
 
-  const result: SocialStatsSyncResult = { ok: true, alreadyFilled: 0, unmatched: 0, filled: [] };
+  const result: SocialStatsSyncResult & { unmatchedPosts: string[] } = { ok: true, alreadyFilled: 0, unmatched: 0, filled: [], unmatchedPosts: [] };
+  const miss = (row: (typeof due)[number]) => {
+    result.unmatched++;
+    result.unmatchedPosts.push(`${row.fields.Platform}: ${row.fields.Name || row.id} (${row.fields["Post URL"]})`);
+  };
 
   for (const row of due) {
     if (num(row.fields["Views 7d"]) !== undefined) {
       result.alreadyFilled++;
       continue;
     }
-    const match = byPermalink.get(permalinkKey(String(row.fields["Post URL"])));
-    if (!match) {
-      result.unmatched++;
+    const key = postKey(await resolveShareLink(String(row.fields["Post URL"])));
+    let s: Record<string, number> | undefined;
+    if (key.startsWith("fbreel:")) {
+      s = await facebookReelStats(key.slice(7)).catch(() => undefined);
+    } else if (key) {
+      s = byKey.get(key)?.stats;
+    }
+    if (!s) {
+      miss(row);
       continue;
     }
 
-    const s = match.stats;
-    // Instagram calls saves "saved"; Facebook reports impressions, not views.
-    const views = num(s.views) ?? num(s.post_impressions) ?? num(s.reach) ?? num(s.post_impressions_unique);
+    // Instagram calls saves "saved"; Facebook posts report media views or
+    // impressions, Reels report plays.
+    const views =
+      num(s.views) ?? num(s.fb_reels_total_plays) ?? num(s.blue_reels_play_count) ?? num(s.post_media_view) ??
+      num(s.post_impressions) ?? num(s.reach) ?? num(s.post_impressions_unique);
     const fields: AirtableFields = {};
     if (views !== undefined) fields["Views 7d"] = views;
     if (num(s.shares) !== undefined) fields["Shares 7d"] = s.shares;
     if (num(s.saved) !== undefined) fields["Saves 7d"] = s.saved;
     if (num(s.follows) !== undefined) fields["Follows 7d"] = s.follows;
+    if (num(s.post_video_followers) !== undefined && fields["Follows 7d"] === undefined) fields["Follows 7d"] = s.post_video_followers;
+    if (num(s.likes) !== undefined) fields["Likes 7d"] = s.likes;
+    if (num(s.comments) !== undefined) fields["Replies 7d"] = s.comments;
     if (!Object.keys(fields).length) {
-      result.unmatched++;
+      miss(row);
       continue;
     }
 
-    await updateRecord(POSTS, row.id, fields, { baseId: BASE_ID });
+    if (!opts.dryRun) await updateRecord(POSTS, row.id, fields, { baseId: BASE_ID });
     result.filled.push({
       name: String(row.fields.Name || row.id),
       platform: String(row.fields.Platform || ""),
