@@ -1,4 +1,5 @@
 import { listRecords, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
+import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 
 export interface GuestSocialLink {
   /** Free-text platform label ("Instagram", "TikTok", "Website", ...) —
@@ -45,6 +46,12 @@ export interface Episode {
   sponsors?: Sponsor[];
   affiliateDisclosure?: string;
   relatedSlugs?: string[];
+  /** Which video plays after this one (Airtable "Up Next"). Unset = the
+   *  automatic order in getUpNext(). */
+  upNextSlug?: string;
+  /** Multi-part rides share one Series name (Airtable "Series"), e.g.
+   *  "Pine Barrens June Ride"; the part number comes from "Part N" in the title. */
+  series?: string;
   /** Cleaned transcript exported from Riverside (see the Podcast Transcript
    *  runbook prompt for the full process). Plain text, paragraphs separated
    *  by a blank line. Two light conventions the renderer understands:
@@ -291,6 +298,8 @@ async function airtableEpisodes(): Promise<Episode[]> {
         guests: links(f.Guests).map((id) => guests.get(id)).filter((g): g is Guest => Boolean(g?.name)),
         sponsors: links(f.Sponsors).map((id) => sponsors.get(id)).filter((x): x is Sponsor => Boolean(x?.name)),
         relatedSlugs: links(f["Related Episodes"]).map((id) => slugById.get(id) || "").filter(Boolean),
+        upNextSlug: slugById.get(links(f["Up Next"])[0] ?? "") || undefined,
+        series: str(f.Series) || undefined,
         artwork: {
           src: art || (yt ? `https://i.ytimg.com/vi/${yt}/maxresdefault.jpg` : "/img/podcast/hero.jpg"),
           alt: `${title} artwork`,
@@ -308,10 +317,92 @@ export async function getAllEpisodes(): Promise<Episode[]> {
     return [] as Episode[];
   });
   const taken = new Set(fromAirtable.map((e) => e.slug));
-  return [
+  const known = [
     ...fromAirtable.sort((a, b) => b.publicationDate.localeCompare(a.publicationDate)),
     ...episodes.filter((e) => !taken.has(e.slug)),
   ];
+  return [...known, ...(await playlistOnlyEpisodes(known))];
+}
+
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+/** Every video in the Trail & Event Videos playlist gets a page on the site,
+ *  even before it has an Episodes row (Jose 9/30: keep plays on the site,
+ *  as many pages as possible). The page uses the YouTube title and
+ *  description as they are; an Episodes row with the same video ID replaces it. */
+async function playlistOnlyEpisodes(known: Episode[]): Promise<Episode[]> {
+  const videos = await fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 50).catch(() => []);
+  const ids = new Set(known.map((e) => e.youtubeVideoId).filter(Boolean));
+  const slugs = new Set(known.map((e) => e.slug));
+  return videos
+    .filter((v) => v.videoId && !ids.has(v.videoId))
+    .map((v): Episode => {
+      let slug = slugify(v.title) || v.videoId.toLowerCase();
+      if (slugs.has(slug)) slug = `${slug}-${v.videoId.toLowerCase()}`;
+      slugs.add(slug);
+      const [first, ...rest] = v.description.split(/\n\s*\n/);
+      return {
+        slug,
+        title: v.title,
+        publicationDate: v.publishedAt || new Date().toISOString(),
+        description: (first || v.title).trim(),
+        showNotes: rest.join("\n\n").trim() || undefined,
+        youtubeVideoId: v.videoId,
+        youtubePlaylistUrl: `https://www.youtube.com/playlist?list=${TRAIL_EVENT_VIDEOS_PLAYLIST_ID}`,
+        type: "trail-event",
+        artwork: { src: v.thumbnail || `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`, alt: v.title },
+      };
+    });
+}
+
+/** Which multi-part ride an episode belongs to, and which part. The Series
+ *  field names it (parts get different titles on purpose, for CTR); without
+ *  it, the title text before "Part N" is used. */
+export function seriesOf(e: Pick<Episode, "title" | "series">): { name: string; part: number } | undefined {
+  const m = e.title.match(/^(.*?)[\s|:–—-]*\bPart\s+(\d+)\b/i);
+  const name = e.series || m?.[1].trim();
+  if (!name || !m) return undefined;
+  return { name, part: Number(m[2]) };
+}
+
+/** Newest first, same kind (trail videos or podcast episodes). */
+export async function getEpisodesOfType(type: Episode["type"]): Promise<Episode[]> {
+  return (await getAllEpisodes())
+    .filter((e) => e.type === type)
+    .sort((a, b) => b.publicationDate.localeCompare(a.publicationDate));
+}
+
+/** The video that plays after this one, in the order WE choose (YouTube's
+ *  own player only suggests; it can't be told what's next):
+ *    1. the Airtable "Up Next" link, if set;
+ *    2. the next part of the same series (Part 1 → Part 2);
+ *    3. otherwise the next-older video of the same kind, wrapping to the
+ *       newest — and a series is always entered at Part 1. */
+export async function getUpNext(episode: Episode): Promise<Episode | undefined> {
+  const list = await getEpisodesOfType(episode.type);
+  if (episode.upNextSlug) {
+    const pick = list.find((e) => e.slug === episode.upNextSlug);
+    if (pick) return pick;
+  }
+  const s = seriesOf(episode);
+  const inSeries = (e: Episode) => Boolean(s && seriesOf(e)?.name === s.name);
+  if (s) {
+    const next = list.find((e) => inSeries(e) && seriesOf(e)?.part === s.part + 1);
+    if (next) return next;
+  }
+  const at = Math.max(...list.map((e, i) => (e.slug === episode.slug || inSeries(e) ? i : -1)));
+  for (let k = 1; k < list.length; k++) {
+    const cand = list[(at + k) % list.length];
+    if (cand.slug === episode.slug || inSeries(cand)) continue;
+    const cs = seriesOf(cand);
+    if (cs && cs.part > 1) {
+      const first = list.find((e) => seriesOf(e)?.name === cs.name && seriesOf(e)?.part === 1);
+      if (first) return first;
+    }
+    return cand;
+  }
+  return undefined;
 }
 
 export async function findEpisodeBySlug(slug: string): Promise<Episode | undefined> {

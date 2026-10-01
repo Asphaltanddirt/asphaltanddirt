@@ -1411,6 +1411,32 @@ button.chip:not(.active):hover{ color:var(--text); }
 .video-frame iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
 .video-frame .play-circle{ width:72px; height:72px; position:relative; z-index:2; box-shadow:0 0 30px 10px rgba(0,0,0,.4); }
 
+/* Up Next — our own end-of-video card (components/EpisodeVideo.tsx) */
+.episode-video{ position:relative; }
+.up-next-overlay{
+  position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center;
+  padding:12px; background:rgba(0,0,0,.82); border-radius:var(--radius-md);
+}
+.up-next-card{ width:min(360px,100%); display:flex; flex-direction:column; gap:8px; text-align:left; }
+.up-next-card img{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border); }
+.up-next-title{ margin:0; font-weight:800; color:var(--text); line-height:1.3; }
+.up-next-count{ margin:0; font-size:13px; color:var(--text-dim); }
+.up-next-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+@media (max-width:560px){
+  .up-next-card img{ display:none; }
+}
+/* Up Next row on the page itself (always visible, not just at the end) */
+.up-next-link{ display:flex; gap:12px; align-items:center; margin-top:16px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-md); color:inherit; text-decoration:none; }
+.up-next-link:hover{ border-color:var(--accent); }
+.up-next-link img{ width:112px; aspect-ratio:16/9; object-fit:cover; border-radius:var(--radius-sm); flex:none; }
+.up-next-link strong{ display:block; font-size:14px; line-height:1.3; }
+.up-next-link .eyebrow{ font-size:11px; }
+
+/* Series row on the playlist page */
+.series-block{ margin-top:var(--sp-4); }
+.series-block h2{ font-size:20px; margin:6px 0 0; }
+.part-tag{ display:inline-block; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+
 /* Captions toggle under every embedded video — one site-wide preference */
 .video-toolbar{ display:flex; justify-content:flex-end; margin-top:8px; }
 .card .video-toolbar{ padding:0 var(--sp-2); }

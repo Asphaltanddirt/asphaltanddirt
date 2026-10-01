@@ -4,10 +4,10 @@ import TrailRatingPicker from "@/components/TrailRatingPicker";
 import Link from "next/link";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
 import EventCover from "@/components/EventCover";
-import RecapCard from "@/components/RecapCard";
+import EpisodeCard from "@/components/EpisodeCard";
+import { getEpisodesOfType } from "@/lib/episodes";
 import { getEventsShowcase, isPastEvent } from "@/lib/events";
 import { socialLinks } from "@/lib/social";
-import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 import { excerpt } from "@/lib/text";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ function formatEventDate(iso: string) {
 export default async function EventsPage() {
   const [showcase, recaps] = await Promise.all([
     getEventsShowcase(3),
-    fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 3),
+    getEpisodesOfType("trail-event").then((v) => v.slice(0, 3)),
   ]);
 
   return (
@@ -126,15 +126,15 @@ export default async function EventsPage() {
         <div className="container">
           <div className="section-head">
             <h2 className="eyebrow">Ride Recaps &amp; Highlights</h2>
-            <Link href="/events/recaps" className="view-all">
-              View All Recaps
+            <Link href="/events/videos" className="view-all">
+              All Trail &amp; Event Videos
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </div>
           {recaps.length ? (
             <div className="grid grid-3">
               {recaps.map((video) => (
-                <RecapCard key={video.videoId} video={video} />
+                <EpisodeCard key={video.slug} episode={video} showPart />
               ))}
             </div>
           ) : (

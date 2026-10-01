@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { episodePath, findEpisodeBySlug, findRelatedEpisodes } from "@/lib/episodes";
-import YouTubeEmbed from "@/components/YouTubeEmbed";
+import { episodePath, findEpisodeBySlug, findRelatedEpisodes, getEpisodesOfType, getUpNext } from "@/lib/episodes";
+import EpisodeVideo from "@/components/EpisodeVideo";
 import PlatformLinks from "@/components/PlatformLinks";
 import DescriptionTranscriptPanel from "@/components/DescriptionTranscriptPanel";
 import BuzzsproutPlayer from "@/components/BuzzsproutPlayer";
@@ -46,7 +46,15 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
   if (!episode) notFound();
   if (episode.type !== kind) permanentRedirect(episodePath(episode));
 
-  const related = await findRelatedEpisodes(episode);
+  const [picked, upNext, sameKind] = await Promise.all([
+    findRelatedEpisodes(episode),
+    getUpNext(episode),
+    getEpisodesOfType(episode.type),
+  ]);
+  // No hand-picked related videos → the newest others, so the bottom of the
+  // page always offers somewhere on the site to go next.
+  const related = picked.length ? picked : sameKind.filter((e) => e.slug !== episode.slug).slice(0, 3);
+  const listPath = episode.type === "trail-event" ? "/events/videos" : "/podcast/episodes";
   const publishedDate = new Date(episode.publicationDate);
   const formattedDate = publishedDate.toLocaleDateString("en-US", {
     month: "long",
@@ -124,7 +132,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
             </Link>
             {/* Keep viewers on the site (Jose 9/30): the "see all" link goes to
                 our own list, not the YouTube playlist. */}
-            <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
+            <Link href={listPath} className="view-all">
               {isTrailEvent ? "All Trail & Event Videos" : "All Episodes"}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
@@ -133,10 +141,15 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
           <div className="episode-hero-grid mt-4">
             <div>
               {episode.youtubeVideoId ? (
-                <YouTubeEmbed
+                <EpisodeVideo
                   videoId={episode.youtubeVideoId}
                   title={episode.title}
                   eventContext={`episode:${episode.slug}`}
+                  upNext={
+                    upNext
+                      ? { href: episodePath(upNext), title: upNext.title, thumbnail: upNext.artwork.src }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="video-frame">
@@ -154,6 +167,16 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
               </div>
               <p className="lead mt-2">{episode.description}</p>
               <PlatformLinks episode={episode} variant="icons" />
+              {upNext && (
+                <Link href={`${episodePath(upNext)}?play=1`} className="up-next-link">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={upNext.artwork.src} alt="" loading="lazy" />
+                  <span>
+                    <span className="eyebrow accent">Up Next</span>
+                    <strong>{upNext.title}</strong>
+                  </span>
+                </Link>
+              )}
               {episode.youtubeVideoId && (
                 <a
                   href={`https://www.youtube.com/watch?v=${episode.youtubeVideoId}`}
@@ -253,7 +276,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
         <div className="container">
           <div className="section-head">
             <h2 className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</h2>
-            <Link href={isTrailEvent ? "/events/recaps" : "/podcast"} className="view-all">
+            <Link href={listPath} className="view-all">
               {isTrailEvent ? "View All Recaps" : "View All Episodes"}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
@@ -261,7 +284,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
           {related.length ? (
             <div className="grid grid-3">
               {related.map((r) => (
-                <Link key={r.slug} href={episodePath(r)} className="card">
+                <Link key={r.slug} href={`${episodePath(r)}?play=1`} className="card">
                   <div className="card-media">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={r.artwork.src} alt={r.artwork.alt} />

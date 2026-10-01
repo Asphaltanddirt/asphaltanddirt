@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       { source: "/blog/the-gear-we-actually-use", destination: "/blog/all?category=gear", permanent: true },
       { source: "/blog/red-clay-run-community-ride-recap", destination: "/blog/why-community-rides-matter", permanent: true },
       // New hat was created as a copy, then renamed Wide Open Trucker (2026-09-26).
+      // The trail video list moved to /events/videos, next to the video pages (2026-09-30).
+      { source: "/events/recaps", destination: "/events/videos", permanent: true },
       { source: "/merch/copy-of-trailhead-trucker", destination: "/merch/wide-open-trucker", permanent: true },
     ];
   },

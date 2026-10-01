@@ -14,6 +14,7 @@ export default function YouTubeEmbed({
   thumbnail,
   vertical = false,
   autoPlayFromQuery = false,
+  onEnded,
 }: {
   videoId: string;
   title: string;
@@ -33,6 +34,8 @@ export default function YouTubeEmbed({
    *  iOS still blocks unmuted playback not started by a gesture on the player
    *  itself, so this is a desktop improvement. */
   autoPlayFromQuery?: boolean;
+  /** Called when the video plays to the end — the page's own Up Next. */
+  onEnded?: () => void;
 }) {
   const [playing, setPlaying] = useState(false);
   const captions = useCaptionsPref();
@@ -40,6 +43,10 @@ export default function YouTubeEmbed({
   const [startAt, setStartAt] = useState(0);
   const currentTime = useRef(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const onEndedRef = useRef(onEnded);
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
   const frameClassName = vertical ? "video-frame video-frame-vertical" : "video-frame";
 
   // Arriving from a deliberate click on a video card: start without making
@@ -62,6 +69,8 @@ export default function YouTubeEmbed({
       try {
         const data = JSON.parse(e.data);
         if (typeof data?.info?.currentTime === "number") currentTime.current = data.info.currentTime;
+        // 0 = ended. It arrives as infoDelivery {playerState} and/or onStateChange.
+        if (data?.info?.playerState === 0 || (data?.event === "onStateChange" && data?.info === 0)) onEndedRef.current?.();
       } catch {
         // Not a player message.
       }
