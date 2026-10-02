@@ -8,6 +8,7 @@ import DescriptionTranscriptPanel from "@/components/DescriptionTranscriptPanel"
 import BuzzsproutPlayer from "@/components/BuzzsproutPlayer";
 import GuestRow from "@/components/GuestRow";
 import ShareEpisodeButton from "@/components/ShareEpisodeButton";
+import { DescriptionPanel, HypeBox, MoreVideosSection, TranscriptFold } from "@/components/VideoPageParts";
 import { SITE_URL } from "@/lib/site";
 
 export type EpisodeKind = "podcast" | "trail-event";
@@ -53,7 +54,12 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
   ]);
   // No hand-picked related videos → the newest others, so the bottom of the
   // page always offers somewhere on the site to go next.
-  const related = picked.length ? picked : sameKind.filter((e) => e.slug !== episode.slug).slice(0, 3);
+  // Always three when there are three to show (Jose 10/2: both "More …"
+  // strips look the same): hand-picked first, topped up with the newest.
+  const related = [
+    ...picked,
+    ...sameKind.filter((e) => e.slug !== episode.slug && !picked.some((p) => p.slug === e.slug)),
+  ].slice(0, 3);
   const listPath = episode.type === "trail-event" ? "/videos?type=trail" : "/podcast/episodes";
   const publishedDate = new Date(episode.publicationDate);
   const formattedDate = publishedDate.toLocaleDateString("en-US", {
@@ -225,8 +231,17 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
             </div>
           )}
 
-          <div className={isTrailEvent ? "mt-3" : "two-col episode-panel-row mt-3"}>
-            {!isTrailEvent && (
+          {isTrailEvent && episode.youtubeVideoId && (
+            <HypeBox videoId={episode.youtubeVideoId} url={episodeUrl} title={episode.title} />
+          )}
+          {isTrailEvent && (episode.showNotes || episode.description) && (
+            <DescriptionPanel label="About this ride:" text={episode.showNotes || episode.description} />
+          )}
+          {isTrailEvent && <TranscriptFold transcript={episode.transcript} />}
+
+          {/* Podcast episodes keep their sponsor + hype row and tabbed panel. */}
+          {!isTrailEvent && (
+          <div className="two-col episode-panel-row mt-3">
               <div>
                 <div className="eyebrow">Sponsor This Episode</div>
                 <div className="sponsor-block mt-3">
@@ -240,9 +255,8 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
                     : "Sponsor spot available on this episode. Reach out to advertise here."}
                 </div>
               </div>
-            )}
             <div>
-              <div className="eyebrow">{isTrailEvent ? "Hype This Video" : "Hype This Episode"}</div>
+              <div className="eyebrow">Hype This Episode</div>
               <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
                 <p className="mb-0">Loved this one? A like, a comment, or a share on YouTube goes a long way.</p>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -256,13 +270,15 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
                       Like &amp; Comment On YouTube
                     </a>
                   )}
-                  <ShareEpisodeButton url={episodeUrl} title={episode.title} label={isTrailEvent ? "Share This Video" : "Share This Episode"} />
+                  <ShareEpisodeButton url={episodeUrl} title={episode.title} />
                 </div>
               </div>
             </div>
           </div>
 
-          {hasDescOrTranscript && (
+          )}
+
+          {!isTrailEvent && hasDescOrTranscript && (
             // Lower priority on purpose (most visitors never open it — it's
             // mainly substance for SEO/GEO) but same tight rhythm as
             // everything above it, not a separately-padded section.
@@ -273,34 +289,42 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
         </div>
       </section>
 
-      <section className="section-alt">
-        <div className="container">
-          <div className="section-head">
-            <h2 className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</h2>
-            <Link href={listPath} className="view-all">
-              {isTrailEvent ? "View All Recaps" : "View All Episodes"}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </Link>
-          </div>
-          {related.length ? (
-            <div className="grid grid-3">
-              {related.map((r) => (
-                <Link key={r.slug} href={`${episodePath(r)}?play=1`} className="card">
-                  <div className="card-media">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.artwork.src} alt={r.artwork.alt} />
-                  </div>
-                  <div className="card-body">
-                    <h3>{r.title}</h3>
-                  </div>
-                </Link>
-              ))}
+      {isTrailEvent ? (
+        <MoreVideosSection
+          title="More Trail & Event Videos"
+          href={listPath}
+          items={related.map((r) => ({ href: episodePath(r), title: r.title, thumbnail: r.artwork.src }))}
+        />
+      ) : (
+        <section className="section-alt">
+          <div className="container">
+            <div className="section-head">
+              <h2 className="eyebrow">{isTrailEvent ? "More Recaps" : "Related Episodes"}</h2>
+              <Link href={listPath} className="view-all">
+                {isTrailEvent ? "View All Recaps" : "View All Episodes"}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </Link>
             </div>
-          ) : (
-            <p className="mb-0">More episodes drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
-          )}
-        </div>
-      </section>
+            {related.length ? (
+              <div className="grid grid-3">
+                {related.map((r) => (
+                  <Link key={r.slug} href={`${episodePath(r)}?play=1`} className="card">
+                    <div className="card-media">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={r.artwork.src} alt={r.artwork.alt} />
+                    </div>
+                    <div className="card-body">
+                      <h3>{r.title}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="mb-0">More episodes drop soon &mdash; check back here or subscribe above so you don&apos;t miss one.</p>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }

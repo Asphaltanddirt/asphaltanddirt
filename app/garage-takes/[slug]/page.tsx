@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EpisodeVideo from "@/components/EpisodeVideo";
-import { renderTranscriptBlocks } from "@/lib/transcriptRenderer";
-import { fetchPublicFromPlaylist, GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
+import { BlogPanel, HypeBox, MoreVideosSection, TranscriptFold } from "@/components/VideoPageParts";
 import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeSummaryForDisplay, takeTitleLines } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 
@@ -40,12 +39,11 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
   if (!take) notFound();
   const post = takeCompanionPost(take);
   const all = publishedGarageTakes();
-  const others = all.filter((t) => t.slug !== take.slug).slice(0, 2);
+  const others = all.filter((t) => t.slug !== take.slug).slice(0, 3);
   // Up Next (Jose 10/2): the next-older take, wrapping to the newest, so the
   // panel and the end-of-video countdown always have somewhere to go.
   const at = all.findIndex((t) => t.slug === take.slug);
   const upNext = all.length > 1 ? all[(at + 1) % all.length] : undefined;
-  const playlistIsPublic = (await fetchPublicFromPlaylist(GARAGE_TAKES_PLAYLIST_ID, 1)).length > 0;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -60,6 +58,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
   };
 
   return (
+    <>
     <section className="section-pt-tight section-pb-tight">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="container">
@@ -123,46 +122,17 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
           </div>
         </div>
 
-        {post && (
-          <div className="exp-box pair-box mt-3">
-            <strong>The story behind it:</strong>{" "}
-            <Link href={`/blog/${post.slug}`}>{post.title} &rarr;</Link>
-            <p>{post.excerpt}</p>
-          </div>
-        )}
-
-        <details className="legal-full mt-4">
-          <summary>Transcript</summary>
-          <div className="transcript-body">{renderTranscriptBlocks(take.transcript)}</div>
-        </details>
-
-        {/* "Watch on YouTube" moved up next to the player. */}
-        {playlistIsPublic && (
-          <p className="garage-links mt-4">
-            <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener">The whole playlist ↗</a>
-          </p>
-        )}
-
-        {others.length > 0 && (
-          <>
-            <h2 className="eyebrow mt-6">More Garage Takes</h2>
-            <div className="grid grid-2 mt-2">
-              {others.map((t) => (
-                <Link className="card" href={`/garage-takes/${t.slug}?play=1`} key={t.slug}>
-                  <div className="card-media card-media-video">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://i.ytimg.com/vi/${t.videoId}/maxresdefault.jpg`} alt={t.title} loading="lazy" />
-                  </div>
-                  <div className="card-body">
-                    <h3 style={{ fontSize: 18 }}>{t.title}</h3>
-                    <p className="meta mb-0">{day(t.publishedAt)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
+        {/* Same parts, same order as trail video pages (Jose 10/2). */}
+        <HypeBox videoId={take.videoId} url={`${SITE_URL}/garage-takes/${take.slug}`} title={take.title} />
+        {post && <BlogPanel href={`/blog/${post.slug}`} title={post.title} excerpt={post.excerpt} />}
+        <TranscriptFold transcript={take.transcript} />
       </div>
     </section>
+    <MoreVideosSection
+      title="More Garage Takes"
+      href="/videos?type=takes"
+      items={others.map((t) => ({ href: `/garage-takes/${t.slug}`, title: t.title, thumbnail: `https://i.ytimg.com/vi/${t.videoId}/maxresdefault.jpg` }))}
+    />
+    </>
   );
 }
