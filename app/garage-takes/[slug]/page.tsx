@@ -60,7 +60,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
       <div className="container">
         <Link href="/videos?type=takes" className="back-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
-          All Garage Takes
+          Back To Videos
         </Link>
 
         <h1 className="mt-3">
