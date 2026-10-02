@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { createRecord, listRecords, updateRecord, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
 import { builds as teamBuilds } from "@/lib/builds";
+import { sendBuildLiveNow } from "@/lib/buildEmails";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { MERCH_COLLECTIONS } from "@/lib/fourthwall";
 
@@ -113,6 +114,8 @@ export async function setBuildSubmission(id: string, change: { state?: ReviewSta
   if (change.ambassador !== undefined) fields.Ambassador = change.ambassador;
   await updateRecord(BUILDS_TABLE, id, fields, { baseId: BUILDS_BASE });
   refresh(["/builds", "/builds/all", "/"]);
+  // The builder gets their page link right away (the hourly sweep retries).
+  if (change.state === "approved") await sendBuildLiveNow(id);
 }
 
 // ---------------------------------------------------------------------------

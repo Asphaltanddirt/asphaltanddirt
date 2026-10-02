@@ -30,18 +30,18 @@ const TIER_INFO: Record<string, { rate: string; label: string }> = {
   "Crew Partner": { rate: "15%", label: "Tier 3" },
 };
 
-function esc(v: string) {
+export function esc(v: string) {
   return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function firstNameOf(fullName: string) {
+export function firstNameOf(fullName: string) {
   return (fullName || "").trim().split(/\s+/)[0] || "there";
 }
 
 /** Shared shell: preview text, off-white ground, 600px white card with a
  *  black logo header, and the crew footer. `bodyRows` is the `<tr>...`
  *  content between header and footer. */
-function shell(previewText: string, bodyRows: string) {
+export function shell(previewText: string, bodyRows: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background-color:#f4f4f2;">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${esc(previewText)}</div>

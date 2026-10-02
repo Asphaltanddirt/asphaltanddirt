@@ -1,5 +1,6 @@
 import { listRecords, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
 import { builds as teamBuilds, type Build, type BuildCategory, type BuildSpec, type BuildStat } from "@/lib/builds";
+import { parseSocialLines } from "@/lib/socialLinks";
 
 // Own base (not Road & Trail Crew or Testimonials) — keeps its record and
 // attachment counts independent on the free plan. Photos are compressed
@@ -80,8 +81,19 @@ function mapRecordToBuild(record: AirtableRecord, usedSlugs: Set<string>): Build
     ] as (BuildSpec | undefined)[]
   ).filter((s): s is BuildSpec => Boolean(s));
 
+  // The one link from the form ("TikTok: @handle"); only real links become buttons.
+  const ownerSocials = parseSocialLines(f["Instagram / Social Handle"] as string)
+    .filter((s) => /^https?:\/\//i.test(s.url))
+    .map((s) => ({
+      platform: s.platform,
+      url: s.url,
+      label: (s.url.replace(/\/+$/, "").split("/").pop() || s.platform).replace(/^@?/, "@"),
+    }));
+
   return {
     slug,
+    recordId: record.id,
+    ownerSocials: ownerSocials.length ? ownerSocials : undefined,
     nameLines: [rigName],
     isAmbassador,
     vehicle,

@@ -2808,3 +2808,10 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .garage-library-row-size{ font-size:12px; color:var(--text-dim); white-space:nowrap; }
 .garage-library-row-body{ display:flex; flex-direction:column; gap:8px; padding:4px 0 8px; border-top:1px solid var(--border); }
 .garage-library-preview{ display:block; width:100%; max-height:70vh; object-fit:contain; background:#000; }
+
+/* Build page: the builder's own links at the top (Jose 10/2). */
+.build-owner-socials{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; }
+.build-owner-socials span{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); }
+.build-owner-socials a{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 14px; border:1px solid var(--border); border-radius:999px; color:var(--text); font-weight:600; font-size:15px; text-decoration:none; }
+.build-owner-socials a:hover{ border-color:var(--accent); color:var(--accent); }
+.build-owner-socials svg{ width:20px; height:20px; flex:none; }

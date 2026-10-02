@@ -71,6 +71,11 @@ export interface Build {
   aboutText: string;
   aboutStats: { label: string; value: string; icon: BuildIconKey }[];
   gallery?: { src: string; alt: string }[];
+  /** Community builds only: the Submissions record, for the builder emails. */
+  recordId?: string;
+  /** Community builds only: the builder's own links, shown at the top of
+   *  their page in place of A&D's (Jose 10/2). */
+  ownerSocials?: { platform: string; url: string; label: string }[];
 }
 
 // Cyclical order matches the original site's prev/next links: Rock Rhino ->

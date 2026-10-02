@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { builds, findBuildBySlug, findAdjacentBuilds, BUILD_ICONS } from "@/lib/builds";
 import { getApprovedCommunityBuilds } from "@/lib/communityBuilds";
 import { socialLinks } from "@/lib/social";
+import { SocialIcon } from "@/lib/socialIcons";
 import BuildGallery from "@/components/BuildGallery";
 import AmbassadorBuildBadge from "@/components/AmbassadorBuildBadge";
 import { SITE_URL } from "@/lib/site";
@@ -79,17 +80,30 @@ export default async function BuildDetailPage({
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
               Back To Builds
             </Link>
-            <div className="social-row">
-              <a href={socialLinks.instagram} target="_blank" rel="noopener" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="1" /></svg>
-              </a>
-              <a href={socialLinks.facebook} target="_blank" rel="noopener" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" /></svg>
-              </a>
-              <a href={socialLinks.x} target="_blank" rel="noopener" aria-label="X">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M20 4 4 20" /></svg>
-              </a>
-            </div>
+            {build.ownerSocials?.length ? (
+              // The builder's own links (Jose 10/2), so people can follow the rig.
+              <div className="build-owner-socials">
+                <span>Follow the build</span>
+                {build.ownerSocials.map((s) => (
+                  <a key={s.url} href={s.url} target="_blank" rel="noopener" aria-label={`${build.nameLines.join(" ")} on ${s.platform}`}>
+                    <SocialIcon platform={s.platform} />
+                    {s.label}
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="social-row">
+                <a href={socialLinks.instagram} target="_blank" rel="noopener" aria-label="Instagram">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="1" /></svg>
+                </a>
+                <a href={socialLinks.facebook} target="_blank" rel="noopener" aria-label="Facebook">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8.5h2.5V5H14c-2 0-3.5 1.5-3.5 3.5V11H8v3.5h2.5V21h3.5v-6.5h2.5l.5-3.5h-3V9c0-.5.3-.5.5-.5z" /></svg>
+                </a>
+                <a href={socialLinks.x} target="_blank" rel="noopener" aria-label="X">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M20 4 4 20" /></svg>
+                </a>
+              </div>
+            )}
           </div>
           <div className="two-col mt-4" style={{ alignItems: "center" }}>
             <div>

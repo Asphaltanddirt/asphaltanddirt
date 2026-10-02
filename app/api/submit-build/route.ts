@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRecord, uploadAttachment, isAirtableConfigured } from "@/lib/airtable";
 import { CATEGORY_LABELS } from "@/lib/communityBuilds";
 import type { BuildCategory } from "@/lib/builds";
+import { sendBuildReceived } from "@/lib/buildEmails";
 import { notifySubmission } from "@/lib/notify";
 
 // Not secrets — safe to reference here. Override in env if these ever need to change.
@@ -217,6 +218,8 @@ export async function POST(req: NextRequest) {
     { social, statPower, statTires, statLift, specEngine, specSuspension, specWheelsTires, specOther },
     photoData,
   );
+
+  await sendBuildReceived({ name: values.name, email: values.email, rigName: values.rigName });
 
   return NextResponse.json({ status: "sent" });
 }
