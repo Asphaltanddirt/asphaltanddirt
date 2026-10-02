@@ -63,8 +63,10 @@ export default function VideoHub({ videos, filter }: { videos: HubVideo[]; filte
               <span>{day(hero.date)}</span>
             </div>
             <p className="lead mt-2">{hero.description}</p>
-            <Link href={hero.href} className="btn btn-primary btn-sm btn-block mt-3">
-              Open The Video Page
+            {/* Not "open the video page": people are already on a video page
+                (Jose 10/2). Say what's there instead. */}
+            <Link href={hero.href} className="btn btn-primary btn-sm btn-block mt-3" style={{ whiteSpace: "normal", textAlign: "center" }}>
+              Expanded View, Transcript &amp; More
             </Link>
             <a
               href={`https://www.youtube.com/watch?v=${hero.videoId}`}
