@@ -381,6 +381,13 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
     const day = WEEKDAYS.indexOf(str(f.Weekday) || "Monday");
     const due = new Date(`${monday}T12:00:00Z`);
     due.setUTCDate(due.getUTCDate() + Math.max(day, 0));
+    // Starts / Ends (Jose 10/2): a slot only makes cards inside its dates, so a
+    // new plan can start mid-week (Sun 10/4) without touching the days before
+    // it, and the podcast slots take over on 11/11 without anyone flipping rows.
+    const dueDay = due.toISOString().slice(0, 10);
+    const starts = str(f.Starts).slice(0, 10);
+    const ends = str(f.Ends).slice(0, 10);
+    if ((starts && dueDay < starts) || (ends && dueDay > ends)) continue;
     const topic = str(f.Topic);
     const blog = topic === "Feature" ? blogs.feature : topic === "Alternate" ? blogs.alternate : null;
     const linkPlacement = str(f.Platform) === "X" && str(f.Asset) === "X image" && blog ? linkPlacementFor(monday) : "";
