@@ -1,8 +1,10 @@
 /**
- * Friday + Saturday 9 AM: make this week's Garage Takes Public (Claude's job,
- * Jose 9/25). One a day (Jose 9/29: two at once hurts the algorithm): Friday
- * flips the week's first take in lib/garageTakes.ts (the Feature), Saturday
- * flips the rest.
+ * Monday + Tuesday 7 AM: make this week's Garage Takes Public (Claude's job,
+ * Jose 9/25; moved from Fri + Sat to Mon + Tue on 10/2, the 7 AM long-video
+ * slot of the new posting plan). One a day (Jose 9/29: two at once hurts the
+ * algorithm): Monday flips the week's first take in lib/garageTakes.ts (the
+ * Feature), Tuesday flips the rest. Run on any other day, it flips whatever
+ * is still Unlisted.
  *
  * Runs on the laptop from a scheduled task, because the YouTube login that can
  * change a video's privacy (YOUTUBE_CAPTIONS_REFRESH_TOKEN, youtube.force-ssl)
@@ -54,7 +56,7 @@ async function main() {
   const list = await (await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status,snippet&id=${ids}`, { headers: auth })).json();
   // YouTube returns the videos in any order; keep the file's order.
   const items = due.map((t) => (list.items || []).find((v: { id: string }) => v.id === t.videoId)).filter(Boolean);
-  const isFriday = new Date(`${today}T12:00:00Z`).getUTCDay() === 5;
+  const isFirstDay = new Date(`${today}T12:00:00Z`).getUTCDay() === 1;
   const flipped: string[] = [];
   let left = 0;
   for (const v of items) {
@@ -63,7 +65,7 @@ async function main() {
       console.log(`skip  ${v.id} ${title} (already ${v.status?.privacyStatus})`);
       continue;
     }
-    if (isFriday && flipped.length) {
+    if (isFirstDay && flipped.length) {
       left++;
       console.log(`wait  ${v.id} ${title} (goes Public tomorrow)`);
       continue;
