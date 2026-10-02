@@ -166,7 +166,8 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
                 <span>{formattedDate}</span>
               </div>
               <p className="lead mt-2">{episode.description}</p>
-              <PlatformLinks episode={episode} variant="icons" />
+              {/* Podcast apps only; a trail video isn't on Spotify or Apple Podcasts. */}
+              {!isTrailEvent && <PlatformLinks episode={episode} variant="icons" />}
               {upNext && (
                 <Link href={`${episodePath(upNext)}?play=1`} className="up-next-link">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -241,7 +242,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
               </div>
             )}
             <div>
-              <div className="eyebrow">Hype This Episode</div>
+              <div className="eyebrow">{isTrailEvent ? "Hype This Video" : "Hype This Episode"}</div>
               <div className="event-promo mt-3" style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
                 <p className="mb-0">Loved this one? A like, a comment, or a share on YouTube goes a long way.</p>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -255,7 +256,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
                       Like &amp; Comment On YouTube
                     </a>
                   )}
-                  <ShareEpisodeButton url={episodeUrl} title={episode.title} />
+                  <ShareEpisodeButton url={episodeUrl} title={episode.title} label={isTrailEvent ? "Share This Video" : "Share This Episode"} />
                 </div>
               </div>
             </div>

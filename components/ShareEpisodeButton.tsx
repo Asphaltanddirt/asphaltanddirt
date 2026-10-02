@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { track } from "@/lib/analytics";
 
-export default function ShareEpisodeButton({ url, title }: { url: string; title: string }) {
+export default function ShareEpisodeButton({ url, title, label = "Share This Episode" }: { url: string; title: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
@@ -34,7 +34,7 @@ export default function ShareEpisodeButton({ url, title }: { url: string; title:
         <circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" />
         <path d="m8.2 10.8 7.6-4.6M8.2 13.2l7.6 4.6" />
       </svg>
-      {copied ? "Link Copied!" : "Share This Episode"}
+      {copied ? "Link Copied!" : label}
     </button>
   );
 }
