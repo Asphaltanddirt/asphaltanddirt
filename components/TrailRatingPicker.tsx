@@ -5,13 +5,14 @@ import { TrailRatingFacts } from "@/components/TrailRatingBadge";
 import type { TrailRating } from "@/lib/trailRating";
 
 /**
- * The Events page explainer (Jose 9/25, option 2): four badges in a row, tap
- * one and its lines show underneath. One level at a time keeps the section
- * short. A tablist, so arrow keys move between levels and screen readers hear
- * which one is showing.
+ * The Events page explainer (Jose 9/25, reworked 10/2): the badges run the
+ * full width of the panel; tap one and its Asphalt lines show on the left and
+ * its Dirt lines on the right (stacked on phones). Park It reads the same on
+ * both sides, so it shows one set. A tablist, so arrow keys move between
+ * levels and screen readers hear which one is showing.
  */
-export default function TrailRatingPicker({ ratings }: { ratings: TrailRating[] }) {
-  const [active, setActive] = useState(0);
+export default function TrailRatingPicker({ ratings, start = 0 }: { ratings: TrailRating[]; start?: number }) {
+  const [active, setActive] = useState(start);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const current = ratings[active];
   // Black on a black page disappears, so the Black edge is the muted grey.
@@ -28,7 +29,7 @@ export default function TrailRatingPicker({ ratings }: { ratings: TrailRating[] 
 
   return (
     <div className="trail-rating-picker">
-      <div role="tablist" aria-label="A&D Trail Rating levels" className="trail-rating-tabs">
+      <div role="tablist" aria-label="A&D Ride Rating levels" className="trail-rating-tabs">
         {ratings.map((r, i) => (
           <button
             key={r.color}
@@ -47,7 +48,7 @@ export default function TrailRatingPicker({ ratings }: { ratings: TrailRating[] 
             onKeyDown={(e) => onKey(e, i)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={r.image} alt={`${r.name} (${r.plain})`} width={120} height={120} />
+            <img src={r.image} alt={`${r.name} (${r.plain})`} width={240} height={240} />
           </button>
         ))}
       </div>
@@ -57,7 +58,14 @@ export default function TrailRatingPicker({ ratings }: { ratings: TrailRating[] 
         <p className="trail-rating-panel-name">
           {current.name} <span>{current.plain}</span>
         </p>
-        <TrailRatingFacts rating={current} />
+        {current.sameBothSides ? (
+          <TrailRatingFacts lines={current.dirt} />
+        ) : (
+          <div className="trail-rating-sides">
+            <TrailRatingFacts lines={current.asphalt} heading="Asphalt" />
+            <TrailRatingFacts lines={current.dirt} heading="Dirt" />
+          </div>
+        )}
       </div>
     </div>
   );

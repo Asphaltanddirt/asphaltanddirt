@@ -1,5 +1,5 @@
 import type { EventDetail } from "@/lib/events";
-import { ratingFacts, trailRatingFor } from "@/lib/trailRating";
+import { linkParts, SHAPE_CHAR, sideLabel, sidesFor, trailRatingFor, type RatingSide } from "@/lib/trailRating";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
 import { requirementsFor } from "@/lib/vehicleRules";
@@ -214,14 +214,27 @@ function requirementsNote(event: EventDetail, eventUrl: string): string {
 /** The event's Requirements (lib/vehicleRules.ts): its own items, then the
  *  standard set for each Venue Type. The full set goes in the D−3 plan email
  *  so riders have them offline at the trailhead. Empty when the event has none. */
-/** The A&D Trail Rating (lib/trailRating.ts): the shape, name and plain word,
- *  then that level's standard lines. Emails can't rely on color alone either,
- *  so the shape character and the plain word always travel with it. */
+/** The A&D Ride Rating (lib/trailRating.ts): the shape, name and plain word,
+ *  then that level's standard lines for the event's side (Asphalt, Dirt, or
+ *  both for a Both event). Emails can't rely on color alone either, so the
+ *  shape character and the plain word always travel with it. */
 function trailRatingBlock(event: EventDetail): string {
   const r = trailRatingFor(event.trailRating);
   if (!r) return "";
-  const shape = { circle: "●", square: "■", diamond: "◆", "double-diamond": "◆◆" }[r.shape];
-  return `<p style="margin:16px 0 4px;"><img src="${SITE_URL}${r.image.replace(/\.webp$/, ".png")}" width="96" height="96" alt="A&amp;D Trail Rating: ${esc(r.name)} (${esc(r.plain)})" style="display:block;border:0;" /></p><p style="margin:4px 0 4px;font-weight:bold;color:#1a1712;">A&amp;D Trail Rating: <span style="color:${r.hex};">${shape}</span> ${esc(r.name)} <span style="font-weight:normal;color:#7a746c;">(${esc(r.plain)})</span></p><ul style="margin:0;padding-left:20px;">${[...ratingFacts(r).map(([k, v]) => `${k}: ${v}`), r.facts.note].map((l) => `<li style="margin:0 0 4px;">${esc(l)}</li>`).join("")}</ul><p style="margin:4px 0 0;font-size:13px;"><a href="${SITE_URL}/events#trail-rating" style="color:${ORANGE};text-decoration:none;">What the ratings mean &rarr;</a></p>`;
+  const sides: RatingSide[] = r.sameBothSides ? ["dirt"] : sidesFor(event.eventType);
+  const linked = (text: string) =>
+    linkParts(text)
+      .map((p) => (p.href ? `<a href="${esc(p.href)}" style="color:${ORANGE};">${esc(p.text)}</a>` : esc(p.text)))
+      .join("");
+  const lists = sides
+    .map((side) => {
+      const l = r[side];
+      const head = sides.length > 1 ? `<p style="margin:8px 0 2px;font-weight:bold;color:#1a1712;">${sideLabel(side)}</p>` : "";
+      const items = [...l.lines.map(([k, v]) => `${esc(k)}: ${linked(v)}`), esc(l.note)];
+      return `${head}<ul style="margin:0;padding-left:20px;">${items.map((i) => `<li style="margin:0 0 4px;">${i}</li>`).join("")}</ul>`;
+    })
+    .join("");
+  return `<p style="margin:16px 0 4px;"><img src="${SITE_URL}${r.image.replace(/\.webp$/, ".png")}" width="96" height="96" alt="A&amp;D Ride Rating: ${esc(r.name)} (${esc(r.plain)})" style="display:block;border:0;" /></p><p style="margin:4px 0 4px;font-weight:bold;color:#1a1712;">A&amp;D Ride Rating: <span style="color:${r.hex};">${SHAPE_CHAR[r.shape]}</span> ${esc(r.name)} <span style="font-weight:normal;color:#7a746c;">(${esc(r.plain)})</span></p>${lists}<p style="margin:4px 0 0;font-size:13px;"><a href="${SITE_URL}/events#trail-rating" style="color:${ORANGE};text-decoration:none;">What the ratings mean &rarr;</a></p>`;
 }
 
 function requirementsBlock(event: EventDetail): string {

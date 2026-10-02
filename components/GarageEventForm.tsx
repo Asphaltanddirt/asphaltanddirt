@@ -221,8 +221,8 @@ export default function GarageEventForm({ initial, venues }: { initial: Editable
         <p id="ev-req-help" className="garage-form-note">One per line. People tick a box agreeing to these when they RSVP.</p>
 
         <fieldset className="garage-choice-group">
-          <legend>A&amp;D Trail Rating</legend>
-          {[{ value: "", name: "None", plain: "Car shows, meets, meals" }, ...TRAIL_RATING_COLORS.map((c) => ({ value: c, name: `${c} · ${TRAIL_RATINGS[c].name}`, plain: TRAIL_RATINGS[c].plain }))].map((r) => (
+          <legend>A&amp;D Ride Rating</legend>
+          {[{ value: "", name: "None", plain: "No badge" }, ...TRAIL_RATING_COLORS.map((c) => ({ value: c, name: `${c} · ${TRAIL_RATINGS[c].name}`, plain: TRAIL_RATINGS[c].plain }))].map((r) => (
             <label key={r.value || "none"} className="garage-choice">
               <input type="radio" name="trailRating" checked={form.trailRating === r.value} onChange={() => setForm((f) => ({ ...f, trailRating: r.value }))} />
               <span>
@@ -231,7 +231,7 @@ export default function GarageEventForm({ initial, venues }: { initial: Editable
               </span>
             </label>
           ))}
-          <p className="garage-form-note">Shows as a badge on the event page and in the RSVP email, with that level&apos;s standard lines.</p>
+          <p className="garage-form-note">Shows as a badge on the event page and in the RSVP email, with that level&apos;s standard lines (Asphalt or Dirt wording, from the side picked below).</p>
         </fieldset>
 
         <fieldset className="garage-choice-group">

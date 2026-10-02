@@ -2691,18 +2691,25 @@ button.garage-plan-claim{ background:none; border:1px solid var(--accent); borde
 .trail-rating-facts dt{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); }
 .trail-rating-facts dd{ margin:0; font-size:15px; color:var(--text); }
 .trail-rating-note{ margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); font-size:14px; color:var(--text-muted); }
-.trail-rating-picker{ margin-top:var(--sp-3, 20px); max-width:640px; }
-.trail-rating-tabs{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.trail-rating-picker{ margin-top:var(--sp-3, 20px); }
+/* Five badges across the full width of the panel (Jose 10/2). */
+.trail-rating-tabs{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:clamp(4px, 1.5vw, 16px); }
 .trail-rating-tab{ background:none; border:2px solid transparent; border-radius:var(--radius-md); padding:6px; cursor:pointer; opacity:.5; transition:opacity .15s ease, border-color .15s ease; }
 .trail-rating-tab:hover{ opacity:.85; }
 .trail-rating-tab.is-active{ opacity:1; border-color:var(--tr); background:var(--bg-card); }
 .trail-rating-tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-.trail-rating-tab img{ display:block; width:100%; height:auto; }
+.trail-rating-tab img{ display:block; width:100%; max-width:240px; height:auto; margin:0 auto; }
 .trail-rating-panel{ margin-top:10px; background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--tr, var(--accent)); border-radius:var(--radius-md); padding:16px 18px; }
-.trail-rating-panel .trail-rating-facts{ margin-top:8px; }
+.trail-rating-panel .trail-rating-facts{ margin-top:8px; max-width:none; }
 .trail-rating-panel-name{ margin:0; font-family:var(--font-display); font-weight:800; font-size:22px; text-transform:uppercase; color:var(--text); }
 .trail-rating-panel-name span{ font-size:14px; letter-spacing:.12em; color:var(--text-muted); margin-left:8px; }
-.trail-rating-footnote{ margin:16px 0 0; max-width:62ch; font-size:14px; color:var(--text-muted); }
+/* Asphalt left, Dirt right; stacked on phones (Jose 10/2). */
+.trail-rating-sides{ display:grid; gap:20px; }
+@media (min-width: 720px){ .trail-rating-sides{ grid-template-columns:1fr 1fr; gap:32px; } }
+.trail-rating-side{ margin:0 0 6px; font-family:var(--font-display); font-weight:800; font-size:16px; letter-spacing:.16em; text-transform:uppercase; color:var(--text); }
+.trail-rating-sides .trail-rating-facts:last-child .trail-rating-side{ color:var(--accent); }
+.trail-rating-facts dd a{ color:var(--accent); }
+.trail-rating-footnote{ margin:16px 0 0; max-width:80ch; font-size:14px; color:var(--text-muted); }
 @media (prefers-reduced-motion: reduce){ .trail-rating-tab{ transition:none; } }
 
 /* Garage Upload one-tap keywords (#19b). */
@@ -2760,14 +2767,7 @@ span.garage-numbers-trend{ display:block; width:64px; }
 /* Garage home: the per-person alert toggle under Your week. */
 .garage-notify-inline{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:10px 0 0; font-size:13px; color:var(--text-muted); }
 
-/* Trail Rating picker on desktop (Jose 9/25): badges left, the selected
-   rating's card right, so the section fills the row like its neighbours.
-   Phones keep the stacked layout. */
-@media (min-width: 900px){
-  .trail-rating-picker{ max-width:none; display:grid; grid-template-columns:minmax(0, 560px) minmax(0, 1fr); gap:24px; align-items:center; }
-  .trail-rating-picker .trail-rating-panel{ margin-top:0; }
-  .trail-rating-picker .trail-rating-facts{ max-width:none; }
-}
+
 
 /* Posting board: Needs you / All set (2026-09-29). Handled cards are one line; tap to open. */
 .garage-social-done-rows{ border:1px solid var(--border); border-radius:10px; overflow:hidden; }

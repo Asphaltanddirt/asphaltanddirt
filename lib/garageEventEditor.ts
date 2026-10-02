@@ -50,7 +50,7 @@ export interface EventEdit {
   showMeetupPublicly: boolean;
   fullDetails: string;
   recap: string;
-  /** A&D Trail Rating: Green / Blue / Black / Red, or "" for none. */
+  /** A&D Ride Rating: Orange / Green / Blue / Black / Red, or "" for none. */
   trailRating: string;
 }
 
@@ -213,7 +213,8 @@ export async function ensureDriveFolderNow(event: EditableEvent): Promise<void> 
 
 export async function createEvent(edit: EventEdit): Promise<EditableEvent> {
   assertConfigured();
-  const record = await createRecord(EVENTS, toFields(edit), { baseId: BASE_ID });
+  // typecast: the Trail Rating select gains options as levels are added (Orange, 10/2).
+  const record = await createRecord(EVENTS, toFields(edit), { baseId: BASE_ID, typecast: true });
   const event = toEditable(record);
   refreshPublicPages([event.slug]);
   return event;
@@ -222,7 +223,7 @@ export async function createEvent(edit: EventEdit): Promise<EditableEvent> {
 export async function updateEvent(id: string, edit: EventEdit, previousSlug: string): Promise<EditableEvent> {
   assertConfigured();
   const previous = await getEditableEvent(id).catch(() => null);
-  const record = await updateRecord(EVENTS, id, toFields(edit), { baseId: BASE_ID });
+  const record = await updateRecord(EVENTS, id, toFields(edit), { baseId: BASE_ID, typecast: true });
   const event = toEditable(record);
 
   // A postponement has to move the comms row too, or the waiver invite fires

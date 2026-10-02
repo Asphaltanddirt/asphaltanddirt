@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TRAIL_RATINGS, TRAIL_RATING_COLORS } from "@/lib/trailRating";
+import { RATING_FOOTNOTE, TRAIL_RATINGS, TRAIL_RATING_COLORS } from "@/lib/trailRating";
 import TrailRatingPicker from "@/components/TrailRatingPicker";
 import Link from "next/link";
 import HeroCTAGroup from "@/components/HeroCTAGroup";
@@ -105,20 +105,18 @@ export default async function EventsPage() {
         </div>
       </section>
 
-      {/* How we rate our rides (Jose 2026-09-25). Every event badge and the
-          RSVP emails link here. A&D-branded; the four colors and shapes are
+      {/* How we rate our rides (Jose 2026-09-25; road + trail and Park It,
+          10/2). Every event badge and the RSVP emails link here (#trail-rating
+          kept so old links still land). A&D-branded; the colors and shapes are
           the standard trail scale riders already know. */}
       <section id="trail-rating" className="section-pt-tight section-pb-tight trail-rating-section">
         <div className="container">
-          <h2 className="eyebrow">A&amp;D Trail Rating</h2>
+          <h2 className="eyebrow">A&amp;D Ride Rating</h2>
           <p className="lead mt-2" style={{ maxWidth: "62ch" }}>
-            How we rate our rides. Same colors and shapes as trail maps. Tap a badge.
+            How we rate our rides, on the road and on the trail. Same colors and shapes as trail maps. Tap a badge.
           </p>
-          <TrailRatingPicker ratings={TRAIL_RATING_COLORS.map((c) => TRAIL_RATINGS[c])} />
-          <p className="trail-rating-footnote">
-            Ratings assume normal weather. If rain bumps a ride up a level, we tell everyone who RSVP&apos;d. Not sure
-            your rig&apos;s ready? Ask us, no pressure.
-          </p>
+          <TrailRatingPicker ratings={TRAIL_RATING_COLORS.map((c) => TRAIL_RATINGS[c])} start={1} />
+          <p className="trail-rating-footnote">{RATING_FOOTNOTE}</p>
         </div>
       </section>
 
