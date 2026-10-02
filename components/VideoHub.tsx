@@ -63,6 +63,16 @@ export default function VideoHub({ videos, filter }: { videos: HubVideo[]; filte
               <span>{day(hero.date)}</span>
             </div>
             <p className="lead mt-2">{hero.description}</p>
+            {next && (
+              <Link href={`${next.href}?play=1`} className="up-next-link">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={next.thumbnail} alt="" loading="lazy" />
+                <span>
+                  <span className="eyebrow accent">Up Next</span>
+                  <strong>{next.title}</strong>
+                </span>
+              </Link>
+            )}
             {/* Not "open the video page": people are already on a video page
                 (Jose 10/2). Say what's there instead. */}
             <Link href={hero.href} className="btn btn-primary btn-sm btn-block mt-3" style={{ whiteSpace: "normal", textAlign: "center" }}>

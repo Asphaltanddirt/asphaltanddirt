@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import YouTubeEmbed from "@/components/YouTubeEmbed";
+import EpisodeVideo from "@/components/EpisodeVideo";
 import { renderTranscriptBlocks } from "@/lib/transcriptRenderer";
 import { fetchPublicFromPlaylist, GARAGE_TAKES_PLAYLIST_ID } from "@/lib/youtube";
 import { garageTakes, getGarageTakeBySlug, publishedGarageTakes, takeCompanionPost, takeSummaryForDisplay, takeTitleLines } from "@/lib/garageTakes";
@@ -39,7 +39,12 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
   const take = getGarageTakeBySlug(slug);
   if (!take) notFound();
   const post = takeCompanionPost(take);
-  const others = publishedGarageTakes().filter((t) => t.slug !== take.slug).slice(0, 2);
+  const all = publishedGarageTakes();
+  const others = all.filter((t) => t.slug !== take.slug).slice(0, 2);
+  // Up Next (Jose 10/2): the next-older take, wrapping to the newest, so the
+  // panel and the end-of-video countdown always have somewhere to go.
+  const at = all.findIndex((t) => t.slug === take.slug);
+  const upNext = all.length > 1 ? all[(at + 1) % all.length] : undefined;
   const playlistIsPublic = (await fetchPublicFromPlaylist(GARAGE_TAKES_PLAYLIST_ID, 1)).length > 0;
 
   const jsonLd = {
@@ -70,19 +75,52 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
           </Link>
         </div>
 
-        <h1 className="mt-3">
-          {takeTitleLines(take).map((line, i) => (
-            <span className="title-line" key={i}>{line}</span>
-          ))}
-        </h1>
-        <p className="meta">{day(take.publishedAt)}</p>
-
-        <div className="mt-3">
-          <YouTubeEmbed videoId={take.videoId} title={take.title} thumbnail={`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`} eventContext="garage_take" autoPlayFromQuery />
-        </div>
-
-        <div className="take-summary mt-3">
-          <p className="mb-0">{takeSummaryForDisplay(take)}</p>
+        {/* Same layout as trail videos (Jose 10/2): player left, details and
+            Up Next right. */}
+        <div className="episode-hero-grid mt-4">
+          <div>
+            <EpisodeVideo
+              videoId={take.videoId}
+              title={take.title}
+              eventContext="garage_take"
+              upNext={
+                upNext
+                  ? { href: `/garage-takes/${upNext.slug}`, title: upNext.title, thumbnail: `https://i.ytimg.com/vi/${upNext.videoId}/maxresdefault.jpg` }
+                  : undefined
+              }
+            />
+          </div>
+          <div className="episode-hero-info">
+            <div className="eyebrow accent">Garage Take</div>
+            <h1 className="mt-2">
+              {takeTitleLines(take).map((line, i) => (
+                <span className="title-line" key={i}>{line}</span>
+              ))}
+            </h1>
+            <div className="episode-meta mt-2">
+              <span>{day(take.publishedAt)}</span>
+            </div>
+            <p className="lead mt-2">{takeSummaryForDisplay(take)}</p>
+            {upNext && (
+              <Link href={`/garage-takes/${upNext.slug}?play=1`} className="up-next-link">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`https://i.ytimg.com/vi/${upNext.videoId}/maxresdefault.jpg`} alt="" loading="lazy" />
+                <span>
+                  <span className="eyebrow accent">Up Next</span>
+                  <strong>{upNext.title}</strong>
+                </span>
+              </Link>
+            )}
+            <a
+              href={`https://www.youtube.com/watch?v=${take.videoId}`}
+              target="_blank"
+              rel="noopener"
+              className="btn btn-primary btn-sm btn-block mt-3"
+              style={{ whiteSpace: "normal", textAlign: "center" }}
+            >
+              Watch, Subscribe &amp; Comment On YouTube
+            </a>
+          </div>
         </div>
 
         {post && (
@@ -98,12 +136,12 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
           <div className="transcript-body">{renderTranscriptBlocks(take.transcript)}</div>
         </details>
 
-        <p className="garage-links mt-4">
-          <a href={`https://www.youtube.com/watch?v=${take.videoId}`} target="_blank" rel="noopener">Watch on YouTube ↗</a>
-          {playlistIsPublic && (
+        {/* "Watch on YouTube" moved up next to the player. */}
+        {playlistIsPublic && (
+          <p className="garage-links mt-4">
             <a href={`https://www.youtube.com/playlist?list=${GARAGE_TAKES_PLAYLIST_ID}`} target="_blank" rel="noopener">The whole playlist ↗</a>
-          )}
-        </p>
+          </p>
+        )}
 
         {others.length > 0 && (
           <>
