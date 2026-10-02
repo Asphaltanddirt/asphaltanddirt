@@ -1,5 +1,5 @@
 import { listRecords, isAirtableConfigured, type AirtableRecord } from "@/lib/airtable";
-import { fetchLatestFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
+import { fetchPublicFromPlaylist, TRAIL_EVENT_VIDEOS_PLAYLIST_ID } from "@/lib/youtube";
 
 export interface GuestSocialLink {
   /** Free-text platform label ("Instagram", "TikTok", "Website", ...) —
@@ -330,9 +330,11 @@ const slugify = (s: string) =>
 /** Every video in the Trail & Event Videos playlist gets a page on the site,
  *  even before it has an Episodes row (Jose 9/30: keep plays on the site,
  *  as many pages as possible). The page uses the YouTube title and
- *  description as they are; an Episodes row with the same video ID replaces it. */
+ *  description as they are; an Episodes row with the same video ID replaces it.
+ *  Public videos only (Jose 10/2): an Unlisted video (the Community Ride, FB
+ *  Group first) or a scheduled one stays off the site until it goes Public. */
 async function playlistOnlyEpisodes(known: Episode[]): Promise<Episode[]> {
-  const videos = await fetchLatestFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 50).catch(() => []);
+  const videos = await fetchPublicFromPlaylist(TRAIL_EVENT_VIDEOS_PLAYLIST_ID, 50).catch(() => []);
   const ids = new Set(known.map((e) => e.youtubeVideoId).filter(Boolean));
   const slugs = new Set(known.map((e) => e.slug));
   return videos

@@ -75,7 +75,7 @@ export default async function BuildDetailPage({
       <section>
         <div className="container">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <Link href="/builds" className="back-link mb-0">
+            <Link href="/builds/all" className="back-link mb-0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
               Back To Builds
             </Link>
@@ -207,7 +207,7 @@ export default async function BuildDetailPage({
                 <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{prev.vehicle}</div>
               </div>
             </Link>
-            <Link href="/builds" style={{ textAlign: "center" }}>
+            <Link href="/builds/all" style={{ textAlign: "center" }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", marginTop: 6 }}>View All Builds</div>
             </Link>

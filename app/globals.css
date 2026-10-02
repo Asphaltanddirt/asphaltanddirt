@@ -2690,7 +2690,8 @@ button.garage-plan-claim{ background:none; border:1px solid var(--accent); borde
 .trail-rating-facts dl > div{ display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:baseline; }
 .trail-rating-facts dt{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); }
 .trail-rating-facts dd{ margin:0; font-size:15px; color:var(--text); }
-.trail-rating-note{ margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); font-size:14px; color:var(--text-muted); }
+/* The one-liner reads like the saying on the card (Jose 10/2: more prominent). */
+.trail-rating-note{ margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); font-size:17px; font-weight:700; font-style:italic; color:var(--text); }
 .trail-rating-picker{ margin-top:var(--sp-3, 20px); }
 /* Five badges across the full width of the panel (Jose 10/2). */
 .trail-rating-tabs{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:clamp(4px, 1.5vw, 16px); }
@@ -2709,7 +2710,7 @@ button.garage-plan-claim{ background:none; border:1px solid var(--accent); borde
 .trail-rating-side{ margin:0 0 6px; font-family:var(--font-display); font-weight:800; font-size:16px; letter-spacing:.16em; text-transform:uppercase; color:var(--text); }
 .trail-rating-sides .trail-rating-facts:last-child .trail-rating-side{ color:var(--accent); }
 .trail-rating-facts dd a{ color:var(--accent); }
-.trail-rating-footnote{ margin:16px 0 0; max-width:80ch; font-size:14px; color:var(--text-muted); }
+.trail-rating-footnote{ margin:16px 0 0; max-width:none; font-size:14px; color:var(--text-muted); }
 @media (prefers-reduced-motion: reduce){ .trail-rating-tab{ transition:none; } }
 
 /* Garage Upload one-tap keywords (#19b). */

@@ -79,7 +79,7 @@ const parkIt: RatingLines = {
     ["Vehicle", "Whatever you drive (or walk in)"],
     ["Bring", "An appetite"],
   ],
-  note: "Our participation trophy.",
+  note: "Our version of a participation trophy 🏆",
 };
 
 export const TRAIL_RATINGS: Record<TrailRatingColor, TrailRating> = {

@@ -115,7 +115,7 @@ export default async function EventsPage() {
           <p className="lead mt-2" style={{ maxWidth: "62ch" }}>
             How we rate our rides, on the road and on the trail. Same colors and shapes as trail maps. Tap a badge.
           </p>
-          <TrailRatingPicker ratings={TRAIL_RATING_COLORS.map((c) => TRAIL_RATINGS[c])} start={1} />
+          <TrailRatingPicker ratings={TRAIL_RATING_COLORS.map((c) => TRAIL_RATINGS[c])} />
           <p className="trail-rating-footnote">{RATING_FOOTNOTE}</p>
         </div>
       </section>
