@@ -45,9 +45,10 @@ export type PromoBeat = (typeof PROMO_BEATS)[number];
 export const CREATIVES = ["real_action_video", "real_still", "host_talking", "designed_card", "recap_clip"] as const;
 export type Creative = (typeof CREATIVES)[number];
 
-/** Evening, when people plan their weekend. One window for every beat keeps
- *  the nudges predictable; move a single card by editing its Window. */
-export const PROMO_WINDOW = "6–8 PM";
+/** The 1 PM slot (Jose 10/2): 7 AM and 7 PM belong to clips, and a 1 PM with
+ *  no clip takes blog or event promo. One window for every beat keeps the
+ *  nudges predictable; move a single card by editing its Window. */
+export const PROMO_WINDOW = "1 PM";
 
 const BEAT_LABEL: Record<PromoBeat, string> = {
   "save-the-date": "Save the date",
