@@ -58,10 +58,17 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
     <section className="section-pt-tight section-pb-tight">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="container">
-        <Link href="/videos?type=takes" className="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
-          Back To Videos
-        </Link>
+        {/* Same hub both ways (Jose 10/2): back = every video, right = just the Takes. */}
+        <div className="episode-hero-topbar">
+          <Link href="/videos" className="back-link mb-0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m15 6-6 6 6 6" /></svg>
+            Back To All Videos
+          </Link>
+          <Link href="/videos?type=takes" className="view-all">
+            More Garage Takes
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
+        </div>
 
         <h1 className="mt-3">
           {takeTitleLines(take).map((line, i) => (
