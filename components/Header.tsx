@@ -8,7 +8,7 @@ import { useCart } from "./CartContext";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/podcast", label: "Podcast" },
-  { href: "/garage-takes", label: "Takes" },
+  { href: "/videos", label: "Videos" },
   { href: "/team", label: "Team" },
   { href: "/builds", label: "Builds" },
   { href: "/community", label: "Community" },
@@ -34,6 +34,10 @@ export default function Header() {
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
+    // Video pages keep their old paths but belong to the Videos hub.
+    const isVideo = pathname.startsWith("/videos") || pathname.startsWith("/events/videos") || pathname.startsWith("/garage-takes");
+    if (href === "/videos") return isVideo;
+    if (isVideo) return false;
     return pathname.startsWith(href);
   }
 

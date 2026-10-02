@@ -60,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: SITE_URL, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast`, changeFrequency: "weekly" },
-    { url: `${SITE_URL}/garage-takes`, changeFrequency: "weekly" },
+    { url: `${SITE_URL}/videos`, changeFrequency: "weekly" },
     ...publishedGarageTakes().map((t) => ({ url: `${SITE_URL}/garage-takes/${t.slug}`, changeFrequency: "monthly" as const })),
     { url: `${SITE_URL}/team`, changeFrequency: "monthly" },
     { url: `${SITE_URL}/ambassadors`, changeFrequency: "monthly" },
@@ -69,7 +69,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/community`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/events`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/events/all`, changeFrequency: "weekly" },
-    { url: `${SITE_URL}/events/videos`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/podcast/episodes`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch`, changeFrequency: "weekly" },
     { url: `${SITE_URL}/merch/all`, changeFrequency: "weekly" },

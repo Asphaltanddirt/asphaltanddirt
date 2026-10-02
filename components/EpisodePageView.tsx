@@ -54,7 +54,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
   // No hand-picked related videos → the newest others, so the bottom of the
   // page always offers somewhere on the site to go next.
   const related = picked.length ? picked : sameKind.filter((e) => e.slug !== episode.slug).slice(0, 3);
-  const listPath = episode.type === "trail-event" ? "/events/videos" : "/podcast/episodes";
+  const listPath = episode.type === "trail-event" ? "/videos" : "/podcast/episodes";
   const publishedDate = new Date(episode.publicationDate);
   const formattedDate = publishedDate.toLocaleDateString("en-US", {
     month: "long",
@@ -133,7 +133,7 @@ export default async function EpisodePageView({ slug, kind }: { slug: string; ki
             {/* Keep viewers on the site (Jose 9/30): the "see all" link goes to
                 our own list, not the YouTube playlist. */}
             <Link href={listPath} className="view-all">
-              {isTrailEvent ? "All Trail & Event Videos" : "All Episodes"}
+              {isTrailEvent ? "All Videos" : "All Episodes"}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </div>

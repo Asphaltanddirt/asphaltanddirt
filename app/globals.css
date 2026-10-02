@@ -2815,3 +2815,16 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .build-owner-socials a{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 14px; border:1px solid var(--border); border-radius:999px; color:var(--text); font-weight:600; font-size:15px; text-decoration:none; }
 .build-owner-socials a:hover{ border-color:var(--accent); color:var(--accent); }
 .build-owner-socials svg{ width:20px; height:20px; flex:none; }
+
+/* Videos hub (/videos, Jose 10/2): filter chips, latest-video hero, divider, grid. */
+.video-hub-chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:var(--sp-3, 20px); }
+.video-hub-chip{ display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 18px; border:1px solid var(--border); border-radius:999px; font-family:var(--font-display); font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase; color:var(--text); text-decoration:none; }
+.video-hub-chip span{ opacity:.6; font-size:12px; }
+.video-hub-chip:hover{ border-color:var(--accent); color:var(--accent); }
+.video-hub-chip.is-on{ background:var(--accent); border-color:var(--accent); color:#000; }
+.video-hub-chip.is-on span{ opacity:.75; }
+.video-hub-hero-title{ font-size:clamp(20px,2.4vw,30px); line-height:1.15; margin-bottom:0; }
+.video-hub-hero-title a{ color:inherit; text-decoration:none; }
+.video-hub-hero-title a:hover{ color:var(--accent); }
+.video-hub-divider{ display:flex; align-items:center; gap:16px; margin:var(--sp-5, 48px) 0 var(--sp-3, 20px); }
+.video-hub-divider::after{ content:""; flex:1; height:1px; background:var(--border); }

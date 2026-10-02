@@ -124,7 +124,7 @@ export default async function EventsPage() {
         <div className="container">
           <div className="section-head">
             <h2 className="eyebrow">Ride Recaps &amp; Highlights</h2>
-            <Link href="/events/videos" className="view-all">
+            <Link href="/videos?type=trail" className="view-all">
               All Trail &amp; Event Videos
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
