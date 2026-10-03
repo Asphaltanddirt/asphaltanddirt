@@ -112,6 +112,11 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
   // `href: null` = built next; the tile shows "Coming soon" instead of leading
   // to a dead page.
   const tiles: { href: string | null; label: string; sub: string; img: string }[] = [
+    // First for owners (Jose 10/3): his therapy-time tool; it was missed
+    // sitting next to X Replies with the same picture.
+    ...(canSeeOwnerOnly(session)
+      ? [{ href: "/garage/engage", label: "Engage", sub: "Therapy time: today's 12 accounts to comment on", img: "/img/garage/tile-comments.webp" }]
+      : []),
     { href: "/garage/events", label: "Events", sub: "Going, details, meetup spot", img: "/img/garage/tile-events.webp" },
     // Owners always; the crew once they've marked Going on an upcoming event.
     ...(canRunEvents(session) || goingSomewhere
@@ -127,7 +132,6 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           { href: "/garage/shoot", label: "Shot list", sub: "What to film, what the Library is short on", img: "/img/garage/tile-upload.webp" },
           { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.webp" },
           { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.webp" },
-          { href: "/garage/engage", label: "Engage", sub: "Today's accounts to comment on as A&D", img: "/img/garage/tile-replies.webp" },
           { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.webp" },
           { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-comments.webp" },
           { href: "/garage/applications", label: "Applications", sub: "Crew applicants: hold, accept, decline", img: "/img/garage/tile-applications.webp" },
