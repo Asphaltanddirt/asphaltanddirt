@@ -187,7 +187,9 @@ export async function facebookPage(since: Date, until: Date): Promise<MetaAccoun
   });
   const rows = await insights(
     `${id}/insights`,
-    ["page_impressions_unique", "page_impressions", "page_post_engagements", "page_views_total"],
+    // Meta retired page_impressions(_unique) in June 2026 (Developers blog,
+    // 2026-02-18); page_total_media_view_unique ("viewers") replaces reach.
+    ["page_total_media_view_unique", "page_media_view", "page_impressions_unique", "page_post_engagements", "page_views_total"],
     { period: "day", since: unix(since), until: unix(until) },
     [{}],
   );

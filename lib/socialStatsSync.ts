@@ -2,16 +2,16 @@
  * Fills in the numbers on the Garage posting board so they don't have to be
  * typed off each app.
  *
- * The board's columns are 7-day numbers, but Meta's per-post insights are
- * lifetime-to-date — so a post's numbers are only written once, in the window
- * where "lifetime" and "7 days" are the same thing: 7 to 10 days after it went
- * up. A post already carrying numbers is left alone, so anything typed in by
- * hand stays put.
+ * The board's columns are 7-day numbers, but every platform's per-post
+ * numbers are lifetime-to-date — so a post's numbers are written once, from 7
+ * days after it went up. A post already carrying numbers is left alone, so
+ * anything typed in by hand stays put. Each fill stamps Stats At and Stats Age
+ * Days, so a post read at day 20 isn't mistaken for one read at day 8.
  *
  * Instagram and Facebook via Meta's insights; X via our own-post metrics
  * (added 2026-09-22 for the X link test). TikTok joins when its API review
  * clears. Runs Mondays from the garage-tasks cron (or on request with
- * ?stats=1), so every post passes through its 7–13 day window on one run.
+ * ?stats=1).
  */
 
 import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
@@ -22,12 +22,19 @@ import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 const BASE_ID = SOCIAL_BASE_ID;
 const POSTS = "Social Posts";
 
-/** Days after posting when lifetime numbers still read as 7-day numbers.
- *  7–13 since this runs Mondays only (Jose 9/28: daily pulls made week over
- *  week hard to read), so every post lands in exactly one Monday's window.
- *  Late-week posts read a little past 7 days; nearly all views come early. */
+/** A post is filled on the first Monday run once it's 7+ days old (Jose 9/28:
+ *  Mondays only, daily pulls made week over week hard to read). Until 10/3
+ *  the window closed at 13 days, so one failed run lost a week of posts for
+ *  good: 1 of ~66 posted cards had numbers. Now anything still blank is
+ *  caught up to 45 days back, and Stats Age Days says how old it was when read. */
 const FILL_FROM_DAY = 7;
-const FILL_UNTIL_DAY = 13;
+const FILL_UNTIL_DAY = 45;
+
+/** When the numbers were taken and how old the post was then (Jose 10/3). */
+function stamp(postedAt: string, now: Date): AirtableFields {
+  const age = (now.getTime() - new Date(postedAt).getTime()) / 86_400_000;
+  return { "Stats At": now.toISOString(), "Stats Age Days": Math.round(age * 10) / 10 };
+}
 
 export interface SocialStatsSyncResult {
   ok: boolean;
@@ -96,8 +103,8 @@ export async function syncSocialStatsFromMeta(
   // Instagram and Facebook fail separately, so one can't blank the other.
   const since = new Date(now.getTime() - (FILL_UNTIL_DAY + 2) * 86_400_000);
   const [ig, fb] = await Promise.allSettled([
-    process.env.META_IG_USER_ID ? instagramPosts(since) : Promise.resolve([]),
-    process.env.META_PAGE_ID ? facebookPosts(since) : Promise.resolve([]),
+    process.env.META_IG_USER_ID ? instagramPosts(since, 100) : Promise.resolve([]),
+    process.env.META_PAGE_ID ? facebookPosts(since, 100) : Promise.resolve([]),
   ]);
   const posts: MetaPost[] = [...(ig.status === "fulfilled" ? ig.value : []), ...(fb.status === "fulfilled" ? fb.value : [])];
   const errors = [ig.status === "rejected" ? `Instagram: ${ig.reason}` : "", fb.status === "rejected" ? `Facebook: ${fb.reason}` : ""].filter(Boolean);
@@ -160,6 +167,7 @@ export async function syncSocialStatsFromMeta(
       continue;
     }
 
+    Object.assign(fields, stamp(String(row.fields["Posted At"]), now));
     if (!opts.dryRun) await updateRecord(POSTS, row.id, fields, { baseId: BASE_ID });
     result.filled.push({
       name: String(row.fields.Name || row.id),
@@ -171,7 +179,7 @@ export async function syncSocialStatsFromMeta(
   return result;
 }
 
-/** X posts on the board, filled once in the same 7–10 day window. */
+/** X posts on the board, filled once from 7 days old (same catch-up window). */
 export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStatsSyncResult> {
   const empty = { alreadyFilled: 0, unmatched: 0, filled: [] };
   if (!isXConfigured()) return { ok: false, skipped: "X keys not configured", ...empty };
@@ -193,9 +201,13 @@ export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStat
   }
   if (!due.size) return result;
 
+  // X only gives click metrics on posts under 30 days old (catch-up can be older).
+  const ageOf = (id: string) => (now.getTime() - new Date(String(due.get(id)!.fields["Posted At"])).getTime()) / 86_400_000;
+  const recent = [...due.keys()].filter((id) => ageOf(id) < 29);
+  const older = [...due.keys()].filter((id) => ageOf(id) >= 29);
   let metrics;
   try {
-    metrics = await fetchOwnPostMetrics([...due.keys()]);
+    metrics = [...(await fetchOwnPostMetrics(recent)), ...(await fetchOwnPostMetrics(older, false))];
   } catch (e) {
     return { ok: false, error: String(e), ...empty };
   }
@@ -211,6 +223,7 @@ export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStat
     if (m.bookmarks !== undefined) fields["Saves 7d"] = m.bookmarks;
     if (m.linkClicks !== undefined) fields["Link Clicks 7d"] = m.linkClicks;
     if (m.profileClicks !== undefined) fields["Profile Clicks 7d"] = m.profileClicks;
+    Object.assign(fields, stamp(String(row.fields["Posted At"]), now));
     await updateRecord(POSTS, row.id, fields, { baseId: BASE_ID });
     result.filled.push({ name: String(row.fields.Name || row.id), platform: "X", views: m.impressions });
   }
@@ -218,7 +231,7 @@ export async function syncSocialStatsFromX(now = new Date()): Promise<SocialStat
   return result;
 }
 
-/** Threads posts on the board, filled once in the same 7–10 day window. */
+/** Threads posts on the board, filled once from 7 days old (same catch-up window). */
 export async function syncSocialStatsFromThreads(now = new Date()): Promise<SocialStatsSyncResult> {
   const result: SocialStatsSyncResult = { ok: true, alreadyFilled: 0, unmatched: 0, filled: [] };
   if (!(await isThreadsConnected())) return { ...result, ok: false, skipped: "Threads not connected" };
@@ -243,6 +256,7 @@ export async function syncSocialStatsFromThreads(now = new Date()): Promise<Soci
     if (m.likes !== undefined) fields["Likes 7d"] = m.likes;
     if (m.replies !== undefined) fields["Replies 7d"] = m.replies;
     if (m.reposts !== undefined || m.quotes !== undefined) fields["Shares 7d"] = (m.reposts || 0) + (m.quotes || 0);
+    Object.assign(fields, stamp(postedAt, now));
     await updateRecord(POSTS, r.id, fields, { baseId: BASE_ID });
     result.filled.push({ name: String(r.fields.Name || r.id), platform: "Threads", views: m.views });
   }

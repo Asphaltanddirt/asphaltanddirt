@@ -66,7 +66,12 @@ export async function POST(req: NextRequest) {
       case "scheduled":
       case "unscheduled":
         if (isAutoPlatform(post.platform)) return NextResponse.json({ error: "This one posts itself. Approve it instead." }, { status: 400 });
-        await setScheduled(post.id, body.action === "scheduled", session.name || session.email);
+        await setScheduled(
+          post.id,
+          body.action === "scheduled",
+          session.name || session.email,
+          typeof body.url === "string" && /^https?:\/\//.test(body.url.trim()) ? body.url.trim() : "",
+        );
         break;
       case "skip":
         await setStatus(post.id, "Skipped");

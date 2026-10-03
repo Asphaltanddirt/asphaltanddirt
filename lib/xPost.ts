@@ -220,9 +220,10 @@ export interface XPostMetrics {
  * Lifetime numbers for our own posts. Reading our own posts is billed as an
  * owned read ($0.001 each). Link and profile clicks are "non-public" metrics,
  * which X only returns for the posting account and only for posts under 30
- * days old — fine for the 7–10 day window the board fills in.
+ * days old, so older catch-up posts ask for public metrics only
+ * (withClicks false) rather than risk the whole batch.
  */
-export async function fetchOwnPostMetrics(ids: string[]): Promise<XPostMetrics[]> {
+export async function fetchOwnPostMetrics(ids: string[], withClicks = true): Promise<XPostMetrics[]> {
   if (!ids.length || !isXConfigured()) return [];
   const out: XPostMetrics[] = [];
   for (let i = 0; i < ids.length; i += 100) {
@@ -233,7 +234,7 @@ export async function fetchOwnPostMetrics(ids: string[]): Promise<XPostMetrics[]
         public_metrics?: { impression_count?: number; like_count?: number; reply_count?: number; retweet_count?: number; quote_count?: number; bookmark_count?: number };
         non_public_metrics?: { url_link_clicks?: number; user_profile_clicks?: number; impression_count?: number };
       }[];
-    }>(`/2/tweets?ids=${batch}&tweet.fields=public_metrics,non_public_metrics`, { method: "GET" });
+    }>(`/2/tweets?ids=${batch}&tweet.fields=public_metrics${withClicks ? ",non_public_metrics" : ""}`, { method: "GET" });
     for (const t of data.data || []) {
       const p = t.public_metrics || {};
       const n = t.non_public_metrics || {};

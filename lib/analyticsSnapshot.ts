@@ -813,11 +813,13 @@ export async function runAnalyticsSnapshot(
         const fb = await facebookPage(since, now);
         fbFollowers = fb.followers;
         push("Facebook Page", "Followers", fb.followers, "Follower count at the time of the run.");
+        // Reach was retired in June 2026; "viewers" (page_total_media_view_unique)
+        // is Meta's replacement. A new row, so it isn't charted against old reach.
         push(
           "Facebook Page",
-          "Weekly reach",
-          fb.window.page_impressions_unique,
-          "People who saw any Page content, 7 days.",
+          "Weekly viewers",
+          fb.window.page_total_media_view_unique,
+          "People who viewed any Page content, 7 days (Meta's replacement for reach, June 2026).",
         );
       } catch (e) {
         errors.push(`facebook: ${String(e)}`);

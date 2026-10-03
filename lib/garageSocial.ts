@@ -497,13 +497,43 @@ export async function getAutoPostQueue(today = todayNY()): Promise<SocialPost[]>
   return rows.map(toPost).sort((a, b) => a.due.localeCompare(b.due));
 }
 
-export async function setScheduled(id: string, on: boolean, by: string) {
+/** Scheduled natively (TikTok Studio, the group's scheduler). The link, when
+ *  the app already gives one, is saved in the same tap (Jose 10/3: having to
+ *  come back to paste it was the friction). */
+export async function setScheduled(id: string, on: boolean, by: string, url = "") {
   await updateRecord(
     POSTS,
     id,
-    on ? { "Scheduled At": new Date().toISOString(), "Scheduled By": by } : { "Scheduled At": null, "Scheduled By": null },
+    on
+      ? { "Scheduled At": new Date().toISOString(), "Scheduled By": by, ...(url ? { "Post URL": url } : {}) }
+      : { "Scheduled At": null, "Scheduled By": null },
     { baseId: BASE_ID },
   );
+}
+
+/**
+ * Scheduled by-hand cards that already carry their link close themselves once
+ * their slot has passed: Posted, with Posted At = the slot time (not the
+ * moment someone tapped), so the stats sync reads the right age. Runs from the
+ * daily garage-tasks cron. Cards without a link still come back to Needs you.
+ */
+export async function closeScheduledPosts(slotOf: (due: string, window: string) => Date, now = new Date()): Promise<number> {
+  if (!isSocialConfigured()) return 0;
+  const rows = await listRecords(POSTS, `AND({Status} = 'Planned', {Scheduled At} != '', {Post URL} != '')`, { baseId: BASE_ID });
+  let closed = 0;
+  for (const r of rows) {
+    const post = toPost(r);
+    const at = slotOf(post.due, post.window);
+    if (at > now) continue;
+    await updateRecord(
+      POSTS,
+      r.id,
+      { Status: "Posted", "Posted At": at.toISOString(), "Posted By": post.scheduledBy || "Scheduled" },
+      { baseId: BASE_ID },
+    );
+    closed++;
+  }
+  return closed;
 }
 
 export async function setStatus(id: string, status: PostStatus) {

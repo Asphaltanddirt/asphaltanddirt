@@ -382,15 +382,15 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
           <span className="garage-social-label">Pre-schedule</span>
           <p>
             {scheduled
-              ? `Scheduled in ${item.platform === "TikTok" ? "TikTok Studio" : "the app"}${item.scheduledBy ? ` by ${item.scheduledBy.split(" ")[0]}` : ""}. No reminders; paste the link below once it's live.`
-              : `Scheduled it in ${item.platform === "TikTok" ? "TikTok Studio" : "the group"} already? Tap Scheduled and the reminders for it stop.`}
+              ? `Scheduled in ${item.platform === "TikTok" ? "TikTok Studio" : "the app"}${item.scheduledBy ? ` by ${item.scheduledBy.split(" ")[0]}` : ""}. ${item.postUrl ? "Link saved; it marks itself posted after its time." : "No reminders. Paste the link below and tap Save link; it marks itself posted after its time."}`
+              : `Scheduled it in ${item.platform === "TikTok" ? "TikTok Studio" : "the group"} already? Paste the link below if you have it, then tap Scheduled. The reminders stop and it marks itself posted after its time.`}
           </p>
           <div className="garage-social-row">
             <button
               type="button"
               className={scheduled ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
               disabled={busy}
-              onClick={() => run({ action: scheduled ? "unscheduled" : "scheduled" })}
+              onClick={() => run(scheduled ? { action: "unscheduled" } : { action: "scheduled", url })}
             >
               {scheduled ? "Not scheduled" : "Scheduled"}
             </button>
@@ -410,7 +410,12 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
             aria-label={`Link to the ${item.platform} post`}
           />
           <div className="garage-social-row">
-            <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run({ action: "posted", url, draftIndex })}>
+            {scheduled && url.trim() && url.trim() !== item.postUrl && (
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run({ action: "scheduled", url })}>
+                Save link
+              </button>
+            )}
+            <button type="button" className={scheduled ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"} disabled={busy} onClick={() => run({ action: "posted", url, draftIndex })}>
               Mark posted
             </button>
             <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => run({ action: "skip" })}>
