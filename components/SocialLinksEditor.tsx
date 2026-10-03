@@ -4,7 +4,8 @@ import { useRef } from "react";
 import { SOCIAL_PLATFORMS, type SocialPlatformName } from "@/lib/socialLinks";
 
 export interface SocialRow {
-  platform: SocialPlatformName;
+  /** "" = not picked yet (only with pickPlatform). */
+  platform: SocialPlatformName | "";
   value: string;
 }
 
@@ -19,6 +20,8 @@ export default function SocialLinksEditor({
   legend,
   hint,
   legendClassName,
+  pickPlatform = false,
+  addLabel = "+ Add another link",
 }: {
   rows: SocialRow[];
   onChange: (rows: SocialRow[]) => void;
@@ -27,9 +30,12 @@ export default function SocialLinksEditor({
   legend: React.ReactNode;
   hint?: string;
   legendClassName?: string;
+  pickPlatform?: boolean;
+  addLabel?: string;
 }) {
   const addRef = useRef<HTMLButtonElement>(null);
-  const list = rows.length ? rows : [{ platform: "Instagram" as SocialPlatformName, value: "" }];
+  const blank: SocialRow = { platform: pickPlatform ? "" : "Instagram", value: "" };
+  const list = rows.length ? rows : [blank];
 
   const update = (i: number, patch: Partial<SocialRow>) =>
     onChange(list.map((row, j) => (j === i ? { ...row, ...patch } : row)));
@@ -38,7 +44,7 @@ export default function SocialLinksEditor({
     addRef.current?.focus();
   };
   const add = () => {
-    onChange([...list, { platform: "Instagram", value: "" }]);
+    onChange([...list, { ...blank }]);
     requestAnimationFrame(() => document.getElementById(`${idPrefix}-platform-${list.length}`)?.focus());
   };
 
@@ -59,6 +65,11 @@ export default function SocialLinksEditor({
             onChange={(e) => update(i, { platform: e.target.value as SocialPlatformName })}
             disabled={disabled}
           >
+            {pickPlatform && (
+              <option value="" disabled>
+                Platform
+              </option>
+            )}
             {SOCIAL_PLATFORMS.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
@@ -69,7 +80,7 @@ export default function SocialLinksEditor({
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            aria-label={`Link ${i + 1}: ${row.platform} link or @handle`}
+            aria-label={`Link ${i + 1}: ${row.platform || "social"} link or @handle`}
             placeholder={row.platform === "Website" || row.platform === "Other" ? "https://…" : "@handle or https://…"}
             value={row.value}
             onChange={(e) => update(i, { value: e.target.value })}
@@ -81,7 +92,7 @@ export default function SocialLinksEditor({
               className="btn btn-outline btn-sm"
               onClick={() => remove(i)}
               disabled={disabled}
-              aria-label={`Remove link ${i + 1} (${row.platform})`}
+              aria-label={`Remove link ${i + 1}${row.platform ? ` (${row.platform})` : ""}`}
             >
               Remove
             </button>
@@ -89,7 +100,7 @@ export default function SocialLinksEditor({
         </div>
       ))}
       <button ref={addRef} type="button" className="social-editor-add" onClick={add} disabled={disabled}>
-        + Add another link
+        {addLabel}
       </button>
     </fieldset>
   );

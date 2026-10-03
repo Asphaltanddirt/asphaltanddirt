@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
+import { rowsToLinks } from "@/lib/socialLinks";
 import { track } from "@/lib/analytics";
 import { requirementsAcceptLabel } from "@/lib/vehicleRules";
 import { useOptionalUnchecked } from "@/lib/comfort";
@@ -28,6 +30,10 @@ export default function RsvpForm({
   const joinEventUpdatesList = eventUpdatesChoice ?? !optionalUnchecked;
   const joinNewsletter = newsletterChoice ?? !optionalUnchecked;
   const [rulesAccepted, setRulesAccepted] = useState(false);
+  // Optional (Jose 10/3): their socials (they pick the platform, nothing
+  // assumed) and their rig, so clips from the ride can tag the right rider.
+  const [socials, setSocials] = useState<SocialRow[]>([]);
+  const [rig, setRig] = useState("");
 
   const busy = status === "submitting";
 
@@ -81,6 +87,8 @@ export default function RsvpForm({
           source,
           variant,
           heardAbout,
+          socials: rowsToLinks(socials),
+          rig: rig.trim() || undefined,
         }),
       });
       const result = await res.json().catch(() => ({}));
@@ -180,6 +188,40 @@ export default function RsvpForm({
               </option>
             ))}
           </select>
+        </div>
+        <div className="form-field">
+          <SocialLinksEditor
+            idPrefix="rsvp-social"
+            rows={socials}
+            onChange={setSocials}
+            disabled={busy}
+            pickPlatform
+            addLabel="+ Add another"
+            legendClassName="form-label"
+            legend={
+              <>
+                Want Your Rig Tagged? <span className="optional">(Optional)</span>
+              </>
+            }
+            hint="Pick where you post and add your @. We'll tag you in clips and photos from the ride."
+          />
+        </div>
+        <div className="form-field">
+          <label htmlFor="rsvp-rig">
+            Your Rig <span className="optional">(Optional)</span>
+          </label>
+          <input
+            id="rsvp-rig"
+            name="rig"
+            type="text"
+            maxLength={80}
+            placeholder="e.g. 2021 Gladiator, gray"
+            value={rig}
+            onChange={(e) => setRig(e.target.value)}
+            disabled={busy}
+            aria-describedby="rsvp-rig-help"
+          />
+          <small id="rsvp-rig-help" className="form-help">So we know which one is yours in the footage.</small>
         </div>
         {hasRequirements && (
           <div className="form-field">

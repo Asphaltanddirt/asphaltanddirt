@@ -36,12 +36,30 @@ function platformFromUrl(url: string): SocialPlatformName {
   return "Website";
 }
 
+/** Editor rows -> links: full URLs, skipping rows with no platform picked or
+ *  nothing typed. Shared by every form that uses SocialLinksEditor. */
+export function rowsToLinks(rows: { platform: SocialPlatformName | ""; value: string }[]): SocialLink[] {
+  const out: SocialLink[] = [];
+  for (const r of rows) {
+    if (!r.platform) continue;
+    const url = socialUrl(r.platform, r.value);
+    if (url) out.push({ platform: r.platform, url });
+  }
+  return out;
+}
+
 /** A handle or link -> a full URL for that platform ("" if empty). */
 export function socialUrl(platform: SocialPlatformName, value: string): string {
   const v = value.trim();
   if (!v) return "";
   if (/^https?:\/\//i.test(v)) return v;
-  if (/^(www\.)?[a-z0-9-]+\.[a-z]{2,}(\/|$)/i.test(v)) return `https://${v}`;
+  // A bare domain is a link only for Website/Other, or when it's the platform's
+  // own domain. On Instagram etc. "dave.jl" is a handle with a dot, not a site
+  // (found 10/3: it was saved as https://dave.jl).
+  const social = platform !== "Website" && platform !== "Other";
+  if (social ? /^(www\.|m\.)?(instagram|tiktok|youtube|facebook|fb|x|twitter)\.com\//i.test(v) || /^youtu\.be\//i.test(v) : /^(www\.)?[a-z0-9-]+\.[a-z]{2,}(\/|$)/i.test(v)) {
+    return `https://${v}`;
+  }
   const handle = v.replace(/^@/, "").replace(/\s+/g, "");
   if (!handle) return "";
   switch (platform) {

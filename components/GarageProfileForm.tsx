@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { CrewProfileEdit } from "@/lib/garageCrew";
-import { socialUrl } from "@/lib/socialLinks";
+import { rowsToLinks } from "@/lib/socialLinks";
 import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
 
 /** The crew member edits their own public profile — the bio and socials that
@@ -28,7 +28,7 @@ export default function GarageProfileForm({ initial }: { initial: CrewProfileEdi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          socials: socials.map((r) => ({ platform: r.platform, url: socialUrl(r.platform, r.value) })).filter((r) => r.url),
+          socials: rowsToLinks(socials),
         }),
       });
       const data = await res.json().catch(() => ({}));

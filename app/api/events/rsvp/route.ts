@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/resendEmail";
 import { addSubscriber, type Topic } from "@/lib/newsletterSubscribers";
 import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
 import { requirementsFor, requirementsRecord } from "@/lib/vehicleRules";
+import { dedupeSocials, formatSocialLines, SOCIAL_PLATFORMS, type SocialLink } from "@/lib/socialLinks";
 
 const FB_GROUP_VALUES = new Set(["Yes", "No", "Not Sure"]);
 /** The "How did you hear about this?" choices. Anything else is dropped. */
@@ -24,6 +25,8 @@ export async function POST(req: NextRequest) {
     source?: string;
     variant?: string;
     heardAbout?: string;
+    socials?: { platform?: string; url?: string }[];
+    rig?: string;
     company?: string; // honeypot
   };
   try {
@@ -49,6 +52,22 @@ export async function POST(req: NextRequest) {
   const source = typeof body.source === "string" && /^[a-z0-9-]{1,30}$/.test(body.source) ? body.source : undefined;
   const variant = body.variant === "A" || body.variant === "B" ? body.variant : undefined;
   const heardAbout = typeof body.heardAbout === "string" && HEARD_ABOUT.has(body.heardAbout) ? body.heardAbout : undefined;
+
+  // Optional (Jose 10/3): their own socials, platform picked by them, and
+  // their rig, so we can tag the right rider in clips. Up to 5 links.
+  const socials = formatSocialLines(
+    dedupeSocials(
+      (Array.isArray(body.socials) ? body.socials : [])
+        .filter(
+          (l): l is SocialLink =>
+            typeof l?.url === "string" &&
+            /^https?:\/\/\S{3,200}$/.test(l.url) &&
+            (SOCIAL_PLATFORMS as readonly string[]).includes(String(l.platform)),
+        )
+        .slice(0, 5),
+    ),
+  );
+  const rig = typeof body.rig === "string" ? body.rig.trim().replace(/\s+/g, " ").slice(0, 80) : "";
 
   if (!slug || !name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
@@ -84,6 +103,8 @@ export async function POST(req: NextRequest) {
     source,
     variant,
     heardAbout,
+    socials: socials || undefined,
+    rig: rig || undefined,
   });
 
   // Best-effort: the RSVP is already saved even if the email or the Event

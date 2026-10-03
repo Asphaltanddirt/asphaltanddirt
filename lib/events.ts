@@ -446,6 +446,10 @@ export interface RsvpInput {
   source?: string;
   variant?: string;
   heardAbout?: string;
+  /** Optional (Jose 10/3): their socials as "Platform: url" lines (they pick
+   *  the platform) and their rig, so clips from the ride can tag them. */
+  socials?: string;
+  rig?: string;
 }
 
 export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
@@ -459,6 +463,8 @@ export async function createRsvp(input: RsvpInput): Promise<{ id: string }> {
     "Join Event Updates List": input.joinEventUpdatesList,
     "Join Newsletter": input.joinNewsletter,
     ...(input.requirementsAccepted ? { "Requirements Accepted": input.requirementsAccepted } : {}),
+    ...(input.socials ? { Socials: input.socials } : {}),
+    ...(input.rig ? { Rig: input.rig } : {}),
     "RSVP Date": new Date().toISOString().slice(0, 10),
     Status: "Confirmed",
   };

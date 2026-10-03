@@ -5,7 +5,7 @@ import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { AGREEMENT_VERSION } from "@/lib/ambassadorAgreement";
 import type { AgreementPrefill } from "@/lib/ambassadorAgreementLink";
-import { socialUrl } from "@/lib/socialLinks";
+import { rowsToLinks } from "@/lib/socialLinks";
 import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
 
 type Status = "idle" | "submitting" | "accepted" | "already-accepted" | "error";
@@ -38,9 +38,7 @@ export default function AgreementForm({ prefill = null }: { prefill?: AgreementP
       email: field("email"),
       legalName: field("legalName"),
       phone: field("phone"),
-      socials: socials
-        .map((r) => ({ platform: r.platform, url: socialUrl(r.platform, r.value) }))
-        .filter((r) => r.url),
+      socials: rowsToLinks(socials),
       vehicle: field("vehicle"),
       shippingAddress: field("shippingAddress"),
       shirtSize: field("shirtSize"),
