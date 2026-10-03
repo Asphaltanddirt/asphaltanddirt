@@ -502,6 +502,9 @@ export async function generateEventPromos(slug: string, now = new Date()): Promi
           Topic: "Event promo",
           Platform: platform,
           Asset: assetFor(platform, variant),
+          // Jose shares every Instagram promo to his Story; the Garage alerts
+          // him when it's live (10/3).
+          ...(platform === "Instagram" ? { "Share to Story": true } : {}),
           Status: "Planned",
           Caption: draftCaption(event, beat, platform, variant),
           Event: event.slug,

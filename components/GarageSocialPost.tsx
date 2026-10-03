@@ -398,6 +398,15 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         </div>
       )}
 
+      {item.status !== "Skipped" && !editing && (
+        <p className="garage-form-note">
+          {item.shareToStory ? "📣 Share to Story: you'll get a Garage alert when it's live. " : "Want this on your Story? "}
+          <button type="button" className="garage-social-link" disabled={busy} onClick={() => run({ action: item.shareToStory ? "story-off" : "story-on" })}>
+            {item.shareToStory ? "Turn off" : "Alert me to share it"}
+          </button>
+        </p>
+      )}
+
       {item.status === "Planned" ? (
         <div className="garage-social-post">
           <input

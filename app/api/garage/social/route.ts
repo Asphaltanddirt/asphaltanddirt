@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { autoPostNow, planPublish } from "@/lib/autoPost";
-import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setScheduled, setStatus } from "@/lib/garageSocial";
+import { generateSocialWeek, getPost, markPosted, saveStats, saveText, setApproved, setScheduled, setShareToStory, setStatus } from "@/lib/garageSocial";
 import { restampPromoFacts } from "@/lib/eventPromo";
 import { isAutoPlatform } from "@/lib/socialCopy";
 
@@ -75,6 +75,10 @@ export async function POST(req: NextRequest) {
         break;
       case "skip":
         await setStatus(post.id, "Skipped");
+        break;
+      case "story-on":
+      case "story-off":
+        await setShareToStory(post.id, body.action === "story-on");
         break;
       case "undo":
         await setStatus(post.id, "Planned");

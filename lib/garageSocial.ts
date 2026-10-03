@@ -102,6 +102,9 @@ export interface SocialPost {
   /** Auto-posting: only approved posts go out on their own. */
   approved: boolean;
   approvedBy: string;
+  /** Jose shares this one to his Story once it's live; the Garage alerts him
+   *  then (Jose 10/3). Event promo Instagram cards get it automatically. */
+  shareToStory: boolean;
   autoStatus: "" | "Processing" | "Posted" | "Failed" | "Dry run" | "Needs update";
   autoLog: string;
   autoState: string;
@@ -185,6 +188,7 @@ function toPost(r: { id: string; fields: AirtableFields }): SocialPost {
     sort: 0,
     approved: f.Approved === true,
     approvedBy: str(f["Approved By"]),
+    shareToStory: f["Share to Story"] === true,
     autoStatus: str(f["Auto Status"]) as SocialPost["autoStatus"],
     autoLog: str(f["Auto Log"]),
     autoState: str(f["Auto State"]),
@@ -598,6 +602,10 @@ export async function flipGoPublicVideos(slotOf: (due: string, window: string) =
     done.push(`${id}: ${result}`);
   }
   return done;
+}
+
+export async function setShareToStory(id: string, on: boolean) {
+  await updateRecord(POSTS, id, { "Share to Story": on }, { baseId: BASE_ID });
 }
 
 export async function setStatus(id: string, status: PostStatus) {

@@ -44,7 +44,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission" | "Story";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -241,6 +241,8 @@ export interface NotifyRun {
   digest: string | null;
   /** People reminded of their own tasks due today (9 AM). */
   dueToday?: string[];
+  /** Live posts Jose asked to share to his Story. */
+  stories?: string[];
 }
 
 export async function runNotifications(options: { now?: Date; force?: boolean } = {}): Promise<NotifyRun> {
@@ -279,6 +281,21 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
     if (blocked && Math.abs(now.getTime() - (opens.getTime() - NUDGE_LEAD_MS)) <= WINDOW_MS / 2) {
       const at = timeLabel(opens);
       notReady.set(at, [...(notReady.get(at) || []), { post, reason: blocked }]);
+    }
+
+    // Share to Story (Jose 10/3): once a ticked card is live, one alert so he
+    // can share it while it's fresh. Live = the auto-poster posted it or a
+    // person marked it posted; the ledger stops a second alert.
+    if (post.shareToStory && (post.autoStatus === "Posted" || post.status === "Posted")) {
+      const key = ledgerKey("Story", post.id, today);
+      const howTo = post.notes.split("\n").find((l) => /story/i.test(l))?.trim();
+      const sent = await deliver(key, "Story", post.name, {
+        title: `Share to Story · ${post.platform}`,
+        body: howTo || `${post.asset || post.topic} is live. Share it to your Story.`,
+        url: `/garage/social?card=${post.id}`,
+        tag: key,
+      });
+      if (sent) (out.stories ||= []).push(post.name);
     }
 
     if (needsAHuman(post)) {
