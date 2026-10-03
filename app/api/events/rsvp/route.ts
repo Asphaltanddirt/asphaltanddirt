@@ -62,6 +62,9 @@ export async function POST(req: NextRequest) {
   if (!event) {
     return NextResponse.json({ error: "That event couldn't be found." }, { status: 404 });
   }
+  if (event.photosOnly) {
+    return NextResponse.json({ error: "This page is for photo uploads only; there's no RSVP." }, { status: 400 });
+  }
   // Nobody gets on the list without agreeing to the event's requirements
   // (its own items plus state forest rules where they apply).
   const requirements = requirementsFor(event);

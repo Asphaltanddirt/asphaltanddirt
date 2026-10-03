@@ -165,7 +165,7 @@ export default async function EventDetailPage({
                     <p style={{ color: "var(--text-dim)" }}>Recap coming soon.</p>
                   )}
                 </>
-              ) : (
+              ) : event.photosOnly ? null : (
                 <>
                   {event.meetupPublic && event.meetupPoint ? (
                     <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", margin: "var(--sp-3) 0" }}>

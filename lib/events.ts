@@ -91,6 +91,9 @@ export interface EventDetail extends EventSummary {
   /** Reachable by direct link only (test events, private invites) — keep it
    *  out of search engines too. */
   unlisted: boolean;
+  /** Photos Only (Jose 10/3): an upload-only page, e.g. a friend shooting
+   *  someone else's show. No RSVP form or meetup line. */
+  photosOnly: boolean;
   /** PRIVATE — never render this on a public page. Only for the RSVP
    *  confirmation email, built server-side. */
   fullDetails: string;
@@ -274,6 +277,7 @@ export async function getEventBySlug(
   return {
     ...toSummary(record),
     unlisted: record.fields.Status === "Unlisted",
+    photosOnly: Boolean(record.fields["Photos Only"]),
     fullDetails: (record.fields["Full Details"] as string) || "",
     meetupPoint: (record.fields["Meetup Point"] as string) || "",
     postponedOn: ((record.fields["Postponed On"] as string) || "").slice(0, 10),
