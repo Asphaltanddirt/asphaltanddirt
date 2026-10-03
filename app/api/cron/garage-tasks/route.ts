@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { slotStart } from "@/lib/autoPost";
-import { attachTrailTalkImages, closeScheduledPosts, generateSocialWeek } from "@/lib/garageSocial";
+import { attachTrailTalkImages, closeScheduledPosts, flipGoPublicVideos, generateSocialWeek } from "@/lib/garageSocial";
 import { generateWeek, todayNY, weekOf } from "@/lib/garageTasks";
 import { matchPostedMedia } from "@/lib/mediaUsage";
 import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
@@ -43,6 +43,9 @@ export async function GET(req: NextRequest) {
       console.error("trail talk images failed", err);
       return 0;
     });
+    // Unlisted videos whose YouTube card is ticked Go Public go Public at
+    // their slot (this run is 7 AM ET). Never blocks the rest.
+    const wentPublic = await flipGoPublicVideos(slotStart).catch((err) => [`failed: ${String(err)}`]);
     // Scheduled by-hand cards that have their link close themselves after
     // their slot (Jose 10/3), before the stats sync looks for Posted cards.
     const scheduledClosed = await closeScheduledPosts(slotStart).catch((err) => {
@@ -71,7 +74,7 @@ export async function GET(req: NextRequest) {
     // Touch the Threads token daily so it renews in its last 20 days even in a
     // quiet week (it only refreshes when used).
     const threads = (await isThreadsConnected().catch(() => false)) ? await checkThreadsSetup() : { ok: false, skipped: "not connected" };
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, trailTalkImages, scheduledClosed, metaStats, xStats, threadsStats, threads, mediaUsage });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, trailTalkImages, wentPublic, scheduledClosed, metaStats, xStats, threadsStats, threads, mediaUsage });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });

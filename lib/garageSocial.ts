@@ -5,6 +5,7 @@ import { SITE_URL } from "@/lib/site";
 import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
 import { trailTalkImageFor } from "@/lib/trailTalk";
+import { youtubeIdFromUrl } from "@/lib/youtube";
 
 /**
  * The social posting board in A&D Garage (/garage/social).
@@ -534,6 +535,69 @@ export async function closeScheduledPosts(slotOf: (due: string, window: string) 
     closed++;
   }
   return closed;
+}
+
+/**
+ * YouTube cards ticked "Go Public": the Unlisted video in Post URL goes
+ * Public at the card's slot time. Replaces the one-off desktop scheduled
+ * tasks, which only ran while the Claude app was open (10/3). One try per
+ * card, never a retry loop: the box is unticked and the result goes in Notes,
+ * and a private or missing video is reported, never changed.
+ */
+export async function flipGoPublicVideos(slotOf: (due: string, window: string) => Date, now = new Date()) {
+  const done: string[] = [];
+  if (!isSocialConfigured()) return done;
+  const refresh = process.env.YOUTUBE_CAPTIONS_REFRESH_TOKEN;
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  if (!refresh || !clientId || !clientSecret) return ["skipped: YouTube sign-in not set"];
+  const rows = await listRecords(POSTS, `AND({Go Public}, {Platform} = 'YouTube', {Post URL} != '')`, { baseId: BASE_ID });
+  // The cron can fire a moment before 11:00:00 UTC; give the slot 5 minutes.
+  const due = rows.filter((r) => {
+    const post = toPost(r);
+    return slotOf(post.due, post.window).getTime() - 5 * 60_000 <= now.getTime();
+  });
+  if (!due.length) return done;
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refresh, grant_type: "refresh_token" }),
+  });
+  const token = (await tokenRes.json()).access_token as string | undefined;
+  if (!token) return ["skipped: YouTube sign-in failed"];
+  const auth = { Authorization: `Bearer ${token}` };
+  for (const r of due) {
+    const post = toPost(r);
+    const id = youtubeIdFromUrl(post.postUrl);
+    let result: string;
+    try {
+      const list = await (await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${id}`, { headers: auth })).json();
+      const v = list.items?.[0];
+      const was = v?.status?.privacyStatus;
+      if (!v) result = "not found on YouTube; nothing changed";
+      else if (was === "public") result = "was already Public";
+      else if (was !== "unlisted") result = `was ${was}, not Unlisted; left alone for Jose`;
+      else {
+        // videos.update replaces the whole status part: send it back with
+        // only the privacy changed (publishAt can't stay on a public video).
+        const status = { ...v.status, privacyStatus: "public" };
+        delete status.publishAt;
+        const res = await fetch("https://www.googleapis.com/youtube/v3/videos?part=status", {
+          method: "PUT",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status }),
+        });
+        result = res.ok ? "Unlisted → Public" : `YouTube refused (${res.status}); nothing changed`;
+      }
+    } catch (err) {
+      result = `failed: ${String(err).slice(0, 120)}`;
+    }
+    const stamp = `Go Public ${now.toISOString().slice(0, 16)}Z: ${result} (site cron).`;
+    const notes = str(r.fields.Notes);
+    await updateRecord(POSTS, r.id, { "Go Public": false, Notes: notes ? `${notes}\n${stamp}` : stamp }, { baseId: BASE_ID });
+    done.push(`${id}: ${result}`);
+  }
+  return done;
 }
 
 export async function setStatus(id: string, status: PostStatus) {
