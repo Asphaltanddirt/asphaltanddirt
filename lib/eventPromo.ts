@@ -58,15 +58,17 @@ const BEAT_LABEL: Record<PromoBeat, string> = {
   "last-call": "Last call",
 };
 
-/** Where each beat goes, straight from the approved doc. TikTok, the Facebook
- *  Group and Instagram Stories have no posting API we can use, so those cards
- *  are by hand like every other card on those platforms. */
+/** Where each beat goes, straight from the approved doc. TikTok and the
+ *  Facebook Group have no posting API we can use, so those cards are by hand
+ *  like every other card on those platforms. No beat is Story-only (Jose
+ *  10/3): every beat is a real post, and Jose shares the Instagram one to his
+ *  Story. */
 const BEAT_PLATFORMS: Record<PromoBeat, string[]> = {
   "save-the-date": ["Facebook Page", "Facebook Group"],
   "whos-in": ["TikTok", "Instagram", "Facebook Group", "Facebook Page", "X", "Threads"],
   details: ["Facebook Page", "Facebook Group", "Instagram"],
   "last-clip": ["TikTok", "Instagram", "Facebook Group", "Facebook Page", "X", "Threads"],
-  "last-call": ["Instagram Story"],
+  "last-call": ["Instagram", "Facebook Page", "X", "Threads"],
 };
 
 /** The `?src=` each platform's RSVP link carries. */
@@ -443,6 +445,10 @@ function notesFor(event: EventDetail, beat: PromoBeat, platform: string, variant
   if (beat === "last-clip") lines.push("Only say how many rigs are confirmed if it's counted from the real roster (Garage → event).");
   if (platform === "TikTok" || platform === "Instagram") lines.push(`Point the link in bio at ${link} for this post.`);
   if (platform === "Instagram Story") lines.push(`Add the countdown sticker (to the start time) and a link sticker to ${link}.`);
+  if (platform === "Instagram")
+    lines.push(
+      `Once it's live, share it to your Story${beat === "last-call" ? " with the countdown sticker (to the start time)" : ""} and a link sticker to ${rsvpLink(event.slug, "Instagram Story", variant)}.`,
+    );
   const wantVideo = variant === "A" || (!variant && platform === "TikTok");
   if (variant !== "B") lines.push(mediaSuggestion(library, event, wantVideo));
   return lines.join("\n");
