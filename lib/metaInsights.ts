@@ -67,6 +67,13 @@ function unsupportedMetrics(message: string, asked: string[]): string[] {
   return asked.filter((m) => lower.includes(m.toLowerCase()));
 }
 
+/** Why insights calls came back empty, newest last (dry runs show it). */
+export const insightsTrouble: string[] = [];
+const note = (path: string, why: string) => {
+  insightsTrouble.push(`${path.split("/").pop()} ${path.split("/")[0].slice(-6)}: ${why}`.slice(0, 300));
+  if (insightsTrouble.length > 20) insightsTrouble.shift();
+};
+
 export interface InsightValue {
   metric: string;
   value: number;
@@ -103,10 +110,12 @@ async function insights(
           if (Number.isFinite(total)) out.push({ metric: row.name, value: total });
         }
         if (out.length) return out;
+        note(path, `empty for ${metrics.join(",")}`);
         break; // Call worked but said nothing — try the next variant.
       } catch (err) {
         if (!(err instanceof GraphCallError)) throw err;
         const drop = unsupportedMetrics(err.detail.message || "", metrics);
+        note(path, err.detail.message || "error");
         if (!drop.length) break; // Not a metric-name problem; try the next variant.
         metrics = metrics.filter((m) => !drop.includes(m));
       }

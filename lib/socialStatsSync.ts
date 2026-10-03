@@ -15,7 +15,7 @@
  */
 
 import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
-import { facebookPosts, facebookReelStats, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
+import { facebookPosts, facebookReelStats, insightsTrouble, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
 import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
 import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 
@@ -180,6 +180,7 @@ export async function syncSocialStatsFromMeta(
     });
   }
 
+  if (opts.dryRun) (result as typeof result & { insightsTrouble?: string[] }).insightsTrouble = [...insightsTrouble];
   return result;
 }
 
