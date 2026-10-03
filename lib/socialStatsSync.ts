@@ -44,7 +44,7 @@ export interface SocialStatsSyncResult {
   alreadyFilled: number;
   /** Posts in the window we had no matching Instagram/Facebook post for. */
   unmatched: number;
-  filled: { name: string; platform: string; views?: number }[];
+  filled: { name: string; platform: string; views?: number; got?: string[] }[];
 }
 
 /**
@@ -153,7 +153,9 @@ export async function syncSocialStatsFromMeta(
     // impressions, Reels report plays.
     const views =
       num(s.views) ?? num(s.fb_reels_total_plays) ?? num(s.blue_reels_play_count) ?? num(s.post_media_view) ??
-      num(s.post_impressions) ?? num(s.reach) ?? num(s.post_impressions_unique);
+      num(s.post_impressions) ?? num(s.reach) ?? num(s.post_impressions_unique) ??
+      // Meta's June 2026 replacement for post reach: unique viewers.
+      num(s.post_total_media_view_unique);
     const fields: AirtableFields = {};
     if (views !== undefined) fields["Views 7d"] = views;
     if (num(s.shares) !== undefined) fields["Shares 7d"] = s.shares;
@@ -173,6 +175,8 @@ export async function syncSocialStatsFromMeta(
       name: String(row.fields.Name || row.id),
       platform: String(row.fields.Platform || ""),
       views,
+      // Dry runs list what Meta actually answered, to chase renamed metrics.
+      ...(opts.dryRun ? { got: Object.keys(s) } : {}),
     });
   }
 
