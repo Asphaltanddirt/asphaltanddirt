@@ -116,7 +116,17 @@ async function insights(
         if (!(err instanceof GraphCallError)) throw err;
         const drop = unsupportedMetrics(err.detail.message || "", metrics);
         note(path, err.detail.message || "error");
-        if (!drop.length) break; // Not a metric-name problem; try the next variant.
+        if (!drop.length) {
+          // "(#100) The value must be a valid insights metric" doesn't say
+          // which one (found 10/3: every Facebook post came back blank). Ask
+          // one metric at a time and keep the ones that answer.
+          if (metrics.length > 1 && /valid insights metric/i.test(err.detail.message || "")) {
+            const one: InsightValue[] = [];
+            for (const m of metrics) one.push(...(await insights(path, [m], params, [variant], token)));
+            if (one.length) return one;
+          }
+          break; // Not a metric-name problem; try the next variant.
+        }
         metrics = metrics.filter((m) => !drop.includes(m));
       }
     }
