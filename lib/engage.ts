@@ -36,6 +36,9 @@ export interface EngageTarget {
   lastEngaged: string;
   timesEngaged: number;
   skippedOn: string;
+  /** Newest post seen from them; recent posters come first (Jose 10/3). */
+  lastPostSeen: string;
+  snoozeUntil: string;
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -61,6 +64,8 @@ export async function getEngageTargets(): Promise<EngageTarget[]> {
     lastEngaged: str(r.fields["Last Engaged"]),
     timesEngaged: typeof r.fields["Times Engaged"] === "number" ? r.fields["Times Engaged"] : 0,
     skippedOn: str(r.fields["Skipped On"]).slice(0, 10),
+    lastPostSeen: str(r.fields["Last Post Seen"]).slice(0, 10),
+    snoozeUntil: str(r.fields["Snooze Until"]).slice(0, 10),
   }));
 }
 
@@ -73,16 +78,25 @@ export function planSession(targets: EngageTarget[], now = new Date()) {
   const today = todayNY(now);
   const active = targets.filter((t) => t.active && t.url);
   const doneToday = active.filter((t) => dayNY(t.lastEngaged) === today);
-  const pool = active.filter((t) => dayNY(t.lastEngaged) !== today && t.skippedOn !== today);
+  const pool = active.filter(
+    (t) => dayNY(t.lastEngaged) !== today && t.skippedOn !== today && !(t.snoozeUntil && t.snoozeUntil > today),
+  );
+  // Accounts that posted in the last week are worth a comment now (Jose 10/3:
+  // "some of these people have not posted in months"); quiet ones sink.
+  const fresh = (t: EngageTarget) => {
+    if (!t.lastPostSeen) return 1;
+    const age = (now.getTime() - new Date(`${t.lastPostSeen}T12:00:00Z`).getTime()) / 86_400_000;
+    return age <= 7 ? 2.5 : age <= 14 ? 1 : 0.3;
+  };
   const score = (t: EngageTarget) => {
     const days = t.lastEngaged ? (now.getTime() - new Date(t.lastEngaged).getTime()) / 86_400_000 : 30;
-    return Math.min(days, 30) * (TIER_WEIGHT[t.tier] ?? 1);
+    return Math.min(days, 30) * (TIER_WEIGHT[t.tier] ?? 1) * fresh(t);
   };
   const session = [...pool].sort((a, b) => score(b) - score(a)).slice(0, Math.max(0, SESSION_SIZE - doneToday.length));
   return { today, session, doneToday, active };
 }
 
-export type EngageAction = "done" | "skip" | "pause" | "undo";
+export type EngageAction = "done" | "skip" | "pause" | "undo" | "quiet";
 
 export async function engageAction(id: string, action: EngageAction, current: EngageTarget): Promise<void> {
   if (!/^rec[A-Za-z0-9]{14}$/.test(id)) throw new Error("bad id");
@@ -93,6 +107,9 @@ export async function engageAction(id: string, action: EngageAction, current: En
         ? { "Skipped On": todayNY() }
         : action === "pause"
           ? { Active: false }
+          : action === "quiet"
+            ? // Nothing new on their page: hide for two weeks.
+              { "Snooze Until": todayNY(new Date(Date.now() + 14 * 86_400_000)) }
           : // Undo today's Done: the count goes back; the previous date isn't kept.
             { "Last Engaged": null, "Times Engaged": Math.max(0, current.timesEngaged - 1) };
   await updateRecord(TABLE, id, fields, { baseId: BASE_ID });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { engageAction, getEngageTargets, type EngageAction } from "@/lib/engage";
 
-const ACTIONS: EngageAction[] = ["done", "skip", "pause", "undo"];
+const ACTIONS: EngageAction[] = ["done", "skip", "pause", "undo", "quiet"];
 
 /** Engage list actions (Garage → Engage). Owners only. */
 export async function POST(req: NextRequest) {

@@ -63,7 +63,7 @@ export default function GarageEngageItem({ target, done = false }: { target: Eng
       <h3 className="garage-engage-name">{target.name}</h3>
       {target.why && <p className="garage-social-what">{target.why}</p>}
       <p className="garage-form-note">
-        Last engaged: {since(target.lastEngaged)}
+        {target.lastPostSeen ? `Last post seen ${since(`${target.lastPostSeen}T12:00:00`)} · ` : ""}Last engaged: {since(target.lastEngaged)}
         {target.timesEngaged > 0 ? ` · ${target.timesEngaged}× so far` : ""}
       </p>
       {done || opened ? (
@@ -93,6 +93,10 @@ export default function GarageEngageItem({ target, done = false }: { target: Eng
             Open {target.platform === "Facebook Page" ? "Page" : target.platform} and comment
           </a>
           <p className="garage-form-note">
+            <button type="button" className="garage-social-link" disabled={busy} onClick={() => act("quiet")}>
+              Quiet lately (hide 2 weeks)
+            </button>
+            {" · "}
             <button type="button" className="garage-social-link" disabled={busy} onClick={() => act("skip")}>
               Skip today
             </button>
