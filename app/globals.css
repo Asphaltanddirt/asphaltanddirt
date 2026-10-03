@@ -2839,3 +2839,5 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .transcript-none > span:last-child{ color:var(--text-muted); }
 
 .garage-engage-name{ font-size:17px; font-weight:700; margin:6px 0 2px; }
+.garage-engage-threads{ list-style:none; padding:0; margin:8px 0 0; display:flex; flex-direction:column; gap:10px; }
+.garage-engage-threads a{ display:block; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text); text-decoration:none; line-height:1.4; }

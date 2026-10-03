@@ -1,4 +1,5 @@
 import { listRecords, updateRecord, isAirtableConfigured, SOCIAL_BASE_ID } from "@/lib/airtable";
+import { isThreadsConnected, threadsKeywordSearch, type ThreadsFound } from "@/lib/threadsPost";
 
 /**
  * Garage → Engage (Jose 2026-10-03): the accounts Jose comments on as A&D
@@ -95,4 +96,32 @@ export async function engageAction(id: string, action: EngageAction, current: En
           : // Undo today's Done: the count goes back; the previous date isn't kept.
             { "Last Engaged": null, "Times Engaged": Math.max(0, current.timesEngaged - 1) };
   await updateRecord(TABLE, id, fields, { baseId: BASE_ID });
+}
+
+/** Local topics searched on Threads alongside the target accounts. */
+const THREADS_TOPICS = ["Pine Barrens jeep", "NJ jeep", "jeep wrangler new jersey", "cars and coffee NJ", "NJ car meet", "AOAA"];
+
+/**
+ * Fresh Threads posts worth a reply: newest posts (3 days) from our Threads
+ * targets plus local topics, newest first, de-duplicated. Empty until Meta
+ * approves threads_keyword_search (until then search only sees our own posts).
+ */
+export async function freshThreadsPosts(targets: EngageTarget[], max = 15): Promise<ThreadsFound[]> {
+  if (!(await isThreadsConnected().catch(() => false))) return [];
+  // Search needs a keyword even when filtering by account, so use the side's
+  // core word ("jeep" for dirt accounts, "car" for asphalt ones).
+  const authors = targets
+    .filter((t) => t.active && t.platform === "Threads")
+    .map((t) => ({ handle: t.url.match(/@([A-Za-z0-9._]+)/)?.[1] || "", q: t.side === "Asphalt" ? "car" : "jeep" }))
+    .filter((a) => a.handle);
+  const searches = [
+    ...authors.map((a) => threadsKeywordSearch(a.q, { author: a.handle, limit: 3 }).catch(() => [] as ThreadsFound[])),
+    ...THREADS_TOPICS.map((q) => threadsKeywordSearch(q, { limit: 5 }).catch(() => [] as ThreadsFound[])),
+  ];
+  const seen = new Set<string>();
+  return (await Promise.all(searches))
+    .flat()
+    .filter((p) => !seen.has(p.id) && seen.add(p.id))
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    .slice(0, max);
 }

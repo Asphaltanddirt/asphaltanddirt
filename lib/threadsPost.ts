@@ -23,7 +23,10 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.asphaltanddirt.com
 const BASE_ID = SOCIAL_BASE_ID;
 const SETTINGS = "Garage Settings";
 const ROW = "Threads connection";
-const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_replies", "threads_manage_insights", "threads_read_replies"];
+// threads_keyword_search (Jose 10/3): Garage → Engage pulls fresh posts from
+// local accounts/topics to reply to by hand. Until Meta approves it, search
+// only returns our own posts.
+const SCOPES = ["threads_basic", "threads_content_publish", "threads_manage_replies", "threads_manage_insights", "threads_read_replies", "threads_keyword_search"];
 export const THREADS_TEXT_LIMIT = 500;
 
 const appId = () => process.env.THREADS_APP_ID || "";
@@ -248,3 +251,35 @@ export async function threadsPostMetrics(permalink: string): Promise<ThreadsMetr
   return { views: get("views"), likes: get("likes"), replies: get("replies"), reposts: get("reposts"), quotes: get("quotes"), shares: get("shares") };
 }
 
+
+// ---------------------------------------------------------------- keyword search
+
+export interface ThreadsFound {
+  id: string;
+  text: string;
+  permalink: string;
+  username: string;
+  timestamp: string;
+}
+
+/**
+ * Recent public Threads posts for a keyword, optionally from one account
+ * (GET /keyword_search, docs checked 2026-10-03: threads_keyword_search,
+ * 2,200 queries / 24 h, empty results don't count). Read-only: replies are
+ * written by hand in the Threads app.
+ */
+export async function threadsKeywordSearch(q: string, opts: { author?: string; sinceDays?: number; limit?: number } = {}): Promise<ThreadsFound[]> {
+  const s = await token();
+  const params: Record<string, string> = {
+    q,
+    search_type: "RECENT",
+    fields: "id,text,permalink,username,timestamp",
+    limit: String(opts.limit ?? 10),
+    since: String(Math.floor(Date.now() / 1000) - (opts.sinceDays ?? 3) * 86_400),
+  };
+  if (opts.author) params.author_username = opts.author;
+  const r = await api<{ data?: Partial<ThreadsFound>[] }>("GET", "keyword_search", params, s.token);
+  return (r.data ?? [])
+    .filter((p) => p.id && p.permalink && p.username !== s.username)
+    .map((p) => ({ id: String(p.id), text: p.text || "", permalink: String(p.permalink), username: p.username || "", timestamp: p.timestamp || "" }));
+}

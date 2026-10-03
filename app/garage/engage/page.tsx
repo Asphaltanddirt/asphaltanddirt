@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import GarageEngageItem from "@/components/GarageEngageItem";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { getEngageTargets, planSession, TIER_ORDER, type EngageTarget } from "@/lib/engage";
+import { freshThreadsPosts, getEngageTargets, planSession, TIER_ORDER, type EngageTarget } from "@/lib/engage";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,6 +30,7 @@ export default async function GarageEngagePage() {
 
   const targets = await getEngageTargets().catch((): EngageTarget[] | null => null);
   const plan = targets ? planSession(targets) : null;
+  const threads = targets ? await freshThreadsPosts(targets).catch(() => []) : [];
   const rest = plan
     ? plan.active
         .filter((t) => !plan.session.includes(t) && !plan.doneToday.includes(t))
@@ -87,6 +88,23 @@ export default async function GarageEngagePage() {
             ))}
           </div>
         )}
+
+        <section className="garage-panel">
+          <h2>3. Fresh on Threads</h2>
+          {threads.length === 0 ? (
+            <p>Nothing new from our Threads accounts or local topics in the last 3 days. (This fills in once Meta approves keyword search.)</p>
+          ) : (
+            <ul className="garage-engage-threads">
+              {threads.map((p) => (
+                <li key={p.id}>
+                  <a href={p.permalink} target="_blank" rel="noopener">
+                    <strong>@{p.username}</strong> {p.text.length > 140 ? `${p.text.slice(0, 139)}…` : p.text} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {plan && plan.doneToday.length > 0 && (
           <>
