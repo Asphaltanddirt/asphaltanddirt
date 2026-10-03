@@ -6,7 +6,7 @@ import { getPost, POSTING_OWNER, type SocialPost } from "@/lib/garageSocial";
 import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
 import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
 import { SITE_URL } from "@/lib/site";
-import { isAutoPlatform, xLength } from "@/lib/socialCopy";
+import { hasStories, isAutoPlatform, xLength } from "@/lib/socialCopy";
 
 /**
  * The event promo countdown (approved by Jose 2026-09-24, from "Event promo
@@ -445,7 +445,7 @@ function notesFor(event: EventDetail, beat: PromoBeat, platform: string, variant
   if (beat === "last-clip") lines.push("Only say how many rigs are confirmed if it's counted from the real roster (Garage → event).");
   if (platform === "TikTok" || platform === "Instagram") lines.push(`Point the link in bio at ${link} for this post.`);
   if (platform === "Instagram Story") lines.push(`Add the countdown sticker (to the start time) and a link sticker to ${link}.`);
-  if (platform === "Instagram")
+  if (hasStories(platform))
     lines.push(
       `Once it's live, share it to your Story${beat === "last-call" ? " with the countdown sticker (to the start time)" : ""} and a link sticker to ${rsvpLink(event.slug, "Instagram Story", variant)}.`,
     );
@@ -502,9 +502,9 @@ export async function generateEventPromos(slug: string, now = new Date()): Promi
           Topic: "Event promo",
           Platform: platform,
           Asset: assetFor(platform, variant),
-          // Jose shares every Instagram promo to his Story; the Garage alerts
-          // him when it's live (10/3).
-          ...(platform === "Instagram" ? { "Share to Story": true } : {}),
+          // Every post on a platform with Stories gets shared to Story; the
+          // Garage alerts Jose when it's live (10/3).
+          ...(hasStories(platform) ? { "Share to Story": true } : {}),
           Status: "Planned",
           Caption: draftCaption(event, beat, platform, variant),
           Event: event.slug,

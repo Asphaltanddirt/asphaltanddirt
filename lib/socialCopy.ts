@@ -78,6 +78,15 @@ export function isAutoPlatform(platform: string): platform is AutoPlatform {
   return (AUTO_PLATFORMS as readonly string[]).includes(platform);
 }
 
+/** Platforms with Stories. Every post on these gets shared to Story (Jose
+ *  10/3: Stories let people discover us without committing to the page).
+ *  X, Threads and Groups have none; YouTube retired Stories in 2023. */
+export const STORY_PLATFORMS = ["Instagram", "Facebook Page", "TikTok"] as const;
+
+export function hasStories(platform: string): boolean {
+  return (STORY_PLATFORMS as readonly string[]).includes(platform);
+}
+
 /** Length as X counts it: every link is 23 characters, however long. */
 export function xLength(text: string): number {
   return text.replace(/https?:\/\/\S+/g, "x".repeat(23)).length;

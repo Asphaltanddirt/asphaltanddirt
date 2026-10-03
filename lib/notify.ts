@@ -264,6 +264,7 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
     return [];
   });
   const posts = (await getWeekPosts(weekOf(today))).filter((p) => p.due === today);
+  const storyReady: SocialPost[] = [];
   /** Blocked auto slots, grouped by the time their window opens. */
   const notReady = new Map<string, { post: SocialPost; reason: string }[]>();
 
@@ -283,19 +284,13 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
       notReady.set(at, [...(notReady.get(at) || []), { post, reason: blocked }]);
     }
 
-    // Share to Story (Jose 10/3): once a ticked card is live, one alert so he
-    // can share it while it's fresh. Live = the auto-poster posted it or a
-    // person marked it posted; the ledger stops a second alert.
-    if (post.shareToStory && (post.autoStatus === "Posted" || post.status === "Posted")) {
-      const key = ledgerKey("Story", post.id, today);
-      const howTo = post.notes.split("\n").find((l) => /story/i.test(l))?.trim();
-      const sent = await deliver(key, "Story", post.name, {
-        title: `Share to Story · ${post.platform}`,
-        body: howTo || `${post.asset || post.topic} is live. Share it to your Story.`,
-        url: `/garage/social?card=${post.id}`,
-        tag: key,
-      });
-      if (sent) (out.stories ||= []).push(post.name);
+    // Share to Story (Jose 10/3): once a ticked card is live, collect it for
+    // ONE alert per run (several posts going live at 7 AM shouldn't be three
+    // banners). Live = auto-posted, marked posted, or pre-scheduled natively
+    // and past its slot. The per-card ledger key stops a second alert.
+    const live = post.autoStatus === "Posted" || post.status === "Posted" || (Boolean(post.scheduledAt) && opens.getTime() <= now.getTime());
+    if (post.shareToStory && post.status !== "Skipped" && live && !(await alreadySent(ledgerKey("Story", post.id, today)))) {
+      storyReady.push(post);
     }
 
     if (needsAHuman(post)) {
@@ -344,6 +339,30 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
       tag: key,
     });
     if (sent) out.notReady.push(...items.map((i) => i.post.name));
+  }
+
+  if (storyReady.length) {
+    const first = storyReady[0];
+    const howTo = storyReady.length === 1 ? first.notes.split("\n").find((l) => /story/i.test(l))?.trim() : "";
+    const key = ledgerKey("Story", storyReady.map((p) => p.id).join("+"), today);
+    const sent = await deliver(key, "Story", storyReady.map((p) => p.name).join(" · ").slice(0, 200), {
+      title: storyReady.length === 1 ? `Share to Story · ${first.platform}` : `Share ${storyReady.length} to Story`,
+      body:
+        howTo ||
+        (storyReady.length === 1
+          ? `${first.asset || first.topic} is live. Share it to your Story.`
+          : `${storyReady.map((p) => p.platform).join(" · ")} are live. Share them to your Stories.`),
+      url: storyReady.length === 1 ? `/garage/social?card=${first.id}` : "/garage/social",
+      tag: key,
+    });
+    if (sent) {
+      // Stamp each card so the next run doesn't pick it up again.
+      for (const p of storyReady) {
+        const own = ledgerKey("Story", p.id, today);
+        if (own !== key) await record(own, "Story", p.name, "Grouped", "Sent", key);
+      }
+      out.stories = storyReady.map((p) => p.name);
+    }
   }
 
   // Digest: 9 PM ET, one line for everything that went out on its own.

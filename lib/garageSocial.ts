@@ -3,7 +3,7 @@ import { getPostBySlug } from "@/lib/blog";
 import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
 import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
-import { isAutoPlatform } from "@/lib/socialCopy";
+import { hasStories, isAutoPlatform } from "@/lib/socialCopy";
 import { trailTalkImageFor } from "@/lib/trailTalk";
 import { youtubeIdFromUrl } from "@/lib/youtube";
 
@@ -415,6 +415,7 @@ export async function generateSocialWeek(reference = todayNY()): Promise<string[
         ...(blog?.url ? { "Blog URL": blog.url } : {}),
         ...(f.Notes ? { Notes: str(f.Notes) } : {}),
         ...(f.Owner ? { Owner: str(f.Owner) } : {}),
+        ...(hasStories(str(f.Platform)) ? { "Share to Story": true } : {}),
       },
       { baseId: BASE_ID, typecast: true },
     );
