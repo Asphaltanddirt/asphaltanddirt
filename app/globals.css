@@ -2943,9 +2943,10 @@ span.garage-numbers-trend{ display:block; width:64px; }
   font-family:var(--font-display); font-weight:900; letter-spacing:-.005em; line-height:.9;
   font-size:clamp(46px, 11.2vw, 170px); color:var(--text);
   -webkit-mask-image:url(/rally/speckle.png); mask-image:url(/rally/speckle.png);
-  -webkit-mask-size:320px; mask-size:320px;
+  /* Speckle scales with the type, so phones get the same worn look. */
+  -webkit-mask-size:2.1em; mask-size:2.1em;
 }
-.rally-tagline-sub{ text-align:center; margin:14px 0 0; font-family:var(--font-display); font-size:clamp(16px,1.8vw,22px); letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); }
+.rally-tagline-sub{ text-align:center; text-wrap:balance; margin:14px 0 0; font-family:var(--font-display); font-size:clamp(16px,1.8vw,22px); letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); }
 .rally-locker-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:stretch; }
 .rally-locker-frame{ position:relative; border-radius:var(--radius-md); overflow:hidden; background:var(--bg-elevated); aspect-ratio:1/1; }
 /* Out of the flow, so the list sets the height and the photo fills it. One
@@ -2963,8 +2964,10 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .rally-locker-list{ display:flex; flex-direction:column; gap:12px; }
 .rally-locker-list > .rally-locker-item{ flex:1 1 auto; }
 @media (max-width:900px){
-  .rally-locker-grid{ grid-template-columns:1fr; }
-  .rally-locker-frame{ aspect-ratio:1/1; }
+  /* One column: the frame no longer stretches to the list, so it needs its
+     own height (stretch + absolute img = 0 px tall on phones). */
+  .rally-locker-grid{ grid-template-columns:1fr; align-items:start; }
+  .rally-locker-frame{ aspect-ratio:1/1; height:auto; width:100%; }
 }
 .rally-locker-item .rally-big{ font-size:38px; }
 .rally-chevron{ width:22px; height:22px; color:var(--accent); transition:transform .2s; }
@@ -2993,3 +2996,8 @@ span.garage-numbers-trend{ display:block; width:64px; }
 .rally-slashes i{ width:20px; height:74px; background:var(--accent); transform:skewX(-18deg); display:block; }
 .rally-initials{ width:96px; height:96px; display:flex; align-items:center; justify-content:center; background:var(--bg-elevated); font-family:var(--font-display); font-size:38px; color:var(--accent); border-radius:var(--radius-sm); }
 @media (max-width:640px){ .rally-legends{ min-height:0; } }
+@media (max-width:640px){
+  .rally-tagline-sub{ letter-spacing:.06em; font-size:15px; }
+  .rally-legend-media{ aspect-ratio:21/9; }
+  .rally-slashes i{ width:14px; height:48px; }
+}
