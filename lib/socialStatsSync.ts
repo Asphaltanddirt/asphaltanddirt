@@ -267,3 +267,53 @@ export async function syncSocialStatsFromThreads(now = new Date()): Promise<Soci
   }
   return result;
 }
+
+/**
+ * Live numbers for one day's posted cards, read straight from the platforms
+ * and NOT written anywhere (the Monday fill still owns the 7-day fields).
+ * For "how is today doing" checks (Jose 10/4: the 12-hour look at the first
+ * day of the posting test). TikTok and the FB Group have no API: by hand.
+ */
+export async function livePostStats(date: string): Promise<{ date: string; posts: Record<string, unknown>[] }> {
+  const rows = await listRecords(POSTS, `AND({Status} = 'Posted', IS_SAME({Due}, '${date}', 'day'))`, { baseId: BASE_ID });
+  const since = new Date(new Date(`${date}T00:00:00Z`).getTime() - 2 * 86_400_000);
+  const needsMeta = rows.some((r) => ["Instagram", "Facebook Page", "Facebook"].includes(String(r.fields.Platform)));
+  const [ig, fb] = needsMeta && isMetaConfigured()
+    ? await Promise.allSettled([
+        process.env.META_IG_USER_ID ? instagramPosts(since, 50) : Promise.resolve([]),
+        process.env.META_PAGE_ID ? facebookPosts(since, 50) : Promise.resolve([]),
+      ])
+    : [{ status: "fulfilled", value: [] } as PromiseFulfilledResult<MetaPost[]>, { status: "fulfilled", value: [] } as PromiseFulfilledResult<MetaPost[]>];
+  const metaPosts: MetaPost[] = [...(ig.status === "fulfilled" ? ig.value : []), ...(fb.status === "fulfilled" ? fb.value : [])];
+  const byKey = new Map<string, MetaPost>();
+  for (const p of metaPosts) {
+    const key = postKey(p.permalink);
+    if (key) byKey.set(key, p);
+    const fbId = p.id.includes("_") ? p.id.split("_")[1] : "";
+    if (fbId) byKey.set(`fb:${fbId}`, p);
+  }
+  const posts: Record<string, unknown>[] = [];
+  for (const r of rows) {
+    const platform = String(r.fields.Platform || "");
+    const url = String(r.fields["Post URL"] || "");
+    const base = { platform, name: String(r.fields.Name || ""), window: String(r.fields.Window || ""), postedAt: String(r.fields["Posted At"] || ""), url };
+    try {
+      if (platform === "X") {
+        const id = url.match(/status\/(\d+)/)?.[1];
+        const m = id && isXConfigured() ? (await fetchOwnPostMetrics([id]))[0] : undefined;
+        posts.push({ ...base, stats: m || null });
+      } else if (platform === "Threads") {
+        posts.push({ ...base, stats: (await isThreadsConnected()) ? await threadsPostMetrics(url).catch(() => null) : null });
+      } else if (["Instagram", "Facebook Page", "Facebook"].includes(platform)) {
+        const key = postKey(await resolveShareLink(url));
+        const s = key.startsWith("fbreel:") ? await facebookReelStats(key.slice(7)).catch(() => undefined) : byKey.get(key)?.stats;
+        posts.push({ ...base, stats: s || null });
+      } else {
+        posts.push({ ...base, stats: null, note: "no API: check the app" });
+      }
+    } catch (err) {
+      posts.push({ ...base, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return { date, posts };
+}
