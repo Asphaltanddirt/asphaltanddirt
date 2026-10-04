@@ -4,6 +4,7 @@ import Link from "next/link";
 import HeroCTAButton from "@/components/HeroCTAButton";
 import { getRiderEmail } from "@/lib/rallyAuth";
 import { RallyClaim, RallyProfile, RallySignIn, RallySignOut } from "@/components/RallyAccount";
+import RallyLocker from "@/components/RallyLocker";
 import {
   rallyLive,
   RANKS,
@@ -90,8 +91,10 @@ export default async function RallyPage({ searchParams }: { searchParams: Promis
     email && configured ? getStanding(email).catch(() => null) : (null as Standing | null),
   ]);
   const signedIn = Boolean(email && rider && standing && !rider.founder);
-  const gear = locker.filter((i) => i.type !== "Experience");
-  const experience = locker.find((i) => i.type === "Experience");
+  // Shelf photos win; until the Fourthwall products exist, Robin's shots stand in (Jose 10/4).
+  const fallbackPhoto = (item: string, type: string) =>
+    type === "Experience" ? "/rally/locker-experience.webp" : /hoodie/i.test(item) ? "/rally/locker-rank-hoodie.webp" : /tee|shirt/i.test(item) ? "/rally/locker-rank-tee.webp" : "/rally/locker-tumbler.webp";
+  const lockerItems = locker.map((i) => ({ id: i.id, item: i.item, points: i.points, blurb: i.blurb, image: i.image || fallbackPhoto(i.item, i.type), experience: i.type === "Experience" }));
   const everyone = [...board.founders, ...board.riders];
   const top = everyone.slice(0, BOARD_TOP);
   const rest = everyone.slice(BOARD_TOP);
@@ -195,42 +198,7 @@ export default async function RallyPage({ searchParams }: { searchParams: Promis
             <span>Earned.</span> <span className="accent-text">Not Given.</span>
           </h2>
           <p className="rally-tagline-sub">Show up. Put in the work. Take from the Locker.</p>
-          <div className="rally-locker-grid mt-4">
-            {/* Fourthwall product photos come in all shapes, so the frame takes the
-                list's height and the photo fills it (cover), keeping both columns flush. */}
-            <div className="rally-locker-frame">
-              <img src="/rally/locker-rank-gear.webp" alt="A ROOKIE rank tee and a LEGEND rank hoodie" />
-            </div>
-            <div className="rally-locker-list">
-              {gear.map((i) => (
-                <div className="card rally-locker-item" key={i.id}>
-                  <div className="rally-big">{i.points}</div>
-                  <div>
-                    <h3>{i.item}</h3>
-                    {i.blurb && <p>{i.blurb}</p>}
-                  </div>
-                </div>
-              ))}
-              {experience && (
-                <details className="card rally-locker-item rally-locker-exp">
-                  <summary>
-                    <span className="rally-big">{experience.points}</span>
-                    <span>
-                      <h3>{experience.item}</h3>
-                      <p>All of it, together. Tap to see.</p>
-                    </span>
-                    <svg className="rally-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-                  </summary>
-                  <ol>
-                    <li><b>01</b> Pick the ride.</li>
-                    <li><b>02</b> Lead the ride.</li>
-                    <li><b>03</b> Get featured: photos and video of you on that ride.</li>
-                    <li><b>04</b> Your story in The Dirt Line newsletter.</li>
-                  </ol>
-                </details>
-              )}
-            </div>
-          </div>
+          <RallyLocker items={lockerItems} />
         </div>
       </section>
 
