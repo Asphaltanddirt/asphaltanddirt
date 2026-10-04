@@ -61,6 +61,16 @@ export async function getDueReminders(email: string, isOwner: boolean): Promise<
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** "Just me" reminders dated today: the personal alerts ("remind me to check
+ *  the 10/28 TikTok"), pushed at 9 AM by the notifier (Jose 10/3). Owner and
+ *  Everyone reminders stay on the home screen only, so the monthly checks
+ *  don't buzz everyone. */
+export async function personalRemindersOn(day: string): Promise<GarageReminder[]> {
+  if (!isAirtableConfigured(BASE_ID)) return [];
+  const records = await listRecords(TABLE, `{Active} = TRUE()`, { baseId: BASE_ID });
+  return records.map(toReminder).filter((r) => r.date === day && r.audience === "Just me" && r.ownerEmail);
+}
+
 export async function addReminder(input: {
   title: string;
   date: string;

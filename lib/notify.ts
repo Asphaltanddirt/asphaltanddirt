@@ -5,6 +5,7 @@ import { slotStart, planPublish } from "@/lib/autoPost";
 import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { getTasksBetween, todayNY, weekOf } from "@/lib/garageTasks";
 import { isAutoPlatform } from "@/lib/socialCopy";
+import { personalRemindersOn } from "@/lib/garageReminders";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -44,7 +45,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission" | "Story";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission" | "Story" | "Reminder";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -520,6 +521,13 @@ async function remindDueToday(now: Date, today: string): Promise<string[]> {
     byPerson.set(who, [...(byPerson.get(who) || []), t.title]);
   }
   const sent: string[] = [];
+  // Personal reminders ("Just me") push to their owner on the day, Jose
+  // included: he set them because he wants the buzz (10/3).
+  for (const r of await personalRemindersOn(today).catch(() => [])) {
+    const key = ledgerKey("Reminder", r.id, today);
+    const payload: PushPayload = { title: "Reminder", body: r.title.slice(0, 180), url: "/garage", tag: key };
+    if (await deliver(key, "Reminder", r.title, payload, r.ownerEmail)) sent.push(r.ownerEmail);
+  }
   for (const [email, titles] of byPerson) {
     const key = ledgerKey("Due today", email, today);
     const payload: PushPayload = {
