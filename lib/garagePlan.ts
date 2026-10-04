@@ -120,7 +120,13 @@ function cardNeed(post: SocialPost): { need: PlanNeed; what: string } | null {
   if (!isAutoPlatform(post.platform)) return post.scheduledAt ? null : { need: "by-hand", what: "by hand" };
   if (post.autoStatus === "Posted" || post.autoStatus === "Processing") return null;
   const plan = planPublish(post);
-  if (!plan.ok) return { need: "missing", what: shortReason(plan.reason) };
+  if (!plan.ok) {
+    // A "Waiting on: …" line in the card's Notes says why it's empty, e.g. the
+    // NJJP recap waiting on Keith's footage (Jose 10/4: "no clip" alone read
+    // like a job with no context).
+    const waiting = post.notes.match(/^\s*Waiting on:\s*(.+)$/im)?.[1]?.trim();
+    return { need: "missing", what: waiting ? `waiting on ${waiting}` : shortReason(plan.reason) };
+  }
   if (!post.approved) return { need: "approve", what: "needs Approve" };
   return null;
 }
