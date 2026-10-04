@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import GarageBack from "@/components/GarageBack";
 import { AdjustForm, ClaimButtons, SweepButton } from "@/components/GarageRallyActions";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
-import { RALLY_LIVE, allStandings, boardName, isRallyConfigured, listClaims, listRiders } from "@/lib/rally";
+import { rallyLive, allStandings, boardName, isRallyConfigured, listClaims, listRiders } from "@/lib/rally";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -45,7 +45,7 @@ export default async function GarageRallyPage() {
         <section className="garage-panel">
           <h2>Status</h2>
           <p>
-            {RALLY_LIVE ? "Live: riders see it in emails and on the site." : "Not launched: points are counted, but no email mentions it and /rally is link-only."}{" "}
+            {rallyLive() ? "Live: riders see it in emails and on the site." : "Not launched: points are counted, but no email mentions it and /rally is link-only."}{" "}
             <Link href="/rally">Open /rally</Link>
           </p>
           <SweepButton />

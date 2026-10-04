@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RALLY_LIVE } from "@/lib/rally";
+import { rallyLive } from "@/lib/rally";
 
-export const metadata: Metadata = {
-  title: "Rally Rewards rules",
-  robots: RALLY_LIVE ? undefined : { index: false, follow: false },
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: "Rally Rewards rules", robots: rallyLive() ? undefined : { index: false, follow: false } };
+}
 
 /** Plain summary first, full rules one tap away (site rule 2026-09-17).
  *  Draft from 2026-10-04: Jose reviews before launch. */

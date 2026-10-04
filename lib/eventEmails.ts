@@ -453,9 +453,10 @@ export function buildCommsClosing(input: {
   event: EventDetail;
   recapUrl: string;
   feedbackUrl: string;
-  /** Rally Rewards (once RALLY_LIVE): the rider's "Rank / Points" line, or
-   *  the "I was there" link for events without Tailgate. */
-  rally?: { line?: string; wasThereUrl?: string };
+  /** Rally Rewards (once launched): the rider's "Rank / Points" line, or the
+   *  "I was there" link for events without Tailgate. `first` = their first
+   *  counted event: the email reveals the program (Jose 10/4, option B). */
+  rally?: { line?: string; wasThereUrl?: string; first?: boolean };
 }): EventEmail {
   const { recipientName, event, recapUrl, feedbackUrl, rally } = input;
   const first = esc(firstNameOf(recipientName));
@@ -498,9 +499,11 @@ export function buildCommsClosing(input: {
 
 /** Rally Rewards in the thank-you email: one short line, no new email
  *  (Jose 10/4). Empty until there's something to say. */
-function rallyRow(rally?: { line?: string; wasThereUrl?: string }): string {
+function rallyRow(rally?: { line?: string; wasThereUrl?: string; first?: boolean }): string {
   if (!rally || (!rally.line && !rally.wasThereUrl)) return "";
-  const body = rally.line
+  const body = rally.line && rally.first
+    ? `<strong style="color:${ORANGE};">New: Rally Rewards.</strong> You just earned points for showing up. We keep score now: every A&amp;D event earns, and points trade for gear you can&rsquo;t buy.<br><strong>${esc(rally.line)}</strong> &middot; <a href="${SITE_URL}/rally" style="color:${ORANGE};font-weight:bold;text-decoration:none;">See where you stand &rarr;</a>`
+    : rally.line
     ? `<strong>Rally Rewards:</strong> ${esc(rally.line)} &middot; <a href="${SITE_URL}/rally" style="color:${ORANGE};font-weight:bold;text-decoration:none;">See your points &rarr;</a>`
     : `<strong>Rally Rewards:</strong> were you there? <a href="${rally.wasThereUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Tap I was there &rarr;</a> and the points go on your account.`;
   return `

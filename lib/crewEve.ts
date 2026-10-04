@@ -1,5 +1,5 @@
 import { getCrewEvents, listRsvpsForEvent, type EventSummary } from "@/lib/events";
-import { RALLY_LIVE, RANKS, allStandings, listRiders, normEmail, boardName } from "@/lib/rally";
+import { rallyLive, RANKS, allStandings, listRiders, normEmail, boardName } from "@/lib/rally";
 import { listGarageUsers, type GarageUser } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
 import { footageStock } from "@/lib/garagePlan";
@@ -177,7 +177,7 @@ export async function runCrewEve(options: { now?: Date; dry?: boolean; force?: b
   const byEmail = new Map(users.map((u) => [u.email.trim().toLowerCase(), u]));
 
   // Rally Rewards ranks for the RSVP list (only once launched).
-  const rally = RALLY_LIVE ? await Promise.all([listRiders(), allStandings()]).catch(() => null) : null;
+  const rally = rallyLive() ? await Promise.all([listRiders(), allStandings()]).catch(() => null) : null;
 
   for (const event of events) {
     let byRank: { rank: string; names: string[] }[] | undefined;

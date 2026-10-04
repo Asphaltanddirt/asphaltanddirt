@@ -33,7 +33,14 @@ const ORDERS_BASE_ID = process.env.AIRTABLE_NEWSLETTER_BASE_ID;
 const ORDERS = process.env.AIRTABLE_ORDERS_TABLE || "Orders";
 
 export const RALLY_START = "2026-10-17";
-export const RALLY_LIVE = process.env.RALLY_LIVE === "true";
+/** Launch = the reveal (Jose 10/4, option B): the Mud Run thank-you email tells
+ *  riders they already earned. Goes live by itself on RALLY_LAUNCH_DATE
+ *  (default the Mud Run, 10/17) or any time RALLY_LIVE=true. A function, not a
+ *  constant, so a warm server crosses midnight correctly. */
+export const RALLY_LAUNCH_DATE = process.env.RALLY_LAUNCH_DATE || "2026-10-17";
+export function rallyLive(): boolean {
+  return process.env.RALLY_LIVE === "true" || todayNY() >= RALLY_LAUNCH_DATE;
+}
 export const FOUNDERS_REVEALED = process.env.RALLY_FOUNDERS_REVEALED === "true";
 
 export const POINTS = { event: 10, special: 20, headStart: 5, birthday: 5, order: 5 } as const;
@@ -364,7 +371,7 @@ export async function creditEvent(slug: string): Promise<number> {
 
 /** The email line for one rider, or "" (not launched, no rider, a founder). */
 export async function rallyLineFor(email: string): Promise<string> {
-  if (!RALLY_LIVE || !isRallyConfigured() || !email) return "";
+  if (!rallyLive() || !isRallyConfigured() || !email) return "";
   try {
     const rider = await getRider(email);
     if (!rider || rider.founder) return "";
@@ -372,6 +379,16 @@ export async function rallyLineFor(email: string): Promise<string> {
   } catch {
     return "";
   }
+}
+
+/** The thank-you email's line, and whether this is the rider's first event
+ *  (then the email says so: the reveal). */
+export async function rallyThanksFor(email: string): Promise<{ line: string; first: boolean } | null> {
+  const line = await rallyLineFor(email);
+  if (!line) return null;
+  const s = await getStanding(email).catch(() => null);
+  const events = s ? s.entries.filter((e) => e.reason === "Event" || e.reason === "Special event").length : 0;
+  return { line, first: events <= 1 };
 }
 
 export interface RallySweep {

@@ -222,7 +222,7 @@ const TAG_LINE = `Tag ${TAG_HANDLES}, or drop <b>#AsphaltAndDirt</b> anywhere`;
 interface EmailContext {
   name: string;
   items: string;
-  /** Rally Rewards line (step 1 only, once RALLY_LIVE). */
+  /** Rally Rewards line (step 1 only, once launched). */
   rallyLine?: string;
 }
 

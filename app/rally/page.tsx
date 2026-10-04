@@ -5,7 +5,7 @@ import HeroCTAButton from "@/components/HeroCTAButton";
 import { getRiderEmail } from "@/lib/rallyAuth";
 import { RallyClaim, RallyProfile, RallySignIn, RallySignOut } from "@/components/RallyAccount";
 import {
-  RALLY_LIVE,
+  rallyLive,
   RANKS,
   POINTS,
   boardName,
@@ -21,12 +21,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Rally Rewards",
-  description: "Show up, earn Rally Points, trade them for gear you can't buy. Everyone starts out a Rookie, but around here, legends are made, not bought.",
-  // Until launch (RALLY_LIVE) the page works by direct link only.
-  robots: RALLY_LIVE ? undefined : { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Rally Rewards",
+    description: "Show up, earn Rally Points, trade them for gear you can't buy. Everyone starts out a Rookie, but around here, legends are made, not bought.",
+    // Until launch (rallyLive) the page works by direct link only.
+    robots: rallyLive() ? undefined : { index: false, follow: false },
+  };
+}
 
 const RANK_FILE: Record<string, string> = { Rookie: "01-rookie", Regular: "02-regular", Mainstay: "03-mainstay", Legend: "04-legend" };
 const LEGEND_MIN = RANKS[RANKS.length - 1].min;
