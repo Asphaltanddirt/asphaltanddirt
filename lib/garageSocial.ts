@@ -525,7 +525,7 @@ export async function setScheduled(id: string, on: boolean, by: string, url = ""
  */
 export async function closeScheduledPosts(slotOf: (due: string, window: string) => Date, now = new Date()): Promise<number> {
   if (!isSocialConfigured()) return 0;
-  const rows = await listRecords(POSTS, `AND({Status} = 'Planned', {Scheduled At} != '', {Post URL} != '')`, { baseId: BASE_ID });
+  const rows = await listRecords(POSTS, `AND({Status} = 'Planned', {Scheduled At} != '', OR({Post URL} != '', {Platform} = 'Facebook Group'))`, { baseId: BASE_ID });
   let closed = 0;
   for (const r of rows) {
     const post = toPost(r);

@@ -85,6 +85,13 @@ export function isAutoPlatform(platform: string): platform is AutoPlatform {
  *  it's left out: no alert for something that already happened. */
 export const STORY_PLATFORMS = ["Instagram", "TikTok"] as const;
 
+/** Whether a post on this platform has a link anyone can copy. The Facebook
+ *  Group is private, so its posts give none (Jose 10/4); a scheduled Group
+ *  card closes itself at its slot without one. */
+export function hasPostLink(platform: string): boolean {
+  return platform !== "Facebook Group";
+}
+
 export function hasStories(platform: string): boolean {
   return (STORY_PLATFORMS as readonly string[]).includes(platform);
 }

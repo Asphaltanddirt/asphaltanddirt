@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, hasStories, hashtagsFor, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
+import { fullCaption, hasPostLink, hasStories, hashtagsFor, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -384,8 +384,8 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
           <span className="garage-social-label">Pre-schedule</span>
           <p>
             {scheduled
-              ? `Scheduled in ${item.platform === "TikTok" ? "TikTok Studio" : "the app"}${item.scheduledBy ? ` by ${item.scheduledBy.split(" ")[0]}` : ""}. ${item.postUrl ? "Link saved; it marks itself posted after its time." : "No reminders. Paste the link below and tap Save link; it marks itself posted after its time."}`
-              : `Scheduled it in ${item.platform === "TikTok" ? "TikTok Studio" : "the group"} already? Paste the link below if you have it, then tap Scheduled. The reminders stop and it marks itself posted after its time.`}
+              ? `Scheduled in ${item.platform === "TikTok" ? "TikTok Studio" : "the app"}${item.scheduledBy ? ` by ${item.scheduledBy.split(" ")[0]}` : ""}. ${item.postUrl || !hasPostLink(item.platform) ? `${item.postUrl ? "Link saved; i" : "I"}t marks itself posted after its time.` : "No reminders. Paste the link below and tap Save link; it marks itself posted after its time."}`
+              : `Scheduled it in ${item.platform === "TikTok" ? "TikTok Studio" : "the group"} already? ${hasPostLink(item.platform) ? "Paste the link below if you have it, then tap" : "Tap"} Scheduled. The reminders stop and it marks itself posted after its time.`}
           </p>
           <div className="garage-social-row">
             <button
@@ -414,7 +414,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
           <input
             type="url"
             inputMode="url"
-            placeholder="Paste the post link"
+            placeholder={hasPostLink(item.platform) ? "Paste the post link" : "Post link (optional: private group)"}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             disabled={busy}

@@ -7,7 +7,7 @@ import GarageSocialPost from "@/components/GarageSocialPost";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { getPost, getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { todayNY, weekOf } from "@/lib/garageTasks";
-import { isAutoPlatform, topicLabel } from "@/lib/socialCopy";
+import { hasPostLink, isAutoPlatform, topicLabel } from "@/lib/socialCopy";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -63,7 +63,7 @@ export default async function GarageSocialPage({
     finished(p) ||
     (isAutoPlatform(p.platform)
       ? p.approved && p.autoStatus !== "Failed"
-      : Boolean(p.scheduledAt) && (p.due > today || Boolean(p.postUrl)));
+      : Boolean(p.scheduledAt) && (p.due > today || Boolean(p.postUrl) || !hasPostLink(p.platform)));
   const spent = (items: SocialPost[], day: string) => day < today && items.every(finished);
 
   const needsYou = (posts || []).filter((p) => !handled(p));
