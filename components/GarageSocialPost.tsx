@@ -29,6 +29,8 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
   const [draftIndex, setDraftIndex] = useState(0);
   const [editing, setEditing] = useState(false);
   const [armed, setArmed] = useState(false);
+  const [armedPosted, setArmedPosted] = useState(false);
+  const future = item.due > today;
   const [caption, setCaption] = useState(item.caption);
   const [hashtags, setHashtags] = useState(item.hashtags);
   const [firstComment, setFirstComment] = useState(item.firstComment);
@@ -424,8 +426,21 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
                 Save link
               </button>
             )}
-            <button type="button" className={scheduled ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"} disabled={busy} onClick={() => run({ action: "posted", url, draftIndex })}>
-              Mark posted
+            {/* A future card can't be live yet, so Mark posted there is almost
+                always a mis-tap for Scheduled (10/21 Trail Talk, 10/3): grey,
+                and a second tap to confirm. */}
+            <button
+              type="button"
+              className={scheduled || future ? "btn btn-outline btn-sm" : "btn btn-primary btn-sm"}
+              disabled={busy}
+              onClick={() => {
+                if (future && !armedPosted) return setArmedPosted(true);
+                setArmedPosted(false);
+                run({ action: "posted", url, draftIndex });
+              }}
+              onBlur={() => setArmedPosted(false)}
+            >
+              {future && armedPosted ? "Tap again: it's already live?" : "Mark posted"}
             </button>
             <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => run({ action: "skip" })}>
               Skip
