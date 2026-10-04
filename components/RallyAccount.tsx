@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const RANKS = ["Rookie", "Regular", "Mainstay", "Legend"];
-const EXPERIENCES = ["Lead the ride", "Pick the next ride", "Pro rig shoot"];
 
 export interface AccountItem {
   id: string;
@@ -22,10 +21,12 @@ async function post(url: string, body: unknown): Promise<string | null> {
   return data.error || "Something went wrong. Try again.";
 }
 
+/** One row: email + button. The whole "check your score" / sign-in in one
+ *  place (Jose 10/4: they were the same thing taking up space twice). */
 export function RallySignIn({ expired }: { expired?: boolean }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
-  const [error, setError] = useState(expired ? "That sign-in link expired. Get a fresh one below." : "");
+  const [error, setError] = useState(expired ? "That link expired. Get a fresh one." : "");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,26 +40,19 @@ export function RallySignIn({ expired }: { expired?: boolean }) {
   }
 
   if (state === "sent") {
-    return (
-      <div className="form-before">
-        <p className="form-before-heading">Check your email</p>
-        <p>We sent a sign-in link to {email}. It works for one hour.</p>
-      </div>
-    );
+    return <p className="rally-signin-done">Check your email. Your sign-in link is on its way (good for an hour).</p>;
   }
 
   return (
-    <form className="build-form" onSubmit={submit}>
-      <div className="form-field">
-        <label htmlFor="rally-email">Your email</label>
-        <input id="rally-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="The one you RSVP with" />
-      </div>
-      {error && <p className="form-error-banner">{error}</p>}
-      <div>
-        <button className="btn btn-primary" disabled={state === "sending"}>
-          {state === "sending" ? "Sending…" : "Email Me a Sign-In Link"}
+    <form className="rally-signin" onSubmit={submit}>
+      <label htmlFor="rally-email" className="rally-signin-label">See your points</label>
+      <div className="rally-signin-row">
+        <input id="rally-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="The email you RSVP with" />
+        <button className="btn btn-primary btn-sm" disabled={state === "sending"}>
+          {state === "sending" ? "Sending…" : "Send My Link"}
         </button>
       </div>
+      {error && <p className="rally-signin-error">{error}</p>}
     </form>
   );
 }
@@ -147,8 +141,7 @@ export function RallyClaim({ items, balance, rank, canClaim }: { items: AccountI
   const [itemId, setItemId] = useState("");
   const [size, setSize] = useState("");
   const [rankPick, setRankPick] = useState(rank);
-  const [choice, setChoice] = useState("");
-  const [state, setState] = useState<"idle" | "saving" | "done">("idle");
+    const [state, setState] = useState<"idle" | "saving" | "done">("idle");
   const [error, setError] = useState("");
   const item = items.find((i) => i.id === itemId);
   const myRank = RANKS.indexOf(rank);
@@ -158,7 +151,7 @@ export function RallyClaim({ items, balance, rank, canClaim }: { items: AccountI
     if (!item) return;
     setState("saving");
     setError("");
-    const err = await post("/api/rally/claim", { itemId, size: size || undefined, rank: item.type === "Rank gear" ? rankPick : undefined, choice: choice || undefined });
+    const err = await post("/api/rally/claim", { itemId, size: size || undefined, rank: item.type === "Rank gear" ? rankPick : undefined });
     if (err) {
       setError(err);
       setState("idle");
@@ -182,8 +175,8 @@ export function RallyClaim({ items, balance, rank, canClaim }: { items: AccountI
     <form className="build-form" onSubmit={claim}>
       <div className="form-field">
         <label htmlFor="rally-item">What do you want?</label>
-        <select id="rally-item" value={itemId} onChange={(e) => { setItemId(e.target.value); setSize(""); setChoice(""); }}>
-          <option value="">Pick from the shelf</option>
+        <select id="rally-item" value={itemId} onChange={(e) => { setItemId(e.target.value); setSize(""); }}>
+          <option value="">Pick from the locker</option>
           {items.map((i) => (
             <option key={i.id} value={i.id} disabled={i.points > balance}>
               {i.item} · {i.points} pts{i.points > balance ? ` (need ${i.points - balance} more)` : ""}
@@ -218,17 +211,7 @@ export function RallyClaim({ items, balance, rank, canClaim }: { items: AccountI
         </div>
       )}
       {item?.type === "Experience" && (
-        <div className="form-field">
-          <label htmlFor="rally-choice">Pick one</label>
-          <select id="rally-choice" value={choice} onChange={(e) => setChoice(e.target.value)}>
-            <option value="">Your pick</option>
-            {EXPERIENCES.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
-        </div>
+        <p className="form-section-hint">All of it, together: you pick the ride, you lead it, you get featured in the photos and video, and your story runs in The Dirt Line. We&apos;ll reach out to set it up.</p>
       )}
       {error && <p className="form-error-banner">{error}</p>}
       <div>

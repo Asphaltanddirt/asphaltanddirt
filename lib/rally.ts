@@ -530,7 +530,8 @@ export interface ShelfItem {
   productUrl: string;
 }
 
-export const EXPERIENCES = ["Lead the ride", "Pick the next ride", "Pro rig shoot"] as const;
+/** The 250 experience is all of these together (Jose 10/4). */
+export const EXPERIENCE_PARTS = ["Pick the ride", "Lead the ride", "Featured in photos + video from that ride", "Your story in The Dirt Line"] as const;
 
 export async function getShelf(): Promise<ShelfItem[]> {
   if (!isRallyConfigured()) return [];
@@ -573,10 +574,10 @@ export async function makeClaim(input: {
   const email = normEmail(input.email);
   const rider = await getRider(email);
   if (!rider) return { ok: false, error: "We couldn't find your account." };
-  if (rider.founder) return { ok: false, error: "Founders don't claim from the shelf." };
+  if (rider.founder) return { ok: false, error: "Founders don't claim from the locker." };
   if (!isAdult(rider)) return { ok: false, error: "Add your birth month and year first (Rally Rewards is 18+)." };
   const item = (await getShelf()).find((i) => i.id === input.itemId);
-  if (!item) return { ok: false, error: "That item isn't on the shelf any more." };
+  if (!item) return { ok: false, error: "That item isn't in the locker any more." };
   const standing = await getStanding(email);
   if (standing.balance < item.points) return { ok: false, error: `You need ${item.points - standing.balance} more points for this.` };
 
@@ -589,8 +590,7 @@ export async function makeClaim(input: {
     return { ok: false, error: `This one opens up at ${item.rankNeeded}.` };
   }
   if (item.sizes.length && !(input.size && item.sizes.includes(input.size))) return { ok: false, error: "Pick a size." };
-  const choice = item.type === "Experience" ? input.choice || "" : rankChoice;
-  if (item.type === "Experience" && !(EXPERIENCES as readonly string[]).includes(choice)) return { ok: false, error: "Pick one of the three." };
+  const choice = rankChoice;
 
   const now = new Date();
   const row = await createRecord(

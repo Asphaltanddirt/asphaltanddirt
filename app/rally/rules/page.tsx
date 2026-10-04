@@ -19,7 +19,7 @@ export default function RallyRulesPage() {
         <ul>
           <li><strong>10 points</strong> for every A&amp;D event you come to (asphalt or dirt). Special events count double.</li>
           <li><strong>5 points</strong> to start, 5 in your birthday month, and 5 for a store order (once a month).</li>
-          <li>Spend them on the shelf: gear you can&apos;t buy, and at 250, an A&amp;D experience.</li>
+          <li>Spend them in the locker: gear you can&apos;t buy, and at 250, an A&amp;D experience.</li>
           <li>Points never expire. Your rank (Rookie, Regular, Mainstay, Legend) comes from every point you&apos;ve ever earned, so spending never lowers it.</li>
           <li>18+. The points board shows your first name and last initial; you can opt out.</li>
         </ul>
@@ -40,9 +40,9 @@ export default function RallyRulesPage() {
           <h3>Ranks</h3>
           <p>Rookie from your first point, Regular at 50, Mainstay at 150, Legend at 300 lifetime points. Rank gear: you can claim gear for your rank or any rank below it.</p>
           <h3>Spending</h3>
-          <p>Pick anything on the shelf you have enough points for; its points come off your balance. Gear ships from our store and you pay the shipping. Shelf items are earn-only and their designs change each year; a claim gets the current design. The 250-point experience is one of: lead the ride, pick the next ride, or a pro shoot of your rig. We arrange it with you.</p>
+          <p>Pick anything in the locker you have enough points for; its points come off your balance. Gear ships from our store and you pay the shipping. Locker items are earn-only and their designs change each year; a claim gets the current design. The 250-point experience is all of it together: you pick the ride, you lead it, you get featured in the photos and video from it, and your story runs in our newsletter. We arrange it with you.</p>
           <h3>The fine print</h3>
-          <p>Points have no cash value and can&apos;t be sold, transferred or swapped for money. We can add items to the shelf; prices on the shelf don&apos;t go up. We can correct points earned by mistake and close accounts that abuse the program. If we ever change or end the program, we&apos;ll email you at least 30 days before, and you&apos;ll have that time to spend your points.</p>
+          <p>Points have no cash value and can&apos;t be sold, transferred or swapped for money. We can add items to the locker; prices in the locker don&apos;t go up. We can correct points earned by mistake and close accounts that abuse the program. If we ever change or end the program, we&apos;ll email you at least 30 days before, and you&apos;ll have that time to spend your points.</p>
           <h3>Your info</h3>
           <p>We keep your name, email, birth month and year, the events you came to and your points. It&apos;s used only to run Rally Rewards and is never sold. See our <Link href="/privacy-policy">Privacy Policy</Link>.</p>
           <p>Questions: <a href="mailto:crew@asphaltanddirt.com">crew@asphaltanddirt.com</a></p>
