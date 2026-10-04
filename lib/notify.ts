@@ -4,7 +4,7 @@ import { sendToUser, isPushConfigured, type PushPayload } from "@/lib/push";
 import { slotStart, planPublish } from "@/lib/autoPost";
 import { getWeekPosts, type SocialPost } from "@/lib/garageSocial";
 import { getTasksBetween, todayNY, weekOf } from "@/lib/garageTasks";
-import { isAutoPlatform } from "@/lib/socialCopy";
+import { hasStories, isAutoPlatform } from "@/lib/socialCopy";
 import { personalRemindersOn } from "@/lib/garageReminders";
 import { SITE_URL } from "@/lib/site";
 
@@ -290,7 +290,7 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
     // banners). Live = auto-posted, marked posted, or pre-scheduled natively
     // and past its slot. The per-card ledger key stops a second alert.
     const live = post.autoStatus === "Posted" || post.status === "Posted" || (Boolean(post.scheduledAt) && opens.getTime() <= now.getTime());
-    if (post.shareToStory && post.status !== "Skipped" && live && !(await alreadySent(ledgerKey("Story", post.id, today)))) {
+    if (post.shareToStory && hasStories(post.platform) && post.status !== "Skipped" && live && !(await alreadySent(ledgerKey("Story", post.id, today)))) {
       storyReady.push(post);
     }
 
@@ -347,7 +347,7 @@ export async function runNotifications(options: { now?: Date; force?: boolean } 
     const howTo = storyReady.length === 1 ? first.notes.split("\n").find((l) => /story/i.test(l))?.trim() : "";
     const key = ledgerKey("Story", storyReady.map((p) => p.id).join("+"), today);
     const sent = await deliver(key, "Story", storyReady.map((p) => p.name).join(" · ").slice(0, 200), {
-      title: storyReady.length === 1 ? `Share to Story · ${first.platform}` : `Share ${storyReady.length} to Story`,
+      title: `Story: ${[...new Set(storyReady.map((p) => p.platform))].join(" + ")}`,
       body:
         howTo ||
         (storyReady.length === 1

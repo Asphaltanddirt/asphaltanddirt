@@ -80,8 +80,10 @@ export function isAutoPlatform(platform: string): platform is AutoPlatform {
 
 /** Platforms with Stories. Every post on these gets shared to Story (Jose
  *  10/3: Stories let people discover us without committing to the page).
- *  X, Threads and Groups have none; YouTube retired Stories in 2023. */
-export const STORY_PLATFORMS = ["Instagram", "Facebook Page", "TikTok"] as const;
+ *  X, Threads and Groups have none; YouTube retired Stories in 2023. The
+ *  Facebook Page shares its own Reels to Story (Page setting, seen 10/4), so
+ *  it's left out: no alert for something that already happened. */
+export const STORY_PLATFORMS = ["Instagram", "TikTok"] as const;
 
 export function hasStories(platform: string): boolean {
   return (STORY_PLATFORMS as readonly string[]).includes(platform);

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SocialPost } from "@/lib/garageSocial";
-import { fullCaption, hashtagsFor, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
+import { fullCaption, hasStories, hashtagsFor, isAutoPlatform, linkPlan, topicLabel, xLength } from "@/lib/socialCopy";
 
 const SHORT_DAY = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -400,7 +400,7 @@ export default function GarageSocialPost({ item, today }: { item: SocialPost; to
         </div>
       )}
 
-      {item.status !== "Skipped" && !editing && (
+      {item.status !== "Skipped" && !editing && hasStories(item.platform) && (
         <p className="garage-form-note">
           {item.shareToStory ? "📣 Share to Story: you'll get a Garage alert when it's live. " : "Want this on your Story? "}
           <button type="button" className="garage-social-link" disabled={busy} onClick={() => run({ action: item.shareToStory ? "story-off" : "story-on" })}>
