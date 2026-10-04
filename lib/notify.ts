@@ -45,7 +45,7 @@ const LAST_CALL_LEAD_MS = 15 * 60 * 1000;
 /** How close to the target a run has to land. The cron is every 10 minutes. */
 const WINDOW_MS = 10 * 60 * 1000;
 
-export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission" | "Story" | "Reminder";
+export type NotifyKind = "Nudge" | "Last call" | "Failure" | "Digest" | "Test" | "Not ready" | "Pin" | "Crew eve" | "Due today" | "Missing meetup" | "New submission" | "Story" | "Reminder" | "Rally";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -466,6 +466,19 @@ export async function notifySubmission(input: { kind: "build" | "review" | "appl
     });
   } catch (err) {
     console.error("submission notification failed", err);
+  }
+}
+
+/** Rally Rewards (Jose 10/4): a rank-up to celebrate in the FB Group, or a new
+ *  claim to fulfil. One push per item, owner-only, never throws. */
+export async function notifyRally(input: { id: string; title: string; body: string; url: string }): Promise<void> {
+  try {
+    const sw = await getNotifySwitch();
+    if (!sw.on) return;
+    const key = ledgerKey("Rally", input.id, todayNY());
+    await deliver(key, "Rally", `${input.title}: ${input.body}`.slice(0, 200), { title: input.title, body: input.body, url: input.url, tag: key });
+  } catch (err) {
+    console.error("rally notification failed", err);
   }
 }
 

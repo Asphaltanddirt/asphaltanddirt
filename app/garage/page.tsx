@@ -131,6 +131,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
       ? [
           { href: "/garage/shoot", label: "Shot list", sub: "What to film, what the Library is short on", img: "/img/garage/tile-upload.webp" },
           { href: "/garage/team", label: "Team", sub: "Everyone's week, the review queue", img: "/img/garage/tile-team.webp" },
+          { href: "/garage/rally", label: "Rally Rewards", sub: "Claims, riders' points, rank-ups", img: "/img/garage/tile-crew.webp" },
           { href: "/garage/social", label: "Posting", sub: "This week's social posts", img: "/img/garage/tile-posting.webp" },
           { href: "/garage/replies", label: "X Replies", sub: "Posts worth replying to, twice a day", img: "/img/garage/tile-replies.webp" },
           { href: "/garage/comments", label: "Comments", sub: "Questions and debates from YouTube", img: "/img/garage/tile-comments.webp" },

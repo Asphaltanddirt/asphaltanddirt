@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addSubscriber, ALL_TOPICS, type Topic } from "@/lib/newsletterSubscribers";
 import { sendWelcomeStep } from "@/lib/newsletterWelcomeSend";
+import { ensureRiderQuietly } from "@/lib/rally";
 
 /**
  * Newsletter / event-updates signup. Writes straight to the Airtable
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
     console.error("Newsletter subscribe error", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 502 });
   }
+
+  // Rally Rewards: any email becomes a rider (Jose 10/4). Never fails the signup.
+  await ensureRiderQuietly(email, firstName || "", "Subscribe");
 
   // New (or reactivated) Newsletter subscriber -> send welcome email 1 now.
   // Best-effort: a send failure never fails the signup — the daily cron

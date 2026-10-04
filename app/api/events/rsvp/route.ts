@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventBySlug, createRsvp } from "@/lib/events";
+import { ensureRiderQuietly } from "@/lib/rally";
 import { buildRsvpConfirmation } from "@/lib/eventEmails";
 import { sendEmail } from "@/lib/resendEmail";
 import { addSubscriber, type Topic } from "@/lib/newsletterSubscribers";
@@ -106,6 +107,9 @@ export async function POST(req: NextRequest) {
     socials: socials || undefined,
     rig: rig || undefined,
   });
+
+  // Rally Rewards: any email becomes a rider (Jose 10/4). Never fails the RSVP.
+  await ensureRiderQuietly(email, name, "RSVP");
 
   // Best-effort: the RSVP is already saved even if the email or the Event
   // Updates opt-in fails, so neither failure should fail the request.

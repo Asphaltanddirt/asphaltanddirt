@@ -7,6 +7,7 @@ import {
 } from "@/lib/newsletterSubscribers";
 import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
+import { RALLY_LIVE, ensureRiderQuietly } from "@/lib/rally";
 
 const FROM = process.env.NEWSLETTER_FROM_EMAIL || "The Dirt Line <dirtline@asphaltanddirt.com>";
 const REPLY_TO = process.env.NEWSLETTER_REPLY_TO || "team@asphaltanddirt.com";
@@ -31,10 +32,14 @@ export async function sendWelcomeStep(sub: WelcomeCandidate, step: number): Prom
     throw new Error("NEWSLETTER_MAILING_ADDRESS must be set before sending welcome emails (CAN-SPAM).");
   }
   const content = buildWelcomeEmail(step);
+  // Rally Rewards: the first welcome says they start with points (Jose 10/4).
+  const rallyLine = RALLY_LIVE && step === 1 ? "you start with 5 Rally Points. Show up to earn more." : undefined;
+  if (rallyLine) await ensureRiderQuietly(sub.email, sub.firstName || "", "Subscribe");
   const html = wrapNewsletterEmail(content, {
     unsubscribeUrl: unsubscribeUrl(sub.token),
     mailingAddress: MAILING_ADDRESS,
     recipientFirstName: sub.firstName,
+    rallyLine,
   });
   await sendEmail({
     to: sub.email,

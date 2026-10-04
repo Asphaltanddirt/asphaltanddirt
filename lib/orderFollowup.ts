@@ -27,6 +27,7 @@ import { getRecentOrders, type FourthwallOrder } from "@/lib/fourthwall-platform
 import { sendEmail } from "@/lib/resendEmail";
 import { socialLinks } from "@/lib/social";
 import { SITE_URL } from "@/lib/site";
+import { rallyLineFor } from "@/lib/rally";
 
 const BASE_ID = process.env.AIRTABLE_NEWSLETTER_BASE_ID;
 const TABLE = process.env.AIRTABLE_ORDERS_TABLE || "Orders";
@@ -221,6 +222,8 @@ const TAG_LINE = `Tag ${TAG_HANDLES}, or drop <b>#AsphaltAndDirt</b> anywhere`;
 interface EmailContext {
   name: string;
   items: string;
+  /** Rally Rewards line (step 1 only, once RALLY_LIVE). */
+  rallyLine?: string;
 }
 
 /** Builds one follow-up email. `step` is 1-indexed (1, 2, 3). */
@@ -242,6 +245,7 @@ export function buildFollowupEmail(step: number, ctx: EmailContext): {
         p(`Your <b>${items}</b> should be in your hands by now. Pull it out, give it a look, make sure everything's right.`) +
         p(`Wrong item, or a print or quality issue? ${link("Reach out", `${SITE_URL}/returns-faq`)} and we'll make it good.`) +
         p(`If it's good, we'd love to see it — on the trail, in the garage, wherever. ${TAG_LINE} and we'll find it.`) +
+        (ctx.rallyLine ? p(`<b>Rally Rewards:</b> +5 for your order. ${esc(ctx.rallyLine)} &middot; ${link("See your points", `${SITE_URL}/rally`)}`) : "") +
         p("Thanks for repping it.<br>— The Asphalt &amp; Dirt crew"),
     };
   }
@@ -323,6 +327,7 @@ export async function processOrderFollowups(now = new Date()): Promise<FollowupS
     const built = buildFollowupEmail(nextStep, {
       name: String(f["First Name"] || "").trim(),
       items: String(f["Items"] || "your order").trim(),
+      rallyLine: nextStep === 1 ? await rallyLineFor(email) : undefined,
     });
     const html = wrapOrderEmail(built.innerHtml, {
       unsubscribeUrl: unsubscribeUrl(String(f["Unsub Token"] || "")),

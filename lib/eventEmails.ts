@@ -448,8 +448,16 @@ export function buildPersonalCommsLink(input: { recipientName: string; event: Ev
  *  Tailgate events send it 3 h after Trail over to Tailgate sign-ups; events
  *  without Tailgate send it to RSVPs the morning after (lib/attendeeTrack.ts). The crew's field note is
  *  the optional "Anything worth saying about the day?" box on Garage Upload. */
-export function buildCommsClosing(input: { recipientName: string; event: EventDetail; recapUrl: string; feedbackUrl: string }): EventEmail {
-  const { recipientName, event, recapUrl, feedbackUrl } = input;
+export function buildCommsClosing(input: {
+  recipientName: string;
+  event: EventDetail;
+  recapUrl: string;
+  feedbackUrl: string;
+  /** Rally Rewards (once RALLY_LIVE): the rider's "Rank / Points" line, or
+   *  the "I was there" link for events without Tailgate. */
+  rally?: { line?: string; wasThereUrl?: string };
+}): EventEmail {
+  const { recipientName, event, recapUrl, feedbackUrl, rally } = input;
   const first = esc(firstNameOf(recipientName));
 
   const bodyRows = `
@@ -482,9 +490,25 @@ export function buildCommsClosing(input: { recipientName: string; event: EventDe
         <p style="margin:0;"><a href="${feedbackUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Tell Us How It Went &rarr;</a></p>
       </td>
     </tr>
+    ${rallyRow(rally)}
   `;
 
   return { subject: `Thanks for riding: send us your photos from ${event.title}`, html: shell(`Send your photos and video from ${event.title}`, bodyRows) };
+}
+
+/** Rally Rewards in the thank-you email: one short line, no new email
+ *  (Jose 10/4). Empty until there's something to say. */
+function rallyRow(rally?: { line?: string; wasThereUrl?: string }): string {
+  if (!rally || (!rally.line && !rally.wasThereUrl)) return "";
+  const body = rally.line
+    ? `<strong>Rally Rewards:</strong> ${esc(rally.line)} &middot; <a href="${SITE_URL}/rally" style="color:${ORANGE};font-weight:bold;text-decoration:none;">See your points &rarr;</a>`
+    : `<strong>Rally Rewards:</strong> were you there? <a href="${rally.wasThereUrl}" style="color:${ORANGE};font-weight:bold;text-decoration:none;">Tap I was there &rarr;</a> and the points go on your account.`;
+  return `
+    <tr>
+      <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#4a453f;border-top:1px solid #eee;">
+        <p style="margin:16px 0 0;">${body}</p>
+      </td>
+    </tr>`;
 }
 
 /** "Can't make it?" with the person's own signed link (lib/rsvpRelease.ts).

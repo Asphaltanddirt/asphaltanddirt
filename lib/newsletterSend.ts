@@ -1,6 +1,7 @@
 import { listActiveRecipients } from "@/lib/newsletterSubscribers";
 import { wrapNewsletterEmail, type NewsletterContent } from "@/lib/newsletter";
 import { SITE_URL } from "@/lib/site";
+import { RALLY_LIVE, allStandings, listRiders, standingLine } from "@/lib/rally";
 
 const FROM = process.env.NEWSLETTER_FROM_EMAIL || "The Dirt Line <dirtline@asphaltanddirt.com>";
 const REPLY_TO = process.env.NEWSLETTER_REPLY_TO || undefined;
@@ -58,6 +59,19 @@ async function sendBatch(apiKey: string, emails: ResendEmail[]) {
  *   Refuses to run without NEWSLETTER_MAILING_ADDRESS (CAN-SPAM) or if the
  *   list is over the free-tier daily cap.
  */
+/** email → "Rookie · 15 Rally Points (35 to Regular)" for riders with points.
+ *  Empty map until RALLY_LIVE. Founders get no line (the reveal is a surprise). */
+async function rallyLines(): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!RALLY_LIVE) return out;
+  const [riders, standings] = await Promise.all([listRiders(), allStandings()]);
+  for (const [email, s] of standings) {
+    if (riders.get(email)?.founder) continue;
+    out.set(email, standingLine(s));
+  }
+  return out;
+}
+
 export async function sendNewsletter(
   content: NewsletterContent,
   mode: "test" | "live",
@@ -104,6 +118,9 @@ export async function sendNewsletter(
     };
   }
 
+  // Rally Rewards footer line per subscriber (only once launched).
+  const rally = await rallyLines().catch(() => new Map<string, string>());
+
   const emails: ResendEmail[] = recipients.map((r) => {
     const url = unsubscribeUrl(r.token);
     return {
@@ -114,6 +131,7 @@ export async function sendNewsletter(
         unsubscribeUrl: url,
         mailingAddress: MAILING_ADDRESS,
         recipientFirstName: r.firstName,
+        rallyLine: rally.get(r.email.trim().toLowerCase()),
       }),
       headers: {
         "List-Unsubscribe": `<${url}>`,

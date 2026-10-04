@@ -1,4 +1,5 @@
-import { getCrewEvents, type EventSummary } from "@/lib/events";
+import { getCrewEvents, listRsvpsForEvent, type EventSummary } from "@/lib/events";
+import { RALLY_LIVE, RANKS, allStandings, listRiders, normEmail, boardName } from "@/lib/rally";
 import { listGarageUsers, type GarageUser } from "@/lib/garageAuth";
 import { getEventResponses } from "@/lib/garageEvents";
 import { footageStock } from "@/lib/garagePlan";
@@ -81,6 +82,9 @@ export function crewEveHtml(input: {
   event: EventSummary;
   owner: boolean;
   needs?: string[];
+  /** Rally Rewards (Jose 10/4): who's coming, by rank, so the crew can greet
+   *  the regulars. Replaces any rank icons on the phone check-in list. */
+  byRank?: { rank: string; names: string[] }[];
 }): { subject: string; html: string } {
   const { firstName, event, owner } = input;
   const upload = `${SITE_URL}/garage/upload`;
@@ -114,6 +118,14 @@ export function crewEveHtml(input: {
       event.crewOnly
         ? ""
         : `<p><strong>Heads up:</strong> Tailgate, our event chat, opens tonight. Everyone who RSVP'd can post in it, so you'll see questions and hellos. You don't have to jump in, but you're welcome to say hi or answer anything you know. It goes quiet once we roll out; on the trail it's the radio.</p>`
+    }
+    ${
+      input.byRank?.some((g) => g.names.length)
+        ? `<p style="margin:16px 0 4px;"><strong>Who's coming, by rank</strong></p>${input.byRank
+            .filter((g) => g.names.length)
+            .map((g) => `<p style="margin:0 0 6px;"><strong style="color:#f86000;">${esc(g.rank)}</strong> · ${esc(g.names.join(", "))}</p>`)
+            .join("")}`
+        : ""
     }
     <p>When you're home, drop it in <a href="${upload}" style="color:#f86000;">Garage → Upload</a> and pick the event. No rush.</p>
     ${owner ? "" : "<p>See you out there,<br>Jose &amp; Anthony</p>"}
@@ -164,7 +176,24 @@ export async function runCrewEve(options: { now?: Date; dry?: boolean; force?: b
   const needs = libraryNeeds(library);
   const byEmail = new Map(users.map((u) => [u.email.trim().toLowerCase(), u]));
 
+  // Rally Rewards ranks for the RSVP list (only once launched).
+  const rally = RALLY_LIVE ? await Promise.all([listRiders(), allStandings()]).catch(() => null) : null;
+
   for (const event of events) {
+    let byRank: { rank: string; names: string[] }[] | undefined;
+    if (rally && !event.crewOnly) {
+      const [riders, standings] = rally;
+      const rsvps = await listRsvpsForEvent(event.id).catch(() => []);
+      const groups = new Map<string, string[]>(RANKS.map((r) => [r.name, [] as string[]]));
+      for (const r of rsvps) {
+        const e = normEmail(r.email);
+        const rider = riders.get(e);
+        if (rider?.founder) continue; // the founders' rank stays a surprise
+        const rank = standings.get(e)?.rank || "Rookie";
+        groups.get(rank)?.push((rider && boardName(rider)) || r.name.trim().split(/\s+/)[0] || r.email);
+      }
+      byRank = [...RANKS].reverse().map((r) => ({ rank: r.name, names: groups.get(r.name) || [] }));
+    }
     const going = new Set(
       responses.filter((r) => r.eventSlug === event.slug && r.response === "Going").map((r) => r.email.trim().toLowerCase()),
     );
@@ -181,7 +210,7 @@ export async function runCrewEve(options: { now?: Date; dry?: boolean; force?: b
         continue;
       }
       const owner = u.role === "Owner";
-      const { subject, html } = crewEveHtml({ firstName: u.name.split(" ")[0] || "there", event, owner, needs: owner ? needs : undefined });
+      const { subject, html } = crewEveHtml({ firstName: u.name.split(" ")[0] || "there", event, owner, needs: owner ? needs : undefined, byRank });
       if (options.dry) {
         out.sent.push(`${email} (${owner ? "owner" : "crew"}, dry run)`);
         continue;

@@ -468,13 +468,18 @@ function manageUrl(unsubscribeUrl: string): string {
 
 export function wrapNewsletterEmail(
   content: NewsletterContent,
-  opts: { unsubscribeUrl: string; mailingAddress: string; recipientFirstName?: string },
+  opts: { unsubscribeUrl: string; mailingAddress: string; recipientFirstName?: string; rallyLine?: string },
 ): string {
   const greeting = opts.recipientFirstName
     ? `<p style="max-width:600px;margin:0 auto;padding:18px 24px 0;font-family:Arial,sans-serif;font-size:14px;color:#666;">Hey ${escapeHtml(opts.recipientFirstName)},</p>`
     : "";
+  // Rally Rewards (Jose 10/4): one text line, "Rank / Points", no icon.
+  const rally = opts.rallyLine
+    ? `<p style="font-size:13px;line-height:1.7;color:#666;margin:0 0 10px;"><strong>Rally Rewards:</strong> ${escapeHtml(opts.rallyLine)} &middot; <a href="${SITE_URL}/rally" style="color:#F86000;text-decoration:none;font-weight:bold;">See your points</a></p>`
+    : "";
   const footer = `
     <div style="max-width:600px;margin:24px auto 0;padding:0 24px 32px;text-align:center;font-family:Arial,sans-serif;">
+      ${rally}
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">You're getting this because you subscribed to The Dirt Line at <a href="${SITE_URL}" style="color:#999;">asphaltanddirt.com</a>.</p>
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">
         <a href="${manageUrl(opts.unsubscribeUrl)}" style="color:#999;text-decoration:underline;">Manage Preferences</a>

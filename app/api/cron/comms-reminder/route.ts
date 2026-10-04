@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/resendEmail";
 import { SITE_URL } from "@/lib/site";
 import { releaseLink } from "@/lib/rsvpRelease";
 import { runAttendeeTrack } from "@/lib/attendeeTrack";
+import { RALLY_LIVE, creditEvent, rallyLineFor } from "@/lib/rally";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -100,13 +101,16 @@ async function run(req: NextRequest) {
 
     const recapUrl = `${SITE_URL}/events/${settings.eventSlug}#photos`;
     const attendees = await getAttendeesForEmail(settings.eventSlug);
+    // Rally Rewards: credit the check-ins first so the email shows the new total.
+    if (RALLY_LIVE) await creditEvent(settings.eventSlug).catch((err) => console.error("rally credit failed", err));
 
     let sent = 0;
     let failed = 0;
     for (const a of attendees) {
       if (!a.email) continue;
       try {
-        const built = buildCommsClosing({ recipientName: a.screenName, event, recapUrl, feedbackUrl: feedbackUrl(settings.eventSlug) });
+        const line = a.checkedIn ? await rallyLineFor(a.email) : "";
+        const built = buildCommsClosing({ recipientName: a.screenName, event, recapUrl, feedbackUrl: feedbackUrl(settings.eventSlug), rally: line ? { line } : undefined });
         await sendEmail({ to: a.email, subject: built.subject, html: built.html, replyTo: TEAM_EMAIL });
         sent++;
       } catch (err) {

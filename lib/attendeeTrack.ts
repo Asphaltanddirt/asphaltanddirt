@@ -1,5 +1,7 @@
 import { getCommsSettings } from "@/lib/eventComms";
 import { buildCommsClosing, buildDayBeforeReminder, buildPlanEmail } from "@/lib/eventEmails";
+import { RALLY_LIVE, RALLY_START } from "@/lib/rally";
+import { wasThereLink } from "@/lib/rallyAuth";
 import { feedbackUrl } from "@/lib/eventFeedback";
 import { SITE_URL } from "@/lib/site";
 import { getLiveEventsOn, listRsvpsForAttendeeTrack, stampRsvp, type EventDetail } from "@/lib/events";
@@ -133,6 +135,8 @@ async function runForEvent(event: EventDetail, kind: "plan" | "reminder" | "than
                 event,
                 recapUrl: `${SITE_URL}/events/${event.slug}#photos`,
                 feedbackUrl: feedbackUrl(event.slug),
+                // No Tailgate check-in here, so riders confirm with one tap.
+                rally: RALLY_LIVE && event.date >= RALLY_START ? { wasThereUrl: wasThereLink(event.slug, r.id) } : undefined,
               });
       await sendEmail({
         to: r.email,
