@@ -19,7 +19,10 @@ export function linkPlan(
   // video and the blog link, so the blog isn't lost.
   const fromTake = post.asset === "Vertical clip" && post.takeUrl ? post.takeUrl : "";
   const text = post.firstComment || (fromTake ? `Anthony's full take: ${fromTake}` : post.blogUrl ? `Full breakdown on the blog: ${post.blogUrl}` : "");
-  if (post.platform === "Facebook Page") return { kind: text ? "caption" : "none", text };
+  // Facebook Page: no link at all during the 5-week test (Jose 2026-10-05).
+  // Meta says captions without links perform best, and the app can't post a
+  // first comment as the Page (no pages_manage_engagement). Revisit after 11/8.
+  if (post.platform === "Facebook Page") return { kind: "none", text: "" };
   if (post.platform.startsWith("Facebook")) return { kind: text ? "comment" : "none", text };
   // X: only the blog-image posts carry the link (a $0.20 post). The Trail Talk
   // and Sunday questions and the clips stand alone, with no link.
