@@ -14,8 +14,9 @@
  * ?stats=1).
  */
 
-import { listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
-import { facebookPosts, facebookReelStats, insightsTrouble, instagramPosts, isMetaConfigured, type MetaPost } from "@/lib/metaInsights";
+import { createRecord, listRecords, updateRecord, type AirtableFields, SOCIAL_BASE_ID } from "@/lib/airtable";
+import { weekOf } from "@/lib/garageTasks";
+import { facebookPosts, facebookReelStats, insightsTrouble, instagramPosts, isMetaConfigured, metaPostList, type MetaPost } from "@/lib/metaInsights";
 import { fetchOwnPostMetrics, isXConfigured } from "@/lib/xPost";
 import { isThreadsConnected, threadsPostMetrics } from "@/lib/threadsPost";
 
@@ -182,6 +183,72 @@ export async function syncSocialStatsFromMeta(
 
   if (opts.dryRun) (result as typeof result & { insightsTrouble?: string[] }).insightsTrouble = [...insightsTrouble];
   return result;
+}
+
+/** How far back the off-board check looks: the weekly run plus a week of slack. */
+const OFF_BOARD_DAYS = 14;
+
+/**
+ * Instagram and Facebook Page posts made outside the board get a card, so the
+ * Monday numbers count them (found 10/5: the hand-posted Mud Run Reel had
+ * 1.6K views and no card, so Numbers undercounted). Runs just before the Meta
+ * fill on Mondays. The card is Posted and never Approved, so the auto-poster
+ * leaves it alone; Slot Key "offboard|<post key>" stops a rerun adding it twice.
+ */
+export async function addOffBoardPosts(
+  now = new Date(),
+  opts: { dryRun?: boolean; days?: number } = {},
+): Promise<{ ok: boolean; skipped?: string; checked: number; added: { name: string; url: string; postedAt: string }[] }> {
+  if (!isMetaConfigured()) return { ok: false, skipped: "META_GRAPH_TOKEN not configured", checked: 0, added: [] };
+
+  const since = new Date(now.getTime() - (opts.days ?? OFF_BOARD_DAYS) * 86_400_000);
+  const posts = await metaPostList(since);
+
+  // Every card that points at an IG/FB post, whatever its status.
+  const rows = await listRecords(POSTS, `OR({Post URL} != '', FIND('offboard|', {Slot Key}) = 1)`, { baseId: BASE_ID });
+  const known = new Set<string>();
+  for (const r of rows) {
+    const slot = String(r.fields["Slot Key"] || "");
+    if (slot.startsWith("offboard|")) known.add(slot.slice("offboard|".length));
+    const url = String(r.fields["Post URL"] || "");
+    if (!/instagram\.com|facebook\.com/.test(url)) continue;
+    // Share links hide the post; only chase the recent ones (one fetch each).
+    const recent = new Date(String(r.fields.Due || 0)) >= since;
+    const key = postKey(recent ? await resolveShareLink(url) : url);
+    if (key) known.add(key);
+  }
+
+  const added: { name: string; url: string; postedAt: string }[] = [];
+  for (const p of posts) {
+    // Page feed ids are "<page id>_<post id>"; Reels are keyed by video id.
+    const keys = [postKey(p.permalink), p.id.includes("_") ? `fb:${p.id.split("_")[1]}` : "", p.mediaType === "REEL" ? `fbreel:${p.id}` : ""].filter(Boolean);
+    if (!keys.length || keys.some((k) => known.has(k))) continue;
+
+    const due = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(p.timestamp || now));
+    const first = p.caption.split("\n").map((l) => l.trim()).find(Boolean) || "(no caption)";
+    const name = `${first.length > 60 ? `${first.slice(0, 57)}...` : first} · ${p.platform}`;
+    if (!opts.dryRun) {
+      await createRecord(
+        POSTS,
+        {
+          Name: name,
+          "Slot Key": `offboard|${keys[0]}`,
+          "Week Of": weekOf(due),
+          Due: due,
+          Platform: p.platform,
+          Status: "Posted",
+          "Posted At": p.timestamp || now.toISOString(),
+          "Post URL": p.permalink,
+          Caption: p.caption.slice(0, 5000),
+          Notes: `Posted outside the board; card added by the Monday off-board check (${now.toISOString().slice(0, 10)}) so its numbers get counted. Not for the auto-poster.`,
+        },
+        { baseId: BASE_ID, typecast: true },
+      );
+    }
+    keys.forEach((k) => known.add(k));
+    added.push({ name, url: p.permalink, postedAt: p.timestamp });
+  }
+  return { ok: true, checked: posts.length, added };
 }
 
 /** X posts on the board, filled once from 7 days old (same catch-up window). */

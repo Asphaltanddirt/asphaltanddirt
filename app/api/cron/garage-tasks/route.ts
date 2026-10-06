@@ -3,7 +3,7 @@ import { slotStart } from "@/lib/autoPost";
 import { attachTrailTalkImages, closeScheduledPosts, flipGoPublicVideos, generateSocialWeek } from "@/lib/garageSocial";
 import { generateWeek, todayNY, weekOf } from "@/lib/garageTasks";
 import { matchPostedMedia } from "@/lib/mediaUsage";
-import { syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
+import { addOffBoardPosts, syncSocialStatsFromMeta, syncSocialStatsFromThreads, syncSocialStatsFromX } from "@/lib/socialStatsSync";
 import { checkThreadsSetup, isThreadsConnected } from "@/lib/threadsPost";
 
 export const maxDuration = 60;
@@ -22,6 +22,12 @@ export async function GET(req: NextRequest) {
   // and skipping the rest of the run (checking the card matching, 10/1).
   if (new URL(req.url).searchParams.get("stats") === "meta-dry") {
     return NextResponse.json(await syncSocialStatsFromMeta(new Date(), { dryRun: true }).catch((err) => ({ ok: false, error: String(err) })));
+  }
+  // ?stats=offboard-dry[&days=N]: which IG/FB posts have no board card,
+  // writing nothing and skipping the rest of the run.
+  if (new URL(req.url).searchParams.get("stats") === "offboard-dry") {
+    const days = Number(new URL(req.url).searchParams.get("days")) || undefined;
+    return NextResponse.json(await addOffBoardPosts(new Date(), { dryRun: true, days }).catch((err) => ({ ok: false, error: String(err) })));
   }
   try {
     // This week AND next week. The Planning Calendar plans Tuesday → next
@@ -59,6 +65,9 @@ export async function GET(req: NextRequest) {
     const weekdayNY = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(new Date());
     const pullStats = weekdayNY === "Mon" || new URL(req.url).searchParams.get("stats") === "1";
     const skipped = { ok: true, skipped: "Mondays only (add ?stats=1 to pull now)" };
+    // IG/FB posts made outside the board get a card first, so the fill below
+    // counts them too (Jose 10/5). Never blocks the rest.
+    const offBoard = pullStats ? await addOffBoardPosts().catch((err) => ({ ok: false, error: String(err) })) : skipped;
     const [metaStats, xStats, threadsStats] = pullStats
       ? await Promise.all([
           syncSocialStatsFromMeta().catch((err) => ({ ok: false, error: String(err) })),
@@ -74,7 +83,7 @@ export async function GET(req: NextRequest) {
     // Touch the Threads token daily so it renews in its last 20 days even in a
     // quiet week (it only refreshes when used).
     const threads = (await isThreadsConnected().catch(() => false)) ? await checkThreadsSetup() : { ok: false, skipped: "not connected" };
-    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, trailTalkImages, wentPublic, scheduledClosed, metaStats, xStats, threadsStats, threads, mediaUsage });
+    return NextResponse.json({ status: "ok", created: made.length, keys: made, socialCreated: social.length, trailTalkImages, wentPublic, scheduledClosed, offBoard, metaStats, xStats, threadsStats, threads, mediaUsage });
   } catch (err) {
     console.error("garage task generation failed", err);
     return NextResponse.json({ error: "Task generation failed." }, { status: 500 });

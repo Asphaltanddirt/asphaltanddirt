@@ -312,6 +312,67 @@ export async function facebookReelStats(videoId: string): Promise<Record<string,
   return stats;
 }
 
+export interface MetaPostLink {
+  platform: "Instagram" | "Facebook Page";
+  id: string;
+  permalink: string;
+  caption: string;
+  timestamp: string;
+  mediaType?: string;
+}
+
+/**
+ * Every Instagram post and Facebook Page post/Reel since `since`, links only
+ * (no insights, so it stays fast). For the off-board check: anything here
+ * with no board card was posted by hand outside the board.
+ */
+export async function metaPostList(since: Date): Promise<MetaPostLink[]> {
+  const out: MetaPostLink[] = [];
+  if (IG_USER_ID()) {
+    const data = await graph<{
+      data?: { id: string; permalink?: string; caption?: string; timestamp?: string; media_type?: string }[];
+    }>(`${IG_USER_ID()}/media`, { fields: "id,permalink,caption,timestamp,media_type", limit: "100", since: unix(since) });
+    for (const m of data.data ?? []) {
+      if (m.timestamp && new Date(m.timestamp) < since) continue;
+      out.push({ platform: "Instagram", id: m.id, permalink: m.permalink || "", caption: m.caption || "", timestamp: m.timestamp || "", mediaType: m.media_type });
+    }
+  }
+  if (PAGE_ID()) {
+    const token = await pageToken();
+    const feed = await graph<{ data?: { id: string; message?: string; created_time?: string; permalink_url?: string }[] }>(
+      `${PAGE_ID()}/posts`,
+      { fields: "id,message,created_time,permalink_url", limit: "100", since: unix(since) },
+      token,
+    );
+    for (const p of feed.data ?? []) {
+      out.push({ platform: "Facebook Page", id: p.id, permalink: p.permalink_url || "", caption: p.message || "", timestamp: p.created_time || "" });
+    }
+    // Reels aren't in /posts (see facebookReelStats). Never fail the list over them.
+    try {
+      const reels = await graph<{ data?: { id: string; description?: string; created_time?: string; permalink_url?: string }[] }>(
+        `${PAGE_ID()}/video_reels`,
+        { fields: "id,description,created_time,permalink_url", limit: "100", since: unix(since) },
+        token,
+      );
+      for (const r of reels.data ?? []) {
+        if (r.created_time && new Date(r.created_time) < since) continue;
+        const link = r.permalink_url || "";
+        out.push({
+          platform: "Facebook Page",
+          id: r.id,
+          permalink: link.startsWith("http") ? link : `https://www.facebook.com/reel/${r.id}/`,
+          caption: r.description || "",
+          timestamp: r.created_time || "",
+          mediaType: "REEL",
+        });
+      }
+    } catch (err) {
+      note(`${PAGE_ID()}/video_reels`, err instanceof Error ? err.message : String(err));
+    }
+  }
+  return out;
+}
+
 function unix(d: Date) {
   return String(Math.floor(d.getTime() / 1000));
 }
