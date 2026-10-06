@@ -211,7 +211,8 @@ export async function addOffBoardPosts(
     const slot = String(r.fields["Slot Key"] || "");
     if (slot.startsWith("offboard|")) known.add(slot.slice("offboard|".length));
     const url = String(r.fields["Post URL"] || "");
-    if (!/instagram\.com|facebook\.com/.test(url)) continue;
+    // The auto-poster saves FB Reels as a bare "/reel/<id>/", so go by platform, not domain.
+    if (!url || !["Instagram", "Facebook", "Facebook Page"].includes(String(r.fields.Platform || ""))) continue;
     // Share links hide the post; only chase the recent ones (one fetch each).
     const recent = new Date(String(r.fields.Due || 0)) >= since;
     const key = postKey(recent ? await resolveShareLink(url) : url);
