@@ -62,14 +62,16 @@ export function hashtagsFor(post: Pick<SocialPost, "caption" | "hashtags" | "pla
 }
 
 /** Caption as it's pasted: the caption, the blog link when it belongs in the
- *  caption (Facebook Page), then hashtags on their own line. */
+ *  caption (Facebook Page), then hashtags on the very next line, no blank line
+ *  between (Jose 10/6: "Full ride: link in our bio." sits right above them). */
 export function fullCaption(
   post: Pick<SocialPost, "caption" | "hashtags" | "platform" | "blogUrl" | "firstComment" | "linkPlacement" | "asset" | "topic" | "weekOf"> & {
     takeUrl?: string;
   },
 ): string {
   const link = linkPlan(post);
-  return [post.caption.trim(), link.kind === "caption" ? link.text : "", hashtagsFor(post).tags].filter(Boolean).join("\n\n");
+  const body = [post.caption.trim(), link.kind === "caption" ? link.text : ""].filter(Boolean).join("\n\n");
+  return [body, hashtagsFor(post).tags].filter(Boolean).join("\n");
 }
 
 /** Platforms the auto-poster handles. TikTok is scheduled in TikTok Studio, Meta
