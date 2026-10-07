@@ -467,6 +467,39 @@ async function pullYouTubeAnalytics(token: string, now: Date, trackedVideoIds: s
       push("watch_time", row.estimatedMinutesWatched, "count", "Value is minutes watched.");
       push("average_view_duration", row.averageViewDuration, "seconds");
     }
+
+    // Per-video engaged views (Jose 10/7): views now count from the first
+    // frame, engaged views only people who stayed past the opening, so the gap
+    // shows which Shorts lose people in the first second. Its own call, so a
+    // refusal never costs the per-video rows above.
+    const ev = await ytaReport(token, {
+      startDate: w.start,
+      endDate: end,
+      metrics: "views,engagedViews",
+      dimensions: "video",
+      sort: "-views",
+      maxResults: "50",
+    }).catch(() => ({ headers: [] as string[], rows: [] as YtaRow[] }));
+    for (const r of ev.rows) {
+      const row = Object.fromEntries(ev.headers.map((h, i) => [h, r[i]]));
+      const vid = String(row.video);
+      if (!tracked.has(vid) || row.engagedViews === undefined) continue;
+      out.push({
+        fields: {
+          observation_id: `YTA-${vid}-engaged_views-${tag}-${end}`,
+          scope: "Video",
+          entity_id: vid,
+          observed_date: end,
+          period_start: w.start,
+          period_end: end,
+          window: w.label,
+          metric: "engaged_views",
+          value: Number(row.engagedViews),
+          unit: "count",
+          source: `YouTube Analytics API (cron, data through ${end})`,
+        },
+      });
+    }
   }
 
   // Traffic sources (28d).
