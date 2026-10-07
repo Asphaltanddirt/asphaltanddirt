@@ -259,6 +259,62 @@ I wouldn't trade it for a Bronco, but that is because I plan on going big. I do 
 
 Catch you on the next one.`,
   },
+  {
+    slug: "race-of-gentlemen-wildwood-anthonys-take",
+    title: "The Race of Gentlemen: Anthony's Take",
+    videoId: "WyPT9fOQ_Cg",
+    publishedAt: "2026-10-06",
+    liveFrom: "2026-10-08",
+    summary:
+      "Anthony went to The Race of Gentlemen in Wildwood. After the nor'easter, the sand was perfect for the racers but the weather was garbage for the crowd. Great community, and his hot take: let cars and bikes up to the '70s race.",
+    blogSlug: "the-race-of-gentlemen-building-for-the-beach",
+    transcript: `This week we're going to discuss The Race of Gentlemen. So this past weekend, I attended The Race of Gentlemen down in Wildwood, New Jersey.
+
+It's an interesting crowd of people. Pretty cool to see the different styles that people have. A lot of people are in that old school fashion, like round glasses, just the cool, old school vintage style. Really cool event. But it's not an event that I would say is for everybody. You've got to really like motorcycles, the old school, vintage style, beach classic racing, down the beach type of vibe.
+
+My personal opinion on this event was that because of the nor'easter the week before, they probably should have rescheduled this event. The racing conditions were perfect for the guys racing, because the sand was packed down. But overall, for the attendees, the weather was just garbage.
+
+It was cool seeing the old school cars coming by, the old school bikes, 1940s, 1950s. It was cool to watch them race. It was just muddy, mushy. I think if the weather was better, it would have been more enjoyable, because it was cold, it was rainy.
+
+But other than that, if you go with the right crowd of people, no matter what the weather is, which I went with a great crowd of people, we had a great time, we made the best of it.
+
+It's a really cool event because literally people from all around the world show up. Just seeing the support in the race community that they have. If somebody's car broke down, everybody would jump in to fix it. Somebody's bike stalled out, everybody was jumping in to fix it. In that aspect, really nice community, really cool.
+
+You sit, you have a couple of drinks, you watch the races. Really good food, too.
+
+As far as the cars, they should start allowing newer bikes and cars, maybe up to the '70s, because 40s and 50s, the older these things are getting, the harder they're getting to find, the harder it is to find parts for them. So there's just a lot less of them attending.
+
+But again, what do I know, right? On that note, guys, The Race of Gentlemen is a fun event. Cool event, if you have the opportunity, check it out. I definitely will be back, though.`,
+  },
+  {
+    slug: "wrangler-vs-bronco-buy-for-your-trails",
+    title: "Wrangler vs Bronco: Buy for the Trails You Actually Drive",
+    videoId: "9d4HM7AsGgI",
+    publishedAt: "2026-10-07",
+    liveFrom: "2026-10-08",
+    summary:
+      "Anthony owns a Jeep and says it rides like a brick. Mostly road miles and easy trails? He'd point you to the Bronco. Tight, serious trails? The Wrangler, and a $15K build can match a $250K Raptor.",
+    blogSlug: "wrangler-vs-bronco-off-road-buy-for-your-trails",
+    transcript: `All right, guys, welcome back. This week we've got another discussion about Jeeps vs Broncos. Here at Asphalt & Dirt, we strongly believe every car has its pros and every car has its cons.
+
+The Jeep would be used for something like rock crawling. Serious trails, where you're actually articulating.
+
+Now, if you're mostly on road, daily driving, and just going down a beaten path on the weekend for a little cruise, nothing too crazy, you'd probably go with a Bronco. Why? Not because the Bronco is better than the Jeep, but because the Bronco is going to give you the comfier ride to the trail.
+
+Versus the Jeep. It's going to ride like a brick. When I say a brick, I say that because it is a solid front axle, solid rear axle. It does drive like a truck.
+
+Everyone complains, oh, you get death wobble, and you can't keep it straight. If you've got death wobble, something is bent, something is getting worn out. If it doesn't track straight, well, you probably need to look into a wheel alignment. I'm not saying they drive great. It's a Jeep. They've come a long way.
+
+We here at Asphalt & Dirt, we drive Jeeps for the most part. Reason being is because we kind of like to rock crawl. We like to get into questionable things.
+
+For example, you can buy a Bronco Raptor and then you can put portals on it and put 40s, and that's $250,000 with the car right now. Or you can get a Jeep Wrangler, spend 15 grand on it, and it'd be just as capable, if not more capable.
+
+When it comes to aftermarket, the Jeeps have a huge aftermarket, options out there versus a Bronco. They're fairly new to the game. There are things for the Broncos out there, but the Wranglers have been around a bit longer and there's a lot more options for them. People do more wheeling, I want to say, with the Jeep Wranglers. But again, that doesn't mean that people don't come out wheeling with the regular Broncos.
+
+Now let's touch base on the Bronco Raptor, right? Cool looking truck. Got 37s on it. Awesome truck to go down a beaten path with, but that truck is super wide, so you're not fitting where a Jeep is going to fit. That's where the Jeep shines.
+
+There is no one vehicle that's better than another. Although I prefer a Jeep over a Bronco for what I do personally, the rest is dependent on you. Other than that, guys, catch you on the next one.`,
+  },
 ];
 
 /** Takes whose Friday has arrived, newest first. */
