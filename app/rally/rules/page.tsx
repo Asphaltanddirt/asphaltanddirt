@@ -39,7 +39,7 @@ export default function RallyRulesPage() {
             <li>Points start with the A&amp;D Community Mud Run (October 17, 2026). Earlier events don&apos;t earn points.</li>
           </ul>
           <h3>Ranks</h3>
-          <p>Rookie from your first point, Regular at 50, Mainstay at 150, Legend at 300 lifetime points. Legends are earned two ways: 300 lifetime points, or named by the founders for what they&apos;ve given the community. Rank gear: you can claim gear for your rank or any rank below it.</p>
+          <p>Rookie from your first point, Regular at 50, Mainstay at 150, Legend at 300 lifetime points. Legends are earned two ways: 300 lifetime points, or named by the founders for what they&apos;ve given the community. Hit 1,000 lifetime points and you earn an ICON shirt. Rank gear: you can claim gear for your rank or any rank below it.</p>
           <h3>Spending</h3>
           <p>Pick anything in the locker you have enough points for; its points come off your balance. Gear ships from our store and you pay the shipping. Locker items are earn-only and their designs change each year; a claim gets the current design. The 250-point experience is all of it together: you pick the ride, you lead it, you get featured in the photos and video from it, and your story runs in our newsletter. We arrange it with you.</p>
           <h3>The fine print</h3>
