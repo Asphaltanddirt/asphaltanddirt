@@ -31,6 +31,8 @@ const CARE_LITTLE = [CARE, "Wash before first wear."];
 const LENGTH = { label: "Length", hint: "Top of the shoulder by the collar, down to the hem" };
 const WIDTH = { label: "Width", hint: "Across the chest, armpit seam to armpit seam, laid flat" };
 const SLEEVE = { label: "Sleeve", hint: "Top of the sleeve seam down to the cuff" };
+// Printful measures long sleeves from the middle of the back collar.
+const LONG_SLEEVE = { label: "Sleeve", hint: "Middle of the back collar, over the shoulder, down to the cuff" };
 
 const CHARTS: { match: string; chart: SizeChart }[] = [
   {
@@ -48,6 +50,24 @@ const CHARTS: { match: string; chart: SizeChart }[] = [
         { size: "2XL", values: ["31.63", "26", "21.75"] },
         { size: "3XL", values: ["32.5", "27.75", "23.25"] },
         { size: "4XL", values: ["33.5", "29.75", "24.63"] },
+      ],
+      care: [CARE],
+    },
+  },
+  {
+    // Long sleeves (added 2026-10-07): Earn It Long Sleeve Tee and the rest of
+    // the tee designs on the long-sleeve twin of the 1717.
+    match: "77f79ee1b97630c573a8ea678533b3b4",
+    chart: {
+      blank: "Comfort Colors 6014 (Printful 753)",
+      columns: [LENGTH, WIDTH, LONG_SLEEVE],
+      rows: [
+        { size: "S", values: ["26.63", "18.25", "31.88"] },
+        { size: "M", values: ["28", "20.25", "33.75"] },
+        { size: "L", values: ["29.75", "22", "36.88"] },
+        { size: "XL", values: ["30.75", "24", "37.25"] },
+        { size: "2XL", values: ["31.6", "26", "38.75"] },
+        { size: "3XL", values: ["32.5", "27.75", "39.75"] },
       ],
       care: [CARE],
     },
