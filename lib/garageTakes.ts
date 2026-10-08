@@ -265,8 +265,7 @@ Catch you on the next one.`,
   {
     slug: "race-of-gentlemen-wildwood-anthonys-take",
     title: "The Race of Gentlemen: Anthony's Take",
-    videoId: "WyPT9fOQ_Cg",
-    siteVideoId: "0hfKkXLcFf0",
+    videoId: "0hfKkXLcFf0",
     publishedAt: "2026-10-06",
     liveFrom: "2026-10-08",
     summary:
@@ -293,8 +292,7 @@ But again, what do I know, right? On that note, guys, The Race of Gentlemen is a
   {
     slug: "wrangler-vs-bronco-buy-for-your-trails",
     title: "Wrangler vs Bronco: Buy for the Trails You Actually Drive",
-    videoId: "9d4HM7AsGgI",
-    siteVideoId: "IFZDjmQHG1w",
+    videoId: "IFZDjmQHG1w",
     publishedAt: "2026-10-07",
     liveFrom: "2026-10-08",
     summary:
