@@ -52,6 +52,8 @@ export default function Footer({ bgImage, returnTo }: { bgImage?: string; return
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Use</Link>
             <a href="/reviews/submit">Leave A Review</a>
+            {/* The Dirt Line archive (Jose 10/8). */}
+            <Link href="/newsletter">Past Newsletters</Link>
             <Link href="/contact">Contact</Link>
             {/* Staff way in (Jose 9/22). Garage Takes stays in the top nav. */}
             <Link href="/garage">Enter The Garage</Link>
