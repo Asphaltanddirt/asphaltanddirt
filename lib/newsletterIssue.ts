@@ -1,3 +1,4 @@
+import { issueDateNY } from "@/lib/newsletterArchive";
 import { listRecords, updateRecord } from "@/lib/airtable";
 import type { WeeklyDigestOptions } from "@/lib/newsletter";
 import { socialLinks } from "@/lib/social";
@@ -178,7 +179,7 @@ export async function archiveIssue(
     {
       Status: "Sent",
       "Subject Sent": data.subject,
-      "Sent Date": new Date().toISOString().slice(0, 10),
+      "Sent Date": issueDateNY(),
       Recipients: data.recipients,
       "Rendered HTML": data.html.slice(0, HTML_ARCHIVE_LIMIT),
     },

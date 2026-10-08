@@ -49,6 +49,9 @@ export interface NewsletterContent {
   subject: string;
   previewText: string;
   innerHtml: string;
+  /** Web copy of this issue (/newsletter/<date>); adds a "View in browser"
+   *  line at the top of the email. Weekly issues only (Jose 10/8). */
+  webUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -478,11 +481,11 @@ export function wrapNewsletterEmail(
     <div style="max-width:600px;margin:24px auto 0;padding:0 24px 32px;text-align:center;font-family:Arial,sans-serif;">
       ${rally}
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">You're getting this because you subscribed to The Dirt Line at <a href="${SITE_URL}" style="color:#999;">asphaltanddirt.com</a>.</p>
-      <p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">
+      <!--ad-optout--><p style="font-size:12px;line-height:1.7;color:#999;margin:0 0 6px;">
         <a href="${manageUrl(opts.unsubscribeUrl)}" style="color:#999;text-decoration:underline;">Manage Preferences</a>
         &nbsp;&middot;&nbsp;
         <a href="${opts.unsubscribeUrl}" style="color:#999;text-decoration:underline;">Unsubscribe</a>
-      </p>
+      </p><!--/ad-optout-->
       <p style="font-size:12px;line-height:1.7;color:#999;margin:0;">${escapeHtml(opts.mailingAddress)}</p>
     </div>
   `;
@@ -495,6 +498,7 @@ export function wrapNewsletterEmail(
 </head>
 <body style="margin:0;padding:24px 0;background:#e5e5e5;-webkit-text-size-adjust:100%;">
 <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">${escapeHtml(content.previewText)}</span>
+${content.webUrl ? `<!--ad-webversion--><p style="max-width:600px;margin:0 auto;padding:0 24px 12px;text-align:center;font-family:Arial,sans-serif;font-size:12px;color:#999;">Trouble seeing this email? <a href="${content.webUrl}" style="color:#999;text-decoration:underline;">View it in your browser</a></p><!--/ad-webversion-->` : ""}
 ${greeting}
 <div style="max-width:600px;margin:0 auto;">
 ${content.innerHtml}

@@ -3008,3 +3008,7 @@ span.garage-numbers-trend{ display:block; width:64px; }
   .rally-legend-media{ aspect-ratio:21/9; }
   .rally-slashes i{ width:14px; height:48px; }
 }
+
+/* The Dirt Line past issues (Jose 10/8). */
+.legal-page ul.newsletter-archive{ list-style:none; padding-left:0; }
+.newsletter-archive li{ margin:0 0 18px; }

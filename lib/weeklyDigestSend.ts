@@ -1,3 +1,4 @@
+import { issueDateNY, issuePath } from "@/lib/newsletterArchive";
 import { buildWeeklyDigest, wrapNewsletterEmail } from "@/lib/newsletter";
 import { archiveIssue, getDraftIssue } from "@/lib/newsletterIssue";
 import { sendNewsletter, type SendResult } from "@/lib/newsletterSend";
@@ -36,6 +37,9 @@ export async function sendDraftDigest(
   const draft = await getDraftIssue();
   if (!draft) throw new NoDraftIssueError();
   const content = await buildWeeklyDigest(draft.options);
+  // "View in browser" (Jose 10/8): the address this issue will have once the
+  // live send archives it under today's New York date.
+  content.webUrl = `${SITE}${issuePath(issueDateNY())}`;
   const result = await sendNewsletter(content, mode);
 
   // Archive back to the row only on a real send that landed.

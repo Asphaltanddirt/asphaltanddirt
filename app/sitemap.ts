@@ -7,8 +7,18 @@ import { getFeaturedProducts } from "@/lib/fourthwall";
 import { getPublishedEvents } from "@/lib/events";
 import { publishedGarageTakes } from "@/lib/garageTakes";
 import { SITE_URL } from "@/lib/site";
+import { issuePath, listSentIssues } from "@/lib/newsletterArchive";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // The Dirt Line's past issues, each its own page (Jose 10/8).
+  const newsletterEntries: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/newsletter`, changeFrequency: "weekly" },
+    ...(await listSentIssues().catch(() => [])).map((i) => ({
+      url: `${SITE_URL}${issuePath(i.date)}`,
+      lastModified: i.date,
+      changeFrequency: "yearly" as const,
+    })),
+  ];
   const episodeEntries: MetadataRoute.Sitemap = (await getAllEpisodes()).map((e) => ({
     url: `${SITE_URL}${episodePath(e)}`,
     lastModified: e.publicationDate,
@@ -84,6 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...buildEntries,
     ...teamEntries,
     ...blogEntries,
+    ...newsletterEntries,
     ...merchEntries,
     ...eventEntries,
   ];
