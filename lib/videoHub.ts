@@ -18,6 +18,8 @@ export interface HubVideo {
   date: string;
   description: string;
   videoId: string;
+  /** What the player embeds when it differs from videoId (Garage Takes' 16:9 site cut). */
+  embedId?: string;
   thumbnail: string;
   part?: number;
 }
@@ -50,6 +52,7 @@ export async function getHubVideos(): Promise<HubVideo[]> {
       date: t.liveFrom,
       description: t.summary,
       videoId: t.videoId,
+      embedId: t.siteVideoId,
       thumbnail: `https://i.ytimg.com/vi/${t.videoId}/maxresdefault.jpg`,
     })),
   ];

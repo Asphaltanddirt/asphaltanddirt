@@ -48,7 +48,7 @@ export default function VideoHub({ videos, filter }: { videos: HubVideo[]; filte
         <div className="episode-hero-grid mt-3" key={hero.href}>
           <div>
             <EpisodeVideo
-              videoId={hero.videoId}
+              videoId={hero.embedId ?? hero.videoId}
               title={hero.title}
               eventContext={`videos-hub:${hero.href}`}
               upNext={next ? { href: next.href, title: next.title, thumbnail: next.thumbnail } : undefined}

@@ -15,6 +15,9 @@ export interface GarageTake {
   slug: string;
   title: string;
   videoId: string;
+  /** Unlisted 16:9 cut played on the site (Jose 10/8: the landscape version
+   *  on the site). The YouTube buttons and thumbnails keep using videoId. */
+  siteVideoId?: string;
   /** YouTube upload date (ISO). */
   publishedAt: string;
   /** The date it goes public on the site (Friday of that week). */
@@ -263,6 +266,7 @@ Catch you on the next one.`,
     slug: "race-of-gentlemen-wildwood-anthonys-take",
     title: "The Race of Gentlemen: Anthony's Take",
     videoId: "WyPT9fOQ_Cg",
+    siteVideoId: "0hfKkXLcFf0",
     publishedAt: "2026-10-06",
     liveFrom: "2026-10-08",
     summary:
@@ -290,6 +294,7 @@ But again, what do I know, right? On that note, guys, The Race of Gentlemen is a
     slug: "wrangler-vs-bronco-buy-for-your-trails",
     title: "Wrangler vs Bronco: Buy for the Trails You Actually Drive",
     videoId: "9d4HM7AsGgI",
+    siteVideoId: "IFZDjmQHG1w",
     publishedAt: "2026-10-07",
     liveFrom: "2026-10-08",
     summary:

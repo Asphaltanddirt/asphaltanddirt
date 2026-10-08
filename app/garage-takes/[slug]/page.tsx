@@ -52,7 +52,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
     description: take.summary,
     uploadDate: take.publishedAt,
     thumbnailUrl: [`https://i.ytimg.com/vi/${take.videoId}/maxresdefault.jpg`],
-    embedUrl: `https://www.youtube.com/embed/${take.videoId}`,
+    embedUrl: `https://www.youtube.com/embed/${take.siteVideoId ?? take.videoId}`,
     url: `${SITE_URL}/garage-takes/${take.slug}`,
     publisher: { "@type": "Organization", name: "Asphalt & Dirt", url: SITE_URL },
   };
@@ -79,7 +79,7 @@ export default async function GarageTakePage({ params }: { params: Promise<{ slu
         <div className="episode-hero-grid mt-4">
           <div>
             <EpisodeVideo
-              videoId={take.videoId}
+              videoId={take.siteVideoId ?? take.videoId}
               title={take.title}
               eventContext="garage_take"
               upNext={
