@@ -117,7 +117,8 @@ export function crewEveHtml(input: {
       // Crew-only rides take no RSVPs, so there's no Tailgate to mention.
       event.crewOnly
         ? ""
-        : `<p><strong>Heads up:</strong> Tailgate, our event chat, opens tonight. Everyone who RSVP'd can post in it, so you'll see questions and hellos. You don't have to jump in, but you're welcome to say hi or answer anything you know. It goes quiet once we roll out; on the trail it's the radio.</p>`
+        : `<p><strong>Heads up:</strong> Tailgate, our event chat, opens tonight. Everyone who RSVP'd can post in it, so you'll see questions and hellos. You don't have to jump in, but you're welcome to say hi or answer anything you know. It goes quiet once we roll out; on the trail it's the radio.</p>
+    <p><strong>At roll call:</strong> if you can, help us tick people in on <a href="${SITE_URL}/garage/tailgate" style="color:#f86000;">Garage → Tailgate → Roster</a>. That's how everyone gets their Rally Points. Passengers and walk-ups sign the waiver on their phone first, then they show up there too.</p>`
     }
     ${
       input.byRank?.some((g) => g.names.length)
