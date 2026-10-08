@@ -2,14 +2,8 @@ import type { BlogPost } from "@/lib/blog";
 import { getAllPostsSorted } from "@/lib/blog";
 import { builds, type Build } from "@/lib/builds";
 import { getNextUpcomingEvent } from "@/lib/events";
-import {
-  fetchLatestFromPlaylist,
-  fetchVideoById,
-  PODCAST_EPISODES_PLAYLIST_ID,
-  youtubeIdFromUrl,
-  type YouTubeVideo,
-} from "@/lib/youtube";
-import { findEpisodeByYoutubeId } from "@/lib/episodes";
+import { fetchVideoById, youtubeIdFromUrl } from "@/lib/youtube";
+import { episodePath, getAllEpisodes } from "@/lib/episodes";
 import { garageTakes } from "@/lib/garageTakes";
 import { getFeaturedProducts, getProductsBySlugs, type Product } from "@/lib/fourthwall";
 import { socialLinks } from "@/lib/social";
@@ -356,9 +350,9 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
 
   const merchSlug = merchSlugFromUrl(options.merchUrl);
   const videoOverrideId = options.videoUrl ? youtubeIdFromUrl(options.videoUrl) : "";
-  const [nextEvent, latestVideos, merch, overrideVideo] = await Promise.all([
+  const [nextEvent, allEpisodes, merch, overrideVideo] = await Promise.all([
     getNextUpcomingEvent(),
-    fetchLatestFromPlaylist(PODCAST_EPISODES_PLAYLIST_ID, 1),
+    getAllEpisodes().catch(() => []),
     merchSlug ? getProductsBySlugs([merchSlug]) : getFeaturedProducts("all", 1),
     videoOverrideId ? fetchVideoById(videoOverrideId) : Promise.resolve(undefined),
   ]);
@@ -366,23 +360,25 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     ? `${nextEvent.title} on ${new Date(`${nextEvent.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
     : null;
 
-  const latestVideo: YouTubeVideo | undefined = latestVideos[0];
+  // The newest trail video or podcast episode that's already out (Jose 10/8:
+  // never the podcast trailer).
+  const now = new Date().toISOString();
+  const latestEpisode = allEpisodes
+    .filter((e) => e.publicationDate <= now && !/trailer/i.test(`${e.slug} ${e.title}`))
+    .sort((a, b) => b.publicationDate.localeCompare(a.publicationDate))[0];
   const newestMerch: Product | undefined = merch[0];
 
-  // A hand-picked video links straight to YouTube; the auto pick (latest
-  // podcast episode) links to the episode's own page — keeps the click
-  // on-property and stops Gmail unfurling a big video card.
+  // A hand-picked video links straight to YouTube; the auto pick links to the
+  // episode's own page — keeps the click on-property and stops Gmail
+  // unfurling a big video card.
   let videoHit: { label: string; ctaText: string; url: string } | undefined;
   if (overrideVideo) {
     videoHit = { label: `Watch: ${overrideVideo.title}`, ctaText: "Watch", url: overrideVideo.url };
-  } else if (latestVideo) {
-    const episode = await findEpisodeByYoutubeId(latestVideo.videoId);
-    // Before the first full episode, the newest podcast video is the trailer.
-    const isTrailer = /trailer/i.test(episode?.slug || latestVideo.title);
+  } else if (latestEpisode) {
     videoHit = {
-      label: isTrailer ? "Watch the Asphalt & Dirt podcast trailer" : `Latest episode: ${latestVideo.title}`,
+      label: `${latestEpisode.type === "trail-event" ? "Latest trail video" : "Latest episode"}: ${latestEpisode.title}`,
       ctaText: "Watch",
-      url: episode ? `${SITE_URL}/podcast/${episode.slug}` : `${SITE_URL}/podcast`,
+      url: `${SITE_URL}${episodePath(latestEpisode)}`,
     };
   }
 
@@ -414,7 +410,8 @@ export async function buildWeeklyDigest(options: WeeklyDigestOptions = {}): Prom
     newestMerch && {
       label: `New in merch: ${newestMerch.name}`,
       ctaText: "Shop",
-      url: `${SITE_URL}/merch/${newestMerch.slug}`,
+      // The full shop, not the single product (Jose 10/8).
+      url: `${SITE_URL}/merch/all`,
     },
   ].filter((x): x is { label: string; ctaText: string; url: string } => Boolean(x));
 

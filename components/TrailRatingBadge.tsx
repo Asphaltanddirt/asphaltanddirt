@@ -21,27 +21,34 @@ export default function TrailRatingBadge({
 }) {
   const sides = rating.sameBothSides ? (["dirt"] as RatingSide[]) : sidesFor(eventType);
   return (
-    <div className="trail-rating">
-      {/* The art carries the shape, name and plain word; the alt text says the
-          same for screen readers, so nothing depends on the picture alone. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={rating.image}
-        alt={`A&D Ride Rating: ${rating.name} (${rating.plain})`}
-        width={120}
-        height={120}
-        className="trail-rating-img"
-        loading="lazy"
-      />
-      {link && (
-        <Link href="/events#trail-rating" className="trail-rating-link">
-          What the ratings mean
-        </Link>
+    <div className={showLines ? "trail-rating has-lines" : "trail-rating"}>
+      {/* Badge + link on the left, the facts fill the space to its right
+          (Jose 10/8); stacked on phones. */}
+      <div className="trail-rating-mark">
+        {/* The art carries the shape, name and plain word; the alt text says the
+            same for screen readers, so nothing depends on the picture alone. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={rating.image}
+          alt={`A&D Ride Rating: ${rating.name} (${rating.plain})`}
+          width={120}
+          height={120}
+          className="trail-rating-img"
+          loading="lazy"
+        />
+        {link && (
+          <Link href="/events#trail-rating" className="trail-rating-link">
+            What the ratings mean
+          </Link>
+        )}
+      </div>
+      {showLines && (
+        <div className="trail-rating-body">
+          {sides.map((s) => (
+            <TrailRatingFacts key={s} lines={rating[s]} heading={sides.length > 1 ? sideLabel(s) : undefined} />
+          ))}
+        </div>
       )}
-      {showLines &&
-        sides.map((s) => (
-          <TrailRatingFacts key={s} lines={rating[s]} heading={sides.length > 1 ? sideLabel(s) : undefined} />
-        ))}
     </div>
   );
 }
