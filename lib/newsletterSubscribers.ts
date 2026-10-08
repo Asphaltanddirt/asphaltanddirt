@@ -237,6 +237,21 @@ export async function unsubscribeByToken(token: string): Promise<{ ok: boolean; 
 }
 
 /** Looks up a subscriber by their token for the /manage preferences page. */
+/** The lists one person is actively on (empty if none). Only ever called for
+ *  the signed-in Rally member's own email (app/api/rally/lists), never for an
+ *  email typed into a form, so it can't be used to test who is subscribed. */
+export async function activeTopicsForEmail(email: string, brand: string = DEFAULT_BRAND): Promise<Topic[]> {
+  assertConfigured();
+  const clean = email.trim().toLowerCase();
+  if (!clean) return [];
+  const records = await listRecords(
+    TABLE,
+    `AND(LOWER({Email}) = '${escapeFormulaString(clean)}', {Brand} = '${escapeFormulaString(brand)}', {State} = 'Active')`,
+    { baseId: BASE_ID },
+  );
+  return (records[0]?.fields.Topics as Topic[]) || [];
+}
+
 export async function getSubscriberByToken(token: string): Promise<SubscriberPreferences | null> {
   assertConfigured();
   const clean = token.trim();

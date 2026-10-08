@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SocialLinksEditor, { type SocialRow } from "./SocialLinksEditor";
 import { rowsToLinks } from "@/lib/socialLinks";
 import { track } from "@/lib/analytics";
@@ -27,8 +27,21 @@ export default function RsvpForm({
   const optionalUnchecked = useOptionalUnchecked();
   const [eventUpdatesChoice, setJoinEventUpdatesList] = useState<boolean | null>(null);
   const [newsletterChoice, setJoinNewsletter] = useState<boolean | null>(null);
-  const joinEventUpdatesList = eventUpdatesChoice ?? !optionalUnchecked;
-  const joinNewsletter = newsletterChoice ?? !optionalUnchecked;
+  // Signed-in Rally members don't see a box for a list they're already on
+  // (Jose 10/8). Only their own lists are looked up, never a typed email.
+  const [onLists, setOnLists] = useState<{ newsletter: boolean; eventUpdates: boolean } | null>(null);
+  useEffect(() => {
+    fetch("/api/rally/lists")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.signedIn) setOnLists({ newsletter: Boolean(d.newsletter), eventUpdates: Boolean(d.eventUpdates) });
+      })
+      .catch(() => {});
+  }, []);
+  const showEventUpdatesBox = !onLists?.eventUpdates;
+  const showNewsletterBox = !onLists?.newsletter;
+  const joinEventUpdatesList = showEventUpdatesBox && (eventUpdatesChoice ?? !optionalUnchecked);
+  const joinNewsletter = showNewsletterBox && (newsletterChoice ?? !optionalUnchecked);
   const [rulesAccepted, setRulesAccepted] = useState(false);
   // Optional (Jose 10/3): their socials (they pick the platform, nothing
   // assumed) and their rig, so clips from the ride can tag the right rider.
@@ -243,6 +256,7 @@ export default function RsvpForm({
             </div>
           </div>
         )}
+        {showEventUpdatesBox || showNewsletterBox ? (
         <div className="form-field">
           <label id="rsvp-group-2">While You&apos;re Here <span className="optional">(Optional)</span></label>
           <small id="rsvp-lists-help" className="form-help">
@@ -251,6 +265,7 @@ export default function RsvpForm({
               : "Tick either one if you'd like email from us."}
           </small>
           <div className="form-checkbox-group form-checkbox-group-stacked" role="group" aria-labelledby="rsvp-group-2" aria-describedby="rsvp-lists-help">
+            {showEventUpdatesBox && (
             <label className={`form-checkbox${joinEventUpdatesList ? " has-check" : ""}`}>
               <input
                 type="checkbox"
@@ -261,6 +276,8 @@ export default function RsvpForm({
               />
               Add me to Event Updates: an email when a new meetup is posted
             </label>
+            )}
+            {showNewsletterBox && (
             <label className={`form-checkbox${joinNewsletter ? " has-check" : ""}`}>
               <input
                 type="checkbox"
@@ -271,8 +288,12 @@ export default function RsvpForm({
               />
               Add me to The Dirt Line: our weekly newsletter
             </label>
+            )}
           </div>
         </div>
+        ) : (
+          <p className="form-help">You&apos;re already on The Dirt Line and Event Updates.</p>
+        )}
       </div>
 
       {errorMsg && <p className="form-error-banner">{errorMsg}</p>}
