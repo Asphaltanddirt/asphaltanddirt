@@ -20,7 +20,11 @@ export async function sendEmail({ to, subject, html, from, replyTo, attachments 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("Resend is not configured (missing RESEND_API_KEY).");
 
-  const res = await fetch(RESEND_ENDPOINT, {
+  // Resend allows 10 requests a second; a loop over a whole RSVP list blew
+  // past it on 10/14 (3 of 14 Mud Run updates bounced with 429). A rate-limited
+  // send waits and tries again instead of failing, so call-offs and updates
+  // reach everyone.
+  const send = () => fetch(RESEND_ENDPOINT, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -42,6 +46,11 @@ export async function sendEmail({ to, subject, html, from, replyTo, attachments 
     }),
   });
 
+  let res = await send();
+  for (let attempt = 1; res.status === 429 && attempt <= 4; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
+    res = await send();
+  }
   if (!res.ok) {
     throw new Error(`Resend send failed: ${res.status} ${await res.text()}`);
   }
