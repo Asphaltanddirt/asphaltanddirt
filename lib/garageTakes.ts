@@ -318,6 +318,52 @@ Now let's touch base on the Bronco Raptor, right? Cool looking truck. Got 37s on
 
 There is no one vehicle that's better than another. Although I prefer a Jeep over a Bronco for what I do personally, the rest is dependent on you. Other than that, guys, catch you on the next one.`,
   },
+  {
+    slug: "overlanding-vs-car-camping-does-your-weekend-count",
+    title: "Overlanding vs Car Camping: Does Your Weekend Count?",
+    videoId: "QxIlVKnF2p4",
+    publishedAt: "2026-10-15",
+    liveFrom: "2026-10-15",
+    summary:
+      "If you go back to the same campsite every night, Anthony calls it camping. Overlanding is a planned 100 to 150 mile route over two or three days, camping wherever you land. Neither is better, and he admits he camps a lot more than he overlands.",
+    blogSlug: "overlanding-vs-car-camping-does-your-weekend-count",
+    transcript: `This week's discussion: camping and overlanding. What's the difference, and is there a difference?
+
+When people say "let's go camping," we take that as setting up camp at one location. Our vehicles are alongside us the whole time, and we have a dedicated campsite. Even if we leave in the vehicles during the day, we come back to that same campsite at night. That's what we call camping.
+
+Overlanding is a little more detailed, a little more off-road dedicated. Our understanding of overlanding here at Asphalt & Dirt is that you sit down and pre-plan a route, let's say 100 to 150 miles, that takes you about two or three days to complete. Every day you progress through the route. Day one, you get through maybe 30 miles. Wherever you end up, you set up camp and pop up your rooftop tent.
+
+This is where the rooftop tent comes in. You pop it open, hop up in your tent and sleep for the night. In the morning you close it up and keep going, instead of breaking down and setting up a ground tent.
+
+So that's overlanding to us: make it 30 or 40 miles through the day, set up camp, pop the rooftop tent, and in the morning close it up, have a cup of coffee, make something quick on a little grill and keep it rolling. Another 30 or 40 miles, set up camp wherever you land, and keep it going with a plan.
+
+Overlanding isn't going to a dedicated campsite. Like I keep saying, that is camping. There's nothing wrong with camping and nothing wrong with overlanding. One isn't better than the other. They're both great, they're just different experiences.
+
+Something more family oriented would be camping. You go into town, see some things with your family, your wife, your kids, come back to camp, have a campfire, hang out, maybe go see a couple of trails. Overlanding is dedicated: we're going to be off-roading 10 hours a day, moving forward, obstacles, just keeping it going.
+
+Again, nothing wrong with either one. I actually like both. I do a lot more camping than overlanding, although we do intend to get into more overlanding moving forward. Catch us on the next one.`,
+  },
+  {
+    slug: "2026-subaru-wrx-base-vs-premium-anthonys-take",
+    title: "2026 Subaru WRX: Base or Premium?",
+    videoId: "19P7GFS3SYE",
+    publishedAt: "2026-10-15",
+    liveFrom: "2026-10-15",
+    summary:
+      "Building it? Anthony says buy the base WRX, because the exhaust, intake and seats are coming out anyway. Keeping it stock as a daily? Spend the extra for the comforts. In the Northeast, the heated seats alone are worth it.",
+    blogSlug: "2026-subaru-wrx-base-bargain-you-can-live-with",
+    transcript: `We're back with some more four-banger talk. There's a big discussion going on right now about the WRX Premium versus the bottom-of-the-line WRX.
+
+The way I look at it, when you're buying that Subie you're already looking at a car in the low 30s. If we're talking about $1,500 more for heated seats, you might as well do it if you live in the Northeast or on the East Coast, where it's cold. If you live somewhere in the South, you're probably not going to bother.
+
+Personally, I would just go with the base model. Everything that's on it, you're probably going to end up ripping out and swapping out. You're going to do your own exhaust. You're going to do downpipes. You're going to end up tuning it. You're going to do intakes. At that point there's no reason to pay the premium, because you're probably going to strip the car anyway.
+
+If you know you're not going to tear the car apart and you're just going to leave it as it is, then yes, spend the extra money. Get the more loaded version and all the comforts. But if you're going to be that guy who tears out the interior and puts in race seats, why spend the extra money just to rip everything out and replace it with performance parts?
+
+There's no wrong or right option. There's a car for each driver. If you're using it for the daily commute, day-to-day driving and groceries, and you want a nicer vehicle with a few more creature features, go for the more loaded version. If you're going to be the race car guy and build it, go for the base entry model and build it up from there. Save yourself a couple of bucks up front that you're going to end up spending on the build anyway.
+
+They're awesome cars, really fun to drive and really fun to build. I love that they're all-wheel-drive manuals. That's very rare nowadays. Base or Premium, they're both great vehicles. Catch you on the next one.`,
+  },
 ];
 
 /** Takes whose Friday has arrived, newest first. */
