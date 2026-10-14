@@ -321,7 +321,7 @@ There is no one vehicle that's better than another. Although I prefer a Jeep ove
   {
     slug: "overlanding-vs-car-camping-does-your-weekend-count",
     title: "Overlanding vs Car Camping: Does Your Weekend Count?",
-    videoId: "QxIlVKnF2p4",
+    videoId: "WWwpfqJxvmM",
     publishedAt: "2026-10-15",
     liveFrom: "2026-10-15",
     summary:
@@ -346,7 +346,7 @@ Again, nothing wrong with either one. I actually like both. I do a lot more camp
   {
     slug: "2026-subaru-wrx-base-vs-premium-anthonys-take",
     title: "2026 Subaru WRX: Base or Premium?",
-    videoId: "19P7GFS3SYE",
+    videoId: "7qX06ImBI3o",
     publishedAt: "2026-10-15",
     liveFrom: "2026-10-15",
     summary:
