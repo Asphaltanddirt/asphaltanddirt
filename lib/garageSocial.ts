@@ -298,7 +298,7 @@ export async function holdEventPromos(slug: string, reason: string): Promise<{ h
           assignee: str(r.fields.Owner) || POSTING_OWNER,
           due: todayNY(),
           details: `"${str(r.fields.Name)}" (due ${str(r.fields.Due).slice(0, 10)}) was scheduled in ${str(r.fields.Platform) === "TikTok" ? "TikTok Studio" : "the group's scheduled posts"}. The card is skipped, but the scheduled post will still go out unless it's deleted there.`,
-          link: "/garage/social",
+          link: `/garage/social?card=${r.id}`,
         }).catch((err) => console.error("couldn't add the delete-scheduled task", err));
       }
       const note = [str(r.fields.Notes), `Held ${new Date().toISOString().slice(0, 10)}: ${reason}`].filter(Boolean).join("\n");

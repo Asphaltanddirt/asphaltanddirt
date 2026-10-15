@@ -87,6 +87,16 @@ export async function getTasksBetween(from: string, to: string): Promise<GarageT
   return records.map(toTask).sort((a, b) => a.due.localeCompare(b.due));
 }
 
+/** Open tasks tied to one posting-board card (Link = /garage/social?card=rec…). */
+export async function listOpenCardTasks(): Promise<{ id: string; title: string; cardId: string }[]> {
+  if (!isAirtableConfigured(BASE_ID)) return [];
+  const records = await listRecords(TASKS, `AND({Status} != 'Done', FIND('card=rec', {Link}))`, { baseId: BASE_ID });
+  return records.flatMap((r) => {
+    const m = String(r.fields.Link || "").match(/card=(rec[A-Za-z0-9]{14})/);
+    return m ? [{ id: r.id, title: String(r.fields.Title || ""), cardId: m[1] }] : [];
+  });
+}
+
 export async function setTaskDone(id: string, done: boolean): Promise<void> {
   if (!isAirtableConfigured(BASE_ID)) throw new Error("A&D Garage base is not configured.");
   await updateRecord(

@@ -3,7 +3,7 @@ import { createRecord, listRecords, updateRecord, isAirtableConfigured, type Air
 import { slotStart } from "@/lib/autoPost";
 import { getEventBySlug, getPublishedEvents, type EventDetail } from "@/lib/events";
 import { getPost, POSTING_OWNER, type SocialPost } from "@/lib/garageSocial";
-import { addTask, todayNY, weekOf } from "@/lib/garageTasks";
+import { addTask, listOpenCardTasks, setTaskDone, todayNY, weekOf } from "@/lib/garageTasks";
 import { getMediaLibrary, type MediaRow } from "@/lib/mediaLibrary";
 import { SITE_URL } from "@/lib/site";
 import { hasStories, isAutoPlatform, xLength } from "@/lib/socialCopy";
@@ -196,6 +196,10 @@ export interface EventFacts {
   /** A short hash, not the text: the meetup point is private, and the Social
    *  Posts table has no business holding a copy of it. */
   place: string;
+  /** Split hashes (from 10/15): the public place (area + venues) and the
+   *  private meetup point. Cards stamped before then only have `place`. */
+  area?: string;
+  meet?: string;
 }
 
 /** The facts a promo card depends on. Time comes from the public At A Glance
@@ -205,28 +209,70 @@ export function eventFacts(event: EventDetail): EventFacts {
     .filter((f) => /time|meet|roll|start|kick/i.test(f.label))
     .map((f) => f.value.trim())
     .join(" / ");
-  const placeText = [event.generalArea, event.meetupPoint, ...event.venues.map((v) => v.name)].map((s) => s.trim()).join("|");
+  const hash = (parts: string[]) => crypto.createHash("sha1").update(parts.map((s) => s.trim()).join("|")).digest("hex").slice(0, 12);
   return {
     date: event.date,
     time,
-    place: crypto.createHash("sha1").update(placeText).digest("hex").slice(0, 12),
+    place: hash([event.generalArea, event.meetupPoint, ...event.venues.map((v) => v.name)]),
+    area: hash([event.generalArea, ...event.venues.map((v) => v.name)]),
+    meet: hash([event.meetupPoint]),
   };
 }
 
 function parseFacts(raw: string): EventFacts | null {
   try {
     const f = JSON.parse(raw) as Partial<EventFacts>;
-    return typeof f.date === "string" ? { date: f.date, time: str(f.time), place: str(f.place) } : null;
+    return typeof f.date === "string"
+      ? { date: f.date, time: str(f.time), place: str(f.place), area: f.area ? str(f.area) : undefined, meet: f.meet ? str(f.meet) : undefined }
+      : null;
   } catch {
     return null;
   }
 }
 
-function changedFacts(was: EventFacts, now: EventFacts): string[] {
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** Does the post say this date? "Oct 17", "October 17th", "10/17". */
+function mentionsDate(text: string, iso: string): boolean {
+  const [, m, d] = iso.split("-").map(Number);
+  if (!m || !d) return true;
+  const name = MONTHS[m - 1];
+  return new RegExp(`\\b(${name}|${name.slice(0, 3)}\\.?)\\s+${d}(st|nd|rd|th)?\\b|\\b0?${m}/0?${d}\\b`, "i").test(text);
+}
+
+/** Does the post say a clock time, or any piece of the old time line? */
+function mentionsTime(text: string, was: string): boolean {
+  if (/\b\d{1,2}(:\d{2})?\s?(a\.?m\.?|p\.?m\.?)(?![a-z])|\bnoon\b/i.test(text)) return true;
+  return was.split(" / ").some((piece) => piece.trim().length > 3 && text.toLowerCase().includes(piece.trim().toLowerCase()));
+}
+
+/** Does the post name the event's public place (area or a venue)? */
+function mentionsPlace(text: string, event: EventDetail): boolean {
+  const low = text.toLowerCase().replace(/[#\s]+/g, "");
+  return [event.generalArea, ...event.venues.map((v) => v.name)]
+    .flatMap((s) => s.split(","))
+    .map((s) => s.toLowerCase().replace(/\s+/g, ""))
+    .some((s) => s.length > 3 && low.includes(s));
+}
+
+/**
+ * What changed that this post actually says (Jose 10/15: a scheduled TikTok
+ * that never named the meetup spot got flagged when the spot was filled in).
+ *  - The meetup point is private and never in a post: a change there is
+ *    never a reason to hold or re-do one.
+ *  - Date / time: only if the post mentions the old date / any clock time.
+ *  - Public place: cards with split hashes say exactly what moved; older
+ *    cards (one combined hash) can't tell, so either way it counts only if
+ *    the post's words (not hashtags) name the area or a venue.
+ */
+function changedFacts(was: EventFacts, now: EventFacts, text: string, event: EventDetail): string[] {
   const changed: string[] = [];
-  if (was.date !== now.date) changed.push(`date ${was.date} → ${now.date}`);
-  if (was.time !== now.time) changed.push("time");
-  if (was.place !== now.place) changed.push("place");
+  if (was.date !== now.date && mentionsDate(text, was.date)) changed.push(`date ${was.date} → ${now.date}`);
+  if (was.time !== now.time && mentionsTime(text, was.time)) changed.push("time");
+  const placeMoved = was.area !== undefined ? was.area !== now.area : was.place !== now.place;
+  // Hashtags don't count here: #PineBarrens isn't telling anyone where to go.
+  const words = text.replace(/#\w+/g, "");
+  if (placeMoved && mentionsPlace(words, event)) changed.push("place");
   return changed;
 }
 
@@ -263,7 +309,8 @@ export async function checkPromoFreshness(post: SocialPost): Promise<Freshness> 
   if (event.date < todayNY()) return { ok: false, action: "skip", reason: "the event has already happened" };
   const was = parseFacts(post.eventFacts);
   if (!was) return { ok: true };
-  const changed = changedFacts(was, eventFacts(event));
+  const text = [post.caption, post.hashtags, post.firstComment].filter(Boolean).join("\n");
+  const changed = changedFacts(was, eventFacts(event), text, event);
   return changed.length ? { ok: false, action: "hold", reason: `the event changed since this was written (${changed.join(", ")})` } : { ok: true };
 }
 
@@ -578,7 +625,7 @@ export async function sweepHandPromos(): Promise<{ skipped: string[]; flagged: s
 
 /** The daily pass: owed cards for every upcoming Published event, then the
  *  by-hand freshness sweep. */
-export async function runPromoPass(): Promise<{ events: { slug: string; made: number; error?: string }[]; skipped: string[]; flagged: string[] }> {
+export async function runPromoPass(): Promise<{ events: { slug: string; made: number; error?: string }[]; skipped: string[]; flagged: string[]; closedTasks: number }> {
   const { upcoming } = await getPublishedEvents();
   const events: { slug: string; made: number; error?: string }[] = [];
   for (const e of upcoming) {
@@ -586,7 +633,34 @@ export async function runPromoPass(): Promise<{ events: { slug: string; made: nu
     events.push({ slug: e.slug, made: result.made.length, ...(result.error ? { error: result.error } : {}) });
   }
   const sweep = await sweepHandPromos();
-  return { events, ...sweep };
+  const closedTasks = await closeStaleCardTasks().catch((err) => {
+    console.error("closing stale card tasks failed", err);
+    return 0;
+  });
+  return { events, ...sweep, closedTasks };
+}
+
+/**
+ * The "Update / Delete the pre-scheduled post" tasks close themselves once
+ * there's nothing left to do (Jose 10/15: one sat overdue after its card had
+ * posted): an Update task when its card is posted or skipped, either kind
+ * once the card's day has passed or the card is gone.
+ */
+export async function closeStaleCardTasks(): Promise<number> {
+  const tasks = await listOpenCardTasks();
+  const today = todayNY();
+  let closed = 0;
+  for (const task of tasks) {
+    const post = await getPost(task.cardId).catch(() => null);
+    const done =
+      !post ||
+      post.due < today ||
+      (task.title.startsWith("Update the pre-scheduled") && post.status !== "Planned");
+    if (!done) continue;
+    await setTaskDone(task.id, true);
+    closed++;
+  }
+  return closed;
 }
 
 // ---------------------------------------------------------------- measurement
