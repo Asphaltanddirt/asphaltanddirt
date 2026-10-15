@@ -77,6 +77,7 @@ export default async function GarageNewsletterPage() {
               </p>
               <GarageNewsletterActions
                 hasDraft
+                scheduled={draft.scheduled}
                 recipients={stats?.newsletter ?? null}
                 testInbox={testInbox}
                 overCap={(stats?.newsletter ?? 0) > DAILY_SEND_CAP}

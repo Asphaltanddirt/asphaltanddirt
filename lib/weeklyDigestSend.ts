@@ -1,6 +1,6 @@
 import { issueDateNY, issuePath } from "@/lib/newsletterArchive";
 import { buildWeeklyDigest, wrapNewsletterEmail } from "@/lib/newsletter";
-import { archiveIssue, getDraftIssue } from "@/lib/newsletterIssue";
+import { archiveIssue, getDraftIssue, type DraftIssue } from "@/lib/newsletterIssue";
 import { sendNewsletter, type SendResult } from "@/lib/newsletterSend";
 
 /**
@@ -33,8 +33,10 @@ export async function renderDraftPreview(): Promise<{ subject: string; html: str
 
 export async function sendDraftDigest(
   mode: "test" | "live",
+  /** Already-read Draft row (the 7 PM cron passes the one it claimed). */
+  given?: DraftIssue,
 ): Promise<SendResult & { subject: string; issueRecordId: string }> {
-  const draft = await getDraftIssue();
+  const draft = given || (await getDraftIssue());
   if (!draft) throw new NoDraftIssueError();
   const content = await buildWeeklyDigest(draft.options);
   // "View in browser" (Jose 10/8): the address this issue will have once the

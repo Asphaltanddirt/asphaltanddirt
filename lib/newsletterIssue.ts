@@ -20,6 +20,8 @@ export interface DraftIssue {
   recordId: string;
   weekOf: string;
   options: WeeklyDigestOptions;
+  /** "Send Thu 7 PM" ticked: the newsletter-send cron sends it. */
+  scheduled: boolean;
 }
 
 function str(v: unknown): string {
@@ -164,7 +166,21 @@ export async function getDraftIssue(): Promise<DraftIssue | null> {
     };
   }
 
-  return { recordId: row.id, weekOf: str(f["Week Of"]), options };
+  return { recordId: row.id, weekOf: str(f["Week Of"]), options, scheduled: f["Send Thu 7 PM"] === true };
+}
+
+/** Ticks or unticks "Send Thu 7 PM" on a Newsletters row. */
+export async function setScheduled(recordId: string, on: boolean): Promise<void> {
+  if (!BASE_ID) throw new Error("Newsletter base is not configured.");
+  await updateRecord(TABLE, recordId, { "Send Thu 7 PM": on }, { baseId: BASE_ID });
+}
+
+/** True if any issue already went out today (New York date). */
+export async function sentToday(): Promise<boolean> {
+  if (!BASE_ID) return false;
+  const today = issueDateNY();
+  const rows = await listRecords(TABLE, `{Status} = 'Sent'`, { baseId: BASE_ID });
+  return rows.some((r) => str(r.fields["Sent Date"]) === today);
 }
 
 /** Stamps a Newsletters row after a live send. */

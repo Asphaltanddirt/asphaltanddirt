@@ -26,6 +26,8 @@ export interface IssueSummary {
   subject: string;
   sentDate: string;
   recipients: number | null;
+  /** "Send Thu 7 PM" ticked. */
+  scheduled: boolean;
   /** Which sections are filled in, left to the automatic pick, or left out. */
   sections: { label: string; state: "set" | "auto" | "out" }[];
 }
@@ -78,6 +80,7 @@ export async function listIssues(): Promise<IssueSummary[]> {
       subject: str(r.fields["Subject Sent"]),
       sentDate: str(r.fields["Sent Date"]),
       recipients: typeof r.fields.Recipients === "number" ? (r.fields.Recipients as number) : null,
+      scheduled: r.fields["Send Thu 7 PM"] === true,
       sections: sectionsOf(r.fields),
     }))
     .sort((a, b) => b.weekOf.localeCompare(a.weekOf));

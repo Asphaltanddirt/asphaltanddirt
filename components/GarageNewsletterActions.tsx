@@ -4,25 +4,28 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 /** Start / test / send for the weekly Dirt Line. Sending to everyone takes
- *  two taps and names how many people it's going to. */
+ *  two taps and names how many people it's going to. "Send Thursday 7 PM"
+ *  hands the live send to the server (no laptop needed). */
 export default function GarageNewsletterActions({
   hasDraft,
+  scheduled = false,
   recipients,
   testInbox,
   overCap,
 }: {
   hasDraft: boolean;
+  scheduled?: boolean;
   recipients: number | null;
   testInbox: string;
   overCap: boolean;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<"" | "start" | "test" | "live">("");
+  const [busy, setBusy] = useState<"" | "start" | "test" | "live" | "schedule" | "unschedule">("");
   const [armed, setArmed] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
-  async function run(action: "start" | "test" | "live") {
+  async function run(action: "start" | "test" | "live" | "schedule" | "unschedule") {
     if (action === "live" && !armed) {
       setArmed(true);
       setError("");
@@ -41,6 +44,11 @@ export default function GarageNewsletterActions({
       if (!res.ok) throw new Error(data.error || "That didn't work. Try again.");
       if (action === "start") {
         router.push(`/garage/newsletter/${data.id}`);
+        return;
+      }
+      if (action === "schedule" || action === "unschedule") {
+        setNote(action === "schedule" ? "Set: it goes to every subscriber Thursday at 7 PM." : "Unscheduled. Nothing goes out on its own.");
+        router.refresh();
         return;
       }
       setNote(
@@ -78,9 +86,26 @@ export default function GarageNewsletterActions({
           {busy === "test" ? "Sending…" : "Send me a test"}
         </button>
       </div>
+      {scheduled ? (
+        <p className="garage-form-note">
+          <strong>Set to send Thursday at 7 PM</strong> to {recipients ?? "–"} subscribers.{" "}
+          <button type="button" className="btn btn-outline btn-sm" disabled={Boolean(busy)} onClick={() => run("unschedule")}>
+            {busy === "unschedule" ? "…" : "Unschedule"}
+          </button>
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={Boolean(busy) || overCap || !recipients}
+          onClick={() => run("schedule")}
+        >
+          {busy === "schedule" ? "Setting…" : "Send Thursday 7 PM"}
+        </button>
+      )}
       <button
         type="button"
-        className="btn btn-primary"
+        className="btn btn-outline"
         disabled={Boolean(busy) || overCap || !recipients}
         onClick={() => run("live")}
       >
@@ -88,7 +113,7 @@ export default function GarageNewsletterActions({
           ? "Sending…"
           : armed
             ? `Tap again: send to ${recipients} subscribers`
-            : `Send to ${recipients ?? "–"} subscribers`}
+            : `Send now to ${recipients ?? "–"} subscribers`}
       </button>
       {overCap && (
         <p className="garage-form-note garage-warn">The list is over the email service&apos;s free daily limit. Upgrade Resend before sending.</p>

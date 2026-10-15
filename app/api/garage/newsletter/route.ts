@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canSeeOwnerOnly, getSession } from "@/lib/garageAuth";
 import { startIssue } from "@/lib/garageNewsletter";
+import { getDraftIssue, setScheduled } from "@/lib/newsletterIssue";
 import { NoDraftIssueError, sendDraftDigest } from "@/lib/weeklyDigestSend";
 
 export const maxDuration = 60;
@@ -8,7 +9,9 @@ export const maxDuration = 60;
 /** Owners run the weekly Dirt Line from the Garage:
  *   { action: "start" }   make this week's Draft issue (or open the existing one)
  *   { action: "test" }    send the newest Draft to the test inbox
- *   { action: "live" }    send it to every Newsletter subscriber and archive it */
+ *   { action: "live" }    send it to every Newsletter subscriber and archive it
+ *   { action: "schedule" | "unschedule" }   tick / untick "Send Thu 7 PM" on
+ *                         the newest Draft (the newsletter-send cron sends it) */
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -23,6 +26,12 @@ export async function POST(req: NextRequest) {
 
   try {
     if (body.action === "start") return NextResponse.json({ status: "ok", id: await startIssue() });
+    if (body.action === "schedule" || body.action === "unschedule") {
+      const draft = await getDraftIssue();
+      if (!draft) throw new NoDraftIssueError();
+      await setScheduled(draft.recordId, body.action === "schedule");
+      return NextResponse.json({ status: "ok" });
+    }
     if (body.action === "test" || body.action === "live") {
       const result = await sendDraftDigest(body.action);
       if (result.skipped) return NextResponse.json({ error: `Not sent: ${result.skipped}.` }, { status: 409 });
